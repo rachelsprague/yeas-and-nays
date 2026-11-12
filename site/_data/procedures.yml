@@ -86,6 +86,15 @@ questions:
       A motion directing the House's negotiators in a conference with the
       Senate to take a position. It is not binding on them.
 
+  - key: concur_amendment
+    term: Motion to concur with an amendment
+    match: 'Motion to Concur\b.*\bwith an Amendment'
+    definition: >-
+      A vote to accept the other chamber's changes to the measure and add a
+      further amendment to them. The measure then goes back to the other
+      chamber, which must agree to the new amendment before the measure has
+      passed Congress.
+
   - key: concur
     term: Motion to concur
     match: 'Motion to Concur'

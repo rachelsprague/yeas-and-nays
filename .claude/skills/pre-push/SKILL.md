@@ -5,8 +5,10 @@ description: Review every outgoing commit before a git push in this public repo 
 
 # Pre-push review
 
-This repo is public, and `.claude/hooks/confirm-push.sh` blocks `git push`
-until this review has been recorded for the exact commit being pushed. The
+This repo is public, and two hooks block a push until this review has been
+recorded for the exact commit being pushed: `.claude/hooks/confirm-push.py`
+(Claude Code, checks the command) and `.githooks/pre-push` (git, checks the
+commits actually pushed; install once per clone with `make hooks`). The
 point is independence: the agent that wrote the code is the worst-placed to
 review it, so the code and security reviews run in fresh agents that see
 only the diff and the repo.
@@ -89,17 +91,29 @@ the user's go-ahead.
 ## 4. Record the review
 
 Only when there are no unresolved high-severity findings (fixed, or the
-user explicitly accepts them), record the review for the current HEAD:
+user explicitly accepts them), record the review for the current HEAD, as a
+command of its own (the Claude Code hook checks before a command runs, so a
+push chained after this in the same command is denied):
 
 ```
-d="$(git rev-parse --git-dir)/pre-push-reviewed"; mkdir -p "$d" && touch "$d/$(git rev-parse HEAD)"
+d="$(git rev-parse --path-format=absolute --git-common-dir)/pre-push-reviewed"; mkdir -p "$d" && touch "$d/$(git rev-parse HEAD)"
 ```
 
-The marker lives inside `.git/`, so it's never committed. Any new commit
+The marker lives inside `.git/` (shared by all worktrees), so it's never
+committed. Every commit in the range was reviewed, but only HEAD needs a
+marker: git's pre-push hook checks the tip of each ref being pushed.
+The marker is an empty file that anything can create, so the gate guards
+against pushing by accident, not against skipping the review on purpose.
+Only record it after the review above has actually run. Any new commit
 changes HEAD, so the hook will require a fresh review.
 
 ## 5. Push
 
-Run `git push`. The hook still asks the user to approve; the report above
+Run `git push` (or `git push origin main`) on main, as the whole command,
+with nothing chained before or after it. Anything else (other refspecs,
+`--all`, `--tags`, `-C`, `cd ... &&`, `--no-verify`) is denied, and so is a
+push while a git alias, push refspec or push URL changes what gets sent, or
+while `.githooks/` has uncommitted changes. The git hook also refuses
+non-fast-forward pushes. The hook still asks the user to approve; the report above
 is what they approve against. If anything is committed after the review,
 start again from step 1.

@@ -1,10 +1,10 @@
 {%- assign b = include.bill -%}
 <li class="vrow">
-  <span class="kicker muted nums">{{ b.measure_label }}{% if b.introduced_date %} · Introduced {{ b.introduced_date | ap_date }}{% endif %}</span>
+  <span class="kicker muted nums">{{ b.measure_label | escape }}{% if b.introduced_date %} · Introduced {{ b.introduced_date | ap_date }}{% endif %}</span>
   <span class="stack">
-    <a class="t headline-link" href="{{ b.congress_gov_url }}">{{ b.title }}</a>
+    <a class="t headline-link" href="{{ b.congress_gov_url | escape }}">{{ b.title | escape }}</a>
     {%- if b.latest_action_text %}
-    <span class="q nums">Latest action{% if b.latest_action_date %}, {{ b.latest_action_date | ap_date }}{% endif %}: {{ b.latest_action_text }}</span>
+    <span class="q nums">Latest action{% if b.latest_action_date %}, {{ b.latest_action_date | ap_date }}{% endif %}: {{ b.latest_action_text | escape }}</span>
     {%- endif %}
   </span>
   <span class="how">{% if b.vote_url %}<a class="link" href="{{ b.vote_url }}">Recorded vote →</a>{% endif %}</span>

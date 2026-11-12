@@ -16,19 +16,30 @@ RETRY_BACKOFF_SECONDS = [5, 15, 45, 120]
 
 
 class Client:
-    def __init__(self, delay: float = REQUEST_DELAY_SECONDS):
+    def __init__(self, delay: float = REQUEST_DELAY_SECONDS, transport: httpx.BaseTransport | None = None):
         self._client = httpx.Client(
             headers={"User-Agent": USER_AGENT},
             timeout=30.0,
             follow_redirects=True,
-            transport=httpx.HTTPTransport(retries=3),
+            transport=transport or httpx.HTTPTransport(retries=3),
         )
         self._delay = delay
         self._last_request = 0.0
 
     def get(self, url: str, headers: dict | None = None) -> httpx.Response:
+        """GET with pacing and retries.
+
+        Requests with extra headers (an API key) never follow redirects: httpx
+        forwards custom headers to the redirect target, even on another host.
+        A redirect on such a request raises instead.
+        """
         for backoff in [*RETRY_BACKOFF_SECONDS, None]:
             resp = self._get_once(url, headers)
+            if headers and resp.is_redirect:
+                raise httpx.HTTPStatusError(
+                    f"HTTP {resp.status_code} redirect for {url}; not following a request with credentials",
+                    request=resp.request, response=resp,
+                )
             if resp.status_code not in RETRY_STATUSES or backoff is None:
                 return resp
             log.warning("HTTP %d for %s; retrying in %ds", resp.status_code, url, backoff)
@@ -39,7 +50,7 @@ class Client:
         if wait > 0:
             time.sleep(wait)
         try:
-            return self._client.get(url, headers=headers)
+            return self._client.get(url, headers=headers, follow_redirects=not headers)
         finally:
             self._last_request = time.monotonic()
 

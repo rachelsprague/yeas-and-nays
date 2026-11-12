@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: all ingest stage model export bot-preview site site-serve test pytest clean
+.PHONY: hooks all ingest stage model export bot-preview site site-serve test pytest clean
 
 all: ingest stage model export
 
@@ -30,6 +30,9 @@ test: pytest     ## parser tests (dbt tests run as part of `make model`)
 
 pytest:
 	uv run pytest -q
+
+hooks:           ## install the git pre-push hook (refuses pushes without a /pre-push review)
+	git config core.hooksPath .githooks
 
 clean:           ## remove local intermediate files (keeps raw downloads)
 	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache
