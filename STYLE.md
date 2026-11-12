@@ -29,18 +29,28 @@ Yeas & Nays reports recorded votes in the U.S. House and Senate. It states what 
 | Constitutional amendments | Amendments, unless agreed to on a major bill |
 | Suspension votes that pass | Procedural motions generally |
 
+**Exception: procedural motions that dispose of a measure are posted.** A motion to table, refer, or postpone that ends floor consideration of an impeachment resolution, a privileged resolution, or a bill gets posted, because it is effectively the decisive vote on that measure. Use the official question and measure title, e.g.:
+
+```
+House agrees to motion to refer H.Res. 1655, "Impeaching Peter Brian Hegseth, Secretary of Defense, for high crimes and misdemeanors"
+211 Yea · 204 Nay · 18 Not Voting
+Voted against party majority: Massie (R-KY-4)
+```
+
+Only a motion that is agreed to ends consideration; a rejected motion to table, refer, or postpone leaves the measure pending and is skipped.
+
 Unsure? Default to **skip** on the bot; everything still appears on the site.
 
 ### Post template
 
 ```
 {Chamber} {result verb} {official title or nominee + position}
-{Yea} Yea · {Nay} Nay{ · tie-break note if VP voted}
+{Yea} Yea · {Nay} Nay{ · Vice President voted {position} to break the tie}
 Voted against party majority: {Name (P-ST)}, {Name (P-ST)}, … and {N} others
 {link}
 ```
 
-- **Result verbs:** passes / fails / confirms / rejects / invokes cloture on / fails to invoke cloture on / overrides veto of / sustains veto of. Use the official result text when in doubt.
+- **Result verbs:** passes / fails / agrees to motion to {table|refer} / rejects motion to {table|refer} / confirms / rejects / invokes cloture on / fails to invoke cloture on / overrides veto of / sustains veto of. Use the official result text when in doubt.
 - **Party-break line:** include only when at least one member voted against their party's majority. List up to 5 names, then "and N others." Independents are grouped with the party they caucus with for this calculation, and the post says so on the site's methodology page.
 - **Length:** Bluesky posts max out at 300 characters. Truncate long titles with "…" before dropping the tally or link.
 
@@ -48,7 +58,7 @@ Voted against party majority: {Name (P-ST)}, {Name (P-ST)}, … and {N} others
 
 ```
 Senate confirms {Nominee} as {Position}
-51 Yea · 50 Nay (Vice President voted to break tie)
+50 Yea · 50 Nay · Vice President voted Yea to break the tie
 Voted against party majority: {Name (R-ME)}, {Name (R-AK)}, {Name (R-KY)}
 senate.gov/legislative/LIS/roll_call_votes/...
 ```
