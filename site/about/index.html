@@ -14,6 +14,7 @@ nav: about
     <span class="kicker soft">On this page</span>
     <a class="link" href="#sources">Data sources</a>
     <a class="link" href="#definitions">Definitions</a>
+    <a class="link" href="#procedural-votes">How votes work</a>
     <a class="link" href="#display">How parties and votes are shown</a>
     <a class="link" href="#bluesky">Bluesky and this site</a>
     <a class="link" href="#who">Who built this</a>
@@ -57,6 +58,25 @@ nav: about
         <dt>Voted with party majority</dt>
         <dd>The share of a member's Yea and Nay votes that matched their party's majority. Votes where the party had no majority are left out.</dd>
       </dl>
+    </section>
+
+    <section id="procedural-votes">
+      <h2>How votes work</h2>
+      <p>Many recorded votes are not on whether to pass a measure. They decide how the chamber handles it: whether to take it up, end debate, change it, or send it to a committee. Each vote page states the official question and, under the result, what that kind of vote decides. The result always refers to that question. For example, "Motion to Refer: Passed" means the motion to send the measure to a committee was agreed to, not that the measure itself passed.</p>
+      <dl>
+        {%- for q in site.data.procedures.questions %}
+        <dt>{{ q.term }}</dt>
+        <dd>{{ q.definition }}</dd>
+        {%- endfor %}
+      </dl>
+      <h3 class="kicker soft" style="margin-top: 8px">Kinds of measures</h3>
+      <dl>
+        {%- for m in site.data.procedures.measures %}
+        <dt>{{ m.term }}</dt>
+        <dd>{{ m.definition }}</dd>
+        {%- endfor %}
+      </dl>
+      <p class="small soft">Definitions follow the House and Senate's own glossaries and rules. For more, see the <a href="https://www.congress.gov/help/legislative-glossary">Congress.gov legislative glossary</a>.</p>
     </section>
 
     <section id="display">

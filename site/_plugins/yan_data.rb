@@ -45,6 +45,32 @@ module Yan
   # Legend mark for a position: Yea solid, Nay striped, Not voting open box.
   MARKS = { "yes" => "yea", "no" => "nay", "present" => "present", "not_voting" => "nv" }.freeze
 
+  # The House records a bare "Passed", "Failed" or "Agreed to", which on its
+  # own reads as the fate of the measure. Tie it to the question voted on:
+  # "Motion to Refer: Passed". Senate results already name their subject
+  # ("Motion to Proceed Agreed to", "Nomination Confirmed").
+  BARE_RESULTS = ["Passed", "Failed", "Agreed to"].freeze
+
+  def self.result_label(v)
+    return v["result"] unless BARE_RESULTS.include?(v["result"])
+
+    "#{v["question"].sub(/\AOn (the )?/, "")}: #{v["result"]}"
+  end
+
+  # The plain-language definition for a vote's question, from _data/procedures.yml.
+  # Measure-type notes ("Bills become law if…") go with passage votes.
+  def self.procedure(v, procedures)
+    q = (procedures["questions"] || []).find do |p|
+      Regexp.new(p["match"], Regexp::IGNORECASE).match?(v["question"].to_s) &&
+        (p["title"].nil? || Regexp.new(p["title"], Regexp::IGNORECASE).match?(v["measure_title"].to_s))
+    end
+    return nil unless q
+
+    note = (procedures["measures"] || []).find { |m| m["types"].include?(v["bill_type"]) }
+    { "key" => q["key"], "term" => q["term"], "definition" => q["definition"],
+      "measure_note" => (%w[passage suspend].include?(q["key"]) && note) ? note["definition"] : nil }
+  end
+
   def self.vote_url(v)
     "/votes/#{v["congress"]}/#{v["chamber"]}/#{v["session"]}/#{v["roll_number"]}/"
   end
@@ -183,6 +209,8 @@ module Yan
       votes.each do |v|
         v["url"] = Yan.vote_url(v)
         v["chamber_name"] = CHAMBER_NAMES[v["chamber"]]
+        v["result_label"] = Yan.result_label(v)
+        v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
         doc = read.call("votes/#{v["vote_id"]}.json")
         view = Yan.vote_view(v, doc, by_id)
         views[v["vote_id"]] = view

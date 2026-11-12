@@ -1,0 +1,8 @@
+{%- comment -%} What the question voted on means, in fixed neutral wording from _data/procedures.yml. {%- endcomment -%}
+{%- assign p = include.vote.procedure -%}
+{%- if p %}
+<div class="procedure">
+  <p><span class="kicker soft">About this vote</span> {{ p.definition }}{% if p.measure_note %} {{ p.measure_note }}{% endif %}</p>
+  <a class="link small" href="/about/#procedural-votes">How votes work</a>
+</div>
+{%- endif %}

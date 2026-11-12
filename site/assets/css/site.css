@@ -140,6 +140,10 @@ main.home { gap: 20px; padding-top: 20px; }
 
 /* ---- Vote header ------------------------------------------------------- */
 
+.procedure { max-width: 680px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; line-height: 22px; color: var(--ink-soft); border-left: 1.5px solid var(--ink); padding-left: 12px; }
+.procedure .kicker { margin-right: 6px; }
+.procedure a { align-self: flex-start; padding: 4px 0; }
+
 .vote-head { display: flex; flex-direction: column; gap: 12px; max-width: 860px; }
 .vote-head .back { margin-bottom: -8px; }
 .question { font-size: 16px; line-height: 22px; color: var(--ink-soft); }

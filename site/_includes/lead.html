@@ -4,7 +4,8 @@
 <div class="lead-vote" style="display: contents" data-show-when="chamber:{{ include.key }}"{% unless include.key == "all" %} hidden{% endunless %}>
   {% include vote_kicker.html vote=v %}
   <h2 class="lead-h"><a href="{{ v.url }}">{% include vote_title.html vote=v %}</a></h2>
-  <span class="kicker result">{{ v.result }}</span>
+  <span class="kicker result">{{ v.result_label }}</span>
+  {%- include procedure.html vote=v %}
   {% include tally.html view=view %}
   {%- unless view.has_other %}
   <table class="mini nums">

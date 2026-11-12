@@ -8,7 +8,8 @@ layout: default
     {% include vote_kicker.html vote=v %}
     <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
     {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author }}){% endif %}: {{ v.amendment_purpose }}</p>{% endif %}
-    <span class="kicker result">{{ v.result }}</span>
+    <span class="kicker result">{{ v.result_label }}</span>
+    {%- include procedure.html vote=v %}
   </section>
 
   <div class="twocol">

@@ -1,0 +1,226 @@
+# Plain-language definitions of the questions the House and Senate vote on,
+# shown on vote pages ("About this vote") and in About > Procedural votes.
+#
+# Wording rules (STYLE.md): describe how the procedure works, the same way
+# every time. Never refer to a specific measure, outcome, party, or motive.
+# Sources: the House and Senate glossaries and rules (house.gov, senate.gov,
+# congress.gov/help/legislative-glossary).
+#
+# questions: matched against the official question in order; the first match
+# wins, so specific patterns come before general ones. `title` additionally
+# requires the measure title to match (a "rule" is an H.Res. providing for
+# consideration of another measure). Matching ignores case.
+
+questions:
+  - key: rule
+    term: Rule (House)
+    match: '^On Agreeing to the Resolution'
+    title: '^Providing for (the )?consideration'
+    definition: >-
+      A vote on a "rule": a House resolution that sets the terms for debating
+      other measures, such as how long debate lasts and which amendments may be
+      offered. Adopting a rule does not pass the measures it names; each still
+      needs its own vote.
+
+  - key: previous_question
+    term: Ordering the previous question (House)
+    match: '^On Ordering the Previous Question'
+    definition: >-
+      A vote to end debate on the pending question, usually a rule, and vote on
+      it right away. If the previous question is not ordered, the pending
+      question stays open to amendment before the final vote.
+
+  - key: table
+    term: Motion to table
+    match: 'Motion to Table'
+    definition: >-
+      A motion to set the pending matter aside without a direct vote on it. If
+      a motion to table is agreed to, the matter is disposed of and generally
+      does not come back.
+
+  - key: suspend
+    term: Suspension of the rules (House)
+    match: 'Motion to Suspend the Rules'
+    definition: >-
+      A faster procedure for measures expected to draw broad support. Debate is
+      limited to 40 minutes, no amendments may be offered from the floor, and
+      the motion needs a two-thirds majority of those voting to pass.
+
+  - key: refer
+    term: Motion to refer
+    match: 'Motion to Refer'
+    definition: >-
+      A motion to send the measure to a committee instead of voting on it
+      directly on the floor. If it is agreed to, the measure goes to that
+      committee and the chamber does not vote on the measure itself at that
+      time.
+
+  - key: recommit
+    term: Motion to recommit
+    match: 'Motion to Recommit'
+    definition: >-
+      A motion to send the measure back to the committee that reported it. In
+      the House it is offered just before the vote on passage. If it is agreed
+      to, the measure returns to committee instead of going to a passage vote.
+
+  - key: commit
+    term: Motion to commit
+    match: 'Motion to Commit'
+    definition: >-
+      A motion to send the measure to a committee, sometimes with instructions
+      to report it back with specific changes. If it is agreed to, the measure
+      goes to committee instead of to a final vote.
+
+  - key: discharge
+    term: Motion to discharge
+    match: 'Motion to Discharge'
+    definition: >-
+      A motion to take a measure out of a committee that has not reported it,
+      so the full chamber can consider it. Agreeing to it brings the measure to
+      the floor; it does not pass the measure.
+
+  - key: instruct
+    term: Motion to instruct conferees (House)
+    match: 'Motion to Instruct Conferees'
+    definition: >-
+      A motion directing the House's negotiators in a conference with the
+      Senate to take a position. It is not binding on them.
+
+  - key: concur
+    term: Motion to concur
+    match: 'Motion to Concur'
+    definition: >-
+      A vote to accept the other chamber's changes to the measure. Once both
+      chambers have agreed to identical text, the measure has passed Congress.
+
+  - key: veto_override
+    term: Veto override
+    match: 'Objections of the President'
+    definition: >-
+      A vote on passing the measure despite the President's veto. It requires
+      a two-thirds majority of those voting in each chamber. If both chambers
+      override, the measure becomes law without the President's signature.
+
+  - key: reconsider
+    term: Motion to reconsider
+    match: 'Motion to Reconsider'
+    definition: >-
+      A motion to vote again on a question that has already been decided.
+
+  - key: adjourn
+    term: Motion to adjourn
+    match: 'Motion to Adjourn'
+    definition: >-
+      A motion to end the day's session.
+
+  - key: recess
+    term: Motion to recess (Senate)
+    match: 'Motion to Recess'
+    definition: >-
+      A motion to pause the session for a set time.
+
+  - key: waive
+    term: Motion to waive (Senate)
+    match: 'Motion to Waive'
+    definition: >-
+      A motion to set aside a budget rule that an amendment or measure would
+      otherwise violate. Waiving most budget rules requires three-fifths of all
+      senators (60 when no seats are vacant).
+
+  - key: consideration
+    term: Question of consideration (House)
+    match: '^On Consideration of'
+    definition: >-
+      A vote on whether the House will take up the measure now.
+
+  - key: cloture
+    term: Cloture (Senate)
+    match: 'Cloture'
+    definition: >-
+      A vote to limit further debate so the Senate can move to a vote. On most
+      legislation it requires three-fifths of all senators (60 when no seats
+      are vacant); on nominations it requires a majority of those voting.
+      Invoking cloture does not decide the measure or nomination itself.
+
+  - key: proceed
+    term: Motion to proceed (Senate)
+    match: 'Motion to Proceed'
+    definition: >-
+      A vote on whether the Senate will begin considering the measure. Agreeing
+      to it brings the measure up for debate; it does not pass it.
+
+  - key: nomination
+    term: Nomination (Senate)
+    match: '^On the Nomination'
+    definition: >-
+      A vote on whether to confirm the President's nominee. Confirmation
+      requires a majority of those voting.
+
+  - key: point_of_order
+    term: Point of order (Senate)
+    match: 'Point of Order'
+    definition: >-
+      A point of order is an objection that a pending action breaks the
+      chamber's rules. This vote decides whether the objection is upheld
+      ("well taken").
+
+  - key: decision_of_chair
+    term: Appeal of the chair's ruling (Senate)
+    match: 'Decision of the Chair'
+    definition: >-
+      A vote on whether to uphold the presiding officer's ruling on a point of
+      order.
+
+  - key: amendment
+    term: Amendment
+    match: '(Agreeing to the Amendment|^On the Amendment)'
+    definition: >-
+      A vote on a proposed change to the measure. Adopting an amendment changes
+      the text under consideration; the measure still needs its own vote to
+      pass.
+
+  - key: quorum
+    term: Quorum call
+    match: '^Call of the House'
+    definition: >-
+      A roll call to establish that a quorum (a majority of members) is
+      present so business can proceed.
+
+  - key: speaker
+    term: Election of the Speaker (House)
+    match: '^Election of the Speaker'
+    definition: >-
+      Members name their choice for Speaker. A candidate must receive a
+      majority of the votes cast for a person by name.
+
+  - key: passage
+    term: Passage
+    match: '^(On Passage|On the Joint Resolution|On the Concurrent Resolution|On the Resolution|On Agreeing to the Resolution)'
+    definition: >-
+      A vote on whether this chamber passes or adopts the measure.
+
+# What happens to each kind of measure after it passes. Shown with passage
+# votes, keyed by Congress.gov bill type.
+measures:
+  - types: [hr, s]
+    term: Bill
+    definition: >-
+      Bills become law if both chambers pass them in identical form and the
+      President signs them, or if both chambers override a veto.
+  - types: [hjres, sjres]
+    term: Joint resolution
+    definition: >-
+      Joint resolutions go through the same process as bills and can become
+      law. Those proposing a constitutional amendment instead need two-thirds
+      of each chamber and then go to the states for ratification.
+  - types: [hconres, sconres]
+    term: Concurrent resolution
+    definition: >-
+      Concurrent resolutions must be adopted by both chambers but do not go to
+      the President and do not become law. They are used for matters such as
+      the congressional budget and joint rules.
+  - types: [hres, sres]
+    term: Simple resolution
+    definition: >-
+      Simple resolutions concern only the chamber that adopts them. They do not
+      go to the other chamber or the President and do not become law.

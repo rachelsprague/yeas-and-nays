@@ -8,6 +8,7 @@ Yeas & Nays reports recorded votes in the U.S. House and Senate. It states what 
 - **No adjectives or characterization.** Never "narrowly," "controversial," "sweeping," "slammed," "historic," "bipartisan win," etc.
 - **Use official language.** Quote the vote question and measure title as the Clerk or Senate records them. Don't paraphrase what a bill "does."
 - **Bill summaries are the Congressional Research Service's, verbatim.** The site may show a CRS summary from Congress.gov exactly as published, credited to CRS and labeled with the bill version and date it describes. Never edit, shorten, or write our own summary. Bot posts don't include summaries.
+- **Tie every result to its question.** A result applies to the question voted on, not necessarily the measure: "Motion to Refer: Passed," never a bare "Passed" under a measure's title. On the site, explain what each kind of vote decides using the fixed definitions in `site/_data/procedures.yml`, the same wording every time.
 - **Party breaks are counts, not judgments.** "Voted against party majority: …" Never "broke ranks," "defied," or "crossed the aisle."
 - **One template for every vote.** The same structure applies whichever party wins or what the topic is.
 - **Always link the source.** Every post links the official vote record (or our vote page, which links the official record).
