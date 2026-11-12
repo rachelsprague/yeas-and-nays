@@ -78,3 +78,18 @@ def test_fetch_sponsored_pages_through_and_keeps_this_congress_bills(monkeypatch
     doc = congress_gov.fetch_sponsored(client, "k", "M001184")
     assert client.calls == [0, 2, 4]
     assert [i["number"] for i in doc["sponsoredLegislation"]] == ["1", "2"]
+
+
+def test_fetch_sponsored_drops_an_item_repeated_across_pages(monkeypatch):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 2)
+    # A bill introduced between page requests pushes HR 2 from page 1 onto page 2.
+    items = [
+        {"congress": 119, "type": "HR", "number": "3"},
+        {"congress": 119, "type": "HR", "number": "2"},
+        {"congress": 119, "type": "HR", "number": "2"},
+        {"congress": 119, "type": "HR", "number": "1"},
+    ]
+    doc = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
+    assert [i["number"] for i in doc["sponsoredLegislation"]] == ["3", "2", "1"]

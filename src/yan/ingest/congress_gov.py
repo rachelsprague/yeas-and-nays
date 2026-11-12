@@ -74,8 +74,11 @@ def sponsored_path(bioguide_id: str):
 
 def fetch_sponsored(client: Client, key: str, bioguide_id: str) -> dict:
     """Every page of a member's sponsored legislation, keeping this Congress's bills and
-    resolutions (amendments, which have no bill type, are dropped)."""
-    items, offset, total = [], 0, None
+    resolutions (amendments, which have no bill type, are dropped).
+
+    Pages are by offset, so a bill introduced mid-fetch shifts the list and can
+    repeat one item across a page boundary; repeats are dropped."""
+    items, seen, offset, total = [], set(), 0, None
     while total is None or offset < total:
         url = SPONSORED_URL.format(bioguide_id=bioguide_id, limit=PAGE_SIZE, offset=offset)
         resp = client.get(url, headers={"X-Api-Key": key})
@@ -85,7 +88,11 @@ def fetch_sponsored(client: Client, key: str, bioguide_id: str) -> dict:
             raise ValueError(f"congress.gov member {bioguide_id}: response has no sponsoredLegislation")
         total = doc.get("pagination", {}).get("count", 0)
         page = doc["sponsoredLegislation"]
-        items += [i for i in page if i.get("congress") == CONGRESS and i.get("type")]
+        for item in page:
+            bill = (item.get("type"), item.get("number"))
+            if item.get("congress") == CONGRESS and item.get("type") and bill not in seen:
+                seen.add(bill)
+                items.append(item)
         if not page:
             break
         offset += PAGE_SIZE
