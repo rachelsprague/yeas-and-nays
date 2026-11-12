@@ -1,7 +1,7 @@
 import datetime as dt
 import json
 
-from yan.export.json_export import dumps, meta_document, vote_document
+from yan.export.json_export import dumps, meta_document, vote_document, with_measure_label
 
 
 def test_dumps_is_valid_sorted_and_one_list_item_per_line():
@@ -40,3 +40,9 @@ def test_meta_tracks_latest_roll_per_chamber_and_session():
     assert meta["latest_roll_number"] == {"house": {"1": 362, "2": 5}, "senate": {"1": 659}}
     assert meta["latest_vote_date"] == dt.date(2026, 1, 7)
     assert meta["member_count"] == 2
+
+
+def test_votes_carry_measure_number_in_citation_form():
+    assert with_measure_label({"chamber": "house", "measure_number": "H RES 1655"})["measure_label"] == "H.Res. 1655"
+    assert with_measure_label({"chamber": "senate", "measure_number": "PN1129"})["measure_label"] == "PN1129"
+    assert with_measure_label({"chamber": "house", "measure_number": None})["measure_label"] is None

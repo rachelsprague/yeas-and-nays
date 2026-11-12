@@ -56,6 +56,32 @@ models:
               config:
                 where: served_in_congress
 
+  - name: member_stats
+    description: >
+      One row per member with a recorded position this Congress: participation and
+      agreement with their caucus majority, as defined on the site's methodology page.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: roll_calls
+        description: Roll calls held in the member's chamber while they were in office.
+        data_tests: [not_null]
+      - name: votes_cast
+        description: Roll calls with any recorded response other than Not Voting.
+      - name: missed_votes_pct
+        description: Not Voting as a percentage of roll_calls, to one decimal place.
+        data_tests: [not_null]
+      - name: with_party_majority_pct
+        description: >
+          Yes/no votes matching the caucus majority as a percentage of yes/no votes where
+          the caucus had a majority. Null when the member cast no such vote.
+
   - name: votes
     description: One row per roll call vote in the House and Senate.
     columns:

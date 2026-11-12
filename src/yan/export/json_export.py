@@ -1,7 +1,7 @@
 """Export the dbt marts to small, deterministic JSON files under data/out/.
 
     data/out/meta.json            congress, counts, latest roll number per chamber/session
-    data/out/members.json         one entry per member
+    data/out/members.json         one entry per member, with their stats this Congress
     data/out/votes.json           one entry per vote (metadata + tallies), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
@@ -20,6 +20,7 @@ from pathlib import Path
 
 import duckdb
 
+from yan.bot.rules import measure_label
 from yan.config import CONGRESS, OUT_DIR, WAREHOUSE_PATH
 
 log = logging.getLogger(__name__)
@@ -67,8 +68,13 @@ def _rows(con, sql: str) -> list[dict]:
 def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     con = duckdb.connect(str(warehouse), read_only=True)
     try:
-        members = _rows(con, "select * from members order by bioguide_id")
-        votes = _rows(con, f"select * from votes order by {VOTE_ORDER}")
+        members = _rows(con, """
+            select members.*, stats.* exclude (bioguide_id)
+            from members
+            left join member_stats as stats using (bioguide_id)
+            order by bioguide_id
+        """)
+        votes = [with_measure_label(v) for v in _rows(con, f"select * from votes order by {VOTE_ORDER}")]
         positions = _rows(con, """
             select vote_id, bioguide_id, member_label, party, caucus_party, position_raw,
                    position, caucus_majority_position, voted_against_party_majority
@@ -101,6 +107,11 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
 
     changed += write_if_changed(out_dir / "meta.json", dumps(meta_document(votes, members)))
     log.info("export: %d votes, %d members, %d files changed", len(votes), len(members), changed)
+
+
+def with_measure_label(vote: dict) -> dict:
+    """Add the measure number in citation form ("H RES 1655" -> "H.Res. 1655") for display."""
+    return {**vote, "measure_label": measure_label(vote)}
 
 
 def vote_document(vote: dict, positions: list[dict]) -> dict:

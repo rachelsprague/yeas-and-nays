@@ -97,3 +97,29 @@ unit_tests:
         - {bioguide_id: H1, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_congress: true, member_label: "Member (R-CA-3)"}
         - {bioguide_id: H1, period_start: "2026-03-09", party: I, caucus_party: R, overlaps_congress: true, member_label: "Member (I-CA-3)"}
         - {bioguide_id: H2, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_congress: true, member_label: "Atlarge (R-WY)"}
+
+  - name: member_stats_count_missed_votes_and_party_agreement
+    description: >
+      Present counts as voting, not as missed. Agreement with the party majority
+      counts only yes/no votes where the caucus had a majority.
+    model: member_stats
+    given:
+      - input: ref('positions')
+        rows:
+          - {vote_id: v1, bioguide_id: A1, position: "yes", voted_against_party_majority: false}
+          - {vote_id: v2, bioguide_id: A1, position: "no", voted_against_party_majority: true}
+          - {vote_id: v3, bioguide_id: A1, position: "yes", voted_against_party_majority: false}
+          - {vote_id: v4, bioguide_id: A1, position: present, voted_against_party_majority: null}
+          - {vote_id: v5, bioguide_id: A1, position: not_voting, voted_against_party_majority: null}
+          # Tie in the caucus: no majority, so excluded from agreement
+          - {vote_id: v6, bioguide_id: A1, position: "yes", voted_against_party_majority: null}
+          # Only ever absent
+          - {vote_id: v1, bioguide_id: A2, position: not_voting, voted_against_party_majority: null}
+    expect:
+      rows:
+        - {bioguide_id: A1, roll_calls: 6, votes_cast: 5, missed_votes: 1, party_majority_votes: 3,
+           with_party_majority_votes: 2, against_party_majority_votes: 1,
+           missed_votes_pct: 16.7, with_party_majority_pct: 66.7}
+        - {bioguide_id: A2, roll_calls: 1, votes_cast: 0, missed_votes: 1, party_majority_votes: 0,
+           with_party_majority_votes: 0, against_party_majority_votes: 0,
+           missed_votes_pct: 100.0, with_party_majority_pct: null}
