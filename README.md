@@ -47,3 +47,15 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`.
 | `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded |
 
 Output is deterministic: re-running with no new votes produces no diff.
+
+## Bot (dry run)
+
+The Bluesky bot reads `data/out/` and applies the post rules in [STYLE.md](STYLE.md). It only prints posts; publishing isn't built yet.
+
+```
+uv run yan bot preview -n 10 [--vote ID]   # the 10 most recent postable votes
+uv run yan bot run                          # votes not yet handled, per data/bot/state.json
+uv run yan bot init                         # start from the latest vote
+```
+
+State (`data/bot/state.json`, committed) records the last vote handled per chamber, posted or skipped, so a vote is never posted twice. A dry run never advances it.

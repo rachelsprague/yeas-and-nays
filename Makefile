@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: all ingest stage model export test pytest dbt-test clean
+.PHONY: all ingest stage model export bot-preview test pytest clean
 
 all: ingest stage model export
 
@@ -16,6 +16,9 @@ model:           ## build and test dbt models (unit tests, models, data tests)
 
 export:          ## write JSON for the bot and site into data/out/
 	uv run yan export
+
+bot-preview:     ## print the 10 most recent postable votes (dry run, never publishes)
+	uv run yan bot preview -n 10
 
 test: pytest     ## parser tests (dbt tests run as part of `make model`)
 

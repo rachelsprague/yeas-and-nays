@@ -20,6 +20,14 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("stage", help="parse data/raw/ into Parquet under data/staged/")
     sub.add_parser("export", help="write JSON from the dbt marts into data/out/")
 
+    bot = sub.add_parser("bot", help="Bluesky bot (dry run only: prints posts, never publishes)")
+    bot_sub = bot.add_subparsers(dest="bot_command", required=True)
+    preview = bot_sub.add_parser("preview", help="print the most recent postable votes, ignoring state")
+    preview.add_argument("-n", type=int, default=10, help="number of recent postable votes (default 10)")
+    preview.add_argument("--vote", action="append", default=[], help="also show this vote ID (repeatable)")
+    bot_sub.add_parser("run", help="print posts for votes not yet handled, per data/bot/state.json")
+    bot_sub.add_parser("init", help="mark every vote up to the latest as handled")
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -39,6 +47,15 @@ def main(argv: list[str] | None = None) -> None:
         from yan.export.json_export import run
 
         run()
+    elif args.command == "bot":
+        from yan.bot import run as bot
+
+        if args.bot_command == "preview":
+            bot.preview(args.n, args.vote)
+        elif args.bot_command == "run":
+            bot.run()
+        elif args.bot_command == "init":
+            print(f"bot state set to: {bot.init()}")
 
 
 if __name__ == "__main__":
