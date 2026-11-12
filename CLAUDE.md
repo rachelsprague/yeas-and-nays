@@ -37,3 +37,7 @@ This repository is public. Before any `git push`, review every outgoing commit i
 - **Internal notes:** TODOs or comments that wouldn't read well in public, scratch files, debug output.
 - **Data and size:** no large raw data dumps committed by accident; respect `.gitignore`.
 - **Third-party content:** nothing copied in that isn't public domain or properly licensed.
+
+## Site build notes
+
+- **Member portraits:** use official congressional portraits from the `unitedstates/images` project, keyed by bioguide ID (already in our member data). Same crop, size, and treatment for every member. Fall back to initials when a member has no portrait yet (common for new members).
