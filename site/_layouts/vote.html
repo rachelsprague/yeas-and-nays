@@ -81,7 +81,7 @@ layout: default
     <ul class="ruled thin">
       {%- for a in page.against %}
       <li>
-        <a class="headline-link" href="{{ a.url }}">{{ a.name }} <span>{{ a.code }}</span></a>
+        <a href="{{ a.url }}">{{ a.name }} <span>{{ a.code }}</span></a>
         <span class="small soft nums">Voted <strong>{{ a.position }}</strong> · {{ a.caucus }} majority voted {{ a.majority }}</span>
       </li>
       {%- endfor %}

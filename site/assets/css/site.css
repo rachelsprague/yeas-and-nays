@@ -240,7 +240,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .crs-text { max-width: 720px; display: flex; flex-direction: column; gap: 12px; font-size: 17px; line-height: 27px; }
 .crs-text :is(p, ul, ol) { margin: 0; }
 .crs-text :is(ul, ol) { padding-left: 22px; }
-.crs summary { cursor: pointer; font-weight: 600; color: var(--ink); min-height: 44px; display: flex; align-items: center; }
+.crs summary { cursor: pointer; font-weight: 600; color: var(--ink); display: list-item; padding: 12px 0; }
 .crs[open] summary { margin-bottom: 8px; }
 
 /* ---- Home -------------------------------------------------------------- */
@@ -304,7 +304,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 footer.wrap { padding-bottom: 28px; }
 .footline { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; padding-top: 14px; font-size: 13px; line-height: 20px; color: var(--ink-muted); text-align: center; }
 .footline .social { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 20px; }
-.footline .social:hover { color: var(--ink); }
+.footline .social:hover { color: var(--accent); }
 
 /* ---- Desktop ----------------------------------------------------------- */
 
