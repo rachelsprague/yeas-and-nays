@@ -1,13 +1,9 @@
 name: Update vote data
 
 on:
-  schedule:
-    # Hourly on weekdays. Cron runs in UTC, so the second line covers Friday
-    # evening Eastern time (early Saturday UTC), when votes can still happen.
-    # At :17 rather than :00: GitHub delays or drops more scheduled runs at
-    # the top of the hour, when the most scheduled jobs start.
-    - cron: "17 * * * 1-5"
-    - cron: "17 0-5 * * 6"
+  # Started hourly by an external scheduler (cron-job.org) through the
+  # workflow_dispatch API. GitHub's own `schedule` trigger ran hours late or
+  # not at all for this repo, which an hourly job can't absorb.
   workflow_dispatch:
 
 permissions:

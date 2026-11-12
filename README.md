@@ -77,7 +77,7 @@ make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bun
 
 ## Automation
 
-`.github/workflows/pipeline.yml` runs hourly on weekdays (and on demand): ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot.
+`.github/workflows/pipeline.yml` runs hourly, started by an external scheduler (cron-job.org) through the workflow_dispatch API, and on demand: ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot.
 
 | Setting | Type | Purpose |
 | --- | --- | --- |

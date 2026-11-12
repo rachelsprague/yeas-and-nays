@@ -14,7 +14,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 - **Output:** JSON/Parquet consumed by the site and bot.
 - **Bot:** Python + atproto SDK. Filters votes per STYLE.md post rules, posts via app password.
 - **Site:** Jekyll on GitHub Pages, pages generated from data files.
-- **Schedule:** GitHub Actions cron (weekday hourly): ingest → model → post → build/deploy.
+- **Schedule:** GitHub Actions, started hourly by cron-job.org via workflow_dispatch: ingest → model → post → build/deploy.
 
 ## Secrets (GitHub Actions)
 
