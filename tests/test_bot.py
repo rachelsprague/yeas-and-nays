@@ -4,7 +4,7 @@ import pytest
 
 from yan.bot import run as bot
 from yan.bot import state as bot_state
-from yan.bot.format import format_post, party_break_line, tally_line
+from yan.bot.format import format_post, party_break_line, party_line, tally_line
 from yan.bot.rules import decide, measure_label
 
 
@@ -36,11 +36,12 @@ def senate_vote(**overrides):
     return {**vote, **overrides}
 
 
-def doc(vote, against=(), positions=None):
+def doc(vote, against=(), positions=None, party_totals=None):
     return {
         "vote": vote,
         "against_party_majority": [{"member_label": label} for label in against],
         "positions": positions or {"A000001": "Yea"},
+        "party_totals": party_totals or {"R": {"yes": 1}, "D": {"no": 1}},
     }
 
 
@@ -103,11 +104,13 @@ def test_house_measure_numbers_use_citation_form():
 
 def test_disposing_motion_post_matches_style_example():
     vote = house_vote(not_voting_count=18)
-    text = format_post(doc(vote, against=["Massie (R-KY-4)"]), decide(vote))
+    totals = {"R": {"yes": 210, "no": 1, "not_voting": 7}, "D": {"no": 203, "not_voting": 11}, "I": {"yes": 1}}
+    text = format_post(doc(vote, against=["Massie (R-KY-4)"], party_totals=totals), decide(vote))
     assert text == (
         'House agrees to motion to refer H.Res. 1655, "Impeaching Peter Brian Hegseth, '
         'Secretary of Defense, for high crimes and misdemeanors"\n'
         "211 Yea · 204 Nay · 18 Not Voting\n"
+        "R 210–1 · D 0–203 · I 1–0\n"
         "Voted against party majority: Massie (R-KY-4)\n"
         "clerk.house.gov/Votes/2026317"
     )
@@ -115,10 +118,13 @@ def test_disposing_motion_post_matches_style_example():
 
 def test_nomination_post_with_tie_break():
     vote = senate_vote()
-    text = format_post(doc(vote, against=["Collins (R-ME)", "McConnell (R-KY)", "Murkowski (R-AK)"]), decide(vote))
+    totals = {"R": {"yes": 50, "no": 3}, "D": {"no": 45}, "I": {"no": 2}}
+    against = ["Collins (R-ME)", "McConnell (R-KY)", "Murkowski (R-AK)"]
+    text = format_post(doc(vote, against=against, party_totals=totals), decide(vote))
     assert text.splitlines() == [
         "Senate confirms Peter Hegseth as Secretary of Defense",
         "50 Yea · 50 Nay · Vice President voted Yea to break the tie",
+        "R 50–3 · D 0–45 · I 0–2",
         "Voted against party majority: Collins (R-ME), McConnell (R-KY), Murkowski (R-AK)",
         "senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00015.htm",
     ]
@@ -135,24 +141,44 @@ def test_tally_uses_recorded_terms_and_only_nonzero_present_and_not_voting():
     assert tally_line(house_vote(not_voting_count=18), {"A": "Yea"}) == "211 Yea · 204 Nay · 18 Not Voting"
 
 
-def test_party_break_line_lists_five_then_counts_the_rest():
-    labels = [f"M{i} (R-TX-{i})" for i in range(1, 8)]
-    assert party_break_line(labels) == (
-        "Voted against party majority: M1 (R-TX-1), M2 (R-TX-2), M3 (R-TX-3), M4 (R-TX-4), M5 (R-TX-5) and 2 others"
+def test_party_line_shows_r_and_d_always_and_i_only_when_an_independent_voted():
+    assert party_line({"R": {"yes": 211, "not_voting": 7}, "D": {"yes": 83, "no": 128}}) == "R 211–0 · D 83–128"
+    assert party_line({"R": {"yes": 1}, "D": {"no": 1}, "I": {"not_voting": 1}}) == "R 1–0 · D 0–1"
+    assert party_line({"R": {"yes": 1}, "D": {"no": 1}, "I": {"no": 2}}) == "R 1–0 · D 0–1 · I 0–2"
+    assert party_line({}) == "R 0–0 · D 0–0"
+
+
+def test_party_break_names_only_when_one_to_five_members():
+    labels = [f"M{i} (R-TX-{i})" for i in range(1, 7)]
+    assert party_break_line([]) is None
+    assert party_break_line(labels[:5]) == (
+        "Voted against party majority: M1 (R-TX-1), M2 (R-TX-2), M3 (R-TX-3), M4 (R-TX-4), M5 (R-TX-5)"
     )
-    assert party_break_line(labels[:6]).endswith("and 1 other")
+    assert party_break_line(labels) is None
 
 
-def test_long_post_truncates_title_and_keeps_tally_and_link():
+def test_more_than_five_against_majority_omits_names_line():
+    vote = house_vote(question="On Passage", measure_number="H R 1013", measure_title="An Act")
+    totals = {"R": {"yes": 211}, "D": {"yes": 83, "no": 128}, "I": {"yes": 1}}
+    text = format_post(doc(vote, against=[f"M{i} (D-CA-{i})" for i in range(83)], party_totals=totals),
+                       decide(vote))
+    assert "Voted against" not in text
+    assert text.splitlines()[2] == "R 211–0 · D 83–128 · I 1–0"
+
+
+def test_long_post_truncates_title_and_keeps_every_other_line():
     vote = house_vote(question="On Passage", measure_number="H R 1", measure_title="An Act " + "word " * 80)
-    labels = [f"Member{i} (D-CA-{i})" for i in range(1, 30)]
+    labels = [f"Member{i} (D-CA-{i})" for i in range(1, 6)]
     text = format_post(doc(vote, against=labels), decide(vote))
     lines = text.splitlines()
     assert len(text) <= 300
     assert lines[0].endswith('…"')
-    assert lines[1] == "211 Yea · 204 Nay"
-    assert lines[2].startswith("Voted against party majority: ") and "others" in lines[2]
-    assert lines[-1] == "clerk.house.gov/Votes/2026317"
+    assert lines[1:] == [
+        "211 Yea · 204 Nay",
+        "R 1–0 · D 0–1",
+        "Voted against party majority: " + ", ".join(labels),
+        "clerk.house.gov/Votes/2026317",
+    ]
 
 
 # --- state: nothing double-posts ----------------------------------------

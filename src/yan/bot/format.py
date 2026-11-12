@@ -2,7 +2,8 @@
 
     {Chamber} {result verb} {official title or nominee + position}
     {Yea} Yea · {Nay} Nay{ · Present}{ · Not Voting}{ · Vice President voted {position} to break the tie}
-    Voted against party majority: {Name (P-ST)}, … and {N} others
+    R {Yea}–{Nay} · D {Yea}–{Nay}{ · I {Yea}–{Nay}}
+    Voted against party majority: {Name (P-ST)}, …   (only when 1 to 5 members)
     {link}
 """
 
@@ -12,8 +13,7 @@ from yan.bot.rules import Decision, measure_label, outcome
 
 MAX_GRAPHEMES = 300
 MAX_NAMES = 5
-# Shortest a title is cut to before listing fewer names.
-MIN_TITLE = 60
+MIN_TITLE = 20
 ELLIPSIS = "…"
 
 
@@ -71,14 +71,27 @@ def tally_line(vote: dict, positions: dict[str, str]) -> str:
     return " · ".join(parts)
 
 
+def party_line(party_totals: dict[str, dict[str, int]]) -> str:
+    """Yea–Nay per party, by party on the vote date. R and D always appear;
+    I only when an independent voted Yea or Nay."""
+    def counts(party):
+        totals = party_totals.get(party, {})
+        return totals.get("yes", 0), totals.get("no", 0)
+
+    parts = []
+    for party in ("R", "D", "I"):
+        yes, no = counts(party)
+        if party != "I" or yes or no:
+            parts.append(f"{party} {yes}–{no}")
+    return " · ".join(parts)
+
+
 def party_break_line(labels: list[str], max_names: int = MAX_NAMES) -> str | None:
-    if not labels:
+    """Names of members who voted against their party majority, only when
+    there are between 1 and max_names of them; otherwise no line."""
+    if not labels or len(labels) > max_names:
         return None
-    shown, rest = labels[:max_names], len(labels) - max_names
-    names = ", ".join(shown)
-    if rest > 0:
-        names += f" and {rest} other{'s' if rest != 1 else ''}"
-    return f"Voted against party majority: {names}"
+    return f"Voted against party majority: {', '.join(labels)}"
 
 
 def display_url(url: str) -> str:
@@ -94,23 +107,15 @@ def grapheme_length(text: str) -> int:
 def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHEMES) -> str:
     vote = vote_doc["vote"]
     title = headline_title(vote, decision)
-    labels = [m["member_label"] for m in vote_doc["against_party_majority"]]
-    tally = tally_line(vote, vote_doc["positions"])
-    link = display_url(vote["source_url"])
+    names = party_break_line([m["member_label"] for m in vote_doc["against_party_majority"]])
+    lines = [tally_line(vote, vote_doc["positions"]), party_line(vote_doc["party_totals"])]
+    fixed = "\n" + "\n".join(lines + ([names] if names else []) + [display_url(vote["source_url"])])
 
-    # Shorten until it fits, never touching the tally or link: first the title
-    # (down to MIN_TITLE), then the number of names listed (the "and N others"
-    # count keeps the total), then the title further.
-    for min_title in (MIN_TITLE, 20):
-        for max_names in range(MAX_NAMES, 0, -1):
-            names = party_break_line(labels, max_names)
-            fixed = "\n" + "\n".join([tally] + ([names] if names else []) + [link])
-            text = headline(vote, decision, title) + fixed
-            if grapheme_length(text) <= max_length:
-                return text
-            keep = len(title) - (grapheme_length(text) - max_length) - len(ELLIPSIS)
-            if keep >= min_title:
-                text = headline(vote, decision, title[:keep].rstrip(" ,;:") + ELLIPSIS) + fixed
-                if grapheme_length(text) <= max_length:
-                    return text
+    # Only the title is shortened; the tally, party lines, names, and link stay whole.
+    text = headline(vote, decision, title) + fixed
+    if grapheme_length(text) <= max_length:
+        return text
+    keep = len(title) - (grapheme_length(text) - max_length) - len(ELLIPSIS)
+    if keep >= MIN_TITLE:
+        return headline(vote, decision, title[:keep].rstrip(" ,;:") + ELLIPSIS) + fixed
     raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
