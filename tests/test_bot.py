@@ -192,9 +192,10 @@ def test_vote_order_crosses_sessions():
 @pytest.fixture
 def out_dir(tmp_path):
     votes = [
-        house_vote(vote_id="h119-2-0316", roll_number=316, vote_time_et="2026-11-09T18:00:00"),
+        house_vote(vote_id="h119-2-0316", roll_number=316, vote_date="2026-11-09", vote_time_et="2026-11-09T18:00:00"),
         house_vote(),
-        senate_vote(vote_id="s119-2-0257", session=2, roll_number=257, vote_time_et="2026-11-09T17:00:00"),
+        senate_vote(vote_id="s119-2-0257", session=2, roll_number=257, vote_date="2026-11-09",
+                    vote_time_et="2026-11-09T17:00:00"),
     ]
     (tmp_path / "votes").mkdir()
     (tmp_path / "votes.json").write_text(json.dumps({"votes": votes}))
@@ -226,3 +227,113 @@ def test_dry_run_does_not_advance_state(out_dir, tmp_path, capsys):
     bot.run(state_path, out_dir)
     assert "h119-2-0317" in capsys.readouterr().out
     assert state_path.read_text() == before
+
+
+# --- publishing (fake publisher; nothing leaves the test) ----------------
+
+class FakePublisher:
+    def __init__(self, already=()):
+        self.posts = []
+        self.already = set(already)
+
+    def recent_links(self):
+        return self.already
+
+    def post(self, text, url):
+        self.posts.append((text, url))
+
+
+def publish_run(out_dir, state_path, publisher, today="2026-11-11", sleeps=None):
+    bot.run(state_path, out_dir, publish=True, publisher=publisher,
+            sleep=(sleeps.append if sleeps is not None else lambda s: None),
+            today=__import__("datetime").date.fromisoformat(today))
+
+
+def test_publish_posts_in_order_and_advances_state(out_dir, tmp_path):
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0300", "senate": "s119-2-0200"}, state_path)
+    publisher, sleeps = FakePublisher(), []
+    publish_run(out_dir, state_path, publisher, sleeps=sleeps)
+
+    assert [url for _, url in publisher.posts] == [
+        "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00015.htm",
+        "https://clerk.house.gov/Votes/2026317",
+        "https://clerk.house.gov/Votes/2026317",
+    ]
+    assert sleeps == [bot.POST_INTERVAL_SECONDS] * 2  # between posts, not before the first
+    assert bot_state.load(state_path) == {"house": "h119-2-0317", "senate": "s119-2-0257"}
+
+    # A second run has nothing left to post.
+    again = FakePublisher()
+    publish_run(out_dir, state_path, again)
+    assert again.posts == []
+
+
+def test_publish_skips_votes_already_on_bluesky_but_advances_state(out_dir, tmp_path):
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher(already={"clerk.house.gov/Votes/2026317"})
+    publish_run(out_dir, state_path, publisher)
+    assert publisher.posts == []
+    assert bot_state.load(state_path)["house"] == "h119-2-0317"
+
+
+def test_publish_stops_at_post_limit_and_leaves_rest_for_next_run(out_dir, tmp_path, monkeypatch):
+    monkeypatch.setattr(bot, "MAX_POSTS_PER_RUN", 1)
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0300", "senate": "s119-2-0200"}, state_path)
+    publisher = FakePublisher()
+    publish_run(out_dir, state_path, publisher)
+    assert len(publisher.posts) == 1
+    assert bot_state.load(state_path) == {"house": "h119-2-0300", "senate": "s119-2-0257"}
+
+
+def test_publish_refuses_a_stale_backlog(out_dir, tmp_path):
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher()
+    with pytest.raises(SystemExit, match="yan bot init"):
+        publish_run(out_dir, state_path, publisher, today="2026-12-01")
+    assert publisher.posts == []
+
+
+def test_publisher_requires_credentials_and_never_logs_them(monkeypatch):
+    from yan.bot.publish import BlueskyPublisher, MissingCredentials
+
+    monkeypatch.delenv("BLUESKY_HANDLE", raising=False)
+    monkeypatch.delenv("BLUESKY_APP_PASSWORD", raising=False)
+    with pytest.raises(MissingCredentials):
+        BlueskyPublisher(client=object())
+
+    class FailingClient:
+        def login(self, handle, password):
+            raise ValueError(f"bad login for {handle} with {password}")
+
+    monkeypatch.setenv("BLUESKY_HANDLE", "example.test")
+    monkeypatch.setenv("BLUESKY_APP_PASSWORD", "secret-value")
+    with pytest.raises(RuntimeError) as err:
+        BlueskyPublisher(client=FailingClient())
+    assert "secret-value" not in str(err.value) and err.value.__cause__ is None
+
+
+def test_publisher_links_the_last_line_to_the_full_url(monkeypatch):
+    from yan.bot.publish import BlueskyPublisher
+
+    class RecordingClient:
+        def login(self, handle, password):
+            pass
+
+        def send_post(self, builder, langs):
+            self.text, self.facets, self.langs = builder.build_text(), builder.build_facets(), langs
+
+    monkeypatch.setenv("BLUESKY_HANDLE", "example.test")
+    monkeypatch.setenv("BLUESKY_APP_PASSWORD", "x")
+    client = RecordingClient()
+    text = "House passes H.R. 1\n211 Yea · 204 Nay\nclerk.house.gov/Votes/2026317"
+    BlueskyPublisher(client=client).post(text, "https://clerk.house.gov/Votes/2026317")
+
+    assert client.text == text
+    [facet] = client.facets
+    assert facet.features[0].uri == "https://clerk.house.gov/Votes/2026317"
+    linked = text.encode()[facet.index.byte_start:facet.index.byte_end].decode()
+    assert linked == "clerk.house.gov/Votes/2026317"
