@@ -275,6 +275,8 @@ table.roll { border-collapse: collapse; width: 100%; }
 footer.wrap { padding-bottom: 28px; }
 .footline { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; padding-top: 14px; font-size: 13px; line-height: 20px; color: var(--ink-muted); text-align: center; }
 .footline a { color: var(--accent); }
+.footline .social { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 20px; }
+.footline .social:hover { color: var(--ink); }
 
 /* ---- Desktop ----------------------------------------------------------- */
 
