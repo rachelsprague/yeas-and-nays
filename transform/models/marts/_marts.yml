@@ -123,6 +123,20 @@ models:
       - name: source_url
         description: Official vote record on clerk.house.gov or senate.gov.
         data_tests: [not_null]
+      - name: bill_type
+        description: >
+          Congress.gov bill type (hr, s, hres, sres, hjres, sjres, hconres, sconres) parsed from
+          the recorded measure number. Null for nominations and questions with no bill.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["hr", "s", "hres", "sres", "hjres", "sjres", "hconres", "sconres"]
+      - name: congress_gov_url
+        description: The measure's page on Congress.gov. Null when bill_type is null.
+        data_tests:
+          - not_null:
+              config:
+                where: bill_type is not null
       - name: member_count
         description: Number of members with a recorded position on the vote.
       - name: against_party_majority_count

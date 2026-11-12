@@ -15,6 +15,8 @@ typed as (
         vote_title,
         document_type,
         document_name as measure_number,
+        bill_type,
+        bill_number,
         coalesce(document_title, vote_document_text) as measure_title,
         amendment_number,
         amendment_purpose,

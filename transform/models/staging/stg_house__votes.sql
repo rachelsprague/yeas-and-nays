@@ -13,6 +13,8 @@ typed as (
         vote_type,
         vote_result as result,
         legis_num as measure_number,
+        bill_type,
+        bill_number,
         vote_desc as measure_title,
         amendment_num as amendment_number,
         amendment_author,

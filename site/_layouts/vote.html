@@ -109,10 +109,16 @@ layout: default
   </section>
 
   <section class="section" style="gap: 6px">
-    <h2 class="kicker soft">Official source</h2>
+    <h2 class="kicker soft">Official sources</h2>
     <p style="font-size: 15px; line-height: 22px">
       {% if v.chamber == "house" %}Office of the Clerk, U.S. House of Representatives{% else %}U.S. Senate{% endif %}:
       <a class="link" href="{{ v.source_url }}" style="overflow-wrap: anywhere">{{ v.source_url | remove_first: "https://" | remove_first: "www." }}</a>
     </p>
+    {%- if v.congress_gov_url %}
+    <p style="font-size: 15px; line-height: 22px">
+      {{ v.measure_label }} on Congress.gov:
+      <a class="link" href="{{ v.congress_gov_url }}" style="overflow-wrap: anywhere">{{ v.congress_gov_url | remove_first: "https://" | remove_first: "www." }}</a>
+    </p>
+    {%- endif %}
   </section>
 </main>

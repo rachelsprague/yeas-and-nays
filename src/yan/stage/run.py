@@ -6,6 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from yan.config import RAW_DIR, STAGED_DIR
+from yan.measures import parse_measure
 from yan.stage import house, legislators, senate
 
 log = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ STRING_COLUMNS = {
         "source_file", "congress", "session", "rollcall_num", "legis_num", "vote_question",
         "vote_type", "vote_result", "action_date", "action_time_etz", "vote_desc",
         "amendment_num", "amendment_author", "yea_total", "nay_total", "present_total",
-        "not_voting_total",
+        "not_voting_total", "bill_type", "bill_number",
     ],
     "house_positions": [
         "source_file", "congress", "session", "rollcall_num", "bioguide_id", "name",
@@ -28,7 +29,7 @@ STRING_COLUMNS = {
         "vote_title", "majority_requirement", "vote_result", "document_type",
         "document_number", "document_name", "document_title", "document_short_title",
         "amendment_number", "amendment_purpose", "yeas", "nays", "present", "absent",
-        "tie_breaker_by_whom", "tie_breaker_vote",
+        "tie_breaker_by_whom", "tie_breaker_vote", "bill_type", "bill_number",
     ],
     "senate_positions": [
         "source_file", "congress", "session", "vote_number", "lis_member_id", "member_full",
@@ -56,13 +57,21 @@ def write(name: str, rows: list[dict]) -> None:
     log.info("staged %s: %d rows", name, table.num_rows)
 
 
+def with_bill(votes: list[dict], measure_field: str) -> list[dict]:
+    """Add the Congress.gov bill type and number parsed from the recorded measure number
+    (null for nominations and other non-bill questions). The recorded value is kept too."""
+    for vote in votes:
+        vote["bill_type"], vote["bill_number"] = parse_measure(vote[measure_field]) or (None, None)
+    return votes
+
+
 def run() -> None:
     h_votes, h_positions = house.parse_dir(RAW_DIR / "house")
-    write("house_votes", h_votes)
+    write("house_votes", with_bill(h_votes, "legis_num"))
     write("house_positions", h_positions)
 
     s_votes, s_positions = senate.parse_dir(RAW_DIR / "senate")
-    write("senate_votes", s_votes)
+    write("senate_votes", with_bill(s_votes, "document_name"))
     write("senate_positions", s_positions)
 
     people, terms, affiliations = legislators.parse_dir(RAW_DIR / "legislators")

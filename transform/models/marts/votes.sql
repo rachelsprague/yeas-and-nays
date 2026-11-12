@@ -15,6 +15,7 @@ position_summary as (
 
 select
     votes.*,
+    {{ congress_gov_url('votes.congress', 'votes.bill_type', 'votes.bill_number') }} as congress_gov_url,
     coalesce(position_summary.member_count, 0) as member_count,
     coalesce(position_summary.against_party_majority_count, 0) as against_party_majority_count
 from votes
