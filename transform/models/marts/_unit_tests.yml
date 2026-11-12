@@ -14,6 +14,8 @@ unit_tests:
           - {vote_id: v1, caucus_party: R, position: "yes"}
           - {vote_id: v1, caucus_party: R, position: "no"}
           - {vote_id: v1, caucus_party: R, position: present}
+          # An independent caucusing with D counts toward the D majority
+          - {vote_id: v1, party: I, caucus_party: D, position: "no"}
           - {vote_id: v1, caucus_party: D, position: "no"}
           - {vote_id: v1, caucus_party: D, position: "no"}
           - {vote_id: v1, caucus_party: D, position: not_voting}
@@ -26,7 +28,7 @@ unit_tests:
     expect:
       rows:
         - {vote_id: v1, caucus_party: R, yes_count: 2, no_count: 1, majority_position: "yes"}
-        - {vote_id: v1, caucus_party: D, yes_count: 0, no_count: 2, majority_position: "no"}
+        - {vote_id: v1, caucus_party: D, yes_count: 0, no_count: 3, majority_position: "no"}
         - {vote_id: v2, caucus_party: D, yes_count: 1, no_count: 1, majority_position: null}
         - {vote_id: v3, caucus_party: R, yes_count: 0, no_count: 0, majority_position: null}
 
@@ -41,11 +43,16 @@ unit_tests:
           - {vote_id: v1, bioguide_id: A4, caucus_party: R, position: not_voting}
           - {vote_id: v2, bioguide_id: A1, caucus_party: D, position: "yes"}
           - {vote_id: v3, bioguide_id: A1, caucus_party: R, position: other}
+          # Independent caucusing with R votes with the R majority, opposite the D majority
+          - {vote_id: v4, bioguide_id: I1, party: I, caucus_party: R, position: "yes"}
+          - {vote_id: v4, bioguide_id: D1, party: D, caucus_party: D, position: "no"}
       - input: ref('int_caucus_majority')
         rows:
           - {vote_id: v1, caucus_party: R, majority_position: "yes"}
           - {vote_id: v2, caucus_party: D, majority_position: null}
           - {vote_id: v3, caucus_party: R, majority_position: null}
+          - {vote_id: v4, caucus_party: R, majority_position: "yes"}
+          - {vote_id: v4, caucus_party: D, majority_position: "no"}
     expect:
       rows:
         - {vote_id: v1, bioguide_id: A1, caucus_majority_position: "yes", voted_against_party_majority: false}
@@ -54,6 +61,8 @@ unit_tests:
         - {vote_id: v1, bioguide_id: A4, caucus_majority_position: "yes", voted_against_party_majority: null}
         - {vote_id: v2, bioguide_id: A1, caucus_majority_position: null, voted_against_party_majority: null}
         - {vote_id: v3, bioguide_id: A1, caucus_majority_position: null, voted_against_party_majority: null}
+        - {vote_id: v4, bioguide_id: I1, caucus_majority_position: "yes", voted_against_party_majority: false}
+        - {vote_id: v4, bioguide_id: D1, caucus_majority_position: "no", voted_against_party_majority: false}
 
   - name: member_periods_resolve_independent_caucus_and_mid_term_switch
     description: >
