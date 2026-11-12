@@ -1,0 +1,88 @@
+name: Update vote data
+
+on:
+  schedule:
+    # Hourly on weekdays. Cron runs in UTC, so the second line covers Friday
+    # evening Eastern time (early Saturday UTC), when votes can still happen.
+    - cron: "0 * * * 1-5"
+    - cron: "0 0-5 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One run at a time: a run that's still posting must finish (and commit its
+# bot state) before the next one starts.
+concurrency:
+  group: update-vote-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # Raw downloads aren't committed. Caching them between runs keeps ingest
+      # incremental, so each run fetches only new and recent votes.
+      - name: Restore raw data cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+          restore-keys: raw-
+
+      - name: Ingest
+        run: uv run yan ingest
+
+      - name: Stage
+        run: uv run yan stage
+
+      # Any failing dbt test stops the run here, before export and the bot,
+      # so bad data never reaches data/out or Bluesky. Warnings don't fail.
+      - name: dbt build (models + tests)
+        working-directory: transform
+        env:
+          DBT_PROFILES_DIR: .
+        run: uv run dbt build
+
+      - name: Export JSON
+        run: uv run yan export
+
+      # Dry run unless the BOT_PUBLISH repository variable is "true". A dry
+      # run prints posts to this log and never advances state. Credentials
+      # are passed only to this step and only when publishing.
+      - name: Bot
+        id: bot
+        env:
+          BOT_PUBLISH: ${{ vars.BOT_PUBLISH }}
+          BLUESKY_HANDLE: ${{ vars.BOT_PUBLISH == 'true' && secrets.BLUESKY_HANDLE || '' }}
+          BLUESKY_APP_PASSWORD: ${{ vars.BOT_PUBLISH == 'true' && secrets.BLUESKY_APP_PASSWORD || '' }}
+        run: |
+          if [ "$BOT_PUBLISH" = "true" ]; then
+            uv run yan bot run --publish
+          else
+            uv run yan bot run
+          fi
+
+      # Also runs if the bot step failed partway, so state for anything
+      # already posted is saved and not posted again.
+      - name: Commit data
+        if: success() || steps.bot.outcome == 'failure'
+        run: |
+          git add data/out data/bot/state.json
+          if git diff --cached --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update vote data"
+          git pull --rebase origin main
+          git push origin HEAD:main

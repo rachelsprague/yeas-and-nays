@@ -48,14 +48,24 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`.
 
 Output is deterministic: re-running with no new votes produces no diff.
 
-## Bot (dry run)
+## Bot
 
-The Bluesky bot reads `data/out/` and applies the post rules in [STYLE.md](STYLE.md). It only prints posts; publishing isn't built yet.
+The Bluesky bot reads `data/out/` and applies the post rules in [STYLE.md](STYLE.md).
 
 ```
 uv run yan bot preview -n 10 [--vote ID]   # the 10 most recent postable votes
-uv run yan bot run                          # votes not yet handled, per data/bot/state.json
+uv run yan bot run                          # dry run: print posts for votes not yet handled
+uv run yan bot run --publish                # post them and advance state
 uv run yan bot init                         # start from the latest vote
 ```
 
-State (`data/bot/state.json`, committed) records the last vote handled per chamber, posted or skipped, so a vote is never posted twice. A dry run never advances it.
+State (`data/bot/state.json`, committed) records the last vote handled per chamber, posted or skipped, so a vote is never posted twice. A dry run never advances it. When publishing, the bot posts in order, one post every 10 minutes and at most 5 per run; skips anything its recent Bluesky posts already cover; and refuses to post a backlog older than 3 days (run `yan bot init` first).
+
+## Automation
+
+`.github/workflows/pipeline.yml` runs hourly on weekdays (and on demand): ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot.
+
+| Setting | Type | Purpose |
+| --- | --- | --- |
+| `BOT_PUBLISH` | repository variable | `true` to publish to Bluesky. Unset or anything else: dry run, posts printed to the log. |
+| `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` | secrets | Bluesky account; passed to the bot step only when publishing. |
