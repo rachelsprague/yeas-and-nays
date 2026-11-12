@@ -1,0 +1,22 @@
+{
+  "against_party_majority": [
+    {"bioguide_id":"B001236","member_label":"Boozman (R-AR)","position":"Nay"},
+    {"bioguide_id":"C001075","member_label":"Cassidy (R-LA)","position":"Nay"},
+    {"bioguide_id":"C001035","member_label":"Collins (R-ME)","position":"Nay"},
+    {"bioguide_id":"F000463","member_label":"Fischer (R-NE)","position":"Nay"},
+    {"bioguide_id":"H001079","member_label":"Hyde-Smith (R-MS)","position":"Nay"},
+    {"bioguide_id":"M000355","member_label":"McConnell (R-KY)","position":"Nay"},
+    {"bioguide_id":"M000934","member_label":"Moran (R-KS)","position":"Nay"},
+    {"bioguide_id":"M001190","member_label":"Mullin (R-OK)","position":"Nay"},
+    {"bioguide_id":"M001153","member_label":"Murkowski (R-AK)","position":"Nay"},
+    {"bioguide_id":"P000603","member_label":"Paul (R-KY)","position":"Nay"},
+    {"bioguide_id":"R000618","member_label":"Ricketts (R-NE)","position":"Nay"},
+    {"bioguide_id":"R000605","member_label":"Rounds (R-SD)","position":"Nay"},
+    {"bioguide_id":"T000250","member_label":"Thune (R-SD)","position":"Nay"},
+    {"bioguide_id":"W000437","member_label":"Wicker (R-MS)","position":"Nay"}
+  ],
+  "caucus_majority_position": {"D":"no","R":"yes"},
+  "party_totals": {"D":{"no":45},"I":{"no":2},"R":{"no":14,"not_voting":2,"yes":37}},
+  "positions": {"A000382":"Nay","B001230":"Nay","B001236":"Nay","B001243":"Yea","B001261":"Yea","B001267":"Nay","B001277":"Nay","B001288":"Nay","B001299":"Yea","B001303":"Nay","B001305":"Yea","B001319":"Yea","C000127":"Nay","C000880":"Yea","C001035":"Nay","C001047":"Yea","C001056":"Yea","C001075":"Nay","C001088":"Nay","C001095":"Yea","C001096":"Yea","C001098":"Yea","C001113":"Nay","C001114":"Yea","D000563":"Nay","D000618":"Yea","D000622":"Nay","E000295":"Yea","F000463":"Nay","F000479":"Nay","G000359":"Yea","G000386":"Yea","G000555":"Nay","G000574":"Nay","H000273":"Nay","H000601":"Yea","H001042":"Nay","H001046":"Nay","H001061":"Yea","H001076":"Nay","H001079":"Nay","H001089":"Yea","H001104":"Yea","J000293":"Yea","J000312":"Yea","K000367":"Nay","K000377":"Nay","K000383":"Nay","K000384":"Nay","K000393":"Yea","K000394":"Nay","L000570":"Nay","L000571":"Yea","L000575":"Yea","L000577":"Yea","M000133":"Nay","M000355":"Nay","M000934":"Nay","M001111":"Nay","M001153":"Nay","M001169":"Nay","M001176":"Nay","M001190":"Nay","M001198":"Not Voting","M001242":"Yea","M001243":"Yea","M001244":"Yea","O000174":"Nay","P000145":"Nay","P000595":"Nay","P000603":"Nay","R000122":"Nay","R000584":"Yea","R000605":"Nay","R000608":"Nay","R000618":"Nay","S000033":"Nay","S000148":"Nay","S001150":"Nay","S001181":"Nay","S001184":"Yea","S001194":"Nay","S001198":"Yea","S001203":"Nay","S001208":"Nay","S001217":"Yea","S001227":"Yea","S001232":"Yea","T000250":"Nay","T000278":"Yea","T000476":"Not Voting","V000128":"Nay","W000437":"Nay","W000779":"Nay","W000790":"Nay","W000800":"Nay","W000802":"Nay","W000805":"Nay","W000817":"Nay","Y000064":"Yea"},
+  "vote": {"against_party_majority_count":14,"amendment_author":null,"amendment_number":null,"amendment_purpose":"No Statement of Purpose on File.","chamber":"senate","congress":119,"majority_requirement":"3/5","measure_number":"S. 2806","measure_title":"A bill to provide for automatic continuing appropriations.","member_count":100,"nay_count":61,"not_voting_count":2,"present_count":0,"question":"On Cloture on the Motion to Proceed S. 2806","result":"Cloture on the Motion to Proceed Rejected","result_text":"Cloture on the Motion to Proceed Rejected (37-61, 3/5 majority required)","roll_number":533,"session":1,"source_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00533.htm","tie_breaker_by":null,"tie_breaker_vote":null,"vote_date":"2025-09-29","vote_id":"s119-1-0533","vote_time_et":"2025-09-29T20:54:00","vote_title":"Motion to Invoke Cloture: Motion to Proceed to S. 2806","vote_type":null,"xml_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00533.xml","yea_count":37}
+}

@@ -1,0 +1,25 @@
+{
+  "against_party_majority": [
+    {"bioguide_id":"B001267","member_label":"Bennet (D-CO)","position":"Nay"},
+    {"bioguide_id":"B001277","member_label":"Blumenthal (D-CT)","position":"Nay"},
+    {"bioguide_id":"B001288","member_label":"Booker (D-NJ)","position":"Nay"},
+    {"bioguide_id":"C000127","member_label":"Cantwell (D-WA)","position":"Nay"},
+    {"bioguide_id":"C001088","member_label":"Coons (D-DE)","position":"Nay"},
+    {"bioguide_id":"C001113","member_label":"Cortez Masto (D-NV)","position":"Nay"},
+    {"bioguide_id":"F000479","member_label":"Fetterman (D-PA)","position":"Nay"},
+    {"bioguide_id":"G000555","member_label":"Gillibrand (D-NY)","position":"Nay"},
+    {"bioguide_id":"H001076","member_label":"Hassan (D-NH)","position":"Nay"},
+    {"bioguide_id":"H000273","member_label":"Hickenlooper (D-CO)","position":"Nay"},
+    {"bioguide_id":"P000145","member_label":"Padilla (D-CA)","position":"Nay"},
+    {"bioguide_id":"P000595","member_label":"Peters (D-MI)","position":"Nay"},
+    {"bioguide_id":"R000608","member_label":"Rosen (D-NV)","position":"Nay"},
+    {"bioguide_id":"S001150","member_label":"Schiff (D-CA)","position":"Nay"},
+    {"bioguide_id":"S000148","member_label":"Schumer (D-NY)","position":"Nay"},
+    {"bioguide_id":"W000805","member_label":"Warner (D-VA)","position":"Nay"},
+    {"bioguide_id":"W000779","member_label":"Wyden (D-OR)","position":"Nay"}
+  ],
+  "caucus_majority_position": {"D":"yes","R":"no"},
+  "party_totals": {"D":{"no":17,"not_voting":3,"yes":25},"I":{"yes":2},"R":{"no":53}},
+  "positions": {"A000382":"Yea","B001230":"Yea","B001236":"Nay","B001243":"Nay","B001261":"Nay","B001267":"Nay","B001277":"Nay","B001288":"Nay","B001299":"Nay","B001303":"Yea","B001305":"Nay","B001319":"Nay","C000127":"Nay","C000880":"Nay","C001035":"Nay","C001047":"Nay","C001056":"Nay","C001075":"Nay","C001088":"Nay","C001095":"Nay","C001096":"Nay","C001098":"Nay","C001113":"Nay","C001114":"Nay","D000563":"Yea","D000618":"Nay","D000622":"Yea","E000295":"Nay","F000463":"Nay","F000479":"Nay","G000359":"Nay","G000386":"Nay","G000555":"Nay","G000574":"Not Voting","H000273":"Nay","H000601":"Nay","H001042":"Yea","H001046":"Yea","H001061":"Nay","H001076":"Nay","H001079":"Nay","H001089":"Nay","H001104":"Nay","J000293":"Nay","J000312":"Nay","K000367":"Yea","K000377":"Not Voting","K000383":"Yea","K000384":"Yea","K000393":"Nay","K000394":"Yea","L000570":"Yea","L000571":"Nay","L000575":"Nay","L000577":"Nay","M000133":"Yea","M000355":"Nay","M000934":"Nay","M001111":"Yea","M001153":"Nay","M001169":"Yea","M001176":"Yea","M001190":"Nay","M001198":"Nay","M001242":"Nay","M001243":"Nay","M001244":"Nay","O000174":"Yea","P000145":"Nay","P000595":"Nay","P000603":"Nay","R000122":"Yea","R000584":"Nay","R000605":"Nay","R000608":"Nay","R000618":"Nay","S000033":"Yea","S000148":"Nay","S001150":"Nay","S001181":"Yea","S001184":"Nay","S001194":"Yea","S001198":"Nay","S001203":"Yea","S001208":"Not Voting","S001217":"Nay","S001227":"Nay","S001232":"Nay","T000250":"Nay","T000278":"Nay","T000476":"Nay","V000128":"Yea","W000437":"Nay","W000779":"Nay","W000790":"Yea","W000800":"Yea","W000802":"Yea","W000805":"Nay","W000817":"Yea","Y000064":"Nay"},
+  "vote": {"against_party_majority_count":17,"amendment_author":null,"amendment_number":null,"amendment_purpose":"No Statement of Purpose on File.","chamber":"senate","congress":119,"majority_requirement":"1/2","measure_number":"S.J.Res. 41","measure_title":"A joint resolution providing for congressional disapproval of the proposed export of certain defense articles to Israel.","member_count":100,"nay_count":70,"not_voting_count":3,"present_count":0,"question":"On the Motion to Discharge S.J.Res. 41","result":"Motion to Discharge Rejected","result_text":"Motion to Discharge Rejected (27-70)","roll_number":454,"session":1,"source_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00454.htm","tie_breaker_by":null,"tie_breaker_vote":null,"vote_date":"2025-07-30","vote_id":"s119-1-0454","vote_time_et":"2025-07-30T21:12:00","vote_title":"Motion to Discharge S. J. Res. 41","vote_type":null,"xml_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00454.xml","yea_count":27}
+}

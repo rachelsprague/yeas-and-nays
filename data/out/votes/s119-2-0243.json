@@ -1,0 +1,33 @@
+{
+  "against_party_majority": [
+    {"bioguide_id":"A000382","member_label":"Alsobrooks (D-MD)","position":"Nay"},
+    {"bioguide_id":"B001277","member_label":"Blumenthal (D-CT)","position":"Nay"},
+    {"bioguide_id":"B001303","member_label":"Blunt Rochester (D-DE)","position":"Nay"},
+    {"bioguide_id":"B001288","member_label":"Booker (D-NJ)","position":"Nay"},
+    {"bioguide_id":"D000622","member_label":"Duckworth (D-IL)","position":"Nay"},
+    {"bioguide_id":"G000555","member_label":"Gillibrand (D-NY)","position":"Nay"},
+    {"bioguide_id":"H001042","member_label":"Hirono (D-HI)","position":"Nay"},
+    {"bioguide_id":"K000384","member_label":"Kaine (D-VA)","position":"Nay"},
+    {"bioguide_id":"K000377","member_label":"Kelly (D-AZ)","position":"Nay"},
+    {"bioguide_id":"K000394","member_label":"Kim (D-NJ)","position":"Nay"},
+    {"bioguide_id":"M000133","member_label":"Markey (D-MA)","position":"Nay"},
+    {"bioguide_id":"M001176","member_label":"Merkley (D-OR)","position":"Nay"},
+    {"bioguide_id":"M001244","member_label":"Moody (R-FL)","position":"Nay"},
+    {"bioguide_id":"M001169","member_label":"Murphy (D-CT)","position":"Nay"},
+    {"bioguide_id":"P000603","member_label":"Paul (R-KY)","position":"Nay"},
+    {"bioguide_id":"R000122","member_label":"Reed (D-RI)","position":"Nay"},
+    {"bioguide_id":"S000033","member_label":"Sanders (I-VT)","position":"Nay"},
+    {"bioguide_id":"S001150","member_label":"Schiff (D-CA)","position":"Nay"},
+    {"bioguide_id":"S000148","member_label":"Schumer (D-NY)","position":"Nay"},
+    {"bioguide_id":"S001217","member_label":"Scott (R-FL)","position":"Nay"},
+    {"bioguide_id":"V000128","member_label":"Van Hollen (D-MD)","position":"Nay"},
+    {"bioguide_id":"W000790","member_label":"Warnock (D-GA)","position":"Nay"},
+    {"bioguide_id":"W000817","member_label":"Warren (D-MA)","position":"Nay"},
+    {"bioguide_id":"W000802","member_label":"Whitehouse (D-RI)","position":"Nay"},
+    {"bioguide_id":"W000779","member_label":"Wyden (D-OR)","position":"Nay"}
+  ],
+  "caucus_majority_position": {"D":"yes","R":"yes"},
+  "party_totals": {"D":{"no":21,"yes":24},"I":{"no":1,"yes":1},"R":{"no":3,"not_voting":1,"yes":49}},
+  "positions": {"A000382":"Nay","A000383":"Yea","B001230":"Yea","B001236":"Yea","B001243":"Yea","B001261":"Yea","B001267":"Yea","B001277":"Nay","B001288":"Nay","B001299":"Yea","B001303":"Nay","B001305":"Yea","B001319":"Yea","C000127":"Yea","C000880":"Yea","C001035":"Yea","C001047":"Yea","C001056":"Yea","C001075":"Yea","C001088":"Yea","C001095":"Yea","C001096":"Yea","C001098":"Yea","C001113":"Yea","C001114":"Yea","D000563":"Yea","D000618":"Yea","D000622":"Nay","E000295":"Yea","F000463":"Yea","F000479":"Yea","G000386":"Yea","G000555":"Nay","G000574":"Yea","G000608":"Yea","H000273":"Yea","H000601":"Yea","H001042":"Nay","H001046":"Yea","H001061":"Yea","H001076":"Yea","H001079":"Yea","H001089":"Yea","H001104":"Yea","J000293":"Yea","J000312":"Yea","K000367":"Yea","K000377":"Nay","K000383":"Yea","K000384":"Nay","K000393":"Yea","K000394":"Nay","L000570":"Yea","L000571":"Yea","L000575":"Yea","L000577":"Yea","M000133":"Nay","M000355":"Yea","M000934":"Yea","M001111":"Yea","M001153":"Yea","M001169":"Nay","M001176":"Nay","M001198":"Yea","M001242":"Yea","M001243":"Yea","M001244":"Nay","O000174":"Yea","P000145":"Yea","P000595":"Yea","P000603":"Nay","R000122":"Nay","R000584":"Yea","R000605":"Yea","R000608":"Yea","R000618":"Yea","S000033":"Nay","S000148":"Nay","S001150":"Nay","S001181":"Yea","S001184":"Yea","S001194":"Yea","S001198":"Yea","S001203":"Yea","S001208":"Yea","S001217":"Nay","S001227":"Yea","S001232":"Yea","T000250":"Yea","T000278":"Yea","T000476":"Not Voting","V000128":"Nay","W000437":"Yea","W000779":"Nay","W000790":"Nay","W000800":"Yea","W000802":"Nay","W000805":"Yea","W000817":"Nay","Y000064":"Yea"},
+  "vote": {"against_party_majority_count":25,"amendment_author":null,"amendment_number":null,"amendment_purpose":"No Statement of Purpose on File.","chamber":"senate","congress":119,"majority_requirement":"3/5","measure_number":"S. 4668","measure_title":"A bill to protect the name, image, and likeness rights of, and provide protections for, student athletes and to promote fair competition among intercollegiate athletics, and for other purposes.","member_count":100,"nay_count":25,"not_voting_count":1,"present_count":0,"question":"On the Cloture Motion S. 4668","result":"Cloture Motion Agreed to","result_text":"Cloture Motion Agreed to (74-25, 3/5 majority required)","roll_number":243,"session":2,"source_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1192/vote_119_2_00243.htm","tie_breaker_by":null,"tie_breaker_vote":null,"vote_date":"2026-09-24","vote_id":"s119-2-0243","vote_time_et":"2026-09-24T11:46:00","vote_title":"Motion to Invoke Cloture: S. 4668, as Amended","vote_type":null,"xml_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1192/vote_119_2_00243.xml","yea_count":74}
+}

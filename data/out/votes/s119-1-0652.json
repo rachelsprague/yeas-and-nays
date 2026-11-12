@@ -1,0 +1,26 @@
+{
+  "against_party_majority": [
+    {"bioguide_id":"D000622","member_label":"Duckworth (D-IL)","position":"Yea"},
+    {"bioguide_id":"F000479","member_label":"Fetterman (D-PA)","position":"Yea"},
+    {"bioguide_id":"G000574","member_label":"Gallego (D-AZ)","position":"Yea"},
+    {"bioguide_id":"H001076","member_label":"Hassan (D-NH)","position":"Yea"},
+    {"bioguide_id":"H001046","member_label":"Heinrich (D-NM)","position":"Yea"},
+    {"bioguide_id":"K000377","member_label":"Kelly (D-AZ)","position":"Yea"},
+    {"bioguide_id":"K000394","member_label":"Kim (D-NJ)","position":"Yea"},
+    {"bioguide_id":"K000383","member_label":"King (I-ME)","position":"Yea"},
+    {"bioguide_id":"K000367","member_label":"Klobuchar (D-MN)","position":"Yea"},
+    {"bioguide_id":"M001176","member_label":"Merkley (D-OR)","position":"Yea"},
+    {"bioguide_id":"O000174","member_label":"Ossoff (D-GA)","position":"Yea"},
+    {"bioguide_id":"P000145","member_label":"Padilla (D-CA)","position":"Yea"},
+    {"bioguide_id":"R000122","member_label":"Reed (D-RI)","position":"Yea"},
+    {"bioguide_id":"S001150","member_label":"Schiff (D-CA)","position":"Yea"},
+    {"bioguide_id":"S001181","member_label":"Shaheen (D-NH)","position":"Yea"},
+    {"bioguide_id":"S001208","member_label":"Slotkin (D-MI)","position":"Yea"},
+    {"bioguide_id":"W000800","member_label":"Welch (D-VT)","position":"Yea"},
+    {"bioguide_id":"W000802","member_label":"Whitehouse (D-RI)","position":"Yea"}
+  ],
+  "caucus_majority_position": {"D":"no","R":"yes"},
+  "party_totals": {"D":{"no":28,"yes":17},"I":{"no":1,"yes":1},"R":{"yes":53}},
+  "positions": {"A000382":"Nay","B001230":"Nay","B001236":"Yea","B001243":"Yea","B001261":"Yea","B001267":"Nay","B001277":"Nay","B001288":"Nay","B001299":"Yea","B001303":"Nay","B001305":"Yea","B001319":"Yea","C000127":"Nay","C000880":"Yea","C001035":"Yea","C001047":"Yea","C001056":"Yea","C001075":"Yea","C001088":"Nay","C001095":"Yea","C001096":"Yea","C001098":"Yea","C001113":"Nay","C001114":"Yea","D000563":"Nay","D000618":"Yea","D000622":"Yea","E000295":"Yea","F000463":"Yea","F000479":"Yea","G000359":"Yea","G000386":"Yea","G000555":"Nay","G000574":"Yea","H000273":"Nay","H000601":"Yea","H001042":"Nay","H001046":"Yea","H001061":"Yea","H001076":"Yea","H001079":"Yea","H001089":"Yea","H001104":"Yea","J000293":"Yea","J000312":"Yea","K000367":"Yea","K000377":"Yea","K000383":"Yea","K000384":"Nay","K000393":"Yea","K000394":"Yea","L000570":"Nay","L000571":"Yea","L000575":"Yea","L000577":"Yea","M000133":"Nay","M000355":"Yea","M000934":"Yea","M001111":"Nay","M001153":"Yea","M001169":"Nay","M001176":"Yea","M001190":"Yea","M001198":"Yea","M001242":"Yea","M001243":"Yea","M001244":"Yea","O000174":"Yea","P000145":"Yea","P000595":"Nay","P000603":"Yea","R000122":"Yea","R000584":"Yea","R000605":"Yea","R000608":"Nay","R000618":"Yea","S000033":"Nay","S000148":"Nay","S001150":"Yea","S001181":"Yea","S001184":"Yea","S001194":"Nay","S001198":"Yea","S001203":"Nay","S001208":"Yea","S001217":"Yea","S001227":"Yea","S001232":"Yea","T000250":"Yea","T000278":"Yea","T000476":"Yea","V000128":"Nay","W000437":"Yea","W000779":"Nay","W000790":"Nay","W000800":"Yea","W000802":"Yea","W000805":"Nay","W000817":"Nay","Y000064":"Yea"},
+  "vote": {"against_party_majority_count":18,"amendment_author":null,"amendment_number":null,"amendment_purpose":"No Statement of Purpose on File.","chamber":"senate","congress":119,"majority_requirement":"1/2","measure_number":"PN645-2","measure_title":"Douglas Weaver, of Maryland, to be a Member of the Nuclear Regulatory Commission for the remainder of the term expiring June 30, 2026","member_count":100,"nay_count":29,"not_voting_count":0,"present_count":0,"question":"On the Nomination PN645-2","result":"Nomination Confirmed","result_text":"Nomination Confirmed (71-29)","roll_number":652,"session":1,"source_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00652.htm","tie_breaker_by":null,"tie_breaker_vote":null,"vote_date":"2025-12-17","vote_id":"s119-1-0652","vote_time_et":"2025-12-17T17:41:00","vote_title":"Confirmation: Douglas Weaver, of Maryland, to be a Member of the Nuclear Regulatory Commission","vote_type":null,"xml_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00652.xml","yea_count":71}
+}

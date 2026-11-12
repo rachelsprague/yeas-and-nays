@@ -1,0 +1,23 @@
+{
+  "against_party_majority": [
+    {"bioguide_id":"B001299","member_label":"Banks (R-IN)","position":"Yea"},
+    {"bioguide_id":"B001261","member_label":"Barrasso (R-WY)","position":"Yea"},
+    {"bioguide_id":"B001305","member_label":"Budd (R-NC)","position":"Yea"},
+    {"bioguide_id":"C001114","member_label":"Curtis (R-UT)","position":"Yea"},
+    {"bioguide_id":"E000295","member_label":"Ernst (R-IA)","position":"Yea"},
+    {"bioguide_id":"H000601","member_label":"Hagerty (R-TN)","position":"Yea"},
+    {"bioguide_id":"J000293","member_label":"Johnson (R-WI)","position":"Yea"},
+    {"bioguide_id":"K000393","member_label":"Kennedy (R-LA)","position":"Yea"},
+    {"bioguide_id":"L000577","member_label":"Lee (R-UT)","position":"Yea"},
+    {"bioguide_id":"L000571","member_label":"Lummis (R-WY)","position":"Yea"},
+    {"bioguide_id":"M001244","member_label":"Moody (R-FL)","position":"Yea"},
+    {"bioguide_id":"M001242","member_label":"Moreno (R-OH)","position":"Yea"},
+    {"bioguide_id":"P000603","member_label":"Paul (R-KY)","position":"Yea"},
+    {"bioguide_id":"S001227","member_label":"Schmitt (R-MO)","position":"Yea"},
+    {"bioguide_id":"S001217","member_label":"Scott (R-FL)","position":"Yea"}
+  ],
+  "caucus_majority_position": {"D":"no","R":"no"},
+  "party_totals": {"D":{"no":43,"not_voting":2},"I":{"no":2},"R":{"no":36,"not_voting":2,"yes":15}},
+  "positions": {"A000382":"Nay","B001230":"Nay","B001236":"Nay","B001243":"Nay","B001261":"Yea","B001267":"Nay","B001277":"Nay","B001288":"Nay","B001299":"Yea","B001303":"Nay","B001305":"Yea","B001319":"Nay","C000127":"Nay","C000880":"Nay","C001035":"Nay","C001047":"Nay","C001056":"Nay","C001075":"Not Voting","C001088":"Nay","C001095":"Nay","C001096":"Nay","C001098":"Nay","C001113":"Nay","C001114":"Yea","D000563":"Nay","D000618":"Nay","D000622":"Nay","E000295":"Yea","F000463":"Nay","F000479":"Nay","G000359":"Nay","G000386":"Nay","G000555":"Nay","G000574":"Not Voting","H000273":"Nay","H000601":"Yea","H001042":"Nay","H001046":"Nay","H001061":"Nay","H001076":"Nay","H001079":"Nay","H001089":"Nay","H001104":"Nay","J000293":"Yea","J000312":"Nay","K000367":"Nay","K000377":"Nay","K000383":"Nay","K000384":"Nay","K000393":"Yea","K000394":"Nay","L000570":"Nay","L000571":"Yea","L000575":"Nay","L000577":"Yea","M000133":"Nay","M000355":"Not Voting","M000934":"Nay","M001111":"Nay","M001153":"Nay","M001169":"Nay","M001176":"Nay","M001190":"Nay","M001198":"Nay","M001242":"Yea","M001243":"Nay","M001244":"Yea","O000174":"Nay","P000145":"Nay","P000595":"Nay","P000603":"Yea","R000122":"Nay","R000584":"Nay","R000605":"Nay","R000608":"Nay","R000618":"Nay","S000033":"Nay","S000148":"Nay","S001150":"Nay","S001181":"Nay","S001184":"Nay","S001194":"Nay","S001198":"Nay","S001203":"Nay","S001208":"Nay","S001217":"Yea","S001227":"Yea","S001232":"Nay","T000250":"Nay","T000278":"Nay","T000476":"Nay","V000128":"Nay","W000437":"Nay","W000779":"Nay","W000790":"Nay","W000800":"Not Voting","W000802":"Nay","W000805":"Nay","W000817":"Nay","Y000064":"Nay"},
+  "vote": {"against_party_majority_count":15,"amendment_author":null,"amendment_number":"S.Amdt. 3113","amendment_purpose":"To reduce funding for certain programs under the division making appropriations for Agriculture, Rural Development, Food and Drug Administration, and Related Agencies.","chamber":"senate","congress":119,"majority_requirement":"1/2","measure_number":null,"measure_title":"To reduce funding for certain programs under the division making appropriations for Agriculture, Rural Development, Food and Drug Administration, and Related Agencies.","member_count":100,"nay_count":81,"not_voting_count":4,"present_count":0,"question":"On the Amendment S.Amdt. 3113 to S.Amdt. 3411 to H.R. 3944 (No short title on file)","result":"Amendment Rejected","result_text":"Amendment Rejected (15-81)","roll_number":477,"session":1,"source_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00477.htm","tie_breaker_by":null,"tie_breaker_vote":null,"vote_date":"2025-08-01","vote_id":"s119-1-0477","vote_time_et":"2025-08-01T18:31:00","vote_title":"Scott (FL) Amdt. No. 3113, as modified","vote_type":null,"xml_url":"https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00477.xml","yea_count":15}
+}
