@@ -121,7 +121,7 @@ module Yan
     {
       "vote" => vote, "words" => words, "tally" => tally, "has_other" => !other.empty?,
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
-      "by_party" => by_party, "against" => against
+      "by_party" => by_party, "against" => against, "summary" => doc["summary"]
     }
   end
 

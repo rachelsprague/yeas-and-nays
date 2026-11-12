@@ -214,6 +214,13 @@ table.roll { border-collapse: collapse; width: 100%; }
 .empty { font-size: 15px; color: var(--ink-soft); }
 [hidden] { display: none !important; }
 
+/* CRS summary, as published. */
+.crs-text { max-width: 720px; display: flex; flex-direction: column; gap: 12px; font-size: 17px; line-height: 27px; }
+.crs-text :is(p, ul, ol) { margin: 0; }
+.crs-text :is(ul, ol) { padding-left: 22px; }
+.crs summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 44px; display: flex; align-items: center; }
+.crs[open] summary { margin-bottom: 8px; }
+
 /* ---- Home -------------------------------------------------------------- */
 
 .twocol { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }

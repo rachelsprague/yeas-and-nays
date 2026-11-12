@@ -49,6 +49,27 @@ layout: default
     </section>
   </div>
 
+  {%- if v.congress_gov_url %}
+  <section class="section" aria-labelledby="summary-h">
+    <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label }}</h2>
+    {%- if page.summary %}
+    <p class="small soft">By the Congressional Research Service, Library of Congress, as published. Version: {{ page.summary.version }}, {{ page.summary.version_date | ap_date }}.{% if v.amendment_number or v.amendment_purpose %} It describes the measure, not the amendment voted on.{% endif %}</p>
+    {%- assign long = page.summary.html.size | at_least: 0 -%}
+    {%- if long > 1600 %}
+    <details class="crs">
+      <summary class="small">Show the full summary</summary>
+      <div class="crs-text">{{ page.summary.html }}</div>
+    </details>
+    {%- else %}
+    <div class="crs-text">{{ page.summary.html }}</div>
+    {%- endif %}
+    {%- else %}
+    <p class="small soft">No Congressional Research Service summary of {{ v.measure_label }} is available.</p>
+    {%- endif %}
+    <a class="more" href="{{ v.congress_gov_url }}/text">Full text on Congress.gov →</a>
+  </section>
+  {%- endif %}
+
   {%- if page.against.size > 0 %}
   <section class="section against" aria-labelledby="against-h">
     <h2 id="against-h" class="section-h sm">Voted against party majority</h2>
