@@ -221,3 +221,13 @@ __marimo__/
 
 # macOS
 .DS_Store
+
+# Yeas & Nays pipeline: raw downloads and intermediate files stay local.
+# Only data/out/ (the JSON the bot and site read) is committed.
+/data/raw/
+/data/staged/
+*.duckdb
+*.duckdb.wal
+transform/logs/
+transform/dbt_packages/
+transform/.user.yml
