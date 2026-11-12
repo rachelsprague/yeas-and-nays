@@ -171,8 +171,9 @@ module Yan
   end
 
   class MemberPage < Jekyll::PageWithoutAFile
-    def initialize(site, member, recent)
+    def initialize(site, member, recent, sponsored)
       super(site, site.source, member["url"], "index.html")
+      data["sponsored"] = sponsored
       data["layout"] = "member"
       data["title"] = member["name"]
       data["nav"] = "members"
@@ -190,6 +191,7 @@ module Yan
     def generate(site)
       dir = File.expand_path(site.config.fetch("yan_data", "../data/out"), site.source)
       read = ->(path) { JSON.parse(File.read(File.join(dir, path))) }
+      read_optional = ->(path) { File.exist?(File.join(dir, path)) ? read.call(path) : nil }
 
       meta = read.call("meta.json")
       members = read.call("members.json")["members"]
@@ -235,6 +237,8 @@ module Yan
         site.pages << VotePage.new(site, view, rows)
       end
 
+      votes_by_id = votes.to_h { |v| [v["vote_id"], v] }
+
       # Newest first already (votes.json order), so each member's list is too.
       members.each do |m|
         list = positions_by_member[m["bioguide_id"]]
@@ -243,7 +247,12 @@ module Yan
         recent = list.each_with_index.select { |p, i| i < RECENT_VOTES || p["against"] }.map do |p, i|
           p.merge("recent" => i < RECENT_VOTES)
         end
-        site.pages << MemberPage.new(site, m, recent)
+        sponsored = (read_optional.call("members/#{m["bioguide_id"]}.json") || {}).fetch("sponsored", [])
+        sponsored.each do |b|
+          vote = b["latest_vote_id"] && votes_by_id[b["latest_vote_id"]]
+          b["vote_url"] = vote && vote["url"]
+        end
+        site.pages << MemberPage.new(site, m, recent, sponsored)
       end
 
       site.data["meta"] = meta

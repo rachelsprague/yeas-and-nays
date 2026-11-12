@@ -29,3 +29,15 @@ def parse_measure(measure_number: str | None) -> tuple[str, str] | None:
         return None
     bill_type = BILL_TYPES.get(re.sub(r"[^A-Z]", "", m.group(1).upper()))
     return (bill_type, m.group(2)) if bill_type else None
+
+
+# Congress.gov bill type -> citation prefix.
+CITATION = {
+    "hr": "H.R.", "s": "S.", "hres": "H.Res.", "sres": "S.Res.", "hjres": "H.J.Res.",
+    "sjres": "S.J.Res.", "hconres": "H.Con.Res.", "sconres": "S.Con.Res.",
+}
+
+
+def bill_label(bill_type: str, bill_number: str) -> str:
+    """("hres", "1655") -> "H.Res. 1655"."""
+    return f"{CITATION[bill_type]} {bill_number}"

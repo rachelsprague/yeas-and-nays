@@ -160,6 +160,33 @@ models:
       - name: cosponsor_count
         description: Cosponsors as of the latest fetch, including any who later withdrew.
 
+  - name: sponsored_bills
+    description: >
+      One row per bill or resolution each member introduced this Congress, from Congress.gov,
+      with its latest action and the most recent roll call vote on it, if any.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: bill_id
+        data_tests: [not_null]
+      - name: bill_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["hr", "s", "hres", "sres", "hjres", "sjres", "hconres", "sconres"]
+      - name: latest_vote_id
+        description: The most recent roll call on the measure. Null when it hasn't had a recorded vote.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('votes')
+                field: vote_id
+
   - name: vote_summaries
     description: >
       For each vote on a bill or resolution with a Congressional Research Service summary,

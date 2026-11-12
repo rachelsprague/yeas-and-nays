@@ -1,6 +1,6 @@
 import pytest
 
-from yan.measures import parse_measure
+from yan.measures import bill_label, parse_measure
 from yan.stage.run import with_bill
 
 
@@ -31,3 +31,9 @@ def test_stage_adds_bill_columns_and_keeps_the_recorded_measure():
         {"legis_num": "H RES 1655", "bill_type": "hres", "bill_number": "1655"},
         {"legis_num": "QUORUM", "bill_type": None, "bill_number": None},
     ]
+
+
+def test_bill_label_is_the_citation_form():
+    assert bill_label("hres", "1655") == "H.Res. 1655"
+    assert bill_label("sjres", "98") == "S.J.Res. 98"
+    assert bill_label("hr", "1013") == "H.R. 1013"

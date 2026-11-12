@@ -2,6 +2,8 @@
 
     data/out/meta.json            congress, counts, latest roll number per chamber/session
     data/out/members.json         one entry per member, with their stats this Congress
+    data/out/members/{bioguide}.json  one member: bills and resolutions they introduced
+                                  this Congress, newest first
     data/out/votes.json           one entry per vote (metadata + tallies), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
@@ -24,6 +26,7 @@ import duckdb
 from yan.bot.rules import measure_label
 from yan.config import CONGRESS, OUT_DIR, WAREHOUSE_PATH
 from yan.export import summary_html
+from yan.measures import bill_label
 
 log = logging.getLogger(__name__)
 
@@ -83,6 +86,13 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             from positions
             order by vote_id, member_label, bioguide_id
         """)
+        sponsored = _rows(con, """
+            select bioguide_id, bill_id, bill_type, bill_number, title, introduced_date,
+                   latest_action_date, latest_action_text, policy_area, congress_gov_url,
+                   latest_vote_id
+            from sponsored_bills
+            order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
+        """)
         summaries = {
             row.pop("vote_id"): row
             for row in _rows(con, """
@@ -115,7 +125,27 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             path.unlink()
             changed += 1
 
-    changed += write_if_changed(out_dir / "meta.json", dumps(meta_document(votes, members)))
+    sponsored_by = defaultdict(list)
+    for bill in sponsored:
+        bill["measure_label"] = bill_label(bill["bill_type"], bill["bill_number"])
+        sponsored_by[bill.pop("bioguide_id")].append(bill)
+    member_dir = out_dir / "members"
+    expected = set()
+    for member in members:
+        name = f"{member['bioguide_id']}.json"
+        expected.add(name)
+        doc = {"bioguide_id": member["bioguide_id"], "sponsored": sponsored_by[member["bioguide_id"]]}
+        changed += write_if_changed(member_dir / name, dumps(doc))
+    for path in member_dir.glob("*.json"):
+        if path.name not in expected:
+            path.unlink()
+            changed += 1
+
+    meta = meta_document(votes, members)
+    # False when Congress.gov sponsored lists weren't ingested (e.g. no API key), so the
+    # site can hide the section instead of showing every member with no bills.
+    meta["has_sponsored_bills"] = bool(sponsored)
+    changed += write_if_changed(out_dir / "meta.json", dumps(meta))
     log.info("export: %d votes, %d members, %d files changed", len(votes), len(members), changed)
 
 

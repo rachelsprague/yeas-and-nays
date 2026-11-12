@@ -42,6 +42,31 @@ layout: default
   </section>
   {%- endif %}
 
+  {%- if site.data.meta.has_sponsored_bills %}
+  <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px">
+    <div class="head-row">
+      <h2 id="bills-h" class="section-h">Bills introduced</h2>
+      <span class="small muted nums">{{ page.sponsored.size }} this Congress</span>
+    </div>
+    <p class="small soft">Bills and resolutions {{ m.name }} introduced as the sponsor, with the latest action on each as Congress.gov records it.</p>
+    {%- if page.sponsored.size > 0 %}
+    <ul class="ruled">
+      {%- for b in page.sponsored limit: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
+    </ul>
+    {%- if page.sponsored.size > 5 %}
+    <details class="crs">
+      <summary class="small">Show all {{ page.sponsored.size }}</summary>
+      <ul class="ruled thin">
+        {%- for b in page.sponsored offset: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
+      </ul>
+    </details>
+    {%- endif %}
+    {%- else %}
+    <p class="empty">No bills or resolutions introduced this Congress.</p>
+    {%- endif %}
+  </section>
+  {%- endif %}
+
   <section aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope>
     <div class="head-row">
       <h2 id="recent-h" class="section-h">Recent votes</h2>
@@ -71,4 +96,5 @@ layout: default
     </ul>
     <p class="empty" data-empty hidden>No votes against the party majority this Congress.</p>
   </section>
+
 </main>
