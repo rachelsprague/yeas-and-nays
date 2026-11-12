@@ -1,0 +1,82 @@
+{
+ "bill": {
+  "actions": {
+   "count": 10,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/actions?format=json"
+  },
+  "committeeReports": [
+   {
+    "citation": "H. Rept. 119-390",
+    "url": "https://api.congress.gov/v3/committee-report/119/HRPT/390?format=json"
+   }
+  ],
+  "committees": {
+   "count": 1,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/committees?format=json"
+  },
+  "congress": 119,
+  "cosponsors": {
+   "count": 24,
+   "countIncludingWithdrawnCosponsors": 24,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/cosponsors?format=json"
+  },
+  "introducedDate": "2025-02-05",
+  "latestAction": {
+   "actionDate": "2026-11-10",
+   "actionTime": "18:20:54",
+   "text": "Rule H. Res. 1650 passed House."
+  },
+  "legislationUrl": "https://www.congress.gov/bill/119th-congress/house-bill/1013",
+  "number": "1013",
+  "originChamber": "House",
+  "originChamberCode": "H",
+  "policyArea": {
+   "name": "Finance and Financial Sector"
+  },
+  "relatedBills": {
+   "count": 2,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/relatedbills?format=json"
+  },
+  "sponsors": [
+   {
+    "bioguideId": "L000491",
+    "district": 3,
+    "firstName": "Frank",
+    "fullName": "Rep. Lucas, Frank D. [R-OK-3]",
+    "isByRequest": "N",
+    "lastName": "Lucas",
+    "middleName": "D.",
+    "party": "R",
+    "state": "OK",
+    "url": "https://api.congress.gov/v3/member/L000491?format=json"
+   }
+  ],
+  "subjects": {
+   "count": 6,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/subjects?format=json"
+  },
+  "summaries": {
+   "count": 1,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/summaries?format=json"
+  },
+  "textVersions": {
+   "count": 2,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/text?format=json"
+  },
+  "title": "Retirement Fairness for Charities and Educational Institutions Act of 2025",
+  "titles": {
+   "count": 4,
+   "url": "https://api.congress.gov/v3/bill/119/hr/1013/titles?format=json"
+  },
+  "type": "HR",
+  "updateDate": "2026-11-11T09:06:56Z",
+  "updateDateIncludingText": "2026-11-11T09:06:56Z"
+ },
+ "request": {
+  "billNumber": "1013",
+  "billType": "hr",
+  "congress": "119",
+  "contentType": "application/json",
+  "format": "json"
+ }
+}

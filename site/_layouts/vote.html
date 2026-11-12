@@ -53,6 +53,9 @@ layout: default
   {%- if v.congress_gov_url %}
   <section class="section" aria-labelledby="summary-h">
     <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label }}</h2>
+    {%- if page.sponsor %}
+    <p class="nums" style="font-size: 15px; line-height: 22px">Introduced by <a class="link" href="{{ page.sponsor.url }}">{{ page.sponsor.name }}</a> ({{ page.sponsor.code }}){% if v.introduced_date %} on {{ v.introduced_date | ap_date }}{% endif %}{% if v.cosponsor_count %} · {{ v.cosponsor_count }} cosponsor{% if v.cosponsor_count != 1 %}s{% endif %}{% endif %}</p>
+    {%- endif %}
     {%- if page.summary %}
     <p class="small soft">By the Congressional Research Service, Library of Congress, as published. Version: {{ page.summary.version }}, {{ page.summary.version_date | ap_date }}.{% if v.amendment_number or v.amendment_purpose %} It describes the measure, not the amendment voted on.{% endif %}</p>
     {%- assign long = page.summary.html.size | at_least: 0 -%}

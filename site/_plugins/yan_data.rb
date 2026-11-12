@@ -144,8 +144,12 @@ module Yan
         "sort" => [m["last_name"].to_s, m["first_name"].to_s] }
     end.sort_by { |a| a.delete("sort") }
 
+    sponsor = (m = members_by_id[vote["sponsor_bioguide_id"]]) && {
+      "name" => member_name(m), "url" => member_url(m["bioguide_id"]), "code" => "#{m["party"]}-#{seat(m)}"
+    }
+
     {
-      "vote" => vote, "words" => words, "tally" => tally, "has_other" => !other.empty?,
+      "vote" => vote, "words" => words, "sponsor" => sponsor, "tally" => tally, "has_other" => !other.empty?,
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
       "by_party" => by_party, "against" => against, "summary" => doc["summary"]
     }

@@ -19,3 +19,18 @@ def test_refetches_bills_voted_on_recently_and_stale_files(tmp_path):
     week_old = path.stat().st_mtime - 8 * 24 * 3600
     os.utime(path, (week_old, week_old))
     assert needs_fetch(path, last_vote=dt.date(2025, 3, 1), today=TODAY)
+
+
+def test_parse_bill_takes_the_sponsor_and_counts():
+    from pathlib import Path
+
+    from yan.stage.congress_gov import parse_bill
+
+    path = Path(__file__).parent / "fixtures" / "congress_gov_bill_119_hr_1013.json"
+    bill = parse_bill(path.read_bytes(), "119/bills/hr1013.json")
+    assert bill["bill_type"] == "hr" and bill["bill_number"] == "1013" and bill["congress"] == "119"
+    assert bill["sponsor_bioguide_id"] == "L000491"
+    assert bill["sponsor_full_name"] == "Rep. Lucas, Frank D. [R-OK-3]"
+    assert bill["cosponsor_count"] == "24"
+    assert bill["introduced_date"] == "2025-02-05"
+    assert bill["legislation_url"] == "https://www.congress.gov/bill/119th-congress/house-bill/1013"

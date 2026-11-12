@@ -12,7 +12,7 @@ make all      # ingest -> stage -> model -> export
 
 | Step | Command | What it does |
 | --- | --- | --- |
-| Ingest | `make ingest` | Downloads House Clerk roll call XML, Senate roll call XML, [congress-legislators](https://github.com/unitedstates/congress-legislators) member data, and Congressional Research Service bill summaries from the [Congress.gov API](https://api.congress.gov/) into `data/raw/` (gitignored). Incremental: re-fetches only the most recent votes to pick up corrections, and summaries for recently voted bills or once a week. Summaries need `CONGRESS_API_KEY`; without it that step is skipped. |
+| Ingest | `make ingest` | Downloads House Clerk roll call XML, Senate roll call XML, [congress-legislators](https://github.com/unitedstates/congress-legislators) member data, and bill details (sponsor, cosponsors) and Congressional Research Service summaries from the [Congress.gov API](https://api.congress.gov/) into `data/raw/` (gitignored). Incremental: re-fetches only the most recent votes to pick up corrections, and summaries for recently voted bills or once a week. The Congress.gov step needs `CONGRESS_API_KEY`; without it that step is skipped. |
 | Stage | `make stage` | Parses raw files into flat Parquet under `data/staged/` (gitignored). Values kept as recorded. |
 | Model | `make model` | `dbt build` in `transform/`: builds DuckDB models and runs unit and data tests. |
 | Export | `make export` | Writes JSON from the marts into `data/out/` (committed). |
@@ -24,7 +24,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`.
 - **House:** Office of the Clerk, `clerk.house.gov/evs/{year}/rollNNN.xml`
 - **Senate:** `senate.gov/legislative/LIS/roll_call_votes/`
 - **Members:** `unitedstates/congress-legislators` (current and historical)
-- **Bill summaries:** Congress.gov API, `/bill/{congress}/{type}/{number}/summaries` (key sent as the `X-Api-Key` header)
+- **Bills:** Congress.gov API, `/bill/{congress}/{type}/{number}` and `.../summaries` (key sent as the `X-Api-Key` header)
 
 ## Models
 
@@ -33,6 +33,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`.
 | `members` | one row per member who served in the 119th Congress | `bioguide_id` |
 | `votes` | one row per roll call vote | `vote_id`, e.g. `h119-1-0042`, `s119-2-0107` |
 | `positions` | one row per member per vote | `vote_id` + `bioguide_id` |
+| `bills` | one row per bill or resolution with a recorded vote: sponsor, introduced date, cosponsor count | `bill_id`, e.g. `119-hr-1013` |
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
 | `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
 
@@ -80,6 +81,6 @@ make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bun
 | --- | --- | --- |
 | `BOT_PUBLISH` | repository variable | `true` to publish to Bluesky. Unset or anything else: dry run, posts printed to the log. |
 | `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` | secrets | Bluesky account; passed to the bot step only when publishing. |
-| `CONGRESS_API_KEY` | secret | Congress.gov API key for bill summaries; passed to the ingest step only. |
+| `CONGRESS_API_KEY` | secret | Congress.gov API key for bill details and summaries; passed to the ingest step only. |
 
 `.github/workflows/site.yml` builds the site and deploys it to GitHub Pages after each successful data run, and on pushes that change `site/`. Pages must be set to deploy from GitHub Actions.

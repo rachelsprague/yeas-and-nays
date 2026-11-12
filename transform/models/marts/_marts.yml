@@ -142,6 +142,24 @@ models:
       - name: against_party_majority_count
         description: Members who voted yes/no opposite to their caucus's majority.
 
+  - name: bills
+    description: >
+      One row per bill or resolution with a recorded vote this Congress: sponsor, introduced
+      date and cosponsor count, from Congress.gov.
+    columns:
+      - name: bill_id
+        description: "{congress}-{bill_type}-{bill_number}, e.g. 119-hr-1013."
+        data_tests: [unique, not_null]
+      - name: sponsor_bioguide_id
+        description: The member who introduced the measure. Null for the few measures with no sponsor.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: cosponsor_count
+        description: Cosponsors as of the latest fetch, including any who later withdrew.
+
   - name: vote_summaries
     description: >
       For each vote on a bill or resolution with a Congressional Research Service summary,
