@@ -26,6 +26,10 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 - Persist bot state (last posted vote ID per chamber) in the repo so runs are idempotent.
 - Brand assets live in `brand/` (svg, social, favicon). Palette: aubergine #5A3463, paper #F2EFE6, ink #1C1C1C, dark-mode accent #A887B5. Type: Newsreader (display), IBM Plex Sans (UI/body).
 
+## Backlog
+
+Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item) and `backlog/<slug>.md` for details. Both are gitignored because this repo is public. Don't create GitHub issues for this project.
+
 ## Public repo: review before every push
 
 This repository is public. Before any `git push`, review every outgoing commit individually (`git log -p origin/main..HEAD`, including commit messages), not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
