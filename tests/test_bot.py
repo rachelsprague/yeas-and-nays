@@ -110,7 +110,7 @@ def test_disposing_motion_post_matches_style_example():
         'House agrees to motion to refer H.Res. 1655, "Impeaching Peter Brian Hegseth, '
         'Secretary of Defense, for high crimes and misdemeanors"\n'
         "211 Yea · 204 Nay · 18 Not Voting\n"
-        "R 210–1 · D 0–203 · I 1–0\n"
+        "D 0–203 · I 1–0 · R 210–1\n"
         "Voted against party majority: Massie (R-KY-4)\n"
         "clerk.house.gov/Votes/2026317"
     )
@@ -124,7 +124,7 @@ def test_nomination_post_with_tie_break():
     assert text.splitlines() == [
         "Senate confirms Peter Hegseth as Secretary of Defense",
         "50 Yea · 50 Nay · Vice President voted Yea to break the tie",
-        "R 50–3 · D 0–45 · I 0–2",
+        "D 0–45 · I 0–2 · R 50–3",
         "Voted against party majority: Collins (R-ME), McConnell (R-KY), Murkowski (R-AK)",
         "senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00015.htm",
     ]
@@ -141,11 +141,11 @@ def test_tally_uses_recorded_terms_and_only_nonzero_present_and_not_voting():
     assert tally_line(house_vote(not_voting_count=18), {"A": "Yea"}) == "211 Yea · 204 Nay · 18 Not Voting"
 
 
-def test_party_line_shows_r_and_d_always_and_i_only_when_an_independent_voted():
-    assert party_line({"R": {"yes": 211, "not_voting": 7}, "D": {"yes": 83, "no": 128}}) == "R 211–0 · D 83–128"
-    assert party_line({"R": {"yes": 1}, "D": {"no": 1}, "I": {"not_voting": 1}}) == "R 1–0 · D 0–1"
-    assert party_line({"R": {"yes": 1}, "D": {"no": 1}, "I": {"no": 2}}) == "R 1–0 · D 0–1 · I 0–2"
-    assert party_line({}) == "R 0–0 · D 0–0"
+def test_party_line_shows_d_and_r_always_and_i_only_when_an_independent_voted():
+    assert party_line({"R": {"yes": 211, "not_voting": 7}, "D": {"yes": 83, "no": 128}}) == "D 83–128 · R 211–0"
+    assert party_line({"R": {"yes": 1}, "D": {"no": 1}, "I": {"not_voting": 1}}) == "D 0–1 · R 1–0"
+    assert party_line({"R": {"yes": 1}, "D": {"no": 1}, "I": {"no": 2}}) == "D 0–1 · I 0–2 · R 1–0"
+    assert party_line({}) == "D 0–0 · R 0–0"
 
 
 def test_party_break_names_only_when_one_to_five_members():
@@ -163,7 +163,7 @@ def test_more_than_five_against_majority_omits_names_line():
     text = format_post(doc(vote, against=[f"M{i} (D-CA-{i})" for i in range(83)], party_totals=totals),
                        decide(vote))
     assert "Voted against" not in text
-    assert text.splitlines()[2] == "R 211–0 · D 83–128 · I 1–0"
+    assert text.splitlines()[2] == "D 83–128 · I 1–0 · R 211–0"
 
 
 def test_long_post_truncates_title_and_keeps_every_other_line():
@@ -175,7 +175,7 @@ def test_long_post_truncates_title_and_keeps_every_other_line():
     assert lines[0].endswith('…"')
     assert lines[1:] == [
         "211 Yea · 204 Nay",
-        "R 1–0 · D 0–1",
+        "D 0–1 · R 1–0",
         "Voted against party majority: " + ", ".join(labels),
         "clerk.house.gov/Votes/2026317",
     ]

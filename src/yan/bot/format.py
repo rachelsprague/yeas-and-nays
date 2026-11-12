@@ -2,7 +2,7 @@
 
     {Chamber} {result verb} {official title or nominee + position}
     {Yea} Yea · {Nay} Nay{ · Present}{ · Not Voting}{ · Vice President voted {position} to break the tie}
-    R {Yea}–{Nay} · D {Yea}–{Nay}{ · I {Yea}–{Nay}}
+    D {Yea}–{Nay}{ · I {Yea}–{Nay}} · R {Yea}–{Nay}
     Voted against party majority: {Name (P-ST)}, …   (only when 1 to 5 members)
     {link}
 """
@@ -72,14 +72,14 @@ def tally_line(vote: dict, positions: dict[str, str]) -> str:
 
 
 def party_line(party_totals: dict[str, dict[str, int]]) -> str:
-    """Yea–Nay per party, by party on the vote date. R and D always appear;
-    I only when an independent voted Yea or Nay."""
+    """Yea–Nay per party, by party on the vote date, parties in alphabetical
+    order. D and R always appear; I only when an independent voted Yea or Nay."""
     def counts(party):
         totals = party_totals.get(party, {})
         return totals.get("yes", 0), totals.get("no", 0)
 
     parts = []
-    for party in ("R", "D", "I"):
+    for party in ("D", "I", "R"):
         yes, no = counts(party)
         if party != "I" or yes or no:
             parts.append(f"{party} {yes}–{no}")

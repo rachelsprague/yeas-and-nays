@@ -34,7 +34,7 @@ Yeas & Nays reports recorded votes in the U.S. House and Senate. It states what 
 ```
 House agrees to motion to refer H.Res. 1655, "Impeaching Peter Brian Hegseth, Secretary of Defense, for high crimes and misdemeanors"
 211 Yea · 204 Nay · 18 Not Voting
-R 210–1 · D 0–203 · I 1–0
+D 0–203 · I 1–0 · R 210–1
 Voted against party majority: Massie (R-KY-4)
 ```
 
@@ -47,13 +47,13 @@ Unsure? Default to **skip** on the bot; everything still appears on the site.
 ```
 {Chamber} {result verb} {official title or nominee + position}
 {Yea} Yea · {Nay} Nay{ · Vice President voted {position} to break the tie}
-R {Yea}–{Nay} · D {Yea}–{Nay}{ · I {Yea}–{Nay}}
+D {Yea}–{Nay}{ · I {Yea}–{Nay}} · R {Yea}–{Nay}
 Voted against party majority: {Name (P-ST)}, {Name (P-ST)}, …
 {link}
 ```
 
 - **Result verbs:** passes / fails / agrees to motion to {table|refer} / rejects motion to {table|refer} / confirms / rejects / invokes cloture on / fails to invoke cloture on / overrides veto of / sustains veto of. Use the official result text when in doubt.
-- **Party breakdown line:** Yea–Nay counts by party as of the vote date, always R then D. Include I only when an independent voted Yea or Nay; independents are shown under I here, not under the party they caucus with.
+- **Party breakdown line:** Yea–Nay counts by party as of the vote date, parties in alphabetical order (D, I, R), the same order the site uses. Include I only when an independent voted Yea or Nay; independents are shown under I here, not under the party they caucus with.
 - **Party-break line:** include only when 1 to 5 members voted against their party's majority, and list them all. When more than 5 did, omit the line; the party breakdown shows the split. Independents are grouped with the party they caucus with for this calculation, and the site's methodology page says so.
 - **Length:** Bluesky posts max out at 300 characters. Truncate long titles with "…" before dropping the tally or link.
 
@@ -62,7 +62,7 @@ Voted against party majority: {Name (P-ST)}, {Name (P-ST)}, …
 ```
 Senate confirms {Nominee} as {Position}
 50 Yea · 50 Nay · Vice President voted Yea to break the tie
-R 50–3 · D 0–45 · I 0–2
+D 0–45 · I 0–2 · R 50–3
 Voted against party majority: {Name (R-ME)}, {Name (R-AK)}, {Name (R-KY)}
 senate.gov/legislative/LIS/roll_call_votes/...
 ```
