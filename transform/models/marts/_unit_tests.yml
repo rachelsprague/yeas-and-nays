@@ -1,0 +1,90 @@
+version: 2
+
+unit_tests:
+  - name: caucus_majority_handles_breaks_ties_and_non_votes
+    description: >
+      Majority counts only yes/no. A tie, or a vote with no yes/no positions at
+      all (quorum call, Speaker election), has no majority.
+    model: int_caucus_majority
+    given:
+      - input: ref('int_positions_resolved')
+        rows:
+          # v1: R 2-1 yes, D 0-2 no
+          - {vote_id: v1, caucus_party: R, position: "yes"}
+          - {vote_id: v1, caucus_party: R, position: "yes"}
+          - {vote_id: v1, caucus_party: R, position: "no"}
+          - {vote_id: v1, caucus_party: R, position: present}
+          - {vote_id: v1, caucus_party: D, position: "no"}
+          - {vote_id: v1, caucus_party: D, position: "no"}
+          - {vote_id: v1, caucus_party: D, position: not_voting}
+          # v2: D tied 1-1
+          - {vote_id: v2, caucus_party: D, position: "yes"}
+          - {vote_id: v2, caucus_party: D, position: "no"}
+          # v3: Speaker election, candidate names only
+          - {vote_id: v3, caucus_party: R, position: other}
+          - {vote_id: v3, caucus_party: R, position: present}
+    expect:
+      rows:
+        - {vote_id: v1, caucus_party: R, yes_count: 2, no_count: 1, majority_position: "yes"}
+        - {vote_id: v1, caucus_party: D, yes_count: 0, no_count: 2, majority_position: "no"}
+        - {vote_id: v2, caucus_party: D, yes_count: 1, no_count: 1, majority_position: null}
+        - {vote_id: v3, caucus_party: R, yes_count: 0, no_count: 0, majority_position: null}
+
+  - name: positions_flag_is_null_unless_member_voted_yes_or_no_against_a_majority
+    model: positions
+    given:
+      - input: ref('int_positions_resolved')
+        rows:
+          - {vote_id: v1, bioguide_id: A1, caucus_party: R, position: "yes"}
+          - {vote_id: v1, bioguide_id: A2, caucus_party: R, position: "no"}
+          - {vote_id: v1, bioguide_id: A3, caucus_party: R, position: present}
+          - {vote_id: v1, bioguide_id: A4, caucus_party: R, position: not_voting}
+          - {vote_id: v2, bioguide_id: A1, caucus_party: D, position: "yes"}
+          - {vote_id: v3, bioguide_id: A1, caucus_party: R, position: other}
+      - input: ref('int_caucus_majority')
+        rows:
+          - {vote_id: v1, caucus_party: R, majority_position: "yes"}
+          - {vote_id: v2, caucus_party: D, majority_position: null}
+          - {vote_id: v3, caucus_party: R, majority_position: null}
+    expect:
+      rows:
+        - {vote_id: v1, bioguide_id: A1, caucus_majority_position: "yes", voted_against_party_majority: false}
+        - {vote_id: v1, bioguide_id: A2, caucus_majority_position: "yes", voted_against_party_majority: true}
+        - {vote_id: v1, bioguide_id: A3, caucus_majority_position: "yes", voted_against_party_majority: null}
+        - {vote_id: v1, bioguide_id: A4, caucus_majority_position: "yes", voted_against_party_majority: null}
+        - {vote_id: v2, bioguide_id: A1, caucus_majority_position: null, voted_against_party_majority: null}
+        - {vote_id: v3, bioguide_id: A1, caucus_majority_position: null, voted_against_party_majority: null}
+
+  - name: member_periods_resolve_independent_caucus_and_mid_term_switch
+    description: >
+      An independent caucusing with Democrats is grouped with D. A member who
+      changed party mid-term gets one period per affiliation. A term that ended
+      when the 119th began is kept but doesn't overlap it.
+    model: int_member_periods
+    given:
+      - input: ref('stg_legislators__terms')
+        rows:
+          # Independent senator caucusing with Democrats
+          - {bioguide_id: S1, chamber: senate, term_start: "2025-01-03", term_end: "2031-01-03", state: VT, district: null, party: I, caucus: D}
+          # Previous term, ended when the 119th began: kept, not overlapping
+          - {bioguide_id: S1, chamber: senate, term_start: "2019-01-03", term_end: "2025-01-03", state: VT, district: null, party: I, caucus: D}
+          # House member who switched from R to I (caucusing R) mid-term
+          - {bioguide_id: H1, chamber: house, term_start: "2025-01-03", term_end: "2027-01-03", state: CA, district: 3, party: I, caucus: R}
+          # At-large House member
+          - {bioguide_id: H2, chamber: house, term_start: "2025-01-03", term_end: "2027-01-03", state: WY, district: 0, party: R, caucus: null}
+      - input: ref('stg_legislators__party_affiliations')
+        rows:
+          - {bioguide_id: H1, term_start: "2025-01-03", affiliation_start: "2025-01-03", affiliation_end: "2026-03-08", party: R, caucus: null}
+          - {bioguide_id: H1, term_start: "2025-01-03", affiliation_start: "2026-03-09", affiliation_end: "2027-01-03", party: I, caucus: R}
+      - input: ref('stg_legislators__people')
+        rows:
+          - {bioguide_id: S1, last_name: Senator}
+          - {bioguide_id: H1, last_name: Member}
+          - {bioguide_id: H2, last_name: Atlarge}
+    expect:
+      rows:
+        - {bioguide_id: S1, period_start: "2025-01-03", party: I, caucus_party: D, overlaps_congress: true, member_label: "Senator (I-VT)"}
+        - {bioguide_id: S1, period_start: "2019-01-03", party: I, caucus_party: D, overlaps_congress: false, member_label: "Senator (I-VT)"}
+        - {bioguide_id: H1, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_congress: true, member_label: "Member (R-CA-3)"}
+        - {bioguide_id: H1, period_start: "2026-03-09", party: I, caucus_party: R, overlaps_congress: true, member_label: "Member (I-CA-3)"}
+        - {bioguide_id: H2, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_congress: true, member_label: "Atlarge (R-WY)"}

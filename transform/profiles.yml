@@ -1,0 +1,9 @@
+# Local DuckDB file only; no credentials. Paths are relative to transform/,
+# which is where the Makefile runs dbt from.
+yeas_and_nays:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: ../data/warehouse.duckdb
+      threads: 4

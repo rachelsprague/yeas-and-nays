@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: staged
+    description: >
+      Parquet files written by `yan stage` from the raw downloads. Values are
+      kept as recorded (strings); staging models cast and rename them.
+    meta:
+      external_location: "../data/staged/{name}.parquet"
+    tables:
+      - name: house_votes
+        description: One row per House roll call, from clerk.house.gov/evs XML.
+      - name: house_positions
+        description: One row per member per House roll call.
+      - name: senate_votes
+        description: One row per Senate roll call, from senate.gov LIS XML.
+      - name: senate_positions
+        description: One row per senator per Senate roll call.
+      - name: legislators
+        description: One row per person in unitedstates/congress-legislators (current + historical).
+      - name: legislator_terms
+        description: One row per term served.
+      - name: legislator_party_affiliations
+        description: Party periods within a term, present only when a member changed party mid-term.

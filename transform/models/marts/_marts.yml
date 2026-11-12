@@ -1,0 +1,162 @@
+version: 2
+
+models:
+  - name: members
+    description: >
+      One row per member who served in the 119th Congress (House and Senate), plus anyone
+      listed on a 119th roll call without a 119th term.
+    columns:
+      - name: bioguide_id
+        description: Biographical Directory ID; the member key across both chambers.
+        data_tests: [unique, not_null]
+      - name: lis_id
+        description: Senate LIS member ID, used to join Senate vote records. Null for House-only members.
+        data_tests:
+          - not_null:
+              config:
+                where: "chamber = 'senate'"
+      - name: member_label
+        description: Display label per STYLE.md, e.g. "Murkowski (R-AK)", "Lawler (R-NY-17)".
+        data_tests: [not_null]
+      - name: chamber
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["house", "senate"]
+      - name: party
+        description: Party code (R, D, I) for the member's most recent period of service.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["R", "D", "I"]
+      - name: caucus_party
+        description: Party the member caucuses with (independents grouped with their caucus).
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["R", "D"]
+      - name: served_in_congress
+        description: >
+          True when congress-legislators has a term overlapping the 119th Congress. False for
+          someone listed on a 119th roll call without one (e.g. a member-elect who never took the seat).
+        data_tests: [not_null]
+      - name: served_from
+        description: First day of service in the 119th Congress. Null when served_in_congress is false.
+        data_tests:
+          - not_null:
+              config:
+                where: served_in_congress
+      - name: served_to
+        description: Last day of service in the 119th Congress (the Congress's end date for sitting members).
+        data_tests:
+          - not_null:
+              config:
+                where: served_in_congress
+
+  - name: votes
+    description: One row per roll call vote in the House and Senate.
+    columns:
+      - name: vote_id
+        description: "{h|s}{congress}-{session}-{roll number, 4 digits}, e.g. h119-1-0042."
+        data_tests: [unique, not_null]
+      - name: chamber
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["house", "senate"]
+      - name: congress
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [119]
+                quote: false
+      - name: session
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2]
+                quote: false
+      - name: roll_number
+        data_tests: [not_null]
+      - name: vote_date
+        data_tests: [not_null]
+      - name: question
+        description: Vote question as officially recorded.
+        data_tests: [not_null]
+      - name: result
+        description: Result as officially recorded (for a Speaker election, the winning candidate).
+        data_tests: [not_null]
+      - name: yea_count
+        description: Official tally. Null for votes tallied by candidate (Election of the Speaker).
+      - name: tie_breaker_by
+        description: Senate only. Set when the Vice President cast a tie-breaking vote.
+      - name: source_url
+        description: Official vote record on clerk.house.gov or senate.gov.
+        data_tests: [not_null]
+      - name: member_count
+        description: Number of members with a recorded position on the vote.
+      - name: against_party_majority_count
+        description: Members who voted yes/no opposite to their caucus's majority.
+
+  - name: positions
+    description: One row per member per vote.
+    columns:
+      - name: vote_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('votes')
+                field: vote_id
+      - name: bioguide_id
+        description: Null only if a Senate LIS ID couldn't be matched; the relationships test fails in that case.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: member_label
+        data_tests: [not_null]
+      - name: position_raw
+        description: Position as officially recorded (Yea, Aye, Nay, No, Present, Not Voting, or a candidate name).
+        data_tests: [not_null]
+      - name: position
+        description: Normalized position.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["yes", "no", "present", "not_voting", "other"]
+      - name: party
+        description: Party in effect on the vote date, from congress-legislators.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["R", "D", "I"]
+      - name: caucus_party
+        description: Caucus in effect on the vote date; independents grouped with the party they caucus with.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["R", "D"]
+      - name: term_covers_vote_date
+        description: >
+          False when the official record lists the member on a date outside their term dates in
+          congress-legislators; party, caucus, and label then come from the nearest term.
+        data_tests: [not_null]
+      - name: caucus_majority_position
+        description: The member's caucus majority on this vote (yes/no), or null on a tie or a non-yes/no vote.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["yes", "no"]
+      - name: voted_against_party_majority
+        description: >
+          True when the member voted yes/no opposite to their caucus majority; false when
+          with it; null when the member did not vote yes/no or the caucus had no majority.

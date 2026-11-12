@@ -1,0 +1,25 @@
+name: yeas_and_nays
+version: "0.1.0"
+config-version: 2
+profile: yeas_and_nays
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  congress: 119
+  # A term "overlaps" the 119th Congress if it ends after the start date.
+  congress_start: "2025-01-03"
+  congress_end: "2027-01-03"
+
+models:
+  yeas_and_nays:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
