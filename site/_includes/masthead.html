@@ -1,0 +1,20 @@
+<div class="topstrip">
+  <div class="wrap">
+    <span class="dateline">{{ site.time | date: "%A, %B %-d, %Y" }}</span>
+    <nav class="mainnav" aria-label="Main">
+      <a href="/votes/"{% if page.nav == "votes" %} aria-current="page"{% endif %}>Votes</a>
+      <a href="/members/"{% if page.nav == "members" %} aria-current="page"{% endif %}>Members</a>
+      <a href="/about/"{% if page.nav == "about" %} aria-current="page"{% endif %}>About</a>
+    </nav>
+  </div>
+</div>
+<header class="wrap mast{% if include.large %} large{% endif %}">
+  <a href="/" aria-label="Yeas &amp; Nays home">
+    <picture>
+      <source srcset="/assets/brand/svg/wordmark-dark.svg" media="(prefers-color-scheme: dark)">
+      <img src="/assets/brand/svg/wordmark-light.svg" alt="Yeas &amp; Nays">
+    </picture>
+  </a>
+  {% if include.large %}<span class="kicker soft">Every roll call, on the record</span>{% endif %}
+</header>
+<div class="wrap" aria-hidden="true"><div class="rule-double"></div></div>

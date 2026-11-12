@@ -1,0 +1,118 @@
+---
+layout: default
+---
+{%- assign v = page.vote -%}
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <a class="back" href="/votes/">← All votes</a>
+    {% include vote_kicker.html vote=v %}
+    <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
+    {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author }}){% endif %}: {{ v.amendment_purpose }}</p>{% endif %}
+    <span class="kicker result">{{ v.result }}</span>
+  </section>
+
+  <div class="twocol">
+    <section class="tally" aria-labelledby="tally-h">
+      <h2 id="tally-h" class="kicker soft">Tally</h2>
+      {% include tally.html view=page %}
+      <p class="small muted nums">
+        {{ page.total }} members recorded.
+        {%- if v.majority_requirement %} Majority required: {{ v.majority_requirement }}.{% endif %}
+        {%- if v.tie_breaker_by %} The {{ v.tie_breaker_by }} voted {{ v.tie_breaker_vote }} to break the tie.{% endif %}
+      </p>
+    </section>
+
+    <section class="tally" aria-labelledby="party-h">
+      <h2 id="party-h" class="kicker soft">By party</h2>
+      <div class="scroll">
+        <table class="roll nums">
+          <thead><tr>
+            <th scope="col">Party</th>
+            {%- if page.has_other %}<th scope="col" class="r">Candidates</th>{% else %}
+            <th scope="col" class="r">{{ page.words.yes }}</th>
+            <th scope="col" class="r">{{ page.words.no }}</th>{% endif %}
+            <th scope="col" class="r">Present</th>
+            <th scope="col" class="r">Not voting</th>
+          </tr></thead>
+          <tbody>
+            {%- for p in page.by_party %}
+            <tr>
+              <th scope="row" class="party">{{ p.party }} · {{ p.name }}</th>
+              {%- if page.has_other %}<td class="r">{{ p.other }}</td>{% else %}
+              <td class="r">{{ p.yes }}</td><td class="r">{{ p.no }}</td>{% endif %}<td class="r">{{ p.present }}</td><td class="r">{{ p.not_voting }}</td>
+            </tr>
+            {%- endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">Party as of the vote date. Parties are listed alphabetically.</p>
+    </section>
+  </div>
+
+  {%- if page.against.size > 0 %}
+  <section class="section against" aria-labelledby="against-h">
+    <h2 id="against-h" class="section-h sm">Voted against party majority</h2>
+    <p class="small soft">Members whose {{ page.words.yes }} or {{ page.words.no }} differed from most of their party. <a class="link" href="/about/#party-majority">How this is counted</a></p>
+    <ul class="ruled thin">
+      {%- for a in page.against %}
+      <li>
+        <a href="{{ a.url }}">{{ a.name }} <span>{{ a.code }}</span></a>
+        <span class="small soft nums">Voted <strong>{{ a.position }}</strong> · {{ a.caucus }} majority voted {{ a.majority }}</span>
+      </li>
+      {%- endfor %}
+    </ul>
+  </section>
+  {%- endif %}
+
+  <section class="section" aria-labelledby="roll-h" data-filter-scope>
+    <div>
+      <h2 id="roll-h" class="section-h">Full roll call</h2>
+      <p class="small muted nums" data-count data-noun="members" aria-live="polite">{{ page.rows.size }} members</p>
+    </div>
+    <div class="filters">
+      <div class="q">
+        <label for="rc-q" class="kicker">Member name</label>
+        <input id="rc-q" class="field" type="search" placeholder="Search by name" data-filter="name" autocomplete="off">
+      </div>
+      <div>
+        <label for="rc-party" class="kicker">Party</label>
+        <select id="rc-party" class="field" data-filter="party">
+          <option value="">All</option><option>D</option><option>I</option><option>R</option>
+        </select>
+      </div>
+      <div>
+        <label for="rc-state" class="kicker">State</label>
+        <select id="rc-state" class="field" data-filter="state">
+          <option value="">All</option>
+          {%- for s in page.states %}<option>{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="rc-pos" class="kicker">Vote</label>
+        <select id="rc-pos" class="field" data-filter="position">
+          <option value="">All</option>
+          {%- for p in page.position_options %}<option>{{ p }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="scroll">
+      <table class="roll">
+        <thead><tr><th scope="col">Member</th><th scope="col">Party</th><th scope="col">{% if v.chamber == "house" %}District{% else %}State{% endif %}</th><th scope="col">Vote</th></tr></thead>
+        <tbody>
+          {%- for r in page.rows %}
+          <tr data-row data-name="{{ r.name | downcase }}" data-party="{{ r.party }}" data-state="{{ r.state }}" data-position="{{ r.position }}"><td><a href="/members/{{ r.id }}/">{{ r.name }}</a></td><td class="party">{{ r.party }}</td><td class="nums">{{ r.seat }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position }}</span></td></tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="empty" data-empty hidden>No members match these filters.</p>
+  </section>
+
+  <section class="section" style="gap: 6px">
+    <h2 class="kicker soft">Official source</h2>
+    <p style="font-size: 15px; line-height: 22px">
+      {% if v.chamber == "house" %}Office of the Clerk, U.S. House of Representatives{% else %}U.S. Senate{% endif %}:
+      <a class="link" href="{{ v.source_url }}" style="overflow-wrap: anywhere">{{ v.source_url | remove_first: "https://" | remove_first: "www." }}</a>
+    </p>
+  </section>
+</main>

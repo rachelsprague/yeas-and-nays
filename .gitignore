@@ -166,8 +166,6 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs/Zensical documentation
-/site
 
 # mypy
 .mypy_cache/
@@ -231,3 +229,9 @@ __marimo__/
 transform/logs/
 transform/dbt_packages/
 transform/.user.yml
+
+# Jekyll site: build output and local gems.
+site/_site/
+site/.jekyll-cache/
+site/.bundle/
+site/vendor/

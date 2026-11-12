@@ -32,6 +32,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`.
 | `members` | one row per member who served in the 119th Congress | `bioguide_id` |
 | `votes` | one row per roll call vote | `vote_id`, e.g. `h119-1-0042`, `s119-2-0107` |
 | `positions` | one row per member per vote | `vote_id` + `bioguide_id` |
+| `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
 
 **Joining members across chambers.** House records carry the Bioguide ID. Senate records carry an LIS member ID, which is mapped to the Bioguide ID through congress-legislators. Party and caucus are taken from the term (or, for a mid-term party change, the affiliation period) in effect on the vote date.
 
@@ -42,7 +43,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`.
 | File | Contents |
 | --- | --- |
 | `meta.json` | Vote and member counts, latest roll number per chamber and session |
-| `members.json` | All members |
+| `members.json` | All members, with their `member_stats` |
 | `votes.json` | All votes: metadata, official tallies, source links, newest first |
 | `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded |
 
@@ -61,6 +62,14 @@ uv run yan bot init                         # start from the latest vote
 
 State (`data/bot/state.json`, committed) records the last vote handled per chamber, posted or skipped, so a vote is never posted twice. A dry run never advances it. When publishing, the bot posts in order, one post every 10 minutes and at most 5 per run; skips anything its recent Bluesky posts already cover; and refuses to post a backlog older than 3 days (run `yan bot init` first).
 
+## Site
+
+`site/` is a Jekyll site that reads `data/out/` directly (`site/_plugins/yan_data.rb`) and generates a page per vote (`/votes/{congress}/{chamber}/{session}/{roll}/`) and per member (`/members/{bioguide_id}/`), plus the home page, the vote and member indexes, and About. The plugin only joins and arranges the pipeline's data; every count and definition comes from the models above. Filters are plain JavaScript over rows already in the page, so everything is readable without it. Colors come from `site/assets/css/tokens.css`; brand assets are linked from `brand/`.
+
+```
+make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bundler)
+```
+
 ## Automation
 
 `.github/workflows/pipeline.yml` runs hourly on weekdays (and on demand): ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot.
@@ -69,3 +78,5 @@ State (`data/bot/state.json`, committed) records the last vote handled per chamb
 | --- | --- | --- |
 | `BOT_PUBLISH` | repository variable | `true` to publish to Bluesky. Unset or anything else: dry run, posts printed to the log. |
 | `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` | secrets | Bluesky account; passed to the bot step only when publishing. |
+
+`.github/workflows/site.yml` builds the site and deploys it to GitHub Pages after each successful data run, and on pushes that change `site/`. Pages must be set to deploy from GitHub Actions.

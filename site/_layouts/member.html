@@ -1,0 +1,74 @@
+---
+layout: default
+---
+{%- assign m = page.member -%}
+<main id="main" class="wrap">
+  <a class="back" href="/members/">← All members</a>
+  <section class="who">
+    {% include portrait.html member=m alt=true %}
+    <div>
+      <span class="kicker accent">{{ m.chamber_name }}</span>
+      <h1 class="name-h">{{ m.name }}</h1>
+      <p class="meta">{{ m.party }} · {{ m.party_name }} · {{ m.where }}</p>
+      {%- if m.served_from %}
+      <p class="term nums">{% if m.is_current %}In office this Congress since {{ m.served_from | ap_date }}{% else %}Served this Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
+      {%- endif %}
+    </div>
+  </section>
+
+  {%- if m.roll_calls %}
+  <section aria-labelledby="stats-h" style="display: flex; flex-direction: column; gap: 12px">
+    <div class="head-row">
+      <h2 id="stats-h" class="kicker soft">This Congress ({{ site.data.meta.congress | ordinal }})</h2>
+      <a class="link small" href="/about/#definitions">How these are calculated</a>
+    </div>
+    <div class="tiles nums">
+      <div>
+        <span class="fig">{{ m.votes_cast }}</span>
+        <span class="what">Votes cast</span>
+        <span class="of">of {{ m.roll_calls }} roll calls</span>
+      </div>
+      <div>
+        <span class="fig">{{ m.missed_votes_pct }}%</span>
+        <span class="what">Missed votes</span>
+        <span class="of">{{ m.missed_votes }} not voting</span>
+      </div>
+      <div>
+        <span class="fig">{% if m.with_party_majority_pct %}{{ m.with_party_majority_pct }}%{% else %}—{% endif %}</span>
+        <span class="what">Voted with party majority</span>
+        <span class="of">of {{ m.party_majority_votes }} Yea or Nay votes where {% if m.party == "I" %}the {{ m.caucus_party }} caucus{% else %}the party{% endif %} had a majority</span>
+      </div>
+    </div>
+  </section>
+  {%- endif %}
+
+  <section aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope>
+    <div class="head-row">
+      <h2 id="recent-h" class="section-h">Recent votes</h2>
+      <div class="tabs js-only" role="group" aria-label="Show">
+        <button type="button" data-tab="view" data-value="recent" aria-pressed="true">All votes</button>
+        <button type="button" data-tab="view" data-value="against" aria-pressed="false">Against majority</button>
+      </div>
+    </div>
+    <ul class="ruled">
+      {%- for p in page.recent %}
+      {%- assign v = p.vote -%}
+      <li data-row data-view="{% if p.recent %}recent{% endif %}{% if p.against %} against{% endif %}">
+        <a class="vrow" href="{{ v.url }}">
+          <span class="kicker accent nums">{{ v.vote_date | ap_date }} · {{ v.chamber_name }} roll {{ v.roll_number }}</span>
+          <span class="stack">
+            <span class="q">{{ v.question }}{% if v.measure_label %}{% unless v.question contains v.measure_label %} · {{ v.measure_label }}{% endunless %}{% endif %}</span>
+            <span class="t">{% include vote_title.html vote=v %}</span>
+          </span>
+          <span class="how">
+            <span>Voted <strong>{{ p.position }}</strong></span>
+            {%- if p.majority %}<span class="muted">{{ p.caucus }} majority voted {{ p.majority }}</span>{% endif %}
+            {%- if p.against %}<span class="kicker tag">Against majority</span>{% endif %}
+          </span>
+        </a>
+      </li>
+      {%- endfor %}
+    </ul>
+    <p class="empty" data-empty hidden>No votes against the party majority this Congress.</p>
+  </section>
+</main>

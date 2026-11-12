@@ -1,0 +1,91 @@
+---
+layout: default
+title: About & methodology
+nav: about
+---
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <span class="kicker accent">About</span>
+    <h1 class="vote-h">About &amp; methodology</h1>
+    <p class="soft" style="font-size: 18px; line-height: 28px">Yeas &amp; Nays publishes every recorded vote in the U.S. House and Senate, taken from the official record and shown without commentary. It does not endorse candidates, parties or positions.</p>
+  </section>
+
+  <nav aria-label="On this page" class="small" style="display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center">
+    <span class="kicker soft">On this page</span>
+    <a class="link" href="#sources">Data sources</a>
+    <a class="link" href="#definitions">Definitions</a>
+    <a class="link" href="#display">How parties and votes are shown</a>
+    <a class="link" href="#bluesky">Bluesky and this site</a>
+    <a class="link" href="#who">Who built this</a>
+  </nav>
+
+  <div class="prose">
+    <section id="sources">
+      <h2>Data sources</h2>
+      <p>Every vote and member record comes from a public, official or widely used source. Each vote page links to its original record.</p>
+      <dl>
+        <dt>House roll call votes</dt>
+        <dd>Office of the Clerk, U.S. House of Representatives, <a href="https://clerk.house.gov">clerk.house.gov</a></dd>
+        <dt>Senate roll call votes</dt>
+        <dd>United States Senate, <a href="https://www.senate.gov">senate.gov</a></dd>
+        <dt>Members: names, parties, states, districts and terms</dt>
+        <dd>congress-legislators, an open dataset maintained by the @unitedstates project, <a href="https://github.com/unitedstates/congress-legislators">github.com/unitedstates/congress-legislators</a></dd>
+        <dt>Portraits</dt>
+        <dd>Official congressional portraits collected by the @unitedstates project, <a href="https://github.com/unitedstates/images">github.com/unitedstates/images</a>. Members without a portrait show their initials.</dd>
+        <dt>Updates</dt>
+        <dd>The site checks for new votes every hour on weekdays.</dd>
+      </dl>
+    </section>
+
+    <section id="definitions">
+      <h2>Definitions</h2>
+      <dl>
+        <dt>Recorded vote</dt>
+        <dd>A vote in which each member's position is recorded by name. Voice votes and unanimous consent are not included, because no individual positions are recorded.</dd>
+        <dt>Yea, Nay, Not voting</dt>
+        <dd>Positions as recorded. The House records some votes as Aye and No; they appear here as recorded and count the same as Yea and Nay. Present is shown as Present and counts toward neither side.</dd>
+        <dt id="party-majority">Party majority</dt>
+        <dd>The position, Yea or Nay, taken by more than half of a party's members who voted Yea or Nay on that roll call. If a party splits evenly, it has no majority on that vote.</dd>
+        <dt>Voted against party majority</dt>
+        <dd>A member who voted Yea or Nay opposite their party's majority. Not voting and Present never count as voting against.</dd>
+        <dt>Independents</dt>
+        <dd>Independents are grouped with the party they caucus with when party majorities are calculated. They are still labeled I everywhere on the site.</dd>
+        <dt>Missed votes</dt>
+        <dd>Roll calls marked Not voting, as a share of all roll calls held in the member's chamber while they were in office this Congress.</dd>
+        <dt>Voted with party majority</dt>
+        <dd>The share of a member's Yea and Nay votes that matched their party's majority. Votes where the party had no majority are left out.</dd>
+      </dl>
+    </section>
+
+    <section id="display">
+      <h2>How parties and votes are shown</h2>
+      <ul>
+        <li>Parties are written as text (D, I, R) and always listed alphabetically.</li>
+        <li>Every party gets the same style and emphasis. The site uses no party colors.</li>
+        <li>Positions are always written out. In charts, Yea is solid, Nay is striped and Not voting is open, so they read the same in black and white.</li>
+      </ul>
+      <div aria-hidden="true" style="display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; font-weight: 600">
+        <span class="pos"><span class="mark yea"></span>Yea</span>
+        <span class="pos"><span class="mark nay"></span>Nay</span>
+        <span class="pos"><span class="mark present"></span>Present</span>
+        <span class="pos"><span class="mark nv"></span>Not voting</span>
+      </div>
+    </section>
+
+    <section id="bluesky">
+      <h2>Bluesky and this site</h2>
+      <dl>
+        <dt>Posted to Bluesky</dt>
+        <dd>Votes that decide a measure: passage of bills and resolutions, nominations, cloture, veto overrides, conference reports, and motions that end consideration of a measure. Procedural votes are not posted. Follow at <a href="{{ site.bluesky }}">@yeasandnaysdata.com</a>.</dd>
+        <dt>Only on this site</dt>
+        <dd>Every recorded vote, the full roll call for each one, and member pages.</dd>
+      </dl>
+    </section>
+
+    <section id="who">
+      <h2>Who built this</h2>
+      <p>Built by <a href="https://rachelsprague.com">Rachel Sprague</a>. The code is public: <a href="{{ site.github }}">{{ site.github | remove_first: "https://" }}</a>.</p>
+      <p>Spot an error? <a href="{{ site.github }}/issues">Open an issue on GitHub</a>.</p>
+    </section>
+  </div>
+</main>

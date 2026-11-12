@@ -1,0 +1,2 @@
+{%- comment -%} The official title: the measure title, else the Senate's vote title, else the question. {%- endcomment -%}
+{{- include.vote.measure_title | default: include.vote.vote_title | default: include.vote.question -}}

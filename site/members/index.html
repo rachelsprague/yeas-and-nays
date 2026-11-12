@@ -1,0 +1,61 @@
+---
+layout: default
+title: Members of Congress
+nav: members
+---
+{%- assign members = site.data.members | where: "is_current", true | where: "is_voting_member", true -%}
+<main id="main" class="wrap" data-filter-scope>
+  <section class="vote-head">
+    <span class="kicker accent">{{ site.data.meta.congress | ordinal }} Congress</span>
+    <h1 class="vote-h">Members of Congress</h1>
+    <p class="soft">Every current senator and voting representative. Search by name or state.</p>
+  </section>
+
+  <section class="filters" aria-label="Search and filters">
+    <div class="q">
+      <label for="m-q" class="kicker">Name or state</label>
+      <input id="m-q" class="field" type="search" name="q" placeholder="e.g. Massie or Kentucky" data-filter="search" autocomplete="off">
+    </div>
+    <div class="js-only">
+      <span id="m-ch" class="kicker soft">Chamber</span>
+      <div class="tabs" role="group" aria-labelledby="m-ch">
+        <button type="button" data-tab="chamber" data-value="all" aria-pressed="true">All</button>
+        <button type="button" data-tab="chamber" data-value="house" aria-pressed="false">House</button>
+        <button type="button" data-tab="chamber" data-value="senate" aria-pressed="false">Senate</button>
+      </div>
+    </div>
+    <div>
+      <label for="m-state" class="kicker">State</label>
+      <select id="m-state" class="field" data-filter="state">
+        <option value="">All</option>
+        {%- assign states = members | map: "state" | uniq | sort -%}
+        {%- for s in states %}{% assign m0 = members | where: "state", s | first %}<option value="{{ s }}">{{ m0.state_name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="m-party" class="kicker">Party</label>
+      <select id="m-party" class="field" data-filter="party">
+        <option value="">All</option><option value="D">D · Democrat</option><option value="I">I · Independent</option><option value="R">R · Republican</option>
+      </select>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 12px">
+    <p class="small muted nums" data-count data-noun="members" aria-live="polite">{{ members.size }} members</p>
+    <ul class="member-list">
+      {%- for m in members %}
+      <li data-row data-chamber="{{ m.chamber }}" data-state="{{ m.state }}" data-party="{{ m.party }}" data-search="{{ m.name | downcase }} {{ m.state | downcase }} {{ m.state_name | downcase }}">
+        <a href="{{ m.url }}">
+          {% include portrait.html member=m size="sm" %}
+          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+            <span class="kicker accent">{{ m.chamber_name }}</span>
+            <span class="n">{{ m.name }}</span>
+            <span class="d">{{ m.party }} · {{ m.where }}</span>
+          </span>
+        </a>
+      </li>
+      {%- endfor %}
+    </ul>
+    <p class="empty" data-empty hidden>No members match. Try a state name or clear the filters.</p>
+  </section>
+</main>

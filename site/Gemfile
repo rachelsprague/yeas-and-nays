@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.4"
+
+# Default gems no longer bundled with newer Rubies that Jekyll still loads.
+gem "bigdecimal"
+gem "csv"
+gem "logger"

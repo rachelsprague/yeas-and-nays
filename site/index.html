@@ -1,0 +1,68 @@
+---
+layout: default
+large_masthead: true
+nav: votes
+---
+{%- assign meta = site.data.meta -%}
+{%- assign leads = site.data.leads -%}
+{%- assign newest = site.data.votes.first -%}
+<div class="wrap session-line nums">
+  <span>{{ meta.congress | ordinal }} Congress, {{ newest.session | ordinal }} Session</span><span aria-hidden="true">·</span><span>House and Senate</span><span aria-hidden="true">·</span><span>From the official record</span>
+</div>
+<div class="wrap" aria-hidden="true"><div class="rule-ink"></div></div>
+
+<form class="wrap findrow" role="search" action="/members/" method="get">
+  <label for="hb-find">Find your members of Congress</label>
+  <div class="findctl">
+    <input id="hb-find" class="field" type="search" name="q" placeholder="Name or state">
+    <button class="button" type="submit">Search</button>
+  </div>
+</form>
+<div class="wrap" aria-hidden="true"><div class="rule-line"></div></div>
+
+<main id="main" class="wrap home" data-filter-scope>
+  <div class="head-row">
+    <h1 class="kicker" style="font-size: 13px">Latest recorded votes</h1>
+    <div class="tabs js-only" role="group" aria-label="Filter by chamber">
+      <button type="button" data-tab="chamber" data-value="all" aria-pressed="true">All</button>
+      <button type="button" data-tab="chamber" data-value="house" aria-pressed="false">House</button>
+      <button type="button" data-tab="chamber" data-value="senate" aria-pressed="false">Senate</button>
+    </div>
+  </div>
+
+  <div class="front">
+    <article class="lead">
+      {% include lead.html view=leads.all key="all" %}
+      {%- if leads.house %}{% include lead.html view=leads.house key="house" %}{% endif %}
+      {%- if leads.senate %}{% include lead.html view=leads.senate key="senate" %}{% endif %}
+    </article>
+
+    <aside class="side" aria-label="More recent votes">
+      {%- comment -%}
+        TODO(schedule): "Coming up" (scheduled floor votes for the week) goes here,
+        above "More recent votes", once the pipeline ingests the House and Senate
+        floor schedules. Rows: day, time ET, "{Chamber} · Scheduled", measure and
+        official title, expected question, each with data-row data-chamber so the
+        tabs filter it. Note under the list: "From the published House and Senate
+        floor schedules. Times are as announced and often change."
+      {%- endcomment %}
+      <section aria-labelledby="more-h">
+        <h2 id="more-h" class="kicker soft" style="padding-bottom: 8px">More recent votes</h2>
+        <ul class="ruled" data-limit="6">
+          {%- for v in site.data.votes limit: 40 %}
+            {%- capture attrs -%}
+              {%- assign skip = "" -%}
+              {%- if v.vote_id == leads.all.vote.vote_id %}{% assign skip = skip | append: " chamber:all" %}{% endif -%}
+              {%- if v.vote_id == leads.house.vote.vote_id %}{% assign skip = skip | append: " chamber:house" %}{% endif -%}
+              {%- if v.vote_id == leads.senate.vote.vote_id %}{% assign skip = skip | append: " chamber:senate" %}{% endif -%}
+              {%- if skip != "" %} data-skip-when="{{ skip | strip }}"{% endif -%}
+              {%- if forloop.index > 7 or v.vote_id == leads.all.vote.vote_id %} hidden{% endif -%}
+            {%- endcapture -%}
+            {%- include vote_item.html vote=v attrs=attrs %}
+          {%- endfor %}
+        </ul>
+        <a class="more" href="/votes/" style="padding: 14px 0; display: inline-block">All votes →</a>
+      </section>
+    </aside>
+  </div>
+</main>

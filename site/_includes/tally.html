@@ -1,0 +1,17 @@
+{%- comment -%} Box score and proportion bar. include.view: a vote view from yan_data.rb. {%- endcomment -%}
+{%- assign view = include.view -%}
+{%- assign v = view.vote -%}
+<div class="boxscore nums{% if view.tally.size > 4 %} many{% endif %}">
+  {%- for t in view.tally %}
+  <div>
+    <span class="fig">{{ t.count }}</span>
+    <span class="fig-label">{% if t.mark %}<span class="mark {{ t.mark }}" aria-hidden="true"></span>{% endif %}{{ t.label }}</span>
+  </div>
+  {%- endfor %}
+</div>
+{%- unless view.has_other %}
+<div class="bar" role="img" aria-label="{{ view.tally[0].count }} {{ view.words.yes }}, {{ view.tally[1].count }} {{ view.words.no }}, of {{ view.total }} members">
+  <div class="yea" style="width: {{ view.yes_pct }}%"></div>
+  <div class="nay hatch" style="width: {{ view.no_pct }}%"></div>
+</div>
+{%- endunless %}

@@ -1,0 +1,37 @@
+---
+layout: default
+title: All votes
+nav: votes
+---
+<main id="main" class="wrap" data-filter-scope>
+  <section class="vote-head">
+    <span class="kicker accent">{{ site.data.meta.congress | ordinal }} Congress</span>
+    <h1 class="vote-h">All recorded votes</h1>
+    <p class="soft">Every roll call in the House and Senate this Congress, newest first.</p>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px">
+    <div class="head-row">
+      <div class="filters" style="flex: 1 1 420px; grid-template-columns: minmax(0, 1fr)">
+        <div class="q">
+          <label for="v-q" class="kicker">Measure, title or question</label>
+          <input id="v-q" class="field" type="search" placeholder="e.g. H.R. 1013 or cloture" data-filter="text" autocomplete="off">
+        </div>
+      </div>
+      <div class="tabs js-only" role="group" aria-label="Filter by chamber">
+        <button type="button" data-tab="chamber" data-value="all" aria-pressed="true">All</button>
+        <button type="button" data-tab="chamber" data-value="house" aria-pressed="false">House</button>
+        <button type="button" data-tab="chamber" data-value="senate" aria-pressed="false">Senate</button>
+      </div>
+    </div>
+    <p class="small muted nums" data-count data-noun="votes" aria-live="polite">{{ site.data.votes.size }} votes</p>
+    <ul class="ruled">
+      {%- for v in site.data.votes %}
+        {%- capture text %}{{ v.measure_label }} {{ v.measure_title }} {{ v.vote_title }} {{ v.question }} roll {{ v.roll_number }}{% endcapture -%}
+        {%- capture attrs %} data-text="{{ text | downcase | escape }}"{% endcapture -%}
+        {%- include vote_item.html vote=v attrs=attrs %}
+      {%- endfor %}
+    </ul>
+    <p class="empty" data-empty hidden>No votes match.</p>
+  </section>
+</main>

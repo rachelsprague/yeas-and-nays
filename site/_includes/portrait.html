@@ -1,0 +1,10 @@
+{%- comment -%}
+  Official portrait from the unitedstates/images project, keyed by bioguide ID.
+  The initials sit underneath and show through when there is no portrait yet
+  (the image removes itself if it fails to load).
+{%- endcomment -%}
+{%- assign m = include.member -%}
+<span class="portrait{% if include.size %} {{ include.size }}{% endif %}">
+  <span class="initials" aria-hidden="true">{{ m.initials }}</span>
+  <img src="https://unitedstates.github.io/images/congress/225x275/{{ m.bioguide_id }}.jpg" alt="{% if include.alt %}Official portrait of {{ m.name }}{% endif %}" loading="lazy" onerror="this.remove()">
+</span>
