@@ -1,8 +1,8 @@
 {%- assign b = include.bill -%}
 <li class="vrow">
-  <span class="kicker accent nums">{{ b.measure_label }}{% if b.introduced_date %} · Introduced {{ b.introduced_date | ap_date }}{% endif %}</span>
+  <span class="kicker muted nums">{{ b.measure_label }}{% if b.introduced_date %} · Introduced {{ b.introduced_date | ap_date }}{% endif %}</span>
   <span class="stack">
-    <a class="t" href="{{ b.congress_gov_url }}" style="text-decoration: none">{{ b.title }}</a>
+    <a class="t headline-link" href="{{ b.congress_gov_url }}">{{ b.title }}</a>
     {%- if b.latest_action_text %}
     <span class="q nums">Latest action{% if b.latest_action_date %}, {{ b.latest_action_date | ap_date }}{% endif %}: {{ b.latest_action_text }}</span>
     {%- endif %}

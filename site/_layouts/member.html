@@ -7,7 +7,7 @@ layout: default
   <section class="who">
     {% include portrait.html member=m alt=true %}
     <div>
-      <span class="kicker accent">{{ m.chamber_name }}</span>
+      <span class="kicker muted">{{ m.chamber_name }}</span>
       <h1 class="name-h">{{ m.name }}</h1>
       <p class="meta">{{ m.party }} · {{ m.party_name }} · {{ m.where }}</p>
       {%- if m.served_from %}
@@ -79,8 +79,8 @@ layout: default
       {%- for p in page.recent %}
       {%- assign v = p.vote -%}
       <li data-row data-view="{% if p.recent %}recent{% endif %}{% if p.against %} against{% endif %}">
-        <a class="vrow" href="{{ v.url }}">
-          <span class="kicker accent nums">{{ v.vote_date | ap_date }} · {{ v.chamber_name }} roll {{ v.roll_number }}</span>
+        <a class="vrow headline-link" href="{{ v.url }}">
+          <span class="kicker muted nums">{{ v.vote_date | ap_date }} · {{ v.chamber_name }} roll {{ v.roll_number }}</span>
           <span class="stack">
             <span class="q">{{ v.question }}{% if v.measure_label %}{% unless v.question contains v.measure_label %} · {{ v.measure_label }}{% endunless %}{% endif %}</span>
             <span class="t">{% include vote_title.html vote=v %}</span>

@@ -81,7 +81,7 @@ layout: default
     <ul class="ruled thin">
       {%- for a in page.against %}
       <li>
-        <a href="{{ a.url }}">{{ a.name }} <span>{{ a.code }}</span></a>
+        <a class="headline-link" href="{{ a.url }}">{{ a.name }} <span>{{ a.code }}</span></a>
         <span class="small soft nums">Voted <strong>{{ a.position }}</strong> · {{ a.caucus }} majority voted {{ a.majority }}</span>
       </li>
       {%- endfor %}
@@ -125,7 +125,7 @@ layout: default
         <thead><tr><th scope="col">Member</th><th scope="col">Party</th><th scope="col">{% if v.chamber == "house" %}District{% else %}State{% endif %}</th><th scope="col">Vote</th></tr></thead>
         <tbody>
           {%- for r in page.rows %}
-          <tr data-row data-name="{{ r.name | downcase }}" data-party="{{ r.party }}" data-state="{{ r.state }}" data-position="{{ r.position }}"><td><a href="/members/{{ r.id }}/">{{ r.name }}</a></td><td class="party">{{ r.party }}</td><td class="nums">{{ r.seat }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position }}</span></td></tr>
+          <tr data-row data-name="{{ r.name | downcase }}" data-party="{{ r.party }}" data-state="{{ r.state }}" data-position="{{ r.position }}"><td><a class="headline-link" href="/members/{{ r.id }}/">{{ r.name }}</a></td><td class="party">{{ r.party }}</td><td class="nums">{{ r.seat }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position }}</span></td></tr>
           {%- endfor %}
         </tbody>
       </table>

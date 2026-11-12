@@ -14,9 +14,29 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-a { color: var(--ink); }
-a:hover { color: var(--accent); }
-a.link, .prose a { color: var(--accent); }
+/* Links: ink text with an aubergine underline. Never purple text, so links
+   don't read as already visited, and visited links look the same. */
+a, a:visited {
+  color: var(--ink);
+  text-decoration-line: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
+}
+a:hover { text-decoration-thickness: 2.5px; }
+
+/* Headline-style links (vote titles, member names): ink, no underline at
+   rest, underline on hover. On a block link, only its title (.t / .n) is
+   underlined. */
+.headline-link, .headline-link:visited { color: var(--ink); text-decoration-line: none; }
+.headline-link:hover { text-decoration-line: underline; }
+.headline-link:has(.t, .n):hover { text-decoration-line: none; }
+.headline-link:hover :is(.t, .n) {
+  text-decoration-line: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 0.2em;
+}
 
 :is(a, button, input, select, summary):focus-visible {
   outline: 2px solid var(--accent);
@@ -37,7 +57,6 @@ h1, h2, h3, p, ul, ol { margin: 0; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.kicker.accent { color: var(--accent); }
 .soft { color: var(--ink-soft); }
 .muted { color: var(--ink-muted); }
 .small { font-size: 14px; line-height: 20px; }
@@ -90,7 +109,7 @@ select.field { padding: 0 8px; }
   background: var(--ink); color: var(--surface);
   border: 0; border-radius: 0; cursor: pointer; text-decoration: none;
 }
-.button:hover { color: var(--surface); background: var(--accent); }
+.button:hover { color: var(--surface); background: var(--ink-soft); }
 
 .tabs { display: flex; gap: 18px; }
 .tabs button {
@@ -120,7 +139,7 @@ select.field { padding: 0 8px; }
 main.wrap { display: flex; flex-direction: column; gap: 36px; padding-top: 16px; padding-bottom: 48px; }
 main.home { gap: 20px; padding-top: 20px; }
 
-.back { font-size: 14px; line-height: 20px; padding: 12px 0; align-self: flex-start; color: var(--accent); margin-bottom: -24px; }
+.back { font-size: 14px; line-height: 20px; padding: 12px 0; align-self: flex-start; margin-bottom: -24px; }
 .section { display: flex; flex-direction: column; gap: 12px; border-top: 1.5px solid var(--ink); padding-top: 12px; }
 .section-h { font-family: var(--font-display); font-size: 28px; line-height: 34px; font-weight: 600; }
 .section-h.sm { font-size: 24px; line-height: 30px; }
@@ -152,7 +171,6 @@ main.home { gap: 20px; padding-top: 20px; }
   letter-spacing: -0.015em; text-wrap: balance;
   font-size: 30px; line-height: 35px;
 }
-.lead-h a { text-decoration: none; }
 
 /* ---- Tally (box score) ------------------------------------------------- */
 
@@ -192,7 +210,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .roll td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; line-height: 20px; vertical-align: middle; }
 .roll .r { text-align: right; }
 .roll :is(th, td):last-child { padding-right: 0; }
-.roll td a { font-weight: 600; color: var(--accent); }
+.roll td a { font-weight: 600; }
 .roll tbody th { white-space: nowrap; text-transform: none; letter-spacing: 0; font-size: 15px; line-height: 20px; color: var(--ink); padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); }
 .party { font-weight: 600; }
 
@@ -208,7 +226,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .ruled.thin { border-top: 1px solid var(--line); }
 
 .against li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; padding: 12px 0; }
-.against li a { font-family: var(--font-display); font-weight: 600; font-size: 19px; color: var(--accent); padding: 4px 0; }
+.against li a { font-family: var(--font-display); font-weight: 600; font-size: 19px; padding: 4px 0; }
 .against li a span { font-family: var(--font-sans); font-weight: 400; font-size: 15px; color: var(--ink-soft); }
 .against strong { color: var(--ink); }
 
@@ -222,7 +240,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .crs-text { max-width: 720px; display: flex; flex-direction: column; gap: 12px; font-size: 17px; line-height: 27px; }
 .crs-text :is(p, ul, ol) { margin: 0; }
 .crs-text :is(ul, ol) { padding-left: 22px; }
-.crs summary { cursor: pointer; font-weight: 600; color: var(--accent); min-height: 44px; display: flex; align-items: center; }
+.crs summary { cursor: pointer; font-weight: 600; color: var(--ink); min-height: 44px; display: flex; align-items: center; }
 .crs[open] summary { margin-bottom: 8px; }
 
 /* ---- Home -------------------------------------------------------------- */
@@ -231,7 +249,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .front { display: grid; grid-template-columns: minmax(0, 1fr); }
 .lead { display: flex; flex-direction: column; gap: 14px; }
 .side { display: flex; flex-direction: column; gap: 28px; border-top: 1.5px solid var(--ink); margin-top: 28px; padding-top: 4px; }
-.more { font-weight: 600; font-size: 15px; color: var(--accent); padding: 10px 0; align-self: flex-start; }
+.more { font-weight: 600; font-size: 15px; padding: 10px 0; align-self: flex-start; }
 
 /* ---- Members ----------------------------------------------------------- */
 
@@ -285,7 +303,6 @@ table.roll { border-collapse: collapse; width: 100%; }
 
 footer.wrap { padding-bottom: 28px; }
 .footline { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; padding-top: 14px; font-size: 13px; line-height: 20px; color: var(--ink-muted); text-align: center; }
-.footline a { color: var(--accent); }
 .footline .social { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 20px; }
 .footline .social:hover { color: var(--ink); }
 

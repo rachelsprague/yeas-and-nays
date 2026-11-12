@@ -1,8 +1,8 @@
 {%- comment -%} One vote in a ruled list. include.vote, include.attrs (extra attributes on the li). {%- endcomment -%}
 {%- assign v = include.vote -%}
 <li class="vote-item" data-row data-chamber="{{ v.chamber }}"{{ include.attrs }}>
-  <a href="{{ v.url }}">
-    <span class="kicker accent nums">{{ v.chamber_name }} · Roll {{ v.roll_number }} · {{ v.vote_date | ap_date }}</span>
+  <a class="headline-link" href="{{ v.url }}">
+    <span class="kicker muted nums">{{ v.chamber_name }} · Roll {{ v.roll_number }} · {{ v.vote_date | ap_date }}</span>
     <span class="small soft">{{ v.question }}{% if v.measure_label %}{% unless v.question contains v.measure_label %} · {{ v.measure_label }}{% endunless %}{% endif %}</span>
     <span class="t">{% include vote_title.html vote=v %}</span>
     <span class="small soft nums">{{ v.result_label }}{% if v.yea_count %} · {{ v.yea_count }}–{{ v.nay_count }}{% endif %}</span>

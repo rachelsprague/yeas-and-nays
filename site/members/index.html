@@ -6,7 +6,7 @@ nav: members
 {%- assign members = site.data.members | where: "is_current", true | where: "is_voting_member", true -%}
 <main id="main" class="wrap" data-filter-scope>
   <section class="vote-head">
-    <span class="kicker accent">{{ site.data.meta.congress | ordinal }} Congress</span>
+    <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
     <h1 class="vote-h">Members of Congress</h1>
     <p class="soft">Every current senator and voting representative. Search by name or state.</p>
   </section>
@@ -45,10 +45,10 @@ nav: members
     <ul class="member-list">
       {%- for m in members %}
       <li data-row data-chamber="{{ m.chamber }}" data-state="{{ m.state }}" data-party="{{ m.party }}" data-search="{{ m.name | downcase }} {{ m.state | downcase }} {{ m.state_name | downcase }}">
-        <a href="{{ m.url }}">
+        <a class="headline-link" href="{{ m.url }}">
           {% include portrait.html member=m size="sm" %}
           <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
-            <span class="kicker accent">{{ m.chamber_name }}</span>
+            <span class="kicker muted">{{ m.chamber_name }}</span>
             <span class="n">{{ m.name }}</span>
             <span class="d">{{ m.party }} · {{ m.where }}</span>
           </span>
