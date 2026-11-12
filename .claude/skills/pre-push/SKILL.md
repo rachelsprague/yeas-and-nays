@@ -88,6 +88,12 @@ Read the agents' findings critically before relaying them: check any you
 doubt against the code, and say which you confirmed. Fix nothing without
 the user's go-ahead.
 
+Nothing gets lost: every finding, at any severity, is either fixed before
+the push, dropped because checking showed it was wrong, or added to
+`BOARD.md` as a one-line item (Later, or Next if it matters soon). Do this
+without being asked, and end the report by saying which findings went
+where.
+
 ## 4. Record the review
 
 Only when there are no unresolved high-severity findings (fixed, or the
