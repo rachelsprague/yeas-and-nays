@@ -123,3 +123,28 @@ unit_tests:
         - {bioguide_id: A2, roll_calls: 1, votes_cast: 0, missed_votes: 1, party_majority_votes: 0,
            with_party_majority_votes: 0, against_party_majority_votes: 0,
            missed_votes_pct: 100.0, with_party_majority_pct: null}
+
+  - name: vote_summaries_use_the_version_in_effect_on_the_vote_date
+    model: vote_summaries
+    given:
+      - input: ref('int_votes_unioned')
+        rows:
+          # Voted after the bill was reported, before it passed: the reported version
+          - {vote_id: v1, vote_date: "2025-06-01", congress: 119, bill_type: hr, bill_number: "1"}
+          # Voted before any summary existed: use the earliest later one
+          - {vote_id: v2, vote_date: "2025-01-05", congress: 119, bill_type: hr, bill_number: "2"}
+          # No summary at all: no row
+          - {vote_id: v3, vote_date: "2025-06-10", congress: 119, bill_type: hres, bill_number: "3"}
+          # Not a bill
+          - {vote_id: v4, vote_date: "2025-06-10", congress: 119, bill_type: null, bill_number: null}
+      - input: ref('stg_congress_gov__bill_summaries')
+        rows:
+          - {congress: 119, bill_type: hr, bill_number: "1", action_date: "2025-01-03", action_desc: Introduced in House}
+          - {congress: 119, bill_type: hr, bill_number: "1", action_date: "2025-05-01", action_desc: Reported to House}
+          - {congress: 119, bill_type: hr, bill_number: "1", action_date: "2025-06-10", action_desc: Passed House}
+          - {congress: 119, bill_type: hr, bill_number: "2", action_date: "2025-02-01", action_desc: Introduced in House}
+          - {congress: 119, bill_type: hr, bill_number: "2", action_date: "2025-03-01", action_desc: Passed House}
+    expect:
+      rows:
+        - {vote_id: v1, action_desc: Reported to House}
+        - {vote_id: v2, action_desc: Introduced in House}

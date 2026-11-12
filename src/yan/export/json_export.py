@@ -5,7 +5,8 @@
     data/out/votes.json           one entry per vote (metadata + tallies), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
-                                  and every member's position as recorded
+                                  every member's position as recorded, and the CRS
+                                  summary of the measure, when there is one
 
 Output is a pure function of the warehouse: keys are sorted, each list
 element sits on its own line, and nothing time-of-run is written. A re-run
@@ -22,6 +23,7 @@ import duckdb
 
 from yan.bot.rules import measure_label
 from yan.config import CONGRESS, OUT_DIR, WAREHOUSE_PATH
+from yan.export import summary_html
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +83,13 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             from positions
             order by vote_id, member_label, bioguide_id
         """)
+        summaries = {
+            row.pop("vote_id"): row
+            for row in _rows(con, """
+                select vote_id, version_code, action_date, action_desc, summary_html
+                from vote_summaries
+            """)
+        }
     finally:
         con.close()
 
@@ -97,7 +106,8 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     for vote in votes:
         name = f"{vote['vote_id']}.json"
         expected.add(name)
-        changed += write_if_changed(vote_dir / name, dumps(vote_document(vote, by_vote[vote["vote_id"]])))
+        doc = vote_document(vote, by_vote[vote["vote_id"]], summaries.get(vote["vote_id"]))
+        changed += write_if_changed(vote_dir / name, dumps(doc))
 
     # Remove files for votes no longer in the warehouse.
     for path in vote_dir.glob("*.json"):
@@ -114,7 +124,19 @@ def with_measure_label(vote: dict) -> dict:
     return {**vote, "measure_label": measure_label(vote)}
 
 
-def vote_document(vote: dict, positions: list[dict]) -> dict:
+def summary_document(summary: dict | None) -> dict | None:
+    """The CRS summary for a vote's measure, its HTML reduced to formatting tags."""
+    if not summary or not (html := summary_html.clean(summary["summary_html"])):
+        return None
+    return {
+        "html": html,
+        "version": summary["action_desc"],
+        "version_date": summary["action_date"],
+        "version_code": summary["version_code"],
+    }
+
+
+def vote_document(vote: dict, positions: list[dict], summary: dict | None = None) -> dict:
     party_totals = defaultdict(lambda: defaultdict(int))
     caucus_majority = {}
     against = []
@@ -133,6 +155,7 @@ def vote_document(vote: dict, positions: list[dict]) -> dict:
         "caucus_majority_position": caucus_majority,
         "against_party_majority": against,
         "positions": {p["bioguide_id"]: p["position_raw"] for p in positions},
+        "summary": summary_document(summary),
     }
 
 

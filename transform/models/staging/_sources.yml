@@ -16,6 +16,10 @@ sources:
         description: One row per Senate roll call, from senate.gov LIS XML.
       - name: senate_positions
         description: One row per senator per Senate roll call.
+      - name: bill_summaries
+        description: >
+          One row per Congressional Research Service summary (one per bill version), from the
+          Congress.gov API, for bills and resolutions with a recorded vote.
       - name: legislators
         description: One row per person in unitedstates/congress-legislators (current + historical).
       - name: legislator_terms

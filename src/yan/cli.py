@@ -1,4 +1,4 @@
-"""Command-line entry point: `yan ingest | stage | export`."""
+"""Command-line entry point: `yan ingest | stage | export | bot`."""
 
 import argparse
 import logging
@@ -13,7 +13,7 @@ def main(argv: list[str] | None = None) -> None:
     ingest = sub.add_parser("ingest", help="download raw source files into data/raw/")
     ingest.add_argument(
         "--source",
-        choices=["legislators", "house", "senate"],
+        choices=["legislators", "house", "senate", "congress_gov"],
         action="append",
         help="limit to one source (repeatable); default is all",
     )
@@ -35,9 +35,10 @@ def main(argv: list[str] | None = None) -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
 
     if args.command == "ingest":
-        from yan.ingest import house, legislators, senate
+        from yan.ingest import congress_gov, house, legislators, senate
 
-        modules = {"legislators": legislators, "house": house, "senate": senate}
+        # congress_gov reads the votes the House and Senate steps download, so it runs last.
+        modules = {"legislators": legislators, "house": house, "senate": senate, "congress_gov": congress_gov}
         with Client() as client:
             for name in args.source or modules:
                 modules[name].ingest(client)

@@ -142,6 +142,29 @@ models:
       - name: against_party_majority_count
         description: Members who voted yes/no opposite to their caucus's majority.
 
+  - name: vote_summaries
+    description: >
+      For each vote on a bill or resolution with a Congressional Research Service summary,
+      the summary of the version in effect on the vote date (else the earliest later one).
+      Shown verbatim with its version and date.
+    columns:
+      - name: vote_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('votes')
+                field: vote_id
+      - name: action_desc
+        description: The bill version summarized, as Congress.gov labels it (e.g. "Introduced in House").
+        data_tests: [not_null]
+      - name: action_date
+        data_tests: [not_null]
+      - name: summary_html
+        description: CRS summary as published (HTML). Sanitized at export.
+        data_tests: [not_null]
+
   - name: positions
     description: One row per member per vote.
     columns:

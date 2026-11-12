@@ -26,20 +26,20 @@ class Client:
         self._delay = delay
         self._last_request = 0.0
 
-    def get(self, url: str) -> httpx.Response:
+    def get(self, url: str, headers: dict | None = None) -> httpx.Response:
         for backoff in [*RETRY_BACKOFF_SECONDS, None]:
-            resp = self._get_once(url)
+            resp = self._get_once(url, headers)
             if resp.status_code not in RETRY_STATUSES or backoff is None:
                 return resp
             log.warning("HTTP %d for %s; retrying in %ds", resp.status_code, url, backoff)
             time.sleep(backoff)
 
-    def _get_once(self, url: str) -> httpx.Response:
+    def _get_once(self, url: str, headers: dict | None = None) -> httpx.Response:
         wait = self._delay - (time.monotonic() - self._last_request)
         if wait > 0:
             time.sleep(wait)
         try:
-            return self._client.get(url)
+            return self._client.get(url, headers=headers)
         finally:
             self._last_request = time.monotonic()
 

@@ -1,7 +1,7 @@
 import datetime as dt
 import json
 
-from yan.export.json_export import dumps, meta_document, vote_document, with_measure_label
+from yan.export.json_export import dumps, meta_document, summary_document, vote_document, with_measure_label
 
 
 def test_dumps_is_valid_sorted_and_one_list_item_per_line():
@@ -28,6 +28,7 @@ def test_vote_document_lists_only_members_against_majority():
     assert doc["party_totals"] == {"R": {"yes": 1, "no": 1}, "I": {"not_voting": 1}}
     assert doc["caucus_majority_position"] == {"R": "yes", "D": "no"}
     assert doc["positions"] == {"A1": "Yea", "A2": "Nay", "A3": "Not Voting"}
+    assert doc["summary"] is None
 
 
 def test_meta_tracks_latest_roll_per_chamber_and_session():
@@ -46,3 +47,13 @@ def test_votes_carry_measure_number_in_citation_form():
     assert with_measure_label({"chamber": "house", "measure_number": "H RES 1655"})["measure_label"] == "H.Res. 1655"
     assert with_measure_label({"chamber": "senate", "measure_number": "PN1129"})["measure_label"] == "PN1129"
     assert with_measure_label({"chamber": "house", "measure_number": None})["measure_label"] is None
+
+
+def test_summary_carries_the_version_it_describes():
+    summary = {"summary_html": "<p>This bill&nbsp;allows X.</p>", "action_desc": "Introduced in House",
+               "action_date": dt.date(2025, 2, 5), "version_code": "00"}
+    assert summary_document(summary) == {
+        "html": "<p>This bill allows X.</p>", "version": "Introduced in House",
+        "version_date": dt.date(2025, 2, 5), "version_code": "00",
+    }
+    assert summary_document(None) is None

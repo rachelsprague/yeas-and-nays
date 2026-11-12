@@ -7,7 +7,7 @@ import pyarrow.parquet as pq
 
 from yan.config import RAW_DIR, STAGED_DIR
 from yan.measures import parse_measure
-from yan.stage import house, legislators, senate
+from yan.stage import congress_gov, house, legislators, senate
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +37,10 @@ STRING_COLUMNS = {
     ],
     "legislator_terms": [
         "bioguide_id", "term_type", "term_start", "term_end", "state", "party", "caucus",
+    ],
+    "bill_summaries": [
+        "source_file", "congress", "bill_type", "bill_number", "version_code", "action_date",
+        "action_desc", "update_date", "summary_html",
     ],
     "legislator_party_affiliations": [
         "bioguide_id", "term_start", "affiliation_start", "affiliation_end", "party", "caucus",
@@ -73,6 +77,8 @@ def run() -> None:
     s_votes, s_positions = senate.parse_dir(RAW_DIR / "senate")
     write("senate_votes", with_bill(s_votes, "document_name"))
     write("senate_positions", s_positions)
+
+    write("bill_summaries", congress_gov.parse_dir(RAW_DIR / "congress_gov"))
 
     people, terms, affiliations = legislators.parse_dir(RAW_DIR / "legislators")
     write("legislators", people)

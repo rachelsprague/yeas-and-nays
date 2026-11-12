@@ -38,7 +38,11 @@ jobs:
           key: raw-${{ github.run_id }}
           restore-keys: raw-
 
+      # The Congress.gov key (CRS bill summaries) is passed to this step only,
+      # and sent only as a request header.
       - name: Ingest
+        env:
+          CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
         run: uv run yan ingest
 
       - name: Stage
