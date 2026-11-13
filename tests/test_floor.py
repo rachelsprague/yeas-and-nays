@@ -110,6 +110,23 @@ def test_an_error_on_this_weeks_house_file_still_fetches_next_week(monkeypatch, 
     assert "house floor schedule for week of 2026-11-09 not updated" in caplog.text
 
 
+def test_a_bad_senate_day_still_fetches_the_newer_days(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path)
+    day = (FIXTURES / "senate_floor_2026-11-11.xml").read_bytes()
+    client = _client({
+        ingest.SENATE_DAYS_URL: httpx.Response(200, content=SESSION_DAYS),
+        ingest.SENATE_DAY_URL.format(day=dt.date(2026, 11, 11)):
+            httpx.Response(200, content=b"<daily_senate_floor_activity><congress>"),
+        ingest.SENATE_DAY_URL.format(day=dt.date(2026, 11, 12)):
+            httpx.Response(200, content=day.replace(b"2026-11-11", b"2026-11-12")),
+    })
+
+    ingest.ingest_senate(client, dt.date(2026, 11, 12))
+
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["2026-11-12.xml", "session_days.xml"]
+    assert "senate floor activity for 2026-11-11 not updated" in caplog.text
+
+
 def test_a_404_is_not_published_rather_than_an_error(monkeypatch, tmp_path, caplog):
     monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path)
     client = _client({ingest.HOUSE_URL.format(week=dt.date(2026, 11, 9)): httpx.Response(404)})
@@ -152,7 +169,7 @@ def test_a_malformed_or_wrong_congress_file_is_not_saved(monkeypatch, tmp_path, 
     assert not (tmp_path / "house").exists() or not list((tmp_path / "house").iterdir())
     assert sorted(p.name for p in (tmp_path / "senate").iterdir()) == ["session_days.xml"]
     assert "not from the 119th Congress" in caplog.text
-    assert "senate floor schedule not updated" in caplog.text
+    assert "senate floor activity for 2026-11-11 not updated" in caplog.text
 
 
 def test_senate_files_from_another_congress_are_not_saved(monkeypatch, tmp_path, caplog):

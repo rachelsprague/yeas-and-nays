@@ -22,8 +22,10 @@
 
 with house_items as (
     select * from {{ ref('stg_floor__house_items') }}
-    -- A malformed week (null after try_cast) is dropped rather than shown undated.
-    where removed_at is null and week_date is not null
+    -- Removal is checked on the recorded value: an unparseable remove date
+    -- (null after try_cast) still means removed. A malformed week is dropped
+    -- rather than shown undated.
+    where removed_at_recorded is null and week_date is not null
 ),
 
 votes as (

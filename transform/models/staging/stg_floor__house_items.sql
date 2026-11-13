@@ -13,5 +13,6 @@ select
     floor_text as title,
     try_cast(add_date as timestamp) as added_at,
     try_cast(remove_date as timestamp) as removed_at,
+    remove_date as removed_at_recorded,
     source_file
 from {{ source('staged', 'house_floor_items') }}

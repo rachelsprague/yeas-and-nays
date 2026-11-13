@@ -238,11 +238,13 @@ unit_tests:
     given:
       - input: ref('stg_floor__house_items')
         rows:
-          - {congress: 119, week_date: 2026-11-09, item_id: "1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at: null}
-          - {congress: 119, week_date: 2026-11-09, item_id: "2", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: B, removed_at: "2026-11-10 09:00:00"}
-          - {congress: 119, week_date: 2026-11-09, item_id: "3", measure_number: H.R. 7, bill_type: hr, bill_number: "7", title: C, removed_at: null}
-          - {congress: 119, week_date: 2026-11-09, item_id: "4", measure_number: H.R. 8, bill_type: hr, bill_number: "8", title: D, removed_at: null}
-          - {congress: 119, week_date: 2026-11-09, item_id: "5", measure_number: H.R. 11, bill_type: hr, bill_number: "11", title: E, removed_at: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "2", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: B, removed_at_recorded: "2026-11-10T09:00:00.000"}
+          - {congress: 119, week_date: 2026-11-09, item_id: "3", measure_number: H.R. 7, bill_type: hr, bill_number: "7", title: C, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "4", measure_number: H.R. 8, bill_type: hr, bill_number: "8", title: D, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "5", measure_number: H.R. 11, bill_type: hr, bill_number: "11", title: E, removed_at_recorded: null}
+          # A remove date that doesn't parse still means removed
+          - {congress: 119, week_date: 2026-11-09, item_id: "6", measure_number: H.R. 12, bill_type: hr, bill_number: "12", title: F, removed_at_recorded: "garbled"}
       - input: ref('int_senate_cloture_events')
         rows:
           # PN1: filed, then voted per the floor record -> not listed

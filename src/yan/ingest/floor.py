@@ -113,18 +113,27 @@ def ingest_senate(client: Client, today: dt.date) -> None:
         path = senate_dir() / f"{day:%Y-%m-%d}.xml"
         if path.exists() and day not in refresh:
             continue
-        day_resp = client.get(SENATE_DAY_URL.format(day=day))
-        # A day not yet posted answers 200 with senate.gov's HTML 404 page.
-        if day_resp.status_code in (200, 404) and b"<daily_senate_floor_activity" not in day_resp.content:
-            log.info("senate floor activity for %s: not published", day)
-            continue
-        day_resp.raise_for_status()
-        # Parsing raises on a malformed file before it's saved.
-        if ET.fromstring(day_resp.content).findtext("congress") != str(CONGRESS):
-            raise ValueError(f"Senate floor activity for {day} is not from the {CONGRESS}th Congress")
-        write_atomic(path, day_resp.content)
-        saved += 1
+        # Each day on its own, so one bad file doesn't skip the newer days after it.
+        try:
+            saved += ingest_senate_day(client, day, path)
+        except (httpx.HTTPError, ValueError, ET.ParseError) as e:
+            log.warning("senate floor activity for %s not updated: %s", day, e)
     log.info("senate floor activity: %d recent session days, %d fetched", len(days), saved)
+
+
+def ingest_senate_day(client: Client, day: dt.date, path) -> bool:
+    """Save one day's floor activity; False when it isn't posted yet."""
+    resp = client.get(SENATE_DAY_URL.format(day=day))
+    # A day not yet posted answers 200 with senate.gov's HTML 404 page.
+    if resp.status_code in (200, 404) and b"<daily_senate_floor_activity" not in resp.content:
+        log.info("senate floor activity for %s: not published", day)
+        return False
+    resp.raise_for_status()
+    # Parsing raises on a malformed file before it's saved.
+    if ET.fromstring(resp.content).findtext("congress") != str(CONGRESS):
+        raise ValueError(f"Senate floor activity for {day} is not from the {CONGRESS}th Congress")
+    write_atomic(path, resp.content)
+    return True
 
 
 def ingest(client: Client, today: dt.date | None = None) -> None:
