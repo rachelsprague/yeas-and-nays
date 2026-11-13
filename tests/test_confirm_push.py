@@ -127,6 +127,24 @@ def test_push_denied_without_git_hook_installed(repo):
     assert decision == "deny" and "make hooks" in reason
 
 
+def test_push_allowed_with_absolute_hooks_path_to_this_checkout(repo):
+    path, head = repo
+    record(path, head)
+    git(path, "config", "core.hooksPath", str(path / ".githooks"))  # as the worktree tool writes it
+    assert confirm_push.decide("git push", str(path))[0] == "ask"
+
+
+def test_push_denied_with_hooks_path_elsewhere(repo, tmp_path_factory):
+    path, head = repo
+    record(path, head)
+    other = tmp_path_factory.mktemp("other")
+    (other / "pre-push").write_text("#!/bin/sh\nexit 0\n")
+    (other / "pre-push").chmod(0o755)
+    git(path, "config", "core.hooksPath", str(other))
+    decision, reason = confirm_push.decide("git push", str(path))
+    assert decision == "deny" and "make hooks" in reason
+
+
 def test_push_denied_when_git_hook_file_missing(repo):
     path, head = repo
     record(path, head)
