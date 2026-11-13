@@ -7,7 +7,7 @@ import pyarrow.parquet as pq
 
 from yan.config import RAW_DIR, STAGED_DIR
 from yan.measures import parse_measure
-from yan.stage import congress_gov, house, legislators, senate
+from yan.stage import congress_gov, floor, house, legislators, senate
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +59,17 @@ STRING_COLUMNS = {
     "legislator_party_affiliations": [
         "bioguide_id", "term_start", "affiliation_start", "affiliation_end", "party", "caucus",
     ],
+    "house_floor_items": [
+        "source_file", "congress", "week_date", "category", "category_order", "item_id", "item_order",
+        "legis_num", "floor_text", "add_date", "remove_date", "bill_type", "bill_number",
+    ],
+    "senate_floor_actions": [
+        "source_file", "activity_date", "docnum", "document_prefix", "document_num", "amends",
+        "sponsor_name", "document_title", "status_order", "status_text", "bill_type", "bill_number",
+    ],
+    "senate_session_days": [
+        "source_file", "legislative_day", "convene_time", "adjourn_time", "next_convene_time",
+    ],
 }
 SCHEMAS = {name: pa.schema([(c, pa.string()) for c in cols]) for name, cols in STRING_COLUMNS.items()}
 SCHEMAS["legislator_terms"] = SCHEMAS["legislator_terms"].append(pa.field("district", pa.int64()))
@@ -99,6 +110,11 @@ def run() -> None:
     cosponsored, cosponsored_lists = congress_gov.parse_cosponsored_dir(RAW_DIR / "congress_gov")
     write("cosponsored_bills", cosponsored)
     write("cosponsored_lists", cosponsored_lists)
+
+    house_floor, senate_floor, session_days = floor.parse_dir(RAW_DIR / "floor")
+    write("house_floor_items", with_bill(house_floor, "legis_num"))
+    write("senate_floor_actions", with_bill(senate_floor, "docnum"))
+    write("senate_session_days", session_days)
 
     people, terms, affiliations = legislators.parse_dir(RAW_DIR / "legislators")
     write("legislators", people)

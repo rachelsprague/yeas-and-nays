@@ -23,3 +23,11 @@ models:
       +materialized: view
     marts:
       +materialized: table
+
+data_tests:
+  yeas_and_nays:
+    marts:
+      # The floor schedule is secondary: its data problems warn rather than
+      # stop the run before votes are exported and posted.
+      floor:
+        +severity: warn

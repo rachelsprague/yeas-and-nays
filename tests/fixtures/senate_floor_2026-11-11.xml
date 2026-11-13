@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><daily_senate_floor_activity><congress>119</congress><session>2</session><title>Today's Senate Floor Activity</title><date>Wednesday, November 11, 2026</date><date_iso_8601>2026-11-11</date_iso_8601><intro_text>The President pro tempore called the Senate to order at 12 
+noon, the Chaplain offered a prayer, and the President pro tempore led 
+the Senate in reciting the Pledge of Allegiance to the Flag of the United
+States of America.</intro_text><section type="journal">
+<section_title>The Journal</section_title>
+<content>Pursuant to the order of yesterday, the Journal of the 
+proceedings of the Senate was deemed approved to date. </content>
+
+</section><section type="procedures_dispensed_with">
+<section_title>Certain Procedures Dispensed With</section_title>
+<content>Pursuant to the order of yesterday,
+the morning hour being deemed expired, and the times for the recognition 
+of the two leaders being reserved.</content>
+</section><section type="morning_business">
+<section_title>Transaction of Morning Business</section_title>
+<content>The following transactions of morning business occurred on today
+.</content>
+</section><section type="legislative_business">
+<section_title>Legislative Business (Wednesday, November 
+11)</section_title>
+<document>
+<docnum> H.R. 2347</docnum> 
+<document_prefix>HR</document_prefix> 
+<document_num>2347</document_num> 
+<sponsor_name>Rep. Smucker</sponsor_name> 
+<document_title><![CDATA[A bill to amend the Internal Revenue Code of 1986 
+to exclude from gross income any damages, other than punitive damages, 
+received on account of any sexual acts or sexual contact
+.]]></document_title> 
+<document_status_text> 
+Considered by Senate.
+</document_status_text>
+<document_status_text> 
+Cloture motion on the measure presented in Senate.
+</document_status_text>
+
+<amendment>
+<document type="amendment_to_docnum">
+<docnum> S.Amdt. 6883</docnum> 
+<document_prefix>SA</document_prefix> 
+<document_num>6883</document_num> 
+<sponsor_name>Sen. Capito</sponsor_name> 
+<document_title><![CDATA[In the nature of a substitute.]]></document_title>
+<amendment_docnum>  Amendment to H.R. 2347</amendment_docnum>
+
+<amendment_status_text>
+Considered by Senate.
+</amendment_status_text>
+<amendment_status_text>
+Cloture motion on amendment SA 6883 presented in Senate.
+</amendment_status_text>
+</document>
+<document type="amendment_to_docnum">
+<docnum> S.Amdt. 6884</docnum> 
+<document_prefix>SA</document_prefix> 
+<document_num>6884</document_num> 
+<sponsor_name>Sen. Thune</sponsor_name> 
+<document_title><![CDATA[To improve the bill.]]></document_title> 
+<amendment_docnum> Amendment to S.Amdt. 6883 to H.R. 
+2347</amendment_docnum>
+<amendment_status_text>
+Considered by Senate.
+</amendment_status_text>
+</document>
+</amendment>
+</document>
+<document>
+<docnum> H.R. 8552</docnum> 
+<document_prefix>HR</document_prefix> 
+<document_num>8552</document_num> 
+<sponsor_name>Rep. Luttrell</sponsor_name> 
+<document_title><![CDATA[A bill to increase, effective as of December 1, 
+2026, the rates of compensation for veterans with service-connected 
+disabilities and the rates of dependency and indemnity compensation for the
+survivors of certain disabled veterans, and for other purposes
+.]]></document_title> 
+<document_status_text> 
+Passed Senate without amendment by Voice Vote.
+</document_status_text>
+</document>
+</section><section type="executive_business">
+<section_title>Executive Business (Wednesday, November 
+11)</section_title>
+<document>
+<docnum> PN1272-3</docnum> 
+<document_prefix>PN</document_prefix> 
+<document_num>1272-3</document_num> 
+
+<document_title><![CDATA[Daniel Lewis Ballou, of Kentucky, to be United 
+States District Judge for the Eastern District of 
+Kentucky]]></document_title> 
+
+<document_status_text> 
+Motion to proceed to executive session to consideration of nomination 
+agreed to in Senate by Voice Vote.
+</document_status_text>
+<document_status_text> 
+Cloture motion presented in Senate.
+</document_status_text>
+</document>
+</section><section type="adjournment">
+<section_title>Adjournment</section_title>
+<content>By unanimous consent, on the request of Ms. Collins, at  
+4:05 p.m., the Senate adjourned, under its order of today, until 
+12 noon tomorrow.</content> 
+</section><last_updated>2026-11-12T03:35-05:00</last_updated></daily_senate_floor_activity>

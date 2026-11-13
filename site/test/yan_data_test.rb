@@ -125,3 +125,56 @@ class EscapingTest < Minitest::Test
     end
   end
 end
+
+class ScheduleTest < Minitest::Test
+  def test_category_drops_the_house_lead_in
+    assert_equal "Under suspension of the rules",
+                 Yan.schedule_category("Items that may be considered under suspension of the rules")
+    assert_equal "Pursuant to a rule", Yan.schedule_category("Items that may be considered pursuant to a rule")
+    assert_nil Yan.schedule_category("Items that may be considered")
+    assert_nil Yan.schedule_category(nil)
+  end
+
+  def test_convene_label
+    assert_equal "Monday, Nov. 16, 2026, at 3 p.m. ET", Yan.convene_label("2026-11-16T15:00:00")
+    assert_equal "Thursday, Nov. 12, 2026, at noon ET", Yan.convene_label("2026-11-12T12:00:00")
+    assert_equal "Tuesday, Nov. 17, 2026, at 10:30 a.m. ET", Yan.convene_label("2026-11-17T10:30:00")
+  end
+
+  def item(chamber, id, week: nil, vote_id: nil)
+    { "chamber" => chamber, "item_id" => id, "week_date" => week, "vote_id" => vote_id,
+      "category" => "Items that may be considered under suspension of the rules" }
+  end
+
+  def test_coming_up_skips_voted_items_and_earlier_house_weeks
+    votes = { "h1" => { "url" => "/votes/119/house/2/1/", "result_label" => "Passed" } }
+    view = Yan.schedule_view({ "items" => [
+      item("house", "a", week: "2026-11-09"),
+      item("house", "b", week: "2026-11-16", vote_id: "h1"),
+      item("house", "c", week: "2026-11-16"),
+      item("senate", "d"),
+      item("senate", "e", vote_id: "s9")
+    ], "senate_next_convene_et" => "2026-11-16T15:00:00" }, votes)
+
+    assert_equal ["c"], view["upcoming_house"].map { |i| i["item_id"] }
+    assert_equal "2026-11-16", view["upcoming_week"]
+    assert_equal ["d"], view["upcoming_senate"].map { |i| i["item_id"] }
+    assert_equal ["2026-11-09", "2026-11-16"], view["house_weeks"].map { |w| w["week_date"] }
+    voted = view["house_weeks"].last["groups"].first["items"].first
+    assert_equal ["/votes/119/house/2/1/", "Passed"], [voted["vote_url"], voted["result_label"]]
+    assert_equal "Monday, Nov. 16, 2026, at 3 p.m. ET", view["senate_next_convene"]
+  end
+
+  def test_senate_items_without_a_house_schedule
+    view = Yan.schedule_view({ "items" => [item("senate", "d")] }, {})
+    assert_equal [["d"], [], nil, []],
+                 [view["upcoming_senate"].map { |i| i["item_id"] }, view["upcoming_house"], view["upcoming_week"],
+                  view["house_weeks"]]
+  end
+
+  def test_empty_schedule
+    view = Yan.schedule_view({ "items" => [] }, {})
+    assert_equal [[], [], nil, nil], view.values_at("upcoming_house", "upcoming_senate", "upcoming_week",
+                                                   "senate_next_convene")
+  end
+end

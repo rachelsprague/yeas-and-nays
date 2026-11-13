@@ -55,6 +55,16 @@ Each session works on its own branch in a worktree (`<alias>/<short-slug>`) and 
 
 The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`, and only runs on `main`. A GitHub ruleset blocks force pushes to and deletion of `main`, but doesn't require PRs (that would block the data job); the push hooks enforce the PR flow for agents. The repo allows squash merges only, and deletes a PR's branch once it's merged.
 
+## Model choice
+
+Subagents get the cheapest model that can do the job. Always pass `model` when spawning one.
+
+- **Sonnet:** reviews and research that read a lot and report back (the pre-push code and security reviews, broad investigations). The main session checks their findings, so they don't need Opus.
+- **Haiku:** file and code search with no judgment calls (`Explore`, "where is X used").
+- **Opus (inherit, no override):** agents that write or change code, and anything where a wrong answer ships unseen.
+
+Long sessions cost more per turn as context grows: start a new session (`/clear`) when switching to an unrelated board item.
+
 ## Public repo: review before every push
 
 This repository is public, and a pushed branch or PR is public as soon as it's pushed or opened. Before any `git push`, review every outgoing commit individually (`git log -p --cc origin/main..HEAD`, including commit messages and merge commits), and the PR title and body, not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:

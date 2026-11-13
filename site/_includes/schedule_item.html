@@ -1,0 +1,31 @@
+{%- comment -%}
+  One floor schedule item in a ruled list, under a heading that names the
+  chamber (and House week). include.item; include.show_category adds the House
+  schedule's heading for lists that don't group by it.
+  Links to the roll call once there is one, else to Congress.gov for bills and
+  resolutions; nominations and amendments without a roll call aren't linked.
+{%- endcomment -%}
+{%- assign s = include.item -%}
+{%- capture body -%}
+    {%- if s.chamber == "senate" %}
+    <span class="kicker muted nums">Cloture filed {{ s.filed_date | ap_date }}</span>
+    <span class="small soft">{{ s.question | escape }} · {{ s.measure_label | escape }}</span>
+    {%- else %}
+    <span class="kicker muted nums">{{ s.measure_label | escape }}</span>
+      {%- if include.show_category and s.category_label %}
+    <span class="small soft">{{ s.category_label | escape }}</span>
+      {%- endif %}
+    {%- endif %}
+    <span class="t">{{ s.title | escape }}</span>
+    {%- if s.vote_url %}
+    <span class="small soft nums">Voted: {{ s.result_label | escape }}</span>
+    {%- endif %}
+{%- endcapture -%}
+{%- assign href = s.vote_url | default: s.congress_gov_url -%}
+<li class="vote-item" data-row data-chamber="{{ s.chamber | escape }}">
+  {%- if href %}
+  <a class="headline-link" href="{{ href | escape }}">{{ body }}</a>
+  {%- else %}
+  <div class="unlinked">{{ body }}</div>
+  {%- endif %}
+</li>

@@ -1,7 +1,14 @@
 import datetime as dt
 import json
 
-from yan.export.json_export import dumps, meta_document, summary_document, vote_document, with_measure_label
+from yan.export.json_export import (
+    dumps,
+    floor_schedule_document,
+    meta_document,
+    summary_document,
+    vote_document,
+    with_measure_label,
+)
 
 
 def test_dumps_is_valid_sorted_and_one_list_item_per_line():
@@ -85,6 +92,12 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=()):
         con.execute("insert into cosponsored_lists values (?, 119, 0)", [bioguide_id])
     con.execute("""create table vote_summaries (vote_id varchar, version_code varchar, action_date date,
                    action_desc varchar, summary_html varchar)""")
+    con.execute("""create table floor_schedule (chamber varchar, item_id varchar, week_date date, filed_date date,
+                   category varchar, category_order integer, item_order integer, question varchar,
+                   measure_number varchar, bill_type varchar, bill_number varchar, title varchar,
+                   amends varchar, congress_gov_url varchar, vote_id varchar)""")
+    con.execute("""create table senate_sessions (convene_time_et timestamp, adjourn_time_et timestamp,
+                   next_convene_time_et timestamp)""")
     con.close()
 
 
@@ -145,3 +158,44 @@ def test_run_flags_missing_sponsored_lists(tmp_path):
     _warehouse(warehouse, [])
     run(warehouse, tmp_path / "out")
     assert json.loads((tmp_path / "out" / "meta.json").read_text())["has_sponsored_bills"] is False
+
+
+def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
+    import duckdb
+
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    con = duckdb.connect(str(warehouse))
+    for measure in ("PN1272-13", "PN1272-3", "H.R. 2347"):
+        con.execute("""insert into floor_schedule (chamber, item_id, filed_date, question, measure_number, title)
+                       values ('senate', 's-' || ?, date '2026-11-11', 'On the Cloture Motion', ?, 'T')""",
+                    [measure, measure])
+    con.execute("insert into senate_sessions values ('2026-11-12 12:00', '2026-11-12 16:52', '2026-11-16 15:00')")
+    con.close()
+
+    run(warehouse, tmp_path / "out")
+
+    doc = json.loads((tmp_path / "out" / "floor_schedule.json").read_text())
+    assert [i["measure_label"] for i in doc["items"]] == ["H.R. 2347", "PN1272-3", "PN1272-13"]
+    assert doc["senate_next_convene_et"] == "2026-11-16T15:00:00"
+
+
+def test_floor_schedule_labels_items_and_takes_the_latest_next_convene():
+    items = [
+        {"measure_number": "H. Res. 1650", "bill_type": "hres", "bill_number": "1650", "amends": None},
+        {"measure_number": "PN1272-3", "bill_type": None, "bill_number": None, "amends": None},
+        {"measure_number": "S.Amdt. 6883", "bill_type": None, "bill_number": None, "amends": "H.R. 2347"},
+        {"measure_number": "H. Res. ___", "bill_type": None, "bill_number": None, "amends": None},
+    ]
+    sessions = [
+        {"next_convene_time_et": dt.datetime(2026, 11, 12, 12)},
+        {"next_convene_time_et": dt.datetime(2026, 11, 16, 15)},
+    ]
+    doc = floor_schedule_document(items, sessions)
+    assert [i["measure_label"] for i in doc["items"]] == [
+        "H.Res. 1650", "PN1272-3", "S.Amdt. 6883 to H.R. 2347", "H. Res. ___",
+    ]
+    assert doc["senate_next_convene_et"] == dt.datetime(2026, 11, 16, 15)
+    assert floor_schedule_document([], [])["senate_next_convene_et"] is None

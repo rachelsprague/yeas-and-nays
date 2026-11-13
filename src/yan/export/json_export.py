@@ -5,6 +5,9 @@
     data/out/members/{bioguide}.json  one member: bills and resolutions they introduced
                                   and cosponsored this Congress, newest first
                                   (cosponsored is null until first fetched)
+    data/out/floor_schedule.json  what may come up for a vote: the House's weekly
+                                  floor schedule and pending Senate cloture motions,
+                                  plus when the Senate next convenes
     data/out/votes.json           one entry per vote (metadata + tallies), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
@@ -102,6 +105,22 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
         """)
         cosponsored_fetched = {row["bioguide_id"] for row in _rows(con, "select bioguide_id from cosponsored_lists")}
+        floor_items = _rows(con, """
+            select chamber, item_id, week_date, filed_date, category, question, measure_number,
+                   bill_type, bill_number, title, amends, congress_gov_url, vote_id
+            from floor_schedule
+            order by chamber, week_date, category_order, item_order, filed_date,
+                -- Numbers in numeric order: PN1272-3 before PN1272-13.
+                regexp_extract(measure_number, '^\\D*'),
+                try_cast(regexp_extract(measure_number, '(\\d+)', 1) as integer),
+                try_cast(regexp_extract(measure_number, '-(\\d+)', 1) as integer),
+                item_id
+        """)
+        senate_sessions = _rows(con, """
+            select convene_time_et, adjourn_time_et, next_convene_time_et
+            from senate_sessions
+            order by convene_time_et
+        """)
         summaries = {
             row.pop("vote_id"): row
             for row in _rows(con, """
@@ -158,6 +177,10 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             path.unlink()
             changed += 1
 
+    changed += write_if_changed(
+        out_dir / "floor_schedule.json", dumps(floor_schedule_document(floor_items, senate_sessions))
+    )
+
     meta = meta_document(votes, members)
     # False when Congress.gov sponsored lists weren't ingested (e.g. no API key), so the
     # site can hide the section instead of showing every member with no bills.
@@ -203,6 +226,23 @@ def vote_document(vote: dict, positions: list[dict], summary: dict | None = None
         "against_party_majority": against,
         "positions": {p["bioguide_id"]: p["position_raw"] for p in positions},
         "summary": summary_document(summary),
+    }
+
+
+def floor_schedule_document(items: list[dict], senate_sessions: list[dict]) -> dict:
+    """Floor schedule items with a display label, and when the Senate is next set to convene.
+
+    The label is the citation form for bills and resolutions ("H.Res. 1650"), else
+    the number as listed ("PN1272-3", "H. Res. ___"); amendments name what they amend.
+    """
+    for item in items:
+        label = bill_label(item["bill_type"], item["bill_number"]) if item["bill_type"] else item["measure_number"]
+        item["measure_label"] = f"{label} to {item['amends']}" if item["amends"] else label
+    latest = senate_sessions[-1] if senate_sessions else {}
+    return {
+        "items": items,
+        # Set when the Senate adjourns; null while it's in session or before any data.
+        "senate_next_convene_et": latest.get("next_convene_time_et"),
     }
 
 
