@@ -15,6 +15,7 @@ MAX_GRAPHEMES = 300
 MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
+RECONSIDERED = ", Upon Reconsideration"
 
 
 class PostTooLong(ValueError):
@@ -56,15 +57,17 @@ def headline_title(vote: dict, decision: Decision) -> str:
         # "Upon Reconsideration, Motion to Invoke Cloture ...". All become the most
         # common form, "Motion to Proceed to {measure}", with reconsideration last
         # as the Senate also writes it ("..., Upon Reconsideration").
+        # The Senate's capitalization varies too, so match ignoring case.
         stripped = vote.get("vote_title") or ""
-        reconsidered = re.match(r"^Upon Reconsideration[,:]\s*", stripped)
+        reconsidered = re.match(r"^Upon Reconsideration[,:]\s*", stripped, flags=re.IGNORECASE)
         if reconsidered:
             stripped = stripped[reconsidered.end():]
-        stripped = re.sub(r"^Motion to Invoke Cloture(?::\s*|\s+Re:\s*|\s+on\s+)(?:the\s+)?", "", stripped)
+        stripped = re.sub(r"^Motion to Invoke Cloture(?::\s*|\s+Re:\s*|\s+on\s+)(?:the\s+)?", "", stripped,
+                          flags=re.IGNORECASE)
         stripped = re.sub(r"^Motion to Proceed(?::\s*|\s+to\s+)", "Motion to Proceed to ", stripped,
                           flags=re.IGNORECASE)
-        if reconsidered and not stripped.endswith("Upon Reconsideration"):
-            stripped += ", Upon Reconsideration"
+        if reconsidered and not re.search(RECONSIDERED + "$", stripped, flags=re.IGNORECASE):
+            stripped += RECONSIDERED
         return stripped or title
     return title
 
@@ -126,7 +129,18 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
     text = headline(vote, decision, title) + fixed
     if grapheme_length(text) <= max_length:
         return text
+    # A trailing ", Upon Reconsideration" goes first, so it is never cut mid-word.
+    if title.endswith(RECONSIDERED):
+        title = title[:-len(RECONSIDERED)]
+        text = headline(vote, decision, title) + fixed
+        if grapheme_length(text) <= max_length:
+            return text
     keep = len(title) - (grapheme_length(text) - max_length) - len(ELLIPSIS)
-    if keep >= MIN_TITLE:
-        return headline(vote, decision, title[:keep].rstrip(" ,;:") + ELLIPSIS) + fixed
+    # Cut at a word boundary, so no word or bill number is left half-written.
+    short = title[:keep]
+    if keep < len(title) and not title[keep].isspace() and " " in short:
+        short = short.rsplit(" ", 1)[0]
+    short = short.rstrip(" ,;:")
+    if len(short) >= MIN_TITLE:
+        return headline(vote, decision, short + ELLIPSIS) + fixed
     raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")

@@ -147,6 +147,8 @@ def test_nomination_post_with_tie_break():
      "Senate invokes cloture on Motion to Proceed to H.R. 5371, Upon Reconsideration"),
     ("Motion to Invoke Cloture: Motion to Proceed to S. 3012, Upon Reconsideration",
      "Senate invokes cloture on Motion to Proceed to S. 3012, Upon Reconsideration"),
+    ("Upon reconsideration, Motion to invoke cloture on the Motion to Proceed to H.R. 1",
+     "Senate invokes cloture on Motion to Proceed to H.R. 1, Upon Reconsideration"),
     ("Motion to Invoke Cloture: Todd Blanche to be Attorney General",
      "Senate invokes cloture on Todd Blanche to be Attorney General"),
 ])
@@ -205,6 +207,24 @@ def test_long_post_truncates_title_and_keeps_every_other_line():
         "Voted against party majority: " + ", ".join(labels),
         "clerk.house.gov/Votes/2026317",
     ]
+
+
+def test_truncation_cuts_at_a_word_boundary():
+    vote = house_vote(question="On Passage", measure_number="H R 1",
+                      measure_title="An Act " + "Housing " * 40)
+    labels = [f"Member{i} (D-CA-{i})" for i in range(1, 6)]
+    headline = format_post(doc(vote, against=labels), decide(vote)).splitlines()[0]
+    assert headline.endswith(' Housing…"')
+
+
+def test_reconsideration_is_dropped_before_the_title_is_cut():
+    vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Rejected",
+                       vote_title="Upon Reconsideration, Motion to Invoke Cloture on the Motion to Proceed to H.R. 5371",
+                       tie_breaker_by=None, tie_breaker_vote=None)
+    labels = [f"Member{i} (D-CA)" for i in range(1, 6)]
+    full = format_post(doc(vote, against=labels), decide(vote), max_length=1000)
+    text = format_post(doc(vote, against=labels), decide(vote), max_length=len(full) - 1)
+    assert text.splitlines()[0] == "Senate fails to invoke cloture on Motion to Proceed to H.R. 5371"
 
 
 # --- state: nothing double-posts ----------------------------------------
