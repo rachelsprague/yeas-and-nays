@@ -186,12 +186,17 @@ It's text, not code, so skip the agent reviews:
 1. Write the text to a file in your scratchpad.
 2. Run the checklist over it (secrets, personal info, neutrality per
    STYLE.md, internal notes, no session links), and show the user the text.
-3. Post it from the file, as a command of its own: `gh pr comment <N>
-   --body-file <file>`, `gh pr edit <N> --body-file <file>`, `gh pr review
-   <N> --comment --body-file <file>`, or for a reply to a review comment
-   `gh api repos/<owner>/<repo>/pulls/<N>/comments/<id>/replies -F
-   body=@<file>`.
+3. Post it from the file, with the gh command alone (no `cd`, `&&`, pipes
+   or redirects around it, each flag and its value as separate words):
+   `gh pr comment <N> --body-file <file>`, `gh pr edit <N> --body-file
+   <file>`, `gh pr review <N> --comment --body-file <file>`, or for a reply
+   to a review comment `gh api repos/<owner>/<repo>/pulls/<N>/comments/<id>/replies
+   -F body=@<file>`. To close with a comment, post the comment first, then
+   close.
 
-The push hook asks before any of these and shows the title and the file's
-text for the user to approve; it denies inline text (`--body`, `-f
-body=...`), stdin, `--fill` and `gh api graphql` mutations.
+The push hook asks before any of these and shows the title and the whole
+file for the user to approve (files over 20,000 bytes are refused rather than
+cut). It denies every other way of posting: inline or attached text
+(`--body`, `-bfoo`, `-f body=...`), stdin, `--fill`, templates, editors,
+other `gh api` writes and graphql mutations, `close`/`reopen -c`, and gh
+aliases.

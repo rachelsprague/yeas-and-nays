@@ -1,7 +1,9 @@
 """The Claude Code push hook: which commands count as a push, and what it decides."""
 
 import importlib.util
+import io
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -140,56 +142,147 @@ def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo
 
 @pytest.mark.parametrize("command", [
     "gh pr create --base main --head feature --title 'Add X' --body-file body.md",
+    "gh pr create -B main -H feature -t 'Add X' -F body.md --draft",
     "gh pr edit 12 --body-file body.md",
-    "gh pr edit 12 --body-file=body.md",
     "gh pr comment 12 --body-file body.md",
     "gh pr comment 12 -F body.md",
+    "gh pr comment 12 --edit-last --body-file body.md",
     "gh -R owner/repo pr comment 12 --body-file body.md",
+    "gh pr -R owner/repo comment 12 --body-file body.md",
     "gh pr review 12 --comment --body-file body.md",
+    "gh pr review 12 --request-changes -F body.md",
+    "gh issue create --title 'Bug' --body-file body.md",
     "gh issue comment 3 --body-file body.md",
     "gh api repos/o/r/issues/12/comments -F body=@body.md",
     "gh api repos/o/r/pulls/12/comments/99/replies -F body=@body.md",
     "gh api -X PATCH repos/o/r/issues/comments/5 -F body=@body.md",
+    "gh api --method PATCH repos/o/r/pulls/comments/5 -F body=@body.md",
 ])
-def test_posting_text_from_a_file_asks_and_shows_it(repo, command):
+def test_posting_text_from_a_file_asks_and_shows_it_in_full(repo, command):
     path, _ = repo
-    (path / "body.md").write_text("Adds the floor schedule.\n")
+    (path / "body.md").write_text("Adds the floor schedule.\n" + "x" * 5000 + "END\n")
     decision, reason = confirm_push.decide(command, str(path))
-    assert decision == "ask" and "PUBLIC" in reason and "Adds the floor schedule." in reason
+    assert decision == "ask" and "PUBLIC" in reason and "Adds the floor schedule." in reason and "END" in reason
 
 
-def test_the_title_is_shown_and_a_long_body_is_cut(repo):
+def test_the_title_is_shown(repo):
     path, _ = repo
-    (path / "body.md").write_text("x" * (confirm_push.SHOWN_CHARS + 50))
+    (path / "body.md").write_text("body\n")
     decision, reason = confirm_push.decide("gh pr create --title 'Add X' --body-file body.md", str(path))
-    assert decision == "ask" and "Title: Add X" in reason and "truncated" in reason
+    assert decision == "ask" and "Title: Add X" in reason
+
+
+def test_edits_and_reviews_without_text_still_ask(repo):
+    path, _ = repo
+    assert confirm_push.decide("gh pr edit 12 --add-label docs", str(path))[0] == "ask"
+    assert confirm_push.decide("gh pr review 12 --approve", str(path))[0] == "ask"
 
 
 @pytest.mark.parametrize("command", [
+    # inline, attached, auto-filled, templated or editor text
     "gh pr comment 12 --body 'looks good'",
     "gh pr comment 12 -b 'looks good'",
+    "gh pr comment 12 -bfoo",
+    "gh pr review 12 --request-changes -bfoo",
     "gh pr edit 12 --body='new text'",
+    "gh pr comment 12 -Fbody.md",
+    "gh pr comment 12 --body-file=body.md",
     "gh pr create --fill",
-    "gh pr create --fill-first",
-    "gh pr comment 12 --body-file -",
+    "gh pr create -f",
+    "gh pr create --title t --template x",
+    "gh pr create -T x",
+    "gh pr comment 12 --editor",
+    "gh pr comment 12 --web",
     "gh issue comment 3 --body hi",
-    "gh api repos/o/r/issues/12/comments -f body='looks good'",
-    "gh api repos/o/r/issues/12/comments --input -",
-    "gh api graphql -f query='mutation { addComment(input: {subjectId: \"x\", body: \"hi\"}) { clientMutationId } }'",
+    "gh pr comment 12",
+    # stdin, special files, files that can't be shown
+    "gh pr comment 12 --body-file -",
+    "gh pr comment 12 -F-",
+    "gh pr comment 12 --body-file /dev/stdin",
+    "gh pr comment 12 --body-file /dev/fd/0",
+    "gh pr comment 12 --body-file ~/notes.md",
+    "gh pr comment 12 --body-file $F",
     "gh pr comment 12 --body-file missing.md",
+    "gh pr comment 12 --body-file /etc/hosts",
+    "gh pr comment 12 --body-file big.md",
+    # not the whole command
+    "cat x | gh pr comment 12 --body-file body.md",
+    "gh pr comment 12 --body-file body.md < secret",
+    "echo evil > body.md && gh pr comment 12 --body-file body.md",
+    "cd sub && gh pr comment 12 --body-file body.md",
     "gh pr comment 12 --body-file body.md && gh pr comment 13 --body-file body.md",
     "sh -c \"gh pr comment 12 --body hi\"",
+    "env X=1 gh pr comment 12 --body-file body.md",
+    # gh api writes other than the allowed comment shapes
+    "gh api repos/o/r/issues/12/comments -f body='looks good'",
+    "gh api repos/o/r/issues/12/comments -fbody=anything",
+    "gh api repos/o/r/issues/12/comments -Fbody=@body.md",
+    "gh api -XPOST repos/o/r/issues/12/comments -F body=@body.md",
+    "gh api --method=POST repos/o/r/issues/12/comments -F body=@body.md",
+    "gh api -XDELETE repos/o/r/issues/comments/5",
+    "gh api --method=DELETE repos/o/r/issues/comments/5",
+    "gh api -X PATCH repos/o/r/issues/12 -f state=closed",
+    "gh api repos/o/r/pulls/12/comments -f body=@body.md",
+    "gh api repos/o/r/issues/12/comments --input body.json",
+    "gh api repos/o/r/issues/12/comments --input=body.json",
+    "gh api graphql -f query='mutation { addComment(input: {subjectId: \"x\", body: \"hi\"}) { clientMutationId } }'",
+    "gh api graphql -F query=@q.gql",
+    "gh api graphql --input q.json",
+    # aliases and comments on close/reopen
+    "gh alias set c 'pr comment'",
+    "gh alias import aliases.yml",
+    "gh pr close 12 -c 'closing'",
+    "gh pr close 12 --comment='closing'",
+    "gh issue close 3 -c done",
+    "gh issue reopen 3 --comment again",
 ])
 def test_posting_inline_or_unseen_text_is_denied(repo, command):
     path, _ = repo
     (path / "body.md").write_text("text\n")
+    (path / "big.md").write_text("x" * (confirm_push.MAX_BODY_BYTES + 1))
     assert confirm_push.decide(command, str(path))[0] == "deny"
 
 
-def test_a_heredoc_script_that_posts_is_denied(repo):
+def test_a_body_file_symlinked_outside_the_repo_is_denied(repo):
+    path, _ = repo
+    (path / "link.md").symlink_to("/etc/hosts")
+    assert confirm_push.decide("gh pr comment 12 --body-file link.md", str(path))[0] == "deny"
+
+
+def test_a_fifo_body_file_is_denied_without_blocking(repo):
+    path, _ = repo
+    os.mkfifo(path / "pipe.md")
+    assert confirm_push.decide("gh pr comment 12 --body-file pipe.md", str(path))[0] == "deny"
+
+
+@pytest.mark.parametrize("command", [
+    "gh pr close 12",
+    "gh pr close 12 --delete-branch",
+    "gh issue reopen 3",
+    "gh api graphql -f query='{ viewer { login } }'",
+    "git commit -m 'Hook now catches gh pr create and gh pr comment'",
+    "echo \"run gh pr comment later\"",
+    "git commit -F - <<'EOF'\nThe hook asks before gh pr create, gh pr review and gh api writes.\nEOF",
+    "cat > notes.md <<'EOF'\nuse gh api to read comments; gh pr comment posts\nEOF",
+])
+def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path)) is None
+
+
+def test_a_script_that_runs_a_post_is_denied(repo):
     path, _ = repo
     command = "python3 - <<'EOF'\nimport os\nos.system('gh pr comment 12 --body hi')\nEOF"
     assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
+    def boom(*a):
+        raise RuntimeError("x")
+    monkeypatch.setattr(confirm_push, "decide", boom)
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"tool_input": {"command": "gh pr view 1"}})))
+    confirm_push.main()
+    assert json.loads(capsys.readouterr().out)["hookSpecificOutput"]["permissionDecision"] == "deny"
 
 
 @pytest.mark.parametrize("command", [
