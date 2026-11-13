@@ -14,6 +14,9 @@
   <link rel="stylesheet" href="/assets/css/site.css">
   <script>document.documentElement.classList.add("has-js")</script>
   <script src="/assets/js/filters.js" defer></script>
+  {%- if jekyll.environment == "production" %}
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="44cd1970-0a63-4dc1-bcb2-3ee6b458d843"></script>
+  {%- endif %}
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
