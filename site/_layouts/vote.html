@@ -52,7 +52,7 @@ layout: default
 
   {%- if v.congress_gov_url %}
   <section class="section" aria-labelledby="summary-h">
-    <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label }}</h2>
+    <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label | escape }}</h2>
     {%- if page.sponsor %}
     <p class="nums" style="font-size: 15px; line-height: 22px">Introduced by <a class="link" href="{{ page.sponsor.url }}">{{ page.sponsor.name }}</a> ({{ page.sponsor.code }}){% if v.introduced_date %} on {{ v.introduced_date | ap_date }}{% endif %}{% if v.cosponsor_count %} · {{ v.cosponsor_count }} cosponsor{% if v.cosponsor_count != 1 %}s{% endif %}{% endif %}</p>
     {%- endif %}
@@ -68,7 +68,7 @@ layout: default
     <div class="crs-text">{{ page.summary.html }}</div>
     {%- endif %}
     {%- else %}
-    <p class="small soft">No Congressional Research Service summary of {{ v.measure_label }} is available.</p>
+    <p class="small soft">No Congressional Research Service summary of {{ v.measure_label | escape }} is available.</p>
     {%- endif %}
     <a class="more" href="{{ v.congress_gov_url }}/text">Full text on Congress.gov →</a>
   </section>
@@ -141,7 +141,7 @@ layout: default
     </p>
     {%- if v.congress_gov_url %}
     <p style="font-size: 15px; line-height: 22px">
-      {{ v.measure_label }} on Congress.gov:
+      {{ v.measure_label | escape }} on Congress.gov:
       <a class="link" href="{{ v.congress_gov_url }}" style="overflow-wrap: anywhere">{{ v.congress_gov_url | remove_first: "https://" | remove_first: "www." }}</a>
     </p>
     {%- endif %}

@@ -8,7 +8,7 @@ layout: default
     {% include portrait.html member=m alt=true %}
     <div>
       <span class="kicker muted">{{ m.chamber_name }}</span>
-      <h1 class="name-h">{{ m.name }}</h1>
+      <h1 class="name-h">{{ m.name | escape }}</h1>
       <p class="meta">{{ m.party }} · {{ m.party_name }} · {{ m.where }}</p>
       {%- if m.served_from %}
       <p class="term nums">{% if m.is_current %}In office this Congress since {{ m.served_from | ap_date }}{% else %}Served this Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
@@ -48,7 +48,7 @@ layout: default
       <h2 id="bills-h" class="section-h">Bills introduced</h2>
       <span class="small muted nums">{{ page.sponsored.size }} this Congress</span>
     </div>
-    <p class="small soft">Bills and resolutions {{ m.name }} introduced as the sponsor, with the latest action on each as Congress.gov records it.</p>
+    <p class="small soft">Bills and resolutions {{ m.name | escape }} introduced as the sponsor, with the latest action on each as Congress.gov records it.</p>
     {%- if page.sponsored.size > 0 %}
     <ul class="ruled">
       {%- for b in page.sponsored limit: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
@@ -82,7 +82,7 @@ layout: default
         <a class="vrow headline-link" href="{{ v.url }}">
           <span class="kicker muted nums">{{ v.vote_date | ap_date }} · {{ v.chamber_name }} roll {{ v.roll_number }}</span>
           <span class="stack">
-            <span class="q">{{ v.question }}{% if v.measure_label %}{% unless v.question contains v.measure_label %} · {{ v.measure_label }}{% endunless %}{% endif %}</span>
+            <span class="q">{{ v.question | escape }}{% if v.measure_label %}{% unless v.question contains v.measure_label %} · {{ v.measure_label | escape }}{% endunless %}{% endif %}</span>
             <span class="t">{% include vote_title.html vote=v %}</span>
           </span>
           <span class="how">
