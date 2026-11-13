@@ -53,7 +53,7 @@ Each session works on its own branch in a worktree (`<alias>/<short-slug>`) and 
 4. Stop there. Rachel reviews and squash-merges the PR on GitHub; agents never merge (`gh pr merge` is denied) and never push `main`.
 5. After the merge: `git pull --ff-only` on `main` in the main checkout, remove the worktree, `git branch -D` the branch (a squash merge leaves its commits off `main`, so `-d` refuses), and move the item to Done.
 
-The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`, and only runs on `main`. `main` has no branch protection yet; the push hooks enforce the PR flow for agents.
+The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`, and only runs on `main`. A GitHub ruleset blocks force pushes to and deletion of `main`, but doesn't require PRs (that would block the data job); the push hooks enforce the PR flow for agents. The repo allows squash merges only, and deletes a PR's branch once it's merged.
 
 ## Public repo: review before every push
 
