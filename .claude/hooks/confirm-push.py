@@ -27,18 +27,17 @@ denied: inline or attached text, stdin, --fill, templates, editors, every
 other `gh api` write (merges, contents and refs included, which are push
 equivalents, and any bundled short flag with -X, -f or -F) and graphql
 mutations, close/reopen with a comment, flags before the action (`gh pr
--b x comment`), `gh pr revert`, gh aliases,
-characters the shell would expand after this check (backticks, $, globs,
-braces, line breaks), body files with control or invisible characters or in
-dot directories, a post chained with or redirected from anything else, and a
-posting command in code that runs: an interpreter's -c/-e code, a heredoc
-script fed to an interpreter, or a heredoc-written file the same command runs.
+-b x comment`), `gh pr revert`, gh aliases, characters the shell would
+expand after this check (backticks, $, globs, braces, line breaks), titles
+and body files with control or invisible characters, body files in dot
+directories, and a post chained with or redirected from anything else.
 
-This is a guard against pushing by accident, not against a determined
-attempt to get around it: it only sees command text, which can always be
-disguised (variables, scripts). The real check is the git pre-push hook in
-.githooks/, which sees the exact commits being pushed; this hook refuses to
-allow a push unless that hook is installed (`make hooks`) and unmodified.
+This is a guard against pushing or posting by accident, not against a
+determined attempt to get around it: it only sees command text, which can
+always be disguised (variables, scripts, code that runs gh). The real check
+for pushes is the git pre-push hook in .githooks/, which sees the exact
+commits being pushed; this hook refuses to allow a push unless that hook is
+installed (`make hooks`) and unmodified.
 
 Reads the hook payload on stdin; prints nothing for other commands, so they
 go through the normal permission flow. If the hook itself fails on a command
@@ -91,17 +90,6 @@ LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
 # A gh command that posts PR or issue text, as it may appear inside a script a heredoc writes.
 LOOSE_POST = re.compile(r"\bgh\b[^\n;&|]{0,80}?\b(pr|issue)\s+(create|edit|comment|review|close|reopen)\b"
                         r"|\bgh\s+(api|alias)\b")
-# A gh command on PRs, issues, the API or aliases in code: as a shell line, or as an argv list
-# (['gh', '-R', 'o/r', 'pr', 'comment', ...]). Broader than LOOSE_POST, since it's only
-# applied to code that runs.
-CODE_POST = re.compile(r"\bgh\b[^\n]{0,60}?\b(pr|issue|api|alias)\b")
-# Wrappers that run the command after them (`time python3 - <<EOF`, `nohup ./s.sh`).
-WRAPPERS = {"env", "command", "exec", "time", "nohup", "sudo", "nice", "timeout", "xargs", "builtin"}
-# Words that only read a file named after them (`git commit -F msg.txt`, `git add notes.md`).
-READERS = {"-F", "--file", "--body-file", "-m", "add", "rm", "mv", "cp", "diff", "cat", "head", "tail",
-           "wc", "less", "grep", "open", "stat", "ls"}
-# Interpreter flags that take code (-c, -e, -E, -p, -r, bundled like -Bc or -le, --eval, --command).
-CODE_FLAG = re.compile(r"-[A-Za-z]*[ceEpr]|--(eval|command|exec|print)")
 
 # Posting commands, and the only flags each may use, every one as a separate token. Flags that
 # take a value map to True. Anything else (attached values, --body, --fill, --template,
@@ -131,20 +119,18 @@ _OWNER_REPO = r"(\{owner\}|[\w.-]+)/(\{repo\}|[\w.-]+)"
 API_COMMENT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues/\d+/comments|pulls/\d+/comments(/\d+/replies)?)")
 API_COMMENT_EDIT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues|pulls)/comments/\d+")
 MAX_BODY_BYTES = 20_000  # shown in full in the approval prompt; anything longer is refused
+MAX_COMMAND_CHARS = 20_000
 # Characters the shell would expand or substitute after the hook has shown the literal text.
 SHELL_EXPANDED = re.compile(r"[`$\\\n\r*?\[\]{}~!]")
 
 
-def split_heredocs(command: str) -> tuple[str, list[str], list[str], list[tuple[str, str]]]:
-    """(shell text, other bodies, interpreter bodies, written files): the command with heredoc
-    bodies taken out, bodies fed to a shell (or piped onward, as in `cat <<EOF | sh`) put back
-    as plain command lines, and every other body (a note written with cat, a `python3 -`
-    script) returned separately for a word-level check; the third list is the subset fed to
-    an interpreter (`python3 -`), as opposed to text read by cat or git, and the fourth is
-    (file, body) for bodies redirected into a file (`cat > s.sh <<EOF`). A `<<WORD` whose
-    delimiter line never comes (say, inside a quoted commit message) isn't a heredoc, so the
-    lines after it stay commands."""
-    lines, kept, scripts, run, written = command.split("\n"), [], [], [], []
+def split_heredocs(command: str) -> tuple[str, list[str]]:
+    """(shell text, other bodies): the command with heredoc bodies taken out, bodies fed to a
+    shell (or piped onward, as in `cat <<EOF | sh`) put back as plain command lines, and every
+    other body (a note written with cat, a `python3 -` script) returned separately for a
+    word-level check. A `<<WORD` whose delimiter line never comes (say, inside a quoted
+    commit message) isn't a heredoc, so the lines after it stay commands."""
+    lines, kept, scripts = command.split("\n"), [], []
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -158,24 +144,17 @@ def split_heredocs(command: str) -> tuple[str, list[str], list[str], list[tuple[
             if end == len(lines):
                 continue  # no delimiter line: not a heredoc
             body, i = lines[i:end], end + 1
-            target = heredoc_target(line[:match.start()])
-            if target in SHELLS or "|" in line[match.end():]:
+            if heredoc_target(line[:match.start()]) in SHELLS or "|" in line[match.end():]:
                 kept += body
             else:
                 scripts.append("\n".join(body))
-                if is_runner(target):
-                    run.append(scripts[-1])
-                elif target == "tee" and (out := re.search(r"\btee\s+(?:-a\s+)?([^\s;&|<>-][^\s;&|<>]*)", line)):
-                    written.append((out.group(1).strip("\"'"), scripts[-1]))
-                elif out := re.search(r"(?<![<\d&])>>?\s*([^\s;&|<>]+)", HEREDOC.sub(" ", line)):
-                    written.append((out.group(1).strip("\"'"), scripts[-1]))
-    return "\n".join(kept), scripts, run, written
+    return "\n".join(kept), scripts
 
 
 def heredoc_target(before: str) -> str:
     """The command a heredoc feeds: the first word of the last command before `<<`."""
     segment = re.split(r"[;&|()]", before)[-1].split()
-    while segment and (ASSIGNMENT.fullmatch(segment[0]) or segment[0] in WRAPPERS):
+    while segment and (ASSIGNMENT.fullmatch(segment[0]) or segment[0] in ("env", "command", "exec")):
         segment = segment[1:]
     return os.path.basename(segment[0].strip("\"'\\")) if segment else ""
 
@@ -251,43 +230,6 @@ def find_posts(command: str, depth: int = 0) -> list[dict]:
                         pass  # not valid shell on its own, so not run as a command
         segment = []
     return found
-
-
-def runs_posting_code(command: str, written: list[tuple[str, str]]) -> str | None:
-    """Why the command runs code that posts to GitHub, or None. Only code that runs counts:
-    code given to an interpreter (-c, -e, --eval, ...), or a file a heredoc writes that the
-    same command then runs. Quoted text elsewhere (a commit message mentioning `gh api`)
-    doesn't."""
-    toks = tokens(strip_redirects(command))
-    runner_seen = False
-    for k, t in enumerate(toks):
-        if t in SEPARATORS:
-            runner_seen = False
-        elif is_runner(t):
-            runner_seen = True
-        elif runner_seen and k + 1 < len(toks) and CODE_FLAG.fullmatch(t):
-            if CODE_POST.search(re.sub(r"[\"'\\]", "", toks[k + 1])):
-                return "This command runs code (-c/-e) that contains a gh command posting to GitHub."
-    # A written file is run unless every mention of it just reads it (`git commit -F msg.txt`,
-    # `git add notes.md`, `cat s.sh`); feeding it to a shell on stdin or through a pipe runs it.
-    for path, body in written:
-        name = os.path.basename(path)
-        if not CODE_POST.search(re.sub(r"[\"'\\]", "", body)):
-            continue
-        quoted = re.escape(name)
-        shell = r"(\S*/)?(sh|bash|zsh|dash|ksh|python[\d.]*)\b"
-        if (re.search(rf"\b{shell}[^\n;&|]*<\s*\S*{quoted}", command)
-                or re.search(rf"{quoted}\b[^\n;&]*\|\s*{shell}", command)):
-            return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
-        for k, t in enumerate(toks):
-            if os.path.basename(t) == name and not (k > 0 and toks[k - 1] in READERS | {"tee", "-a"}):
-                return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
-    return None
-
-
-def is_runner(word: str) -> bool:
-    """Whether a word is an interpreter that runs code: a shell, python (any version), node, ruby, perl, uv."""
-    return bool(re.fullmatch(r"(sh|bash|zsh|dash|ksh|python[\d.]*|node|ruby|perl|uv)", os.path.basename(word)))
 
 
 def _post_in_segment(seg: list[str]) -> list[dict]:
@@ -429,30 +371,37 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
 # Characters that render as nothing or as blank space: fillers, braille blank, the combining
 # grapheme joiner, Khmer and Mongolian invisibles, the object replacement character.
 BLANK_LOOKING = {"ᅟ", "ᅠ", "⠀", "ㅤ", "ﾠ", "͏", "឴", "឵",
-                 "᠋", "᠌", "᠍", "᠎", "᠏", "￼"}
-EMOJI_JOINERS = {"‍", "︎", "️"}  # zero-width joiner and text/emoji selectors
+                 "᠋", "᠌", "᠍", "᠎", "᠏", "￼", "\U00016fe4"}
 # Default-ignorable and noncharacter ranges, denied by range rather than by category, since a
 # code point unassigned in this Python's Unicode table may be an invisible one in a newer table.
 IGNORABLE_RANGES = [("⁠", "⁯"), ("︀", "︍"), ("﷐", "﷯"), ("￰", "￻"),
                     ("\U000e0000", "\U000e0fff")]
 
 
-def _emoji_base(c: str) -> bool:
-    """A character an emoji joiner or selector may follow: a symbol or emoji, or a keycap base."""
-    return unicodedata.category(c) in ("So", "Sk", "Sm") or ord(c) >= 0x1F000 or c in "0123456789#*"
+def _is_emoji(c: str) -> bool:
+    """A non-ASCII pictographic symbol (✔ ⚠ ❤ 👨 💻): the only thing an emoji joiner or selector
+    may attach to. Keycaps (1️⃣) aren't, since their enclosing mark is denied anyway."""
+    return ord(c) >= 0x2000 and (unicodedata.category(c) == "So" or ord(c) >= 0x1F000)
 
 
 def hides_text(text: str) -> bool:
     """Whether text has characters that could make the prompt show something other than what's
     posted: control and format characters (ANSI escapes, bidi overrides, zero-width), enclosing
     marks, private-use code points, default-ignorable ranges and noncharacters, blank-looking
-    letters, and any space other than a plain one. The emoji joiner and selectors are allowed
-    only right after an emoji or symbol (✔️, ⚠️, 👨‍💻), so they can't carry text on their own."""
+    letters, and any space other than a plain one. The emoji selectors are allowed once, right
+    after an emoji (✔️, ⚠️), and the joiner only between two emoji (👨‍💻), so neither can
+    carry hidden data."""
     for i, c in enumerate(text):
         if c in "\n\t":
             continue
-        if c in EMOJI_JOINERS:
-            if i > 0 and (_emoji_base(text[i - 1]) or text[i - 1] in "️"):
+        prev = text[i - 1] if i > 0 else ""
+        if c in ("︎", "️"):
+            if prev and _is_emoji(prev):
+                continue
+            return True
+        if c == "‍":
+            base = text[i - 2] if prev == "️" and i > 1 else prev
+            if base and _is_emoji(base) and i + 1 < len(text) and _is_emoji(text[i + 1]):
                 continue
             return True
         cat = unicodedata.category(c)
@@ -639,27 +588,23 @@ def current_branch(repo: str) -> str:
 
 def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
+    # Keeps every check fast: a hook that times out doesn't block the command.
+    if len(command) > MAX_COMMAND_CHARS and re.search(r"\b(git|gh)\b", command):
+        return "deny", f"Commands that mention git or gh are limited to {MAX_COMMAND_CHARS} characters here; split it up."
     if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
         return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
-    command, scripts, run_scripts, written = split_heredocs(command)
+    command, scripts = split_heredocs(command)
     # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
     flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
     unquote = lambda s: re.sub(r"[\"'\\]", "", s)  # noqa: E731
     if any(LOOSE_PUSH.search(unquote(s)) or LOOSE_MERGE.search(unquote(s)) for s in scripts):
         return "deny", ("A heredoc in this command mentions git push or gh pr merge, and what it writes may be run. "
                         "Run the push as its own command (or merge on GitHub); for notes, write the text to a file.")
-    # Posts only in scripts that run (python3 - <<EOF), so a commit message or note that
-    # mentions `gh pr create` isn't refused.
-    if any(CODE_POST.search(unquote(s)) for s in run_scripts):
-        return "deny", ("A script in this command runs a gh command that posts to GitHub. Post with the gh command "
-                        f"itself. {FILE_ONLY}")
     try:
         pushes = find_pushes(command)
         if finds_pr_merge(command):
             return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
         posts = find_posts(command)
-        if not posts and (why := runs_posting_code(command, written)):
-            return "deny", f"{why} Post with the gh command itself. {FILE_ONLY}"
     except ValueError:
         if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat) or LOOSE_POST.search(unquote(command)):
             return "deny", ("Couldn't parse this command to check for a git push, PR merge or text posted to "

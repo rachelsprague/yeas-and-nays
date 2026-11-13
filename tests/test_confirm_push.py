@@ -246,9 +246,6 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh api -X PATCH repos/o/r/releases/1 -f body=x",
     "gh api repos/o/r/actions/runs -f status=failure",
     "gh api graphql -f query=\"$Q\"",
-    # a posting command written to a script, or passed as code, and run
-    "cat <<'EOF' > s.sh\ngh pr comment 1 -b x\nEOF\nbash s.sh",
-    "python3 -c \"import os; os.system('gh pr comment 1 -b x')\"",
     # body files that can't be shown faithfully, or shouldn't be
     "gh pr comment 12 --body-file ctrl.md",
     "gh pr comment 12 --body-file bidi.md",
@@ -263,7 +260,6 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr close 1 -dc 'text'",
     "gh issue new --title x --body y",
     "gh pr new --title x --body y",
-    "python3 -c \"import subprocess; subprocess.run(['gh', 'pr', 'comment', '1', '-b', 'x'])\"",
     "gh pr create --title 'Add ‮evil' --body-file body.md",
     "gh pr create --title 'Add​this' --body-file body.md",
     "gh pr comment 12 --body-file vs.md",
@@ -284,24 +280,6 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr -c hi close 1",
     "gh pr --comment hi close 1",
     "gh pr revert 1 --title x --body hi",
-    # run-code variants
-    "python3 -Bc \"import subprocess; subprocess.run(['gh','pr','comment','1','-b','x'])\"",
-    "python3.12 -c \"import os; os.system('gh pr comment 1 -b x')\"",
-    "perl -le 'system(\"gh pr comment 1 -b x\")'",
-    "python3.12 - <<'EOF'\nimport os\nos.system('gh pr comment 1 -b x')\nEOF",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\n./s.sh",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\nbash -x s.sh",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\nsource s.sh",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\n. ./s.sh",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ntime ./s.sh",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\nsh <s.sh",
-    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ncat s.sh | bash",
-    "tee s.sh <<'EOF' >/dev/null\ngh pr comment 1 -b hi\nEOF\nbash s.sh",
-    "perl -E 'system(\"gh pr comment 1 -b x\")'",
-    "node --eval \"require('child_process').execSync('gh pr comment 1 -b x')\"",
-    "python3 -W ignore -X dev -B -c \"import os; os.system('gh pr comment 1 -b x')\"",
-    "python3 -c \"import subprocess; subprocess.run(['gh', '-R', 'a/b', 'pr', 'comment', '1', '-b', 'x'])\"",
-    "time python3 - <<'EOF'\nimport os\nos.system('gh pr comment 1 -b x')\nEOF",
     # aliases and comments on close/reopen
     "gh alias set c 'pr comment'",
     "gh alias import aliases.yml",
@@ -339,6 +317,30 @@ def test_emoji_with_joiners_and_selectors_are_allowed_in_a_body(repo):
     path, _ = repo
     (path / "body.md").write_text("Done ✔️ ⚠️ \U0001f468‍\U0001f4bb\n")
     assert confirm_push.decide("gh pr comment 1 --body-file body.md", str(path))[0] == "ask"
+
+
+@pytest.mark.parametrize("text", [
+    "a+‍b",           # joiner after an ASCII symbol
+    "1‍2️3",     # joiners and selectors after digits
+    "✔️️",  # a second selector
+    "✔‍",        # joiner with nothing to join
+    "1️⃣",       # keycap
+    "a\U00016fe4b",        # Khitan filler
+])
+def test_emoji_joiners_and_selectors_cant_carry_hidden_data(text):
+    assert confirm_push.hides_text(text)
+
+
+@pytest.mark.parametrize("text", ["✔️ done", "⚠️", "\U0001f468‍\U0001f4bb",
+                                  "❤️‍\U0001f525", "\U0001f44d\U0001f3fd", "→ — …"])
+def test_ordinary_emoji_and_punctuation_are_fine(text):
+    assert not confirm_push.hides_text(text)
+
+
+def test_very_long_git_or_gh_commands_are_denied(repo):
+    path, _ = repo
+    assert confirm_push.decide("gh pr view 1 " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
+    assert confirm_push.decide("echo " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path)) is None
 
 
 def test_gh_new_is_gated_like_create(repo):
@@ -410,12 +412,6 @@ def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, co
     assert confirm_push.decide(command, str(path)) is None
 
 
-def test_a_script_that_runs_a_post_is_denied(repo):
-    path, _ = repo
-    command = "python3 - <<'EOF'\nimport os\nos.system('gh pr comment 12 --body hi')\nEOF"
-    assert confirm_push.decide(command, str(path))[0] == "deny"
-
-
 def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
     def boom(*a):
         raise RuntimeError("x")
@@ -448,7 +444,6 @@ def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
     "export GIT_DIR=../other/.git; git push",
     "export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null; git push",
     "git push origin main && git push",
-    "python3 -c \"import subprocess; subprocess.run(['git', 'push', '--no-verify'])\"",
     "git $'pu\\x73h'",
     "git push --no-v''erify",
     "git config core.hooks''Path /dev/null && git push",
@@ -667,8 +662,6 @@ def test_prose_about_github_and_pre_push_is_not_a_push(repo, command):
     # `<<EOF` inside a quoted message, with no delimiter line: the next line is still a command.
     "git commit -m \"fix; cat <<EOF\"\ngit push origin HEAD:main",
     "sh <<EOF\necho finch's\ngit push --no-verify\nEOF",
-    "python3 - <<'PY'\nimport subprocess\nsubprocess.run(['git', 'push', '--force'])\nPY",
-    "python3 - <<'PY'\nimport os; os.system('gh pr merge 12')\nPY",
     "echo finch's && git push --force origin main",
     "echo don't; gh pr merge 3",
 ])

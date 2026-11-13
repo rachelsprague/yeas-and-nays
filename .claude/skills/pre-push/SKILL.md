@@ -202,5 +202,7 @@ every other `gh api` write and graphql mutations, `close`/`reopen -c`, flags
 before the action (`gh pr -b x comment`), `gh pr revert`, gh aliases, and any of `` ` `` `$ \ * ? [ ] { } ~ !` or a line break in the
 command (the shell would expand them after the check; gh's `{owner}` and
 `{repo}` placeholders are fine), so word titles without them. Titles and
-body files can't contain control or invisible characters, and body files
-must be UTF-8 text outside dot directories.
+body files can't contain control or invisible characters (emoji like ✔️ and
+👨‍💻 are fine; keycaps like 1️⃣ aren't), and body files must be UTF-8 text
+outside dot directories. The hook reads command text, so gh run from a
+script or another program isn't gated: post with the gh command itself.
