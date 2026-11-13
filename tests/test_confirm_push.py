@@ -274,6 +274,10 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr comment 12 --body-file mongol.md",
     "gh pr comment 12 --body-file khmer.md",
     "gh pr --repo=o/r comment 1 --body-file body.md",
+    # a gh word that's an argument to a wrapper, before the gh that runs
+    "sudo -u gh gh pr comment 1 --body hi",
+    "env -u gh gh pr comment 1 --body hi",
+    "xargs -I gh gh pr comment 1 --body hi",
     "gh --repo o/r pr comment 1 -b x",
     # flags between the group and the action, which gh accepts
     "gh pr -b hello comment 1",
@@ -329,6 +333,8 @@ def test_emoji_with_joiners_and_selectors_are_allowed_in_a_body(repo):
     "a\U00016fe4b",        # Khitan filler
     "a\U0001d159b",        # null notehead
     "a〿b",            # ideographic half fill space
+    "5 ×️ 3",    # selector after a math symbol
+    "€‍±",  # joiner between currency and math symbols
 ])
 def test_emoji_joiners_and_selectors_cant_carry_hidden_data(text):
     assert confirm_push.hides_text(text)
@@ -344,12 +350,15 @@ def test_ordinary_emoji_and_punctuation_are_fine(text):
 def test_very_long_git_or_gh_commands_are_denied(repo):
     path, _ = repo
     assert confirm_push.decide("gh pr view 1 " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
-    assert confirm_push.decide("echo " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path)) is None
-    # Quotes inside the word don't get around the cap.
+    assert confirm_push.decide("echo " + "x" * (confirm_push.MAX_COMMAND_CHARS - 10), str(path)) is None
+    # Every long command, since quotes or a backslash-newline can split `gh` past any check for it.
     assert confirm_push.decide("g''h pr " * 3000, str(path))[0] == "deny"
+    assert confirm_push.decide("g\\\nh pr view " + "1" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
+    assert confirm_push.decide("echo " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
 
 
-@pytest.mark.parametrize("command", [" gh api" * 2850, "gh " * 6600, "gh pr " * 3300])
+@pytest.mark.parametrize("command", [" gh api" * 2850, "gh " * 6600, "gh pr " * 3300,
+                                     "gh pr view " + "1" * 19900, "1" * 19900 + " gh pr comment"])
 def test_many_gh_words_in_one_command_stay_fast(repo, command):
     path, _ = repo
     start = time.time()

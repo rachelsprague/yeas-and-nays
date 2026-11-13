@@ -31,8 +31,8 @@ mutations, close/reopen with a comment, flags before the action (`gh pr
 expand after this check (backticks, $, globs, braces, line breaks), titles
 and body files with control or invisible characters, body files in dot
 directories, and a post chained with or redirected from anything else.
-Commands over 20,000 characters that mention git or gh are denied outright,
-so every check stays fast (a hook that times out doesn't block the command).
+Commands over 20,000 characters are denied outright, so every check stays
+fast (a hook that times out doesn't block the command).
 
 This is a guard against pushing or posting by accident, not against a
 determined attempt to get around it: it only sees command text, which can
@@ -122,6 +122,7 @@ API_COMMENT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues/\d+/comments|pulls/\d+
 API_COMMENT_EDIT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues|pulls)/comments/\d+")
 MAX_BODY_BYTES = 20_000  # shown in full in the approval prompt; anything longer is refused
 MAX_COMMAND_CHARS = 20_000
+MAX_GH_CANDIDATES = 5  # `gh` words per command segment tried as the start of a post
 # Characters the shell would expand or substitute after the hook has shown the literal text.
 SHELL_EXPANDED = re.compile(r"[`$\\\n\r*?\[\]{}~!]")
 
@@ -197,20 +198,21 @@ def _scan(command: str, in_segment, depth: int = 0) -> list:
 
 
 def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
-    """One pass (linear, so long commands stay fast): after a `gh` word, `pr` then `merge`
-    wherever flags put them (`gh -R o/r pr merge 3`, `gh pr -R o/r merge`), an API merge
-    endpoint, or an alias that mentions merge (`gh alias set m 'pr merge'`)."""
-    seen_gh = seen_pr = seen_api = seen_alias = False
-    for a in seg:
-        if os.path.basename(a) == "gh":
-            seen_gh = True
-            continue
-        if not seen_gh:
-            continue
-        seen_pr, seen_api, seen_alias = seen_pr or a == "pr", seen_api or a == "api", seen_alias or a == "alias"
-        if (seen_pr and a == "merge") or (seen_alias and "merge" in a) or (
-                seen_api and re.search(r"/pulls/\d+/merge\b|mergePullRequest", a)):
-            return [True]
+    """After a `gh` word: `pr` then `merge` wherever flags put them (`gh -R o/r pr merge 3`,
+    `gh pr -R o/r merge`), `api` and a merge endpoint, or `alias` and a word mentioning merge
+    (`gh alias set m 'pr merge'`). Only the first `gh` is checked: the words after any later
+    one are a subset of the words after the first, so it can't add a match, and checking once
+    keeps this linear."""
+    i = next((i for i, tok in enumerate(seg) if os.path.basename(tok) == "gh"), None)
+    if i is None:
+        return []
+    rest = seg[i + 1:]
+    if "pr" in rest and "merge" in rest[rest.index("pr") + 1:]:
+        return [True]
+    if "api" in rest and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in rest):
+        return [True]
+    if "alias" in rest and any("merge" in a for a in rest):
+        return [True]
     return []
 
 
@@ -238,11 +240,13 @@ def find_posts(command: str, depth: int = 0) -> list[dict]:
 
 
 def _post_in_segment(seg: list[str]) -> list[dict]:
-    """The segment's gh command, if it posts. Only the first `gh` word is the command (any later
-    one is its argument), which also keeps this linear in the segment's length."""
-    i = next((i for i, tok in enumerate(seg) if os.path.basename(tok) == "gh"), None)
-    if i is not None and (kind := _post_kind(seg[i + 1:])):
-        return [{"kind": kind, "args": seg[i + 1:]}]
+    """The segment's gh command, if it posts. A `gh` word can be an argument to a wrapper that
+    runs the real one (`sudo -u gh gh pr comment ...`), so the first few are tried; capping
+    them keeps this linear in the segment's length."""
+    starts = [i for i, tok in enumerate(seg) if os.path.basename(tok) == "gh"][:MAX_GH_CANDIDATES]
+    for i in starts:
+        if kind := _post_kind(seg[i + 1:]):
+            return [{"kind": kind, "args": seg[i + 1:]}]
     return []
 
 
@@ -386,16 +390,21 @@ IGNORABLE_RANGES = [("⁠", "⁯"), ("︀", "︍"), ("﷐", "﷯"), ("￰", "￻
                     ("\U000e0000", "\U000e0fff")]
 
 
-# Emoji that aren't in a symbol category: ℹ (letter), ‼ ⁉ 〽 (punctuation), © ® (Latin-1 symbols).
-EMOJI_NON_SYMBOLS = set("ℹ‼⁉〽〰©®")
+# Emoji outside the "other symbol" category: ℹ (letter), ‼ ⁉ 〽 〰 (punctuation), and the
+# arrows that take an emoji selector (math symbols).
+EMOJI_NON_SYMBOLS = set("ℹ‼⁉〽〰↔↕↖↗↘↙↩↪"
+                        "⤴⤵")
 
 
 def _is_emoji(c: str) -> bool:
-    """A non-ASCII symbol or emoji (✔ ⚠ ❤ ↔ ™ ℹ ‼ © 👨 💻): the only thing an emoji joiner or
-    selector may attach to. Keycaps (1️⃣) and tag-sequence flags aren't, since their enclosing
-    mark and tag characters are denied anyway."""
-    return ord(c) >= 0x80 and (unicodedata.category(c).startswith("S") or ord(c) >= 0x1F000
-                               or c in EMOJI_NON_SYMBOLS)
+    """An emoji or pictographic symbol (✔ ⚠ ❤ ™ © ℹ ‼ ↔ 👨 💻): the only thing an emoji joiner or
+    selector may attach to. Not math, currency or modifier symbols (× ± € °), which appear in
+    ordinary prose, and not unassigned code points. Keycaps (1️⃣) and tag-sequence flags aren't
+    either, since their enclosing mark and tag characters are denied anyway."""
+    if ord(c) < 0x80:
+        return False
+    cat = unicodedata.category(c)
+    return cat == "So" or (ord(c) >= 0x1F000 and cat != "Cn") or c in EMOJI_NON_SYMBOLS
 
 
 def hides_text(text: str) -> bool:
@@ -538,7 +547,9 @@ def _push_in_segment(seg: list[str]) -> list[dict]:
 
 def strip_redirects(command: str) -> str:
     """The command without redirections (`2>&1`, `> /dev/null`, `push>/dev/null`, `<<<x`)."""
-    return re.sub(r"\d*(>>?|<<<|<)(&\d+|\s*[^\s;&|]+)", " ", command).strip()
+    # (?<!\d): start a match at the beginning of a digit run, not at each digit, so a long run of
+    # digits doesn't make this quadratic.
+    return re.sub(r"(?<!\d)\d*(>>?|<<<|<)(&\d+|\s*[^\s;&|]+)", " ", command).strip()
 
 
 def git(repo: str, *args: str) -> str:
@@ -602,9 +613,11 @@ def current_branch(repo: str) -> str:
 
 def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
-    # Keeps every check fast: a hook that times out doesn't block the command.
-    if len(command) > MAX_COMMAND_CHARS and re.search(r"\b(git|gh)\b", re.sub(r"[\"'\\]", "", command)):
-        return "deny", f"Commands that mention git or gh are limited to {MAX_COMMAND_CHARS} characters here; split it up."
+    # Keeps every check fast: a hook that times out doesn't block the command. Any command, since
+    # quotes, backslash-newlines and the like can split `gh` past any check for it.
+    if len(command) > MAX_COMMAND_CHARS:
+        return "deny", (f"Commands are limited to {MAX_COMMAND_CHARS} characters here (so the push hook stays "
+                        "fast); put long text in a file.")
     if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
         return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
     command, scripts = split_heredocs(command)
