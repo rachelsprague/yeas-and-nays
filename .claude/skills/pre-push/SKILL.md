@@ -198,5 +198,8 @@ The push hook asks before any of these and shows the title and the whole
 file for the user to approve (files over 20,000 bytes are refused rather than
 cut). It denies every other way of posting: inline or attached text
 (`--body`, `-bfoo`, `-f body=...`), stdin, `--fill`, templates, editors,
-other `gh api` writes and graphql mutations, `close`/`reopen -c`, and gh
-aliases.
+every other `gh api` write and graphql mutations, `close`/`reopen -c`, gh
+aliases, and any of `` ` `` `$ \ * ? [ ] { } ~ !` or a line break in the
+command (the shell would expand them after the check), so word titles
+without them. Body files must be plain UTF-8 text with no control or
+invisible characters, outside dot directories.

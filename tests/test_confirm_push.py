@@ -132,7 +132,7 @@ def test_gh_pr_merge_is_denied(repo, command):
     "gh api repos/o/r/pulls/2/comments",
     "gh api repos/o/r/issues/2/comments --paginate",
     "gh api -X GET repos/o/r/pulls/2/comments -f per_page=100",
-    "gh api repos/o/r/actions/runs -f status=failure",
+    "gh api -X GET repos/o/r/actions/runs -f status=failure",
     "git merge origin/main",
 ])
 def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo, command):
@@ -228,6 +228,32 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh api graphql -f query='mutation { addComment(input: {subjectId: \"x\", body: \"hi\"}) { clientMutationId } }'",
     "gh api graphql -F query=@q.gql",
     "gh api graphql --input q.json",
+    # shell expansion after the hook has shown the literal text
+    "gh pr create --title \"x`cp evil.md body.md`\" --body-file body.md",
+    "gh pr edit 1 --title 'Use `uv run` in docs' --body-file body.md",
+    "gh pr comment \"1`cmd`\" --body-file body.md",
+    "gh pr create --title * --body-file body.md",
+    "gh pr comment 12 --body-file b?dy.md",
+    "gh pr comment 12 --body-file b{o,a}dy.md",
+    "gh pr create --title 'Cost $5' --body-file body.md",
+    "gh pr create --title 'line one\nline two' --body-file body.md",
+    # every other gh api write, including push-equivalent ones
+    "gh api repositories/123/issues/1/comments -f body=hi",
+    "gh api repositories/123/issues/1/comments -F body=@body.md",
+    "gh api repos/o/r/merges -f base=main -f head=x",
+    "gh api -X PUT repos/o/r/contents/a.txt -f content=x -f message=y",
+    "gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=abc",
+    "gh api -X PATCH repos/o/r/releases/1 -f body=x",
+    "gh api repos/o/r/actions/runs -f status=failure",
+    "gh api graphql -f query=\"$Q\"",
+    # a posting command written to a script, or passed as code, and run
+    "cat <<'EOF' > s.sh\ngh pr comment 1 -b x\nEOF\nbash s.sh",
+    "python3 -c \"import os; os.system('gh pr comment 1 -b x')\"",
+    # body files that can't be shown faithfully, or shouldn't be
+    "gh pr comment 12 --body-file ctrl.md",
+    "gh pr comment 12 --body-file bidi.md",
+    "gh pr comment 12 --body-file .env",
+    "gh pr comment 12 --body-file .git/config",
     # aliases and comments on close/reopen
     "gh alias set c 'pr comment'",
     "gh alias import aliases.yml",
@@ -240,7 +266,17 @@ def test_posting_inline_or_unseen_text_is_denied(repo, command):
     path, _ = repo
     (path / "body.md").write_text("text\n")
     (path / "big.md").write_text("x" * (confirm_push.MAX_BODY_BYTES + 1))
+    (path / "ctrl.md").write_text("shown\x1b[8mhidden\x1b[0m\n")
+    (path / "bidi.md").write_text("a‮b\n")
+    (path / ".env").write_text("KEY=1\n")
     assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+def test_gh_owner_repo_placeholders_are_allowed(repo):
+    path, _ = repo
+    (path / "body.md").write_text("text\n")
+    command = "gh api repos/{owner}/{repo}/issues/1/comments -F body=@body.md"
+    assert confirm_push.decide(command, str(path))[0] == "ask"
 
 
 def test_a_body_file_symlinked_outside_the_repo_is_denied(repo):

@@ -23,9 +23,13 @@ issues only as a comment, a review-comment reply or a comment edit with
 `-F body=@file`. The file must be a regular file in the repo or a temp
 directory, small enough to show in full. Those ask, showing the title and the
 whole text, so the user approves exactly what's posted. Every other form is
-denied: inline or attached text, stdin, --fill, templates, editors, other
-`gh api` writes and graphql mutations, close/reopen with a comment, gh
-aliases, and a post chained with or redirected from anything else.
+denied: inline or attached text, stdin, --fill, templates, editors, every
+other `gh api` write (merges, contents and refs included, which are push
+equivalents) and graphql mutations, close/reopen with a comment, gh aliases,
+characters the shell would expand after this check (backticks, $, globs,
+braces, line breaks), body files with control or invisible characters or in
+dot directories, a post chained with or redirected from anything else, and a
+posting command written to a script and run in the same command.
 
 This is a guard against pushing by accident, not against a determined
 attempt to get around it: it only sees command text, which can always be
@@ -49,6 +53,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import unicodedata
 
 HOOKS_PATH = ".githooks"
 # git's global options that take a separate value (`-C dir`, `--git-dir dir`).
@@ -110,11 +115,12 @@ POSTING_FLAGS = {
 # close and reopen post text only with a comment.
 COMMENTING_ACTIONS = {("pr", "close"), ("pr", "reopen"), ("issue", "close"), ("issue", "reopen")}
 # The only `gh api` writes allowed: a comment, a reply to a review comment, or an edit of a comment.
-API_COMMENT = re.compile(r"/?repos/[\w.-]+/[\w.-]+/(issues/\d+/comments|pulls/\d+/comments(/\d+/replies)?)")
-API_COMMENT_EDIT = re.compile(r"/?repos/[\w.-]+/[\w.-]+/(issues|pulls)/comments/\d+")
-API_TEXT_ENDPOINT = re.compile(r"(^|/)repos/[^\s]*/(pulls|issues|comments|reviews)(/|$|\?)|(^|/)graphql$")
-API_WRITE_OPTS = ("-f", "-F", "--field", "--raw-field", "--input", "-X", "--method")
+_OWNER_REPO = r"(\{owner\}|[\w.-]+)/(\{repo\}|[\w.-]+)"
+API_COMMENT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues/\d+/comments|pulls/\d+/comments(/\d+/replies)?)")
+API_COMMENT_EDIT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues|pulls)/comments/\d+")
 MAX_BODY_BYTES = 20_000  # shown in full in the approval prompt; anything longer is refused
+# Characters the shell would expand or substitute after the hook has shown the literal text.
+SHELL_EXPANDED = re.compile(r"[`$\\\n\r*?\[\]{}~!]")
 
 
 def split_heredocs(command: str) -> tuple[str, list[str], list[str]]:
@@ -260,16 +266,15 @@ def _post_kind(args: list[str]) -> str | None:
     if pair in COMMENTING_ACTIONS and any(a in ("-c", "--comment") or a.startswith(("-c", "--comment="))
                                           for a in args):
         return "close-comment"
-    if words[:1] == ["api"] and _api_writes_text(args):
+    if words[:1] == ["api"] and _api_writes(args):
         return "api"
     return None
 
 
-def _api_writes_text(args: list[str]) -> bool:
-    """Whether `gh api <args>` writes to a PR, issue, comment or review, or runs a graphql
-    mutation. gh POSTs when given fields, unless the method says otherwise."""
-    if not any(API_TEXT_ENDPOINT.search(a) for a in args if not a.startswith("-")):
-        return False
+def _api_writes(args: list[str]) -> bool:
+    """Whether `gh api <args>` writes anything (gh POSTs when given fields, unless the method
+    says otherwise), or runs a graphql query the hook can't read. Every write is gated, not
+    just PR and issue endpoints: merges, contents and refs are push equivalents."""
     method = ""
     for k, a in enumerate(args):
         if a in ("-X", "--method") and k + 1 < len(args):
@@ -282,8 +287,9 @@ def _api_writes_text(args: list[str]) -> bool:
     if any(a.strip("/") == "graphql" for a in args):
         # A query given inline can be read; one from a file, --input or a mutation can't be checked.
         values = [args[k + 1] for k, a in enumerate(args[:-1]) if a in ("-f", "-F", "--field", "--raw-field")]
-        return (len(values) != len(fields) or any("mutation" in a for a in args)
-                or any(v.split("=", 1)[-1].startswith("@") for v in values))
+        return (len(values) != len(fields) or any("mutation" in a or "$" in a for a in args)
+                or any(v.split("=", 1)[-1].startswith("@") for v in values)
+                or method.upper() not in ("", "GET", "POST"))
     return method.upper() not in ("", "GET") or (bool(fields) and method.upper() != "GET")
 
 
@@ -298,9 +304,15 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
     A regular file under the repo or a temp directory, at most MAX_BODY_BYTES, UTF-8."""
     if path == "-" or path.startswith("~") or "$" in path:
         return None, f"{path!r} isn't a plain path to a file (no stdin, ~ or variables)."
-    full = os.path.realpath(os.path.join(repo, path))
-    if not any(full == r or full.startswith(r + os.sep) for r in _allowed_roots(repo)):
+    try:
+        full = os.path.realpath(os.path.join(repo, path))
+    except ValueError:  # a NUL byte
+        return None, f"{path!r} isn't a valid path."
+    root = next((r for r in _allowed_roots(repo) if full == r or full.startswith(r + os.sep)), None)
+    if root is None:
         return None, f"{path} is outside the repository and the temp directories."
+    if any(part.startswith(".") for part in os.path.relpath(full, root).split(os.sep)):
+        return None, f"{path} is a dotfile or inside a dot directory (.git, .env, ...)."
     try:
         st = os.stat(full)
     except OSError:
@@ -311,9 +323,14 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
         return None, f"{path} is over {MAX_BODY_BYTES} bytes, too long to show in full for approval."
     try:
         with open(full, "rb") as f:
-            return f.read(MAX_BODY_BYTES + 1).decode("utf-8"), ""
+            text = f.read(MAX_BODY_BYTES + 1).decode("utf-8")
     except (OSError, UnicodeDecodeError):
         return None, f"{path} isn't readable UTF-8 text."
+    # Control characters, bidi overrides and zero-width characters can make the prompt show
+    # something other than what's posted.
+    if any(unicodedata.category(c) in ("Cc", "Cf", "Zl", "Zp") and c not in "\n\t" for c in text):
+        return None, f"{path} contains control or invisible characters, which could hide text in the prompt."
+    return text, ""
 
 
 FILE_ONLY = ("Text posted to GitHub is public: write it to a file, run the public-repo checklist (CLAUDE.md) "
@@ -331,9 +348,13 @@ def post_decision(post: dict, command: str, repo: str) -> tuple[str, str]:
         return "deny", f"Closing or reopening with a comment posts unreviewed text. Post the comment first. {FILE_ONLY}"
     # The whole command, so nothing before it changes the file or the directory, and nothing
     # feeds it stdin.
-    if (strip_redirects(command) != command.strip() or tokens(command) != ["gh", *args]
-            or any("$" in a for a in args)):
-        return "deny", f"Post to GitHub with the gh command alone: no redirects, pipes, cd, $ or && around it. {FILE_ONLY}"
+    if strip_redirects(command) != command.strip() or tokens(command) != ["gh", *args]:
+        return "deny", f"Post to GitHub with the gh command alone: no redirects, pipes, cd or && around it. {FILE_ONLY}"
+    # The shell would expand these after the hook showed the literal text (a backtick runs a
+    # command that could rewrite the body file), so the approval wouldn't cover what's posted.
+    if SHELL_EXPANDED.search(command.replace("{owner}", "").replace("{repo}", "")):
+        return "deny", ("Posting commands can't contain ` $ \\ * ? [ ] { } ~ ! or line breaks, which the shell "
+                        f"would expand after this check; reword the title or rename the file. {FILE_ONLY}")
 
     if kind == "api":
         return _api_post_decision(args, repo)
@@ -502,6 +523,13 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
         if finds_pr_merge(command):
             return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
         posts = find_posts(command)
+        # A posting command written to a script (a heredoc) or passed as code (`python3 -c`)
+        # and run by an interpreter in the same command.
+        if not posts and LOOSE_POST.search(flat):
+            words = {os.path.basename(t) for t in tokens(strip_redirects(command))}
+            if words & (INTERPRETERS - {".", "source"}):
+                return "deny", ("This command runs a script that contains a gh command that posts to GitHub. Post "
+                                f"with the gh command itself. {FILE_ONLY}")
     except ValueError:
         if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat) or LOOSE_POST.search(unquote(command)):
             return "deny", ("Couldn't parse this command to check for a git push, PR merge or text posted to "
