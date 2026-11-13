@@ -1,0 +1,42 @@
+---
+layout: default
+title: Privacy
+description: What Yeas & Nays and the services it uses record about visits, and how to opt out of analytics.
+---
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <span class="kicker muted">Privacy</span>
+    <h1 class="vote-h">Privacy</h1>
+    <p class="soft" style="font-size: 18px; line-height: 28px">Yeas &amp; Nays has no accounts, forms or ads, and sets no cookies. It counts visits with a cookieless analytics service, and like any website, the services that host and serve it see each visitor's IP address.</p>
+  </section>
+
+  <nav aria-label="On this page" class="small" style="display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center">
+    <span class="kicker soft">On this page</span>
+    <a class="link" href="#analytics">Analytics</a>
+    <a class="link" href="#opt-out">Opting out</a>
+    <a class="link" href="#hosting">Hosting and fonts</a>
+  </nav>
+
+  <div class="prose">
+    <section id="analytics">
+      <h2>Analytics</h2>
+      <p>Visits are counted with <a href="https://umami.is">Umami Cloud</a>, which does not use cookies. For each page view, Umami records the page address, the referring site, browser, operating system, device type, screen size, language, and approximate location (country, region and city), which it derives from the IP address.</p>
+      <p>Umami does not store the IP address in its analytics records. To count repeat visits without cookies, it combines the IP address and browser details with a value that changes every month into an anonymous identifier. Umami and its infrastructure providers may keep IP addresses in operational and security logs. See <a href="https://umami.is/privacy">Umami's privacy policy</a>.</p>
+      <p>Analytics runs only on yeasandnaysdata.com, and not at all in a browser with Do Not Track turned on.</p>
+    </section>
+
+    <section id="opt-out">
+      <h2>Opting out</h2>
+      <p>Open any page with <code>?notrack=1</code> at the end of the address, such as <a href="/?notrack=1">yeasandnaysdata.com/?notrack=1</a>. From then on, this browser sends no page views to Umami from this site, on later visits too. The Umami script still loads, but sends nothing.</p>
+      <p>The setting is saved in this browser only, in its local storage for this site. It lasts until you open a page with <code>?notrack=0</code> at the end of the address or clear this site's data. Other browsers and devices need their own opt-out.</p>
+      <p>Anyone who opens a link ending in <code>?notrack=1</code> is opted out the same way, so remove it from a link before sharing it.</p>
+    </section>
+
+    <section id="hosting">
+      <h2>Hosting and fonts</h2>
+      <p>The site is hosted on GitHub Pages. GitHub logs and stores each visitor's IP address for security purposes. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
+      <p>The site's fonts load from Google Fonts, so a browser requests them from Google's servers, which receive the visitor's IP address with each request. See <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</p>
+      <p>Questions? <a href="{{ site.github }}/issues">Open an issue on GitHub</a>.</p>
+    </section>
+  </div>
+</main>
