@@ -1,0 +1,9 @@
+{
+  "bioguide_id": "M001214",
+  "sponsored": [
+    {"bill_id":"119-hr-10687","bill_number":"10687","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10687","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10687","policy_area":"Energy","title":"Utility Affordability and Transparency Act"},
+    {"bill_id":"119-hr-10194","bill_number":"10194","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10194","introduced_date":"2026-08-31","latest_action_date":"2026-09-15","latest_action_text":"Sponsor introductory remarks on measure. (CR H5828)","latest_vote_id":null,"measure_label":"H.R. 10194","policy_area":"Taxation","title":"PRO–WORK Act"},
+    {"bill_id":"119-hr-6217","bill_number":"6217","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/6217","introduced_date":"2025-11-20","latest_action_date":"2025-11-20","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 6217","policy_area":"Housing and Community Development","title":"Revitalize Our Neighborhoods Act of 2025"},
+    {"bill_id":"119-hr-3359","bill_number":"3359","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/3359","introduced_date":"2025-05-13","latest_action_date":"2025-06-06","latest_action_text":"Referred to the Subcommittee on Oversight and Investigations.","latest_vote_id":null,"measure_label":"H.R. 3359","policy_area":"Armed Forces and National Security","title":"Veterans’ Security and Pay Transparency Act"}
+  ]
+}

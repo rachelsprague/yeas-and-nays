@@ -1,7 +1,8 @@
 {
   "congress": 119,
-  "latest_roll_number": {"house":{"1":362,"2":322},"senate":{"1":659,"2":258}},
+  "has_sponsored_bills": true,
+  "latest_roll_number": {"house":{"1":362,"2":323},"senate":{"1":659,"2":262}},
   "latest_vote_date": "2026-11-12",
   "member_count": 556,
-  "vote_count": 1601
+  "vote_count": 1606
 }

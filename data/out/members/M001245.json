@@ -1,0 +1,10 @@
+{
+  "bioguide_id": "M001245",
+  "sponsored": [
+    {"bill_id":"119-hr-10991","bill_number":"10991","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10991","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10991","policy_area":"Health","title":"SPARKS Act"},
+    {"bill_id":"119-hr-9320","bill_number":"9320","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9320","introduced_date":"2026-06-15","latest_action_date":"2026-06-15","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9320","policy_area":"Education","title":"All in For Attendance Act"},
+    {"bill_id":"119-hr-8619","bill_number":"8619","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8619","introduced_date":"2026-04-30","latest_action_date":"2026-05-15","latest_action_text":"Sponsor introductory remarks on measure. (CR H3541)","latest_vote_id":null,"measure_label":"H.R. 8619","policy_area":"Crime and Law Enforcement","title":"Kimberly Vaughan Firearm Safe Storage Act"},
+    {"bill_id":"119-hr-8618","bill_number":"8618","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8618","introduced_date":"2026-04-30","latest_action_date":"2026-04-30","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 8618","policy_area":"Education","title":"College Affordability and Accessibility Act"},
+    {"bill_id":"119-hr-8581","bill_number":"8581","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8581","introduced_date":"2026-04-29","latest_action_date":"2026-04-29","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 8581","policy_area":"Congress","title":"SET Act"}
+  ]
+}
