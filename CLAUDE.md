@@ -67,7 +67,11 @@ Long sessions cost more per turn as context grows: start a new session (`/clear`
 
 ## Public repo: review before every push
 
-This repository is public, and a pushed branch or PR is public as soon as it's pushed or opened. Before any `git push`, review every outgoing commit individually (`git log -p --cc origin/main..HEAD`, including commit messages and merge commits), and the PR title and body, not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
+This repository is public, and a pushed branch or PR is public as soon as it's pushed or opened. Before any `git push`, review every outgoing commit individually (`git log -p --cc origin/main..HEAD`, including commit messages and merge commits), and the PR title and body, not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms.
+
+The same goes for any text posted to GitHub: PR titles and descriptions (and later edits to them), PR comments, review comments and replies, and issues. Write the text to a file, run this checklist over it, show it to the user, and post it with `--body-file` (`gh api`: `-F body=@file`). The push hook asks before any command that posts and shows the text; it denies inline text, stdin and `--fill`. `/pre-push` covers a PR's opening title and body; for a comment or a description edit later, run the checklist on its own.
+
+Check for:
 
 - **Secrets:** API keys, tokens, app passwords, `.env` files, credentials in URLs, logs, or test fixtures.
 - **Personal info:** personal emails, home directory paths (e.g. `/Users/...`), machine names, IPs, or anything about the maintainer beyond "Rachel Sprague" and rachelsprague.com. No links to personal (non-professional) accounts or sites.

@@ -15,6 +15,13 @@ PR, and the maintainer squash-merges it on GitHub. So:
   missing git hook). Pushing main and `gh pr merge` are denied: PRs are merged
   on GitHub by the maintainer.
 
+It also gates text posted to GitHub, which is just as public: `gh pr create /
+edit / comment / review`, `gh issue create / edit / comment`, and `gh api`
+writes to PRs and issues (comments, review replies, mutations). The text must
+come from a file (`--body-file`, `body=@file`); the hook asks, showing the
+title and the file's text, so the user approves exactly what's posted. Inline
+text (`--body`, `body=...`), stdin and `--fill` are denied.
+
 This is a guard against pushing by accident, not against a determined
 attempt to get around it: it only sees command text, which can always be
 disguised (variables, scripts). The real check is the git pre-push hook in
@@ -66,6 +73,17 @@ ASSIGNMENT = re.compile(r"[A-Za-z_]\w*=\S*")
 # one line (not "github", "/pre-push" or "pre-push"), and `gh` ... `merge` likewise.
 LOOSE_PUSH = re.compile(r"\bgit\b[^\n;&|]{0,200}?(?<![-/.\w])push\b")
 LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
+LOOSE_POST = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])(comment|review|create|edit|api)\b")
+
+# `gh <group> <action>` commands that post text to GitHub.
+POSTING = {("pr", "create"), ("pr", "edit"), ("pr", "comment"), ("pr", "review"),
+           ("issue", "create"), ("issue", "edit"), ("issue", "comment")}
+# `gh api` endpoints that hold PR and issue text.
+POSTED_ENDPOINT = re.compile(r"(^|/)(pulls|issues|comments|reviews)(/|$)|^graphql$")
+SHOWN_CHARS = 4000  # of a body file, in the approval prompt
+# `gh api` options that take a separate value (`-X PATCH`), so the value isn't read as the endpoint.
+API_OPTS_WITH_VALUE = {"-X", "--method", "-f", "--raw-field", "-F", "--field", "-H", "--header", "--input",
+                       "-q", "--jq", "-t", "--template", "--hostname", "-p", "--preview", "--cache"}
 
 
 def split_heredocs(command: str) -> tuple[str, list[str]]:
@@ -120,6 +138,11 @@ def finds_pr_merge(command: str) -> bool:
     return bool(_scan(command, _pr_merge_in_segment))
 
 
+def find_posts(command: str) -> list[dict]:
+    """Every gh command in the command that posts text to GitHub, as {"what", "args"}."""
+    return _scan(command, _post_in_segment)
+
+
 def _scan(command: str, in_segment, depth: int = 0) -> list:
     found, segment = [], []
     for tok in tokens(strip_redirects(command)) + [";"]:
@@ -151,6 +174,106 @@ def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
         if "alias" in rest and any("merge" in a for a in rest):  # `gh alias set m 'pr merge'`
             return [True]
     return []
+
+
+def _post_in_segment(seg: list[str]) -> list[dict]:
+    for i, tok in enumerate(seg):
+        if os.path.basename(tok) != "gh":
+            continue
+        rest = seg[i + 1:]
+        words = [a for a in rest if not a.startswith("-")]
+        # The group and action are the first two plain words, wherever flags put them;
+        # `-R owner/repo` leaves "owner/repo" as a word, so skip anything with a slash first.
+        plain = [w for w in words if "/" not in w]
+        if len(plain) >= 2 and (plain[0], plain[1]) in POSTING:
+            return [{"what": f"gh {plain[0]} {plain[1]}", "args": rest}]
+        if plain and plain[0] == "api" and _api_writes(rest):
+            return [{"what": "gh api", "args": rest}]
+    return []
+
+
+def _api_writes(args: list[str]) -> bool:
+    """Whether `gh api <args>` writes to a PR or issue: an explicit write method, or fields
+    (which make gh POST), on a PR, issue, comment or review endpoint, or a graphql mutation."""
+    endpoint, after = "", iter(args[args.index("api") + 1:])
+    for a in after:
+        if a in API_OPTS_WITH_VALUE:
+            next(after, None)
+        elif not a.startswith("-"):
+            endpoint = a
+            break
+    if not POSTED_ENDPOINT.search(endpoint.split("?")[0].strip("/")):
+        return False
+    if endpoint.strip("/") == "graphql":
+        return any("mutation" in a for a in args)
+    method = next((args[k + 1] for k, a in enumerate(args[:-1]) if a in ("-X", "--method")), "")
+    fields = any(a in ("-f", "-F", "--field", "--raw-field", "--input") or a.startswith(("--field=", "--raw-field="))
+                 for a in args)
+    return method.upper() in ("POST", "PATCH", "PUT", "DELETE") or (fields and method.upper() != "GET")
+
+
+def _option(args: list[str], *names: str) -> list[str]:
+    """Values of an option, given as `--name value` or `--name=value`."""
+    values = []
+    for k, a in enumerate(args):
+        for name in names:
+            if a == name and k + 1 < len(args):
+                values.append(args[k + 1])
+            elif name.startswith("--") and a.startswith(name + "="):
+                values.append(a[len(name) + 1:])
+    return values
+
+
+def _read_text(path: str, repo: str) -> str | None:
+    try:
+        with open(os.path.join(repo, os.path.expanduser(path)), encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return None
+    return text if len(text) <= SHOWN_CHARS else text[:SHOWN_CHARS] + "\n[… truncated]"
+
+
+def post_decision(post: dict, repo: str) -> tuple[str, str]:
+    """Ask, showing the text to be posted, when it comes from files; deny otherwise."""
+    what, args = post["what"], post["args"]
+    file_only = ("Text posted to GitHub is public: write it to a file, run the public-repo checklist "
+                 "(CLAUDE.md) over it, and pass it with --body-file (gh api: -F body=@file).")
+    if what == "gh api":
+        if any(a.strip("/") == "graphql" for a in args):
+            return "deny", ("gh api graphql mutations carry their text inline. Use `gh pr comment --body-file` or a "
+                            f"REST endpoint with -F body=@file. {file_only}")
+        fields = _option(args, "-f", "--raw-field") + _option(args, "-F", "--field")
+        files = [f.split("=", 1)[1][1:] for f in fields if "=" in f and f.split("=", 1)[1].startswith("@")]
+        inline = [f for f in fields if "=" in f and not f.split("=", 1)[1].startswith("@")
+                  and f.split("=", 1)[0] in ("body", "title")]
+        if inline:
+            return "deny", f"{what} with inline text refused. {file_only}"
+        if "--input" in args or any(f == "-" for f in files):
+            return "deny", f"{what} reading from stdin or --input refused. {file_only}"
+        shown = []
+        for f in files:
+            text = _read_text(f, repo)
+            if text is None:
+                return "deny", f"{what}: can't read {f}, so the text to be posted can't be shown."
+            shown.append(f"--- {f} ---\n{text}")
+        return "ask", (f"{what} writes to a PR or issue on a PUBLIC repo:\n{' '.join(args)}\n\n"
+                       + ("\n\n".join(shown) or "(no text fields)")
+                       + "\n\nApprove only if this text passed the public-repo checklist.")
+
+    if any(a in ("-b", "--body") or a.startswith("--body=") or a.startswith("--fill") for a in args):
+        return "deny", f"{what} with inline or auto-filled text refused. {file_only}"
+    body_files = _option(args, "--body-file", "-F")
+    if "-" in body_files:
+        return "deny", f"{what} reading the body from stdin refused. {file_only}"
+    titles = _option(args, "-t", "--title")
+    shown = [f"Title: {t}" for t in titles]
+    for f in body_files:
+        text = _read_text(f, repo)
+        if text is None:
+            return "deny", f"{what}: can't read {f}, so the text to be posted can't be shown."
+        shown.append(f"--- {f} ---\n{text}")
+    return "ask", (f"{what} posts to a PUBLIC repo:\n\n" + ("\n\n".join(shown) or "(no title or body: "
+                   + " ".join(args) + ")") + "\n\nApprove only if this text passed the public-repo checklist.")
 
 
 def _push_in_segment(seg: list[str]) -> list[dict]:
@@ -240,19 +363,27 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
     command, scripts = split_heredocs(command)
     # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
     flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
-    if any(LOOSE_PUSH.search(s) or LOOSE_MERGE.search(s) for s in (re.sub(r"[\"'\\]", "", s) for s in scripts)):
-        return "deny", ("A heredoc in this command mentions git push or gh pr merge, and what it writes may be run. "
-                        "Run the push as its own command (or merge on GitHub); for notes, write the text to a file.")
+    if any(LOOSE_PUSH.search(s) or LOOSE_MERGE.search(s) or LOOSE_POST.search(s)
+           for s in (re.sub(r"[\"'\\]", "", s) for s in scripts)):
+        return "deny", ("A heredoc in this command mentions git push, gh pr merge or a gh command that posts to "
+                        "GitHub, and what it writes may be run. Run that command on its own; for notes, write the "
+                        "text to a file.")
     try:
         pushes = find_pushes(command)
         if finds_pr_merge(command):
             return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
+        posts = find_posts(command)
     except ValueError:
-        if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat):
-            return "deny", "Couldn't parse this command to check for a git push or PR merge. Run it on its own."
+        if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat) or LOOSE_POST.search(flat):
+            return "deny", ("Couldn't parse this command to check for a git push, PR merge or text posted to "
+                            "GitHub. Run it on its own.")
         return None
     if "push" in flat and ("--no-verify" in flat or "hookspath" in flat.lower()):  # also pushes built in a script
         return "deny", "git push refused: --no-verify or a hooksPath setting would switch off the git pre-push hook."
+    if posts:
+        if pushes or len(posts) > 1:
+            return "deny", "Post to GitHub as a command of its own (one gh command, nothing before or after it)."
+        return post_decision(posts[0], repo)
     if not pushes:
         return None
 
@@ -291,10 +422,11 @@ def main() -> None:
         command = (payload.get("tool_input") or {}).get("command") or ""
         repo = payload.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or "."
         result = decide(command, repo)
-    except Exception as e:  # fail closed: a crash must not let a push or merge through
-        if "push" not in raw and "merge" not in raw:
+    except Exception as e:  # fail closed: a crash must not let a push, merge or post through
+        if "push" not in raw and "merge" not in raw and not re.search(r"\bgh\b", raw):
             return
-        result = "deny", f"The push hook failed ({type(e).__name__}: {e}); not allowing a command that may push."
+        result = "deny", (f"The push hook failed ({type(e).__name__}: {e}); not allowing a command that may push "
+                          "or post to GitHub.")
     if result is None:
         return
     decision, reason = result

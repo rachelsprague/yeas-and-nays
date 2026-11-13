@@ -124,15 +124,72 @@ def test_gh_pr_merge_is_denied(repo, command):
 
 
 @pytest.mark.parametrize("command", [
-    "gh pr create --base main --head feature --title 't' --body-file /tmp/body.md",
     "gh pr view 12 && git merge origin/main",
     "gh pr view 12 --json state",
-    "gh pr edit 12 --body-file /tmp/body.md",
+    "gh pr list",
+    "gh api repos/o/r/pulls/2/comments",
+    "gh api repos/o/r/issues/2/comments --paginate",
+    "gh api -X GET repos/o/r/pulls/2/comments -f per_page=100",
+    "gh api repos/o/r/actions/runs -f status=failure",
     "git merge origin/main",
 ])
-def test_pr_commands_that_dont_merge_are_left_to_normal_permissions(repo, command):
+def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo, command):
     path, _ = repo
     assert confirm_push.decide(command, str(path)) is None
+
+
+@pytest.mark.parametrize("command", [
+    "gh pr create --base main --head feature --title 'Add X' --body-file body.md",
+    "gh pr edit 12 --body-file body.md",
+    "gh pr edit 12 --body-file=body.md",
+    "gh pr comment 12 --body-file body.md",
+    "gh pr comment 12 -F body.md",
+    "gh -R owner/repo pr comment 12 --body-file body.md",
+    "gh pr review 12 --comment --body-file body.md",
+    "gh issue comment 3 --body-file body.md",
+    "gh api repos/o/r/issues/12/comments -F body=@body.md",
+    "gh api repos/o/r/pulls/12/comments/99/replies -F body=@body.md",
+    "gh api -X PATCH repos/o/r/issues/comments/5 -F body=@body.md",
+])
+def test_posting_text_from_a_file_asks_and_shows_it(repo, command):
+    path, _ = repo
+    (path / "body.md").write_text("Adds the floor schedule.\n")
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "ask" and "PUBLIC" in reason and "Adds the floor schedule." in reason
+
+
+def test_the_title_is_shown_and_a_long_body_is_cut(repo):
+    path, _ = repo
+    (path / "body.md").write_text("x" * (confirm_push.SHOWN_CHARS + 50))
+    decision, reason = confirm_push.decide("gh pr create --title 'Add X' --body-file body.md", str(path))
+    assert decision == "ask" and "Title: Add X" in reason and "truncated" in reason
+
+
+@pytest.mark.parametrize("command", [
+    "gh pr comment 12 --body 'looks good'",
+    "gh pr comment 12 -b 'looks good'",
+    "gh pr edit 12 --body='new text'",
+    "gh pr create --fill",
+    "gh pr create --fill-first",
+    "gh pr comment 12 --body-file -",
+    "gh issue comment 3 --body hi",
+    "gh api repos/o/r/issues/12/comments -f body='looks good'",
+    "gh api repos/o/r/issues/12/comments --input -",
+    "gh api graphql -f query='mutation { addComment(input: {subjectId: \"x\", body: \"hi\"}) { clientMutationId } }'",
+    "gh pr comment 12 --body-file missing.md",
+    "gh pr comment 12 --body-file body.md && gh pr comment 13 --body-file body.md",
+    "sh -c \"gh pr comment 12 --body hi\"",
+])
+def test_posting_inline_or_unseen_text_is_denied(repo, command):
+    path, _ = repo
+    (path / "body.md").write_text("text\n")
+    assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+def test_a_heredoc_script_that_posts_is_denied(repo):
+    path, _ = repo
+    command = "python3 - <<'EOF'\nimport os\nos.system('gh pr comment 12 --body hi')\nEOF"
+    assert confirm_push.decide(command, str(path))[0] == "deny"
 
 
 @pytest.mark.parametrize("command", [
