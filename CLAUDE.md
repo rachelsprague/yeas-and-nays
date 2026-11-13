@@ -30,7 +30,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 
 Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item) and `backlog/<slug>.md` for details. Both are gitignored because this repo is public. Don't create GitHub issues for this project.
 
-Being gitignored, they exist only in the main checkout, and a session isolated in a worktree can't edit them. So board edits bracket worktree work: claim from the main checkout before entering the worktree, and update the board after leaving it and fast-forwarding `main`.
+Being gitignored, they exist only in the main checkout, and a session isolated in a worktree can't edit them. So board edits bracket worktree work: claim from the main checkout before entering the worktree, and update the board after leaving it.
 
 ### Claiming items
 
@@ -39,12 +39,25 @@ Several sessions may work in this repo at once. Claim an item before starting it
 - **Alias:** at your first claim, pick one short lowercase word as your alias, not one already used in a claim on the board, tell the user, and use it for the rest of the session.
 - **Claim:** re-read `BOARD.md` right before editing it, then move the item to Now and append ` — claimed by **<alias>** (YYYY-MM-DD HH:MM local, from <column>)`, naming the column it came from. Claim only what you're about to start. Claim at the end of the line, never as a leading `[word]` (the board dashboard reads that as a role).
 - **Respect claims:** never work on an item another alias has claimed. If a claim looks abandoned, ask the user before taking it over.
-- **Release:** when the work ships, move the item to Done per the usual one-line note, without the claim. If you stop before finishing, remove the claim, put the item back in the column it came from, and add a short note of where it stands.
+- **PR open:** once the item's PR is open, keep it in Now with the claim and add the PR number (` — PR #N, awaiting merge`), so no other session picks it up while it waits.
+- **Release:** the work ships when its PR is merged. Then move the item to Done per the usual one-line note, with the PR number, without the claim. Whichever session sees a merged PR first (or the user) does this. If you stop before finishing, remove the claim, put the item back in the column it came from, and add a short note of where it stands.
 - **Subagents** work under the claim of the session that spawned them; they don't claim items themselves.
+
+## Landing work: branches and pull requests
+
+Each session works on its own branch in a worktree (`<alias>/<short-slug>`) and lands it through a pull request, so sessions never share unpushed commits on `main`:
+
+1. Work and commit on the branch. Never commit to `main` locally; it only moves by `git pull --ff-only` after a merge.
+2. Before the first push, rebase the branch on `origin/main`. After it's pushed, bring in new `main` commits with `git merge origin/main` instead (no force pushes).
+3. Run `/pre-push`: it reviews the branch, pushes it (`git push -u origin <branch>`), and opens the PR (`gh pr create`).
+4. Stop there. Rachel reviews and squash-merges the PR on GitHub; agents never merge (`gh pr merge` is denied) and never push `main`.
+5. After the merge: `git pull --ff-only` on `main` in the main checkout, remove the worktree and branch, and update the board.
+
+The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`. `main` has no branch protection yet; the push hooks enforce the PR flow for agents.
 
 ## Public repo: review before every push
 
-This repository is public. Before any `git push`, review every outgoing commit individually (`git log -p origin/main..HEAD`, including commit messages), not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
+This repository is public, and a pushed branch or PR is public as soon as it's pushed or opened. Before any `git push`, review every outgoing commit individually (`git log -p origin/main..HEAD`, including commit messages), not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
 
 - **Secrets:** API keys, tokens, app passwords, `.env` files, credentials in URLs, logs, or test fixtures.
 - **Personal info:** personal emails, home directory paths (e.g. `/Users/...`), machine names, IPs, or anything about the maintainer beyond "Rachel Sprague" and rachelsprague.com. No links to personal (non-professional) accounts or sites.
