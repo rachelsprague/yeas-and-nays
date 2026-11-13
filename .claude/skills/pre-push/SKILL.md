@@ -54,6 +54,8 @@ the net `git diff origin/main...HEAD` when the branch has a merge.
 
 Launch the two agents in one message, then do the checklist yourself while
 they run. The agents only read and search, so they don't need a worktree.
+Run both on Sonnet (`model: "sonnet"`): they read a lot and write little,
+and you check their findings in step 3 anyway.
 
 **a. Public-repo checklist (you).** Follow "Public repo: review before every
 push" in `CLAUDE.md`: read `git log -p --cc origin/main..HEAD` commit by commit,
@@ -61,7 +63,7 @@ including messages and author emails, and the drafted PR title and body.
 Secrets, personal info, commit identity (GitHub noreply only), neutrality,
 internal notes, data size, third-party content.
 
-**b. Code review (fresh `general-purpose` agent).** Prompt it with the
+**b. Code review (fresh `general-purpose` agent, Sonnet).** Prompt it with the
 commit range and this brief:
 
 > You are reviewing commits `origin/main..HEAD` in this repo before they're
@@ -80,7 +82,7 @@ commit range and this brief:
 > medium = likely bug; low = cleanup). Verify each finding against the code
 > before reporting it; drop anything you can't support. Don't edit files.
 
-**c. Security review (fresh `general-purpose` agent).** Prompt:
+**c. Security review (fresh `general-purpose` agent, Sonnet).** Prompt:
 
 > You are doing a security review of commits `origin/main..HEAD` in this
 > public repo before they're pushed. You did not write them. Read
