@@ -37,15 +37,36 @@ nav: votes
       {%- if leads.senate %}{% include lead.html view=leads.senate key="senate" %}{% endif %}
     </article>
 
-    <aside class="side" aria-label="More recent votes">
-      {%- comment -%}
-        TODO(schedule): "Coming up" (scheduled floor votes for the week) goes here,
-        above "More recent votes", once the pipeline ingests the House and Senate
-        floor schedules. Rows: day, time ET, "{Chamber} · Scheduled", measure and
-        official title, expected question, each with data-row data-chamber so the
-        tabs filter it. Item links use .headline-link, like the other vote lists. Note under the list: "From the published House and Senate
-        floor schedules. Times are as announced and often change."
-      {%- endcomment %}
+    <aside class="side" aria-label="Coming up and more recent votes">
+      {%- assign schedule = site.data.schedule %}
+      {%- if schedule.upcoming_senate.size > 0 or schedule.upcoming_house.size > 0 %}
+      <section aria-labelledby="soon-h">
+        <h2 id="soon-h" class="kicker soft" style="padding-bottom: 8px">Coming up</h2>
+        {%- comment -%} Each chamber's block is a data-row too, so the chamber tabs hide its heading with its list. {%- endcomment %}
+        {%- if schedule.upcoming_senate.size > 0 %}
+        <div data-row data-chamber="senate">
+          <h3 class="small soft nums">Senate{% if schedule.senate_next_convene %} · Convenes {{ schedule.senate_next_convene }}{% endif %}</h3>
+          <ul class="ruled" data-limit="3">
+            {%- for item in schedule.upcoming_senate %}
+              {%- include schedule_item.html item=item %}
+            {%- endfor %}
+          </ul>
+        </div>
+        {%- endif %}
+        {%- if schedule.upcoming_house.size > 0 %}
+        <div data-row data-chamber="house">
+          <h3 class="small soft nums">House · Week of {{ schedule.upcoming_week | ap_date }}</h3>
+          <ul class="ruled" data-limit="3">
+            {%- for item in schedule.upcoming_house %}
+              {%- include schedule_item.html item=item show_category=true %}
+            {%- endfor %}
+          </ul>
+        </div>
+        {%- endif %}
+        <p class="small muted">From the House floor schedule and Senate cloture motions on file. Listed items may or may not come up for a vote.</p>
+        <a class="more" href="/schedule/">Full floor schedule →</a>
+      </section>
+      {%- endif %}
       <section aria-labelledby="more-h">
         <h2 id="more-h" class="kicker soft" style="padding-bottom: 8px">More recent votes</h2>
         <ul class="ruled" data-limit="6">

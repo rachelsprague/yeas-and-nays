@@ -195,3 +195,67 @@ unit_tests:
         - {bioguide_id: A1, bill_id: 119-s-7, latest_vote_id: s119-1-0050}
         - {bioguide_id: B2, bill_id: 119-s-7, latest_vote_id: s119-1-0050}
         - {bioguide_id: B2, bill_id: 119-sres-3, latest_vote_id: null}
+
+  - name: cloture_events_parse_the_senate_status_lines
+    model: int_senate_cloture_events
+    given:
+      - input: ref('stg_floor__senate_actions')
+        rows:
+          - {docnum: H.R. 1, status_text: "Cloture motion on the motion to proceed to the measure presented in Senate."}
+          - {docnum: H.R. 1, status_text: "Cloture on the motion to proceed to the measure invoked in Senate by Yea-Nay Vote. 73 - 25. Record Vote Number:"}
+          - {docnum: H.R. 1, status_text: "Cloture on the measure, as amended, not invoked in Senate by Yea-Nay Vote. 52 - 46. Record Vote Number:"}
+          - {docnum: S.Amdt. 9, status_text: "Cloture motion on amendment SA 9 presented in Senate."}
+          - {docnum: PN1, status_text: "Cloture motion presented in Senate."}
+          - {docnum: PN1, status_text: "Cloture invoked in Senate by Yea-Nay Vote. 50 - 44. Record Vote Number:"}
+          - {docnum: PN2, status_text: "Cloture motion withdrawn by unanimous consent in Senate."}
+          # Not cloture events
+          - {docnum: H.R. 1, status_text: "Considered by Senate."}
+          - {docnum: S.Amdt. 8, status_text: "SA 8 fell when cloture invoked on amendment SA 9."}
+    expect:
+      rows:
+        - {docnum: H.R. 1, event: filed, target: the motion to proceed to the measure}
+        - {docnum: H.R. 1, event: voted, target: the motion to proceed to the measure}
+        - {docnum: H.R. 1, event: voted, target: the measure}
+        - {docnum: S.Amdt. 9, event: filed, target: amendment SA 9}
+        - {docnum: PN1, event: filed, target: ""}
+        - {docnum: PN1, event: voted, target: ""}
+        - {docnum: PN2, event: withdrawn, target: ""}
+
+  - name: floor_schedule_keeps_filed_cloture_motions_and_links_the_vote_that_followed
+    description: >
+      A cloture motion is listed until a later status line records the vote; a roll call
+      on it can arrive first and is linked. House items removed from the schedule drop out,
+      and a House item links the first roll call on the measure in its week.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "2", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: B, removed_at: "2026-11-10 09:00:00"}
+          - {congress: 119, week_date: 2026-11-09, item_id: "3", measure_number: H.R. 7, bill_type: hr, bill_number: "7", title: C, removed_at: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          # PN1: filed, then voted per the floor record -> not listed
+          - {docnum: PN1, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-09, status_order: 0, document_title: N1}
+          - {docnum: PN1, document_prefix: PN, target: "", event: voted, activity_date: 2026-11-11, status_order: 0, document_title: N1}
+          # PN2: filed; the roll call is in, the floor record isn't yet -> listed with the vote
+          - {docnum: PN2, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N2}
+          # H.R. 9: cloture on the motion to proceed voted; cloture on the measure filed
+          - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the motion to proceed to the measure, event: filed, activity_date: 2026-11-05, status_order: 0, document_title: B9}
+          - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the motion to proceed to the measure, event: voted, activity_date: 2026-11-09, status_order: 0, document_title: B9}
+          - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the measure, event: filed, activity_date: 2026-11-11, status_order: 1, document_title: B9}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: h119-2-0001, chamber: house, congress: 119, bill_type: hr, bill_number: "5", vote_date: 2026-11-10, vote_time_et: "2026-11-10 14:00:00"}
+          - {vote_id: h119-2-0002, chamber: house, congress: 119, bill_type: hr, bill_number: "5", vote_date: 2026-11-11, vote_time_et: "2026-11-11 14:00:00"}
+          # A vote on H.R. 7 the week before doesn't count
+          - {vote_id: h119-2-0000, chamber: house, congress: 119, bill_type: hr, bill_number: "7", vote_date: 2026-11-04, vote_time_et: "2026-11-04 14:00:00"}
+          - {vote_id: s119-2-0010, chamber: senate, congress: 119, measure_number: PN2, question: On the Cloture Motion PN2, vote_date: 2026-11-12, vote_time_et: "2026-11-12 13:00:00"}
+          # Cloture on the motion to proceed doesn't settle cloture on the measure
+          - {vote_id: s119-2-0009, chamber: senate, congress: 119, measure_number: H.R. 9, question: On Cloture on the Motion to Proceed H.R. 9, vote_date: 2026-11-09, vote_time_et: "2026-11-09 17:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09-1, vote_id: h119-2-0001, question: null}
+        - {item_id: h-2026-11-09-3, vote_id: null, question: null}
+        - {item_id: s-PN2, vote_id: s119-2-0010, question: On the Cloture Motion}
+        - {item_id: s-H.R. 9-measure, vote_id: null, question: On the Cloture Motion}

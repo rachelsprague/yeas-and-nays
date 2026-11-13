@@ -10,6 +10,7 @@
 # Routes: /votes/{congress}/{chamber}/{session}/{roll}/ (roll numbers restart
 # each session) and /members/{bioguide_id}/.
 
+require "date"
 require "json"
 
 module Yan
@@ -69,6 +70,57 @@ module Yan
     note = (procedures["measures"] || []).find { |m| m["types"].include?(v["bill_type"]) }
     { "key" => q["key"], "term" => q["term"], "definition" => q["definition"],
       "measure_note" => (%w[passage suspend].include?(q["key"]) && note) ? note["definition"] : nil }
+  end
+
+  # The House schedule's heading without its "Items that may be considered"
+  # lead-in: "Under suspension of the rules", "Pursuant to a rule", or nil.
+  def self.schedule_category(category)
+    rest = category.to_s.sub(/\AItems that may be considered\s*/, "")
+    rest.empty? ? nil : rest[0].upcase + rest[1..]
+  end
+
+  # "2026-11-16T15:00:00" (Eastern) -> "Monday, Nov. 16, 2026, at 3 p.m. ET"
+  def self.convene_label(iso)
+    t = DateTime.strptime(iso, "%Y-%m-%dT%H:%M:%S")
+    clock =
+      if t.hour == 12 && t.minute.zero? then "noon"
+      else
+        hour = t.hour % 12
+        hour = 12 if hour.zero?
+        "#{hour}#{t.minute.zero? ? "" : format(":%02d", t.minute)} #{t.hour < 12 ? "a.m." : "p.m."}"
+      end
+    "#{Date::DAYNAMES[t.wday]}, #{Filters.ap_date(t)}, at #{clock} ET"
+  end
+
+  # The floor schedule for display. Each item links to its roll call once
+  # there is one (else to Congress.gov, when it's a bill or resolution).
+  # "Coming up" lists items without a roll call yet, and for the House only
+  # the newest published week: by the time the next week's schedule is out,
+  # the current week's floor business is mostly done.
+  def self.schedule_view(schedule, votes_by_id)
+    items = schedule["items"].map do |item|
+      vote = item["vote_id"] && votes_by_id[item["vote_id"]]
+      item.merge("chamber_name" => CHAMBER_NAMES[item["chamber"]],
+                 "category_label" => schedule_category(item["category"]),
+                 "vote_url" => vote && vote["url"],
+                 "result_label" => vote && vote["result_label"])
+    end
+    house, senate = items.partition { |i| i["chamber"] == "house" }
+    # Week -> heading -> items, in the schedule's own order.
+    house_weeks = house.group_by { |i| i["week_date"] }.map do |week, rows|
+      groups = rows.group_by { |i| i["category"] }.map { |category, r| { "category" => category, "items" => r } }
+      { "week_date" => week, "groups" => groups }
+    end
+    next_convene = schedule["senate_next_convene_et"]
+    latest_week = house_weeks.last
+    {
+      "upcoming_senate" => senate.reject { |i| i["vote_id"] },
+      "upcoming_house" => house.select { |i| i["week_date"] == latest_week["week_date"] && !i["vote_id"] },
+      "upcoming_week" => latest_week && latest_week["week_date"],
+      "house_weeks" => house_weeks,
+      "senate" => senate,
+      "senate_next_convene" => next_convene && convene_label(next_convene)
+    }
   end
 
   def self.vote_url(v)
@@ -259,6 +311,10 @@ module Yan
         site.pages << MemberPage.new(site, m, recent, sponsored, cosponsored)
       end
 
+      # Absent until the pipeline first ingests the floor schedules.
+      schedule = read_optional.call("floor_schedule.json") || { "items" => [] }
+      site.data["schedule"] = Yan.schedule_view(schedule, votes_by_id)
+
       site.data["meta"] = meta
       site.data["members"] = members
       site.data["votes"] = votes
@@ -278,6 +334,8 @@ module Yan
       d = input.is_a?(String) ? Date.parse(input) : input.to_date
       "#{AP_MONTHS[d.month - 1]} #{d.day}, #{d.year}"
     end
+
+    def self.ap_date(input) = Object.new.extend(self).ap_date(input)
 
     # 4 -> "4th"
     def self.ordinal(n) = Object.new.extend(self).ordinal(n)

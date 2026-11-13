@@ -230,7 +230,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .against li a span { font-family: var(--font-sans); font-weight: 400; font-size: 15px; color: var(--ink-soft); }
 .against strong { color: var(--ink); }
 
-.vote-item a { display: flex; flex-direction: column; gap: 6px; padding: 16px 0; text-decoration: none; }
+.vote-item :is(a, .unlinked) { display: flex; flex-direction: column; gap: 6px; padding: 16px 0; text-decoration: none; }
 .vote-item .t { font-family: var(--font-display); font-size: 19px; line-height: 25px; font-weight: 600; }
 
 .empty { font-size: 15px; color: var(--ink-soft); }
