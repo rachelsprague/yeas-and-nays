@@ -16,6 +16,7 @@ MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
 RECONSIDERED = ", Upon Reconsideration"
+SMALL_WORD_END = re.compile(r"\s(?:of|to|the|and|for)$", flags=re.IGNORECASE)
 
 
 class PostTooLong(ValueError):
@@ -147,4 +148,13 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
         by_word = short.rsplit(" ", 1)[0].rstrip(" ,;:")
         if len(by_word) >= MIN_TITLE:
             short = by_word
+    if at_boundary or short != title[:keep]:
+        # A cut that ends on a whole small word ("Secretary of…") reads as
+        # broken; drop such words too, as long as enough title remains.
+        short = short.rstrip(" ,;:")
+        while True:
+            trimmed = SMALL_WORD_END.sub("", short).rstrip(" ,;:")
+            if trimmed == short or len(trimmed) < MIN_TITLE:
+                break
+            short = trimmed
     return headline(vote, decision, short.rstrip(" ,;:") + ELLIPSIS) + fixed

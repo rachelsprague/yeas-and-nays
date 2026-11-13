@@ -241,6 +241,32 @@ def test_cut_just_before_a_comma_keeps_the_whole_word():
     assert headline.endswith('H.R. 5371…"')
 
 
+def cut_after(vote, prefix, tail):
+    """Headline of `vote` when the post is just long enough to keep `prefix`
+    of a title `prefix + tail`, cut mid-word in the word that follows."""
+    full = format_post(doc(vote), decide(vote), max_length=1000)
+    max_length = len(full) - len(tail) + len("…") + 2
+    return format_post(doc(vote), decide(vote), max_length=max_length).splitlines()[0]
+
+
+def test_cut_drops_a_trailing_small_word():
+    prefix, tail = "An Act relating to the Secretary of", " Defense and a long tail " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_after(vote, prefix, tail).endswith(' Secretary…"')
+
+
+def test_cut_drops_several_trailing_small_words():
+    prefix, tail = "An Act to provide funds to the", " States and a long tail " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_after(vote, prefix, tail).endswith(' funds…"')
+
+
+def test_small_word_stays_when_dropping_it_leaves_too_little_title():
+    prefix, tail = "Housing Supply Act Of", " Housing and a long tail " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_after(vote, prefix, tail).endswith(' Act Of…"')
+
+
 def test_reconsideration_is_dropped_before_the_title_is_cut():
     vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Rejected",
                        vote_title="Upon Reconsideration, Motion to Invoke Cloture on the Motion to Proceed to H.R. 5371",
