@@ -122,7 +122,7 @@ API_COMMENT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues/\d+/comments|pulls/\d+
 API_COMMENT_EDIT = re.compile(rf"/?repos/{_OWNER_REPO}/(issues|pulls)/comments/\d+")
 MAX_BODY_BYTES = 20_000  # shown in full in the approval prompt; anything longer is refused
 MAX_COMMAND_CHARS = 20_000
-MAX_GH_CANDIDATES = 5  # `gh` words per command segment tried as the start of a post
+MAX_GH_CANDIDATES = 20  # `gh` words per command segment tried as the start of a post
 # Characters the shell would expand or substitute after the hook has shown the literal text.
 SHELL_EXPANDED = re.compile(r"[`$\\\n\r*?\[\]{}~!]")
 
@@ -398,8 +398,8 @@ EMOJI_NON_SYMBOLS = set("ℹ‼⁉〽〰↔↕↖↗↘↙↩↪"
 
 def _is_emoji(c: str) -> bool:
     """An emoji or pictographic symbol (✔ ⚠ ❤ ™ © ℹ ‼ ↔ 👨 💻): the only thing an emoji joiner or
-    selector may attach to. Not math, currency or modifier symbols (× ± € °), which appear in
-    ordinary prose, and not unassigned code points. Keycaps (1️⃣) and tag-sequence flags aren't
+    selector may attach to. Not math, currency or modifier symbols (× ± €), which appear in
+    ordinary prose, and not unassigned code points. (° © ® are "other symbols" and count.) Keycaps (1️⃣) and tag-sequence flags aren't
     either, since their enclosing mark and tag characters are denied anyway."""
     if ord(c) < 0x80:
         return False
@@ -547,9 +547,10 @@ def _push_in_segment(seg: list[str]) -> list[dict]:
 
 def strip_redirects(command: str) -> str:
     """The command without redirections (`2>&1`, `> /dev/null`, `push>/dev/null`, `<<<x`)."""
-    # (?<!\d): start a match at the beginning of a digit run, not at each digit, so a long run of
-    # digits doesn't make this quadratic.
-    return re.sub(r"(?<!\d)\d*(>>?|<<<|<)(&\d+|\s*[^\s;&|]+)", " ", command).strip()
+    # The fd number is optional but, when present, starts at the beginning of a digit run, so a
+    # long run of digits isn't retried at every digit (quadratic). The redirect itself may still
+    # follow a previous one's digits directly (`2>&1>/dev/null`).
+    return re.sub(r"(?:(?<!\d)\d+)?(>>?|<<<|<)(&\d+|\s*[^\s;&|]+)", " ", command).strip()
 
 
 def git(repo: str, *args: str) -> str:

@@ -88,6 +88,9 @@ def test_reviewed_push_asks(repo):
     assert confirm_push.decide("git push 2>&1", str(path))[0] == "ask"
     assert confirm_push.decide("git push origin feature > /dev/null", str(path))[0] == "ask"
     assert confirm_push.decide("git push>/dev/null", str(path))[0] == "ask"
+    # Chained redirects, even between git and push, are stripped like single ones.
+    assert confirm_push.decide("git 2>&1>x push", str(path))[0] == "ask"
+    assert confirm_push.decide("git 2>&1</dev/null push", str(path))[0] == "ask"
 
 
 @pytest.mark.parametrize("command", ["git push", "git push origin", "git push origin main", "git push -u origin main"])
@@ -274,6 +277,11 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr comment 12 --body-file mongol.md",
     "gh pr comment 12 --body-file khmer.md",
     "gh pr --repo=o/r comment 1 --body-file body.md",
+    # chained redirects between gh and the action
+    "gh 2>&1>/dev/null pr comment 3 -b hi",
+    "gh>&2>/dev/null pr comment 3 -b hi",
+    "gh pr 2>&1>/dev/null comment 1 --body hi",
+    "env -u gh -u gh -u gh -u gh -u gh gh pr comment 1 --body hi",
     # a gh word that's an argument to a wrapper, before the gh that runs
     "sudo -u gh gh pr comment 1 --body hi",
     "env -u gh gh pr comment 1 --body hi",
@@ -479,6 +487,10 @@ def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
     "git push origin main#x; git push origin feature",
     "git push origin feature && git push origin feature",
     "git push  # ship it",
+    "git 2>&1>/dev/null push --force origin main",
+    "git>&2>/dev/null push -u origin foo",
+    "git 0<&0<x push origin main",
+    "git -C . 2>&1>x push --force",
 ])
 def test_uncovered_push_forms_are_denied_even_when_reviewed(repo, command):
     path, head = repo
