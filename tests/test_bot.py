@@ -4,7 +4,7 @@ import pytest
 
 from yan.bot import run as bot
 from yan.bot import state as bot_state
-from yan.bot.format import format_post, party_break_line, party_line, tally_line
+from yan.bot.format import PostTooLong, format_post, party_break_line, party_line, tally_line
 from yan.bot.rules import decide, measure_label
 
 
@@ -215,6 +215,30 @@ def test_truncation_cuts_at_a_word_boundary():
     labels = [f"Member{i} (D-CA-{i})" for i in range(1, 6)]
     headline = format_post(doc(vote, against=labels), decide(vote)).splitlines()[0]
     assert headline.endswith(' Housing…"')
+
+
+def test_post_that_cannot_fit_raises_instead_of_running_long():
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title="Word " * 30)
+    with pytest.raises(PostTooLong):
+        format_post(doc(vote), decide(vote), max_length=41)
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title="Word Word")
+    with pytest.raises(PostTooLong):
+        format_post(doc(vote), decide(vote), max_length=60)
+
+
+def test_one_very_long_word_is_cut_rather_than_rejected():
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title="A " + "x" * 400)
+    text = format_post(doc(vote), decide(vote))
+    assert len(text) <= 300 and text.splitlines()[0].endswith('x…"')
+
+
+def test_cut_just_before_a_comma_keeps_the_whole_word():
+    vote = house_vote(question="On Passage", measure_number="H R 1",
+                      measure_title="Motion to Proceed to H.R. 5371, and a long tail " + "y" * 300)
+    full = format_post(doc(vote), decide(vote), max_length=1000)
+    cut_at_comma = len(full) - len(" and a long tail " + "y" * 300) - 1 + len("…")
+    headline = format_post(doc(vote), decide(vote), max_length=cut_at_comma).splitlines()[0]
+    assert headline.endswith('H.R. 5371…"')
 
 
 def test_reconsideration_is_dropped_before_the_title_is_cut():

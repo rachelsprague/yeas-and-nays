@@ -136,11 +136,15 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
         if grapheme_length(text) <= max_length:
             return text
     keep = len(title) - (grapheme_length(text) - max_length) - len(ELLIPSIS)
-    # Cut at a word boundary, so no word or bill number is left half-written.
+    if keep < MIN_TITLE:
+        raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
+    # Cut at a word boundary, so no word or bill number is left half-written,
+    # unless that leaves too little of the title.
     short = title[:keep]
-    if keep < len(title) and not title[keep].isspace() and " " in short:
-        short = short.rsplit(" ", 1)[0]
-    short = short.rstrip(" ,;:")
-    if len(short) >= MIN_TITLE:
-        return headline(vote, decision, short + ELLIPSIS) + fixed
-    raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
+    rest = title[keep:]
+    at_boundary = rest[0].isspace() or re.match(r"[,;:](\s|$)", rest)
+    if not at_boundary and " " in short:
+        by_word = short.rsplit(" ", 1)[0].rstrip(" ,;:")
+        if len(by_word) >= MIN_TITLE:
+            short = by_word
+    return headline(vote, decision, short.rstrip(" ,;:") + ELLIPSIS) + fixed
