@@ -129,6 +129,17 @@ def test_a_malformed_or_wrong_congress_file_is_not_saved(monkeypatch, tmp_path, 
     assert "senate floor schedule not updated" in caplog.text
 
 
+def test_senate_files_from_another_congress_are_not_saved(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path / "house")
+    monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path / "senate")
+    client = _client({ingest.SENATE_DAYS_URL: httpx.Response(200, content=SESSION_DAYS.replace(b'"119"', b'"120"'))})
+
+    ingest.ingest(client, dt.date(2026, 11, 12))
+
+    assert not (tmp_path / "senate" / "session_days.xml").exists()
+    assert "Senate session days are not from the 119th Congress" in caplog.text
+
+
 def test_a_failed_fetch_logs_and_keeps_the_last_good_files(monkeypatch, tmp_path, caplog):
     monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path / "house")
     monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path / "senate")

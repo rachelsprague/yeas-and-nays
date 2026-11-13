@@ -165,6 +165,13 @@ class ScheduleTest < Minitest::Test
     assert_equal "Monday, Nov. 16, 2026, at 3 p.m. ET", view["senate_next_convene"]
   end
 
+  def test_senate_items_without_a_house_schedule
+    view = Yan.schedule_view({ "items" => [item("senate", "d")] }, {})
+    assert_equal [["d"], [], nil, []],
+                 [view["upcoming_senate"].map { |i| i["item_id"] }, view["upcoming_house"], view["upcoming_week"],
+                  view["house_weeks"]]
+  end
+
   def test_empty_schedule
     view = Yan.schedule_view({ "items" => [] }, {})
     assert_equal [[], [], nil, nil], view.values_at("upcoming_house", "upcoming_senate", "upcoming_week",

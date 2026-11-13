@@ -13,7 +13,8 @@
 
   vote_id links an item to the roll call that followed: for the House, the
   first vote in the scheduled week that decides the measure (passage,
-  suspend and pass, agreeing to the resolution, concurring), not procedural
+  suspend and pass, agreeing to the resolution, concurring, a veto
+  override), not procedural
   votes on the way there; for the Senate, the first cloture roll call on it
   after the motion was filed, which can appear before the day's floor
   activity is posted.
@@ -33,7 +34,8 @@ house_decisions as (
     where chamber = 'house'
         and regexp_matches(
             question,
-            '^On (Passage|Motion to Suspend the Rules and (Pass|Agree)|Agreeing to the (Resolution|Conference Report)|Motion to Concur)',
+            '^(On (Passage|Motion to Suspend the Rules and (Pass|Agree|Concur)|Agreeing to the (Resolution|Conference Report)|Motion to Concur)'
+            || '|Passage, Objections of the President)',
             'i'
         )
 ),

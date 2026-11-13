@@ -94,6 +94,8 @@ def ingest_senate(client: Client, today: dt.date) -> None:
     if b"<CongressSessionDayConvenings" not in resp.content:
         raise ValueError("Senate session days: response is not a session day list")
     # Parsed before saving, so a malformed file never reaches the stage step.
+    if ET.fromstring(resp.content).get("Congress") != str(CONGRESS):
+        raise ValueError(f"Senate session days are not from the {CONGRESS}th Congress")
     days = [d for d in session_days(resp.content) if d <= today][-SENATE_RECENT_DAYS:]
     write_atomic(senate_dir() / "session_days.xml", resp.content)
     refresh = set(days[-SENATE_REFRESH_DAYS:])
@@ -109,7 +111,9 @@ def ingest_senate(client: Client, today: dt.date) -> None:
             log.info("senate floor activity for %s: not published", day)
             continue
         day_resp.raise_for_status()
-        ET.fromstring(day_resp.content)  # raises on a malformed file before it's saved
+        # Parsing raises on a malformed file before it's saved.
+        if ET.fromstring(day_resp.content).findtext("congress") != str(CONGRESS):
+            raise ValueError(f"Senate floor activity for {day} is not from the {CONGRESS}th Congress")
         write_atomic(path, day_resp.content)
         saved += 1
     log.info("senate floor activity: %d recent session days, %d fetched", len(days), saved)

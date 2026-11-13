@@ -241,6 +241,8 @@ unit_tests:
           - {congress: 119, week_date: 2026-11-09, item_id: "1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at: null}
           - {congress: 119, week_date: 2026-11-09, item_id: "2", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: B, removed_at: "2026-11-10 09:00:00"}
           - {congress: 119, week_date: 2026-11-09, item_id: "3", measure_number: H.R. 7, bill_type: hr, bill_number: "7", title: C, removed_at: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "4", measure_number: H.R. 8, bill_type: hr, bill_number: "8", title: D, removed_at: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "5", measure_number: H.R. 11, bill_type: hr, bill_number: "11", title: E, removed_at: null}
       - input: ref('int_senate_cloture_events')
         rows:
           # PN1: filed, then voted per the floor record -> not listed
@@ -254,6 +256,9 @@ unit_tests:
           # ...and re-filed the same day an earlier cloture vote on the measure failed
           - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the measure, event: voted, activity_date: 2026-11-11, status_order: 0, document_title: B9}
           - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the measure, event: filed, activity_date: 2026-11-11, status_order: 1, document_title: B9}
+          # PN5: filed, then withdrawn -> not listed
+          - {docnum: PN5, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N5}
+          - {docnum: PN5, document_prefix: PN, target: "", event: withdrawn, activity_date: 2026-11-11, status_order: 0, document_title: N5}
           # PN3: filed, then confirmed by voice vote with no cloture vote -> not listed
           - {docnum: PN3, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N3}
           - {docnum: PN3, document_prefix: PN, target: null, event: disposed, activity_date: 2026-11-12, status_order: 0, document_title: N3}
@@ -270,6 +275,9 @@ unit_tests:
           - {vote_id: h119-2-0003, chamber: house, congress: 119, bill_type: hr, bill_number: "5", question: On Motion to Reconsider, vote_date: 2026-11-11, vote_time_et: "2026-11-11 15:00:00"}
           # A vote on H.R. 7 the week before doesn't count
           - {vote_id: h119-2-0000, chamber: house, congress: 119, bill_type: hr, bill_number: "7", question: On Passage, vote_date: 2026-11-04, vote_time_et: "2026-11-04 14:00:00"}
+          # Suspend and concur, and a veto override, decide their measures too
+          - {vote_id: h119-2-0004, chamber: house, congress: 119, bill_type: hr, bill_number: "8", question: On Motion to Suspend the Rules and Concur in the Senate Amendments, vote_date: 2026-11-10, vote_time_et: "2026-11-10 16:00:00"}
+          - {vote_id: h119-2-0005, chamber: house, congress: 119, bill_type: hr, bill_number: "11", question: "Passage, Objections of the President To The Contrary Notwithstanding", vote_date: 2026-11-12, vote_time_et: "2026-11-12 16:00:00"}
           - {vote_id: s119-2-0010, chamber: senate, congress: 119, measure_number: PN2, question: On the Cloture Motion PN2, vote_date: 2026-11-12, vote_time_et: "2026-11-12 13:00:00"}
           # Cloture on the motion to proceed doesn't settle cloture on the measure
           - {vote_id: s119-2-0009, chamber: senate, congress: 119, measure_number: H.R. 9, question: On Cloture on the Motion to Proceed H.R. 9, vote_date: 2026-11-09, vote_time_et: "2026-11-09 17:00:00"}
@@ -281,6 +289,8 @@ unit_tests:
       rows:
         - {item_id: h-2026-11-09-1, vote_id: h119-2-0002, question: null}
         - {item_id: h-2026-11-09-3, vote_id: null, question: null}
+        - {item_id: h-2026-11-09-4, vote_id: h119-2-0004, question: null}
+        - {item_id: h-2026-11-09-5, vote_id: h119-2-0005, question: null}
         - {item_id: s-PN2, vote_id: s119-2-0010, question: On the Cloture Motion}
         - {item_id: s-H.R. 9-measure, vote_id: null, question: On the Cloture Motion}
         - {item_id: s-S.Amdt. 9, vote_id: s119-2-0012, question: On the Cloture Motion}
