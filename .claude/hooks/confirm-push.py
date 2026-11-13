@@ -106,12 +106,11 @@ def repo_problem(repo: str, ref: str) -> str | None:
     """Why the repo's own state means the review can't vouch for this push, or None."""
     top = git(repo, "rev-parse", "--show-toplevel")
     hook = os.path.join(top, HOOKS_PATH, "pre-push") if top else ""
-    # Claude Code's worktree tool rewrites `.githooks` to its absolute path in the
-    # shared config, so accept any value that resolves to this checkout's .githooks.
+    # `make hooks` writes `.githooks`; Claude Code's worktree tool rewrites it to
+    # this checkout's absolute path in the shared config. Accept exactly those two
+    # strings: resolving the value here (`..`, `~`) wouldn't match how git does it.
     configured = git(repo, "config", "core.hooksPath")
-    installed = bool(top and configured) and (
-        os.path.realpath(os.path.join(top, configured)) == os.path.realpath(os.path.join(top, HOOKS_PATH)))
-    if not installed or not os.access(hook, os.X_OK):
+    if not top or configured not in (HOOKS_PATH, os.path.join(top, HOOKS_PATH)) or not os.access(hook, os.X_OK):
         return f"the git pre-push hook isn't installed in this clone. Run `make hooks` (sets core.hooksPath to {HOOKS_PATH})."
     if git(repo, "status", "--porcelain", "--", HOOKS_PATH):
         return f"{HOOKS_PATH}/ differs from the committed version, so the git pre-push hook can't be trusted."

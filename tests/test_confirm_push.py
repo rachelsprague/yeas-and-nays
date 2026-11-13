@@ -145,6 +145,16 @@ def test_push_denied_with_hooks_path_elsewhere(repo, tmp_path_factory):
     assert decision == "deny" and "make hooks" in reason
 
 
+# Paths that collapse to .githooks as text but that git resolves elsewhere
+# (a missing directory before `..`; `~` expanded to $HOME).
+@pytest.mark.parametrize("value", ["nope/../.githooks", "~/../.githooks", "./.githooks", ".githooks/"])
+def test_push_denied_for_any_other_spelling_of_hooks_path(repo, value):
+    path, head = repo
+    record(path, head)
+    git(path, "config", "core.hooksPath", value)
+    assert confirm_push.decide("git push", str(path))[0] == "deny"
+
+
 def test_push_denied_when_git_hook_file_missing(repo):
     path, head = repo
     record(path, head)
