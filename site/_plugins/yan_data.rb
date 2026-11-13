@@ -171,9 +171,10 @@ module Yan
   end
 
   class MemberPage < Jekyll::PageWithoutAFile
-    def initialize(site, member, recent, sponsored)
+    def initialize(site, member, recent, sponsored, cosponsored)
       super(site, site.source, member["url"], "index.html")
       data["sponsored"] = sponsored
+      data["cosponsored"] = cosponsored
       data["layout"] = "member"
       data["title"] = member["name"]
       data["nav"] = "members"
@@ -247,12 +248,15 @@ module Yan
         recent = list.each_with_index.select { |p, i| i < RECENT_VOTES || p["against"] }.map do |p, i|
           p.merge("recent" => i < RECENT_VOTES)
         end
-        sponsored = (read_optional.call("members/#{m["bioguide_id"]}.json") || {}).fetch("sponsored", [])
-        sponsored.each do |b|
+        bills = read_optional.call("members/#{m["bioguide_id"]}.json") || {}
+        sponsored = bills.fetch("sponsored", [])
+        # Nil until the member's cosponsored list is first fetched; the page leaves the section out.
+        cosponsored = bills["cosponsored"]
+        [*sponsored, *cosponsored].each do |b|
           vote = b["latest_vote_id"] && votes_by_id[b["latest_vote_id"]]
           b["vote_url"] = vote && vote["url"]
         end
-        site.pages << MemberPage.new(site, m, recent, sponsored)
+        site.pages << MemberPage.new(site, m, recent, sponsored, cosponsored)
       end
 
       site.data["meta"] = meta

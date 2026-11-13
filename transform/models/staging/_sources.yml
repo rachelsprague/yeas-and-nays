@@ -24,6 +24,14 @@ sources:
         description: >
           One row per bill or resolution a member introduced this Congress, from the
           Congress.gov API member sponsored-legislation endpoint.
+      - name: cosponsored_bills
+        description: >
+          One row per bill or resolution a member cosponsored this Congress, from the
+          Congress.gov API member cosponsored-legislation endpoint.
+      - name: cosponsored_lists
+        description: >
+          One row per member whose cosponsored-legislation list has been fetched, with the
+          number of this Congress's bills and resolutions on it.
       - name: bill_summaries
         description: >
           One row per Congressional Research Service summary (one per bill version), from the

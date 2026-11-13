@@ -49,7 +49,8 @@ class _StubResponse:
 
 
 class _StubClient:
-    """Serves a member's sponsored legislation in pages, like the API (count + offset)."""
+    """Serves a member's sponsored or cosponsored legislation in pages, like the API
+    (count + offset)."""
 
     def __init__(self, items, page_size):
         self.items, self.page_size, self.calls = items, page_size, []
@@ -58,10 +59,12 @@ class _StubClient:
         from urllib.parse import parse_qs, urlparse
 
         assert headers == {"X-Api-Key": "k"} and "k" not in url  # key only in the header
-        offset = int(parse_qs(urlparse(url).query)["offset"][0])
-        self.calls.append(offset)
+        parsed = urlparse(url)
+        offset = int(parse_qs(parsed.query)["offset"][0])
+        self.calls.append((parsed.path, offset))
+        kind = parsed.path.rsplit("/", 1)[-1].removesuffix("-legislation")
         page = self.items[offset:offset + self.page_size]
-        return _StubResponse({"pagination": {"count": len(self.items)}, "sponsoredLegislation": page})
+        return _StubResponse({"pagination": {"count": len(self.items)}, f"{kind}Legislation": page})
 
 
 def test_fetch_sponsored_pages_through_and_keeps_this_congress_bills(monkeypatch):
@@ -77,8 +80,59 @@ def test_fetch_sponsored_pages_through_and_keeps_this_congress_bills(monkeypatch
     ]
     client = _StubClient(items, page_size=2)
     doc = congress_gov.fetch_sponsored(client, "k", "M001184")
-    assert client.calls == [0, 2, 4]
+    assert [offset for _, offset in client.calls] == [0, 2, 4]
     assert [i["number"] for i in doc["sponsoredLegislation"]] == ["1", "2"]
+
+
+def test_fetch_cosponsored_reads_every_page_and_counts_requests(monkeypatch):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 2)
+    # Not sorted by Congress (as the API returns it), so a page with no 119th items
+    # doesn't mean the rest of the list has none.
+    items = [
+        {"congress": 119, "type": "S", "number": "7"},
+        {"congress": 114, "type": "S", "number": "1"},
+        {"congress": 96, "type": "S", "number": "2"},
+        {"congress": 95, "number": "3", "amendmentNumber": "3"},
+        {"congress": 119, "type": "SRES", "number": "4"},
+    ]
+    client = _StubClient(items, page_size=2)
+    doc, requests = congress_gov.fetch_cosponsored(client, "k", "G000386")
+    assert {path for path, _ in client.calls} == {"/v3/member/G000386/cosponsored-legislation"}
+    assert requests == 3
+    assert [i["number"] for i in doc["cosponsoredLegislation"]] == ["7", "4"]
+
+
+def test_ingest_fetches_stalest_cosponsored_lists_within_the_budget(monkeypatch, tmp_path):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setenv("CONGRESS_API_KEY", "k")
+    monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1", "B2", "C3", "D4"])
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: {})
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / "cosponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "COSPONSORED_REQUEST_BUDGET", 3)
+
+    # B2 is fresh (skipped); D4's list is older than C3's, and A1 has never been fetched.
+    (tmp_path / "cosponsored").mkdir()
+    week = 8 * 24 * 3600
+    for member, age in [("B2", 0), ("C3", week), ("D4", 2 * week)]:
+        path = tmp_path / "cosponsored" / f"{member}.json"
+        path.write_text("{}")
+        os.utime(path, (path.stat().st_mtime - age,) * 2)
+
+    fetched = []
+
+    def fake_fetch(client, key, bioguide_id):
+        fetched.append(bioguide_id)
+        return {"bioguideId": bioguide_id, "cosponsoredLegislation": []}, 2
+
+    monkeypatch.setattr(congress_gov, "fetch_cosponsored", fake_fetch)
+    congress_gov.ingest(client=None)
+    # Two lists use up the budget of 3 (2 requests each); C3 waits for the next run.
+    assert fetched == ["A1", "D4"]
 
 
 def test_fetch_sponsored_drops_an_item_repeated_across_pages(monkeypatch):
@@ -130,3 +184,21 @@ def test_parse_sponsored_flattens_each_item():
     }
     assert rows[1]["title"] == "Only title"
     assert rows[1]["latest_action_date"] is None and rows[1]["policy_area"] is None
+
+
+def test_parse_cosponsored_dir_records_every_fetched_list_even_when_empty(tmp_path):
+    from yan.stage.congress_gov import parse_cosponsored_dir
+
+    folder = tmp_path / "119" / "cosponsored"
+    folder.mkdir(parents=True)
+    (folder / "A1.json").write_text(json.dumps({"bioguideId": "A1", "congress": 119, "cosponsoredLegislation": [
+        {"congress": 119, "type": "S", "number": 7, "title": "A title"},
+    ]}))
+    (folder / "B2.json").write_text(json.dumps({"bioguideId": "B2", "congress": 119, "cosponsoredLegislation": []}))
+
+    rows, lists = parse_cosponsored_dir(tmp_path)
+    assert [(r["bioguide_id"], r["bill_type"], r["bill_number"]) for r in rows] == [("A1", "s", "7")]
+    assert lists == [
+        {"source_file": "119/cosponsored/A1.json", "bioguide_id": "A1", "congress": "119", "bill_count": "1"},
+        {"source_file": "119/cosponsored/B2.json", "bioguide_id": "B2", "congress": "119", "bill_count": "0"},
+    ]

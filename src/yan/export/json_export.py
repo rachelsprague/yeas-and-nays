@@ -3,7 +3,8 @@
     data/out/meta.json            congress, counts, latest roll number per chamber/session
     data/out/members.json         one entry per member, with their stats this Congress
     data/out/members/{bioguide}.json  one member: bills and resolutions they introduced
-                                  this Congress, newest first
+                                  and cosponsored this Congress, newest first
+                                  (cosponsored is null until first fetched)
     data/out/votes.json           one entry per vote (metadata + tallies), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
@@ -93,6 +94,14 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             from sponsored_bills
             order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
         """)
+        cosponsored = _rows(con, """
+            select bioguide_id, bill_id, bill_type, bill_number, title, introduced_date,
+                   latest_action_date, latest_action_text, policy_area, congress_gov_url,
+                   latest_vote_id
+            from cosponsored_bills
+            order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
+        """)
+        cosponsored_fetched = {row["bioguide_id"] for row in _rows(con, "select bioguide_id from cosponsored_lists")}
         summaries = {
             row.pop("vote_id"): row
             for row in _rows(con, """
@@ -125,16 +134,24 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             path.unlink()
             changed += 1
 
-    sponsored_by = defaultdict(list)
-    for bill in sponsored:
-        bill["measure_label"] = bill_label(bill["bill_type"], bill["bill_number"])
-        sponsored_by[bill.pop("bioguide_id")].append(bill)
+    sponsored_by, cosponsored_by = defaultdict(list), defaultdict(list)
+    for bills, by_member in ((sponsored, sponsored_by), (cosponsored, cosponsored_by)):
+        for bill in bills:
+            bill["measure_label"] = bill_label(bill["bill_type"], bill["bill_number"])
+            by_member[bill.pop("bioguide_id")].append(bill)
     member_dir = out_dir / "members"
     expected = set()
     for member in members:
         name = f"{member['bioguide_id']}.json"
         expected.add(name)
-        doc = {"bioguide_id": member["bioguide_id"], "sponsored": sponsored_by[member["bioguide_id"]]}
+        bioguide_id = member["bioguide_id"]
+        doc = {
+            "bioguide_id": bioguide_id,
+            "sponsored": sponsored_by[bioguide_id],
+            # Null until the member's cosponsored list is first fetched (lists fill in over
+            # several runs), so the site can leave the section out rather than show none.
+            "cosponsored": cosponsored_by[bioguide_id] if bioguide_id in cosponsored_fetched else None,
+        }
         changed += write_if_changed(member_dir / name, dumps(doc))
     for path in member_dir.glob("*.json"):
         if path.name not in expected:

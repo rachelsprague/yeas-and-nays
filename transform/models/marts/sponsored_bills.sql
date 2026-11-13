@@ -9,13 +9,7 @@ with sponsored as (
 ),
 
 latest_vote as (
-    select congress, bill_type, bill_number, vote_id, vote_date
-    from {{ ref('int_votes_unioned') }}
-    where bill_type is not null
-    qualify row_number() over (
-        partition by congress, bill_type, bill_number
-        order by vote_time_et desc, vote_id desc
-    ) = 1
+    select * from {{ ref('int_latest_vote_per_bill') }}
 )
 
 select

@@ -1,5 +1,5 @@
 """Parse Congress.gov responses: bills (details), CRS summaries (one per bill version), and
-the bills each member sponsored."""
+the bills each member sponsored and cosponsored."""
 
 import json
 from pathlib import Path
@@ -47,6 +47,14 @@ def parse_bill(content: bytes, source_file: str) -> dict:
 
 
 def parse_sponsored(content: bytes, source_file: str) -> list[dict]:
+    return parse_member_list(content, source_file, "sponsoredLegislation")
+
+
+def parse_cosponsored(content: bytes, source_file: str) -> list[dict]:
+    return parse_member_list(content, source_file, "cosponsoredLegislation")
+
+
+def parse_member_list(content: bytes, source_file: str, list_key: str) -> list[dict]:
     doc = json.loads(content)
     return [
         {
@@ -61,8 +69,23 @@ def parse_sponsored(content: bytes, source_file: str) -> list[dict]:
             "latest_action_text": (item.get("latestAction") or {}).get("text"),
             "policy_area": (item.get("policyArea") or {}).get("name"),
         }
-        for item in doc["sponsoredLegislation"]
+        for item in doc[list_key]
     ]
+
+
+def parse_cosponsored_dir(raw_root: Path) -> tuple[list[dict], list[dict]]:
+    """(cosponsored, lists): every cosponsored bill, and one row per member whose list has
+    been fetched. Lists fill in over several runs, so a member with no rows may just not
+    have been fetched yet; `lists` tells that apart from cosponsoring nothing."""
+    cosponsored, lists = [], []
+    for path in sorted(raw_root.glob("*/cosponsored/*.json")):
+        source_file = str(path.relative_to(raw_root))
+        rows = parse_cosponsored(path.read_bytes(), source_file)
+        cosponsored += rows
+        doc = json.loads(path.read_bytes())
+        lists.append({"source_file": source_file, "bioguide_id": doc["bioguideId"],
+                      "congress": str(doc["congress"]), "bill_count": str(len(rows))})
+    return cosponsored, lists
 
 
 def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict]]:

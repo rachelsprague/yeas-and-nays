@@ -24,7 +24,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`. `make hook
 - **House:** Office of the Clerk, `clerk.house.gov/evs/{year}/rollNNN.xml`
 - **Senate:** `senate.gov/legislative/LIS/roll_call_votes/`
 - **Members:** `unitedstates/congress-legislators` (current and historical)
-- **Bills:** Congress.gov API, `/bill/{congress}/{type}/{number}`, `.../summaries`, and `/member/{bioguide_id}/sponsored-legislation` (key sent as the `X-Api-Key` header)
+- **Bills:** Congress.gov API, `/bill/{congress}/{type}/{number}`, `.../summaries`, `/member/{bioguide_id}/sponsored-legislation`, and `/member/{bioguide_id}/cosponsored-legislation` (key sent as the `X-Api-Key` header)
 
 ## Models
 
@@ -35,6 +35,8 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`. `make hook
 | `positions` | one row per member per vote | `vote_id` + `bioguide_id` |
 | `bills` | one row per bill or resolution with a recorded vote: sponsor, introduced date, cosponsor count | `bill_id`, e.g. `119-hr-1013` |
 | `sponsored_bills` | one row per bill or resolution a member introduced this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
+| `cosponsored_bills` | one row per bill or resolution a member cosponsored this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
+| `cosponsored_lists` | one row per member whose cosponsored list has been fetched (lists fill in over several runs) | `bioguide_id` |
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
 | `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
 
@@ -48,7 +50,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`. `make hook
 | --- | --- |
 | `meta.json` | Vote and member counts, latest roll number per chamber and session |
 | `members.json` | All members, with their `member_stats` |
-| `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced this Congress |
+| `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored this Congress (`cosponsored` is null until their list is first fetched) |
 | `votes.json` | All votes: metadata, official tallies, source links, newest first |
 | `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded, and the CRS summary of the measure (HTML reduced to formatting tags), or null |
 

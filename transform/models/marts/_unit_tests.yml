@@ -149,6 +149,20 @@ unit_tests:
         - {vote_id: v1, action_desc: Reported to House}
         - {vote_id: v2, action_desc: Introduced in House}
 
+  - name: latest_vote_per_bill_takes_the_most_recent_roll_call
+    model: int_latest_vote_per_bill
+    given:
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: h119-1-0010, congress: 119, bill_type: hr, bill_number: "1", vote_time_et: "2025-03-01 12:00:00"}
+          - {vote_id: s119-1-0040, congress: 119, bill_type: hr, bill_number: "1", vote_time_et: "2025-05-01 12:00:00"}
+          - {vote_id: h119-1-0011, congress: 119, bill_type: hr, bill_number: "10", vote_time_et: "2025-06-01 12:00:00"}
+          - {vote_id: s119-1-0041, congress: 119, bill_type: null, bill_number: null, vote_time_et: "2025-06-02 12:00:00"}
+    expect:
+      rows:
+        - {vote_id: s119-1-0040, bill_type: hr, bill_number: "1"}
+        - {vote_id: h119-1-0011, bill_type: hr, bill_number: "10"}
+
   - name: sponsored_bills_link_the_most_recent_vote_on_each_bill
     model: sponsored_bills
     given:
@@ -156,12 +170,28 @@ unit_tests:
         rows:
           - {bioguide_id: A1, congress: 119, bill_type: hr, bill_number: "1"}
           - {bioguide_id: A1, congress: 119, bill_type: hres, bill_number: "2"}
-      - input: ref('int_votes_unioned')
+      - input: ref('int_latest_vote_per_bill')
         rows:
-          - {vote_id: h119-1-0010, congress: 119, bill_type: hr, bill_number: "1", vote_time_et: "2025-03-01 12:00:00"}
-          - {vote_id: s119-1-0040, congress: 119, bill_type: hr, bill_number: "1", vote_time_et: "2025-05-01 12:00:00"}
-          - {vote_id: h119-1-0011, congress: 119, bill_type: hr, bill_number: "10", vote_time_et: "2025-06-01 12:00:00"}
+          - {vote_id: s119-1-0040, congress: 119, bill_type: hr, bill_number: "1"}
+          - {vote_id: h119-1-0011, congress: 119, bill_type: hr, bill_number: "10"}
     expect:
       rows:
         - {bioguide_id: A1, bill_id: 119-hr-1, latest_vote_id: s119-1-0040}
         - {bioguide_id: A1, bill_id: 119-hres-2, latest_vote_id: null}
+
+  - name: cosponsored_bills_link_the_most_recent_vote_on_each_bill
+    model: cosponsored_bills
+    given:
+      - input: ref('stg_congress_gov__cosponsored_bills')
+        rows:
+          - {bioguide_id: A1, congress: 119, bill_type: s, bill_number: "7"}
+          - {bioguide_id: B2, congress: 119, bill_type: s, bill_number: "7"}
+          - {bioguide_id: B2, congress: 119, bill_type: sres, bill_number: "3"}
+      - input: ref('int_latest_vote_per_bill')
+        rows:
+          - {vote_id: s119-1-0050, congress: 119, bill_type: s, bill_number: "7"}
+    expect:
+      rows:
+        - {bioguide_id: A1, bill_id: 119-s-7, latest_vote_id: s119-1-0050}
+        - {bioguide_id: B2, bill_id: 119-s-7, latest_vote_id: s119-1-0050}
+        - {bioguide_id: B2, bill_id: 119-sres-3, latest_vote_id: null}

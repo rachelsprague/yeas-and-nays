@@ -67,6 +67,31 @@ layout: default
   </section>
   {%- endif %}
 
+  {%- if page.cosponsored %}
+  <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px">
+    <div class="head-row">
+      <h2 id="cosponsored-h" class="section-h">Bills cosponsored</h2>
+      <span class="small muted nums">{{ page.cosponsored.size }} this Congress</span>
+    </div>
+    <p class="small soft">Bills and resolutions {{ m.name | escape }} cosponsored, with the latest action on each as Congress.gov records it. A cosponsor is a member who adds their name as a supporter of a bill or resolution another member introduced.</p>
+    {%- if page.cosponsored.size > 0 %}
+    <ul class="ruled">
+      {%- for b in page.cosponsored limit: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
+    </ul>
+    {%- if page.cosponsored.size > 5 %}
+    <details class="crs">
+      <summary class="small">Show all {{ page.cosponsored.size }}</summary>
+      <ul class="ruled thin">
+        {%- for b in page.cosponsored offset: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
+      </ul>
+    </details>
+    {%- endif %}
+    {%- else %}
+    <p class="empty">No bills or resolutions cosponsored this Congress.</p>
+    {%- endif %}
+  </section>
+  {%- endif %}
+
   <section aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope>
     <div class="head-row">
       <h2 id="recent-h" class="section-h">Recent votes</h2>

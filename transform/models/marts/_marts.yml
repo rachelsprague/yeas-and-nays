@@ -187,6 +187,50 @@ models:
                 to: ref('votes')
                 field: vote_id
 
+  - name: cosponsored_bills
+    description: >
+      One row per bill or resolution each member cosponsored this Congress, from Congress.gov,
+      with its latest action and the most recent roll call vote on it, if any.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: bill_id
+        data_tests: [not_null]
+      - name: bill_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["hr", "s", "hres", "sres", "hjres", "sjres", "hconres", "sconres"]
+      - name: latest_vote_id
+        description: The most recent roll call on the measure. Null when it hasn't had a recorded vote.
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('votes')
+                field: vote_id
+
+  - name: cosponsored_lists
+    description: >
+      One row per member whose Congress.gov cosponsored list has been fetched. Lists fill in
+      over several runs; a member not listed here hasn't been fetched yet.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: bill_count
+        description: This Congress's bills and resolutions on the member's cosponsored list.
+        data_tests: [not_null]
+
   - name: vote_summaries
     description: >
       For each vote on a bill or resolution with a Congressional Research Service summary,

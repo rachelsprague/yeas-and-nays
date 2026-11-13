@@ -59,7 +59,7 @@ def test_summary_carries_the_version_it_describes():
     assert summary_document(None) is None
 
 
-def _warehouse(path, sponsored_rows):
+def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=()):
     """A minimal warehouse with the tables run() reads: two members, one vote."""
     import duckdb
 
@@ -72,13 +72,17 @@ def _warehouse(path, sponsored_rows):
     con.execute("""create table positions as select 'h119-1-0001' as vote_id, 'A000001' as bioguide_id,
                    'A (R-TX-1)' as member_label, 'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
                    'yes' as position, 'yes' as caucus_majority_position, false as voted_against_party_majority""")
-    con.execute("""create table sponsored_bills (bioguide_id varchar, bill_id varchar, bill_type varchar,
-                   bill_number varchar, title varchar, introduced_date date, latest_action_date date,
-                   latest_action_text varchar, policy_area varchar, congress_gov_url varchar,
-                   latest_vote_id varchar)""")
-    for row in sponsored_rows:
-        con.execute("insert into sponsored_bills (bioguide_id, bill_type, bill_number, introduced_date) "
-                    "values (?, ?, ?, ?)", row)
+    for table, rows in (("sponsored_bills", sponsored_rows), ("cosponsored_bills", cosponsored_rows)):
+        con.execute(f"""create table {table} (bioguide_id varchar, bill_id varchar, bill_type varchar,
+                       bill_number varchar, title varchar, introduced_date date, latest_action_date date,
+                       latest_action_text varchar, policy_area varchar, congress_gov_url varchar,
+                       latest_vote_id varchar)""")
+        for row in rows:
+            con.execute(f"insert into {table} (bioguide_id, bill_type, bill_number, introduced_date) "
+                        "values (?, ?, ?, ?)", row)
+    con.execute("create table cosponsored_lists (bioguide_id varchar, congress integer, bill_count integer)")
+    for bioguide_id in cosponsored_lists:
+        con.execute("insert into cosponsored_lists values (?, 119, 0)", [bioguide_id])
     con.execute("""create table vote_summaries (vote_id varchar, version_code varchar, action_date date,
                    action_desc varchar, summary_html varchar)""")
     con.close()
@@ -101,9 +105,37 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
 
     a = json.loads((out / "members" / "A000001.json").read_text())
     assert [b["measure_label"] for b in a["sponsored"]] == ["H.Res. 2", "H.R. 10", "H.R. 9"]
-    assert json.loads((out / "members" / "B000002.json").read_text()) == {"bioguide_id": "B000002", "sponsored": []}
+    assert json.loads((out / "members" / "B000002.json").read_text()) == {
+        "bioguide_id": "B000002", "sponsored": [], "cosponsored": None,
+    }
     assert sorted(p.name for p in (out / "members").iterdir()) == ["A000001.json", "B000002.json"]
     assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True
+
+
+def test_run_writes_cosponsored_bills_and_null_until_a_list_is_fetched(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [],
+               cosponsored_rows=[("A000001", "s", "7", dt.date(2025, 2, 1)),
+                                 ("A000001", "sres", "3", dt.date(2025, 4, 1))],
+               cosponsored_lists=["A000001"])
+    out = tmp_path / "out"
+    run(warehouse, out)
+
+    a = json.loads((out / "members" / "A000001.json").read_text())
+    assert [b["measure_label"] for b in a["cosponsored"]] == ["S.Res. 3", "S. 7"]
+    # B000002's list hasn't been fetched yet: null, not an empty list.
+    assert json.loads((out / "members" / "B000002.json").read_text())["cosponsored"] is None
+
+
+def test_run_writes_an_empty_cosponsored_list_once_fetched(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [], cosponsored_lists=["B000002"])
+    run(warehouse, tmp_path / "out")
+    assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["cosponsored"] == []
 
 
 def test_run_flags_missing_sponsored_lists(tmp_path):
