@@ -268,6 +268,19 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr create --title 'Add​this' --body-file body.md",
     "gh pr comment 12 --body-file vs.md",
     "gh pr comment 12 --body-file blank.md",
+    "gh pr comment 12 --body-file cgj.md",
+    # flags between the group and the action, which gh accepts
+    "gh pr -b hello comment 1",
+    "gh issue --body hi create --title x",
+    "gh pr -c hi close 1",
+    "gh pr --comment hi close 1",
+    "gh pr revert 1 --title x --body hi",
+    # run-code variants
+    "python3 -Bc \"import subprocess; subprocess.run(['gh','pr','comment','1','-b','x'])\"",
+    "python3.12 -c \"import os; os.system('gh pr comment 1 -b x')\"",
+    "perl -le 'system(\"gh pr comment 1 -b x\")'",
+    "python3.12 - <<'EOF'\nimport os\nos.system('gh pr comment 1 -b x')\nEOF",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\n./s.sh",
     # aliases and comments on close/reopen
     "gh alias set c 'pr comment'",
     "gh alias import aliases.yml",
@@ -283,7 +296,8 @@ def test_posting_inline_or_unseen_text_is_denied(repo, command):
     (path / "ctrl.md").write_text("shown\x1b[8mhidden\x1b[0m\n")
     (path / "bidi.md").write_text("a‮b\n")
     (path / ".env").write_text("KEY=1\n")
-    (path / "vs.md").write_text("ok️\n")
+    (path / "vs.md").write_text("ok︁\n")
+    (path / "cgj.md").write_text("a͏b\n")
     (path / "blank.md").write_text("aㅤb\n")
     assert confirm_push.decide(command, str(path))[0] == "deny"
 
@@ -295,6 +309,12 @@ def test_the_documented_pre_push_pr_command_asks(repo, tmp_path_factory):
     command = f"gh pr create --base main --head wren/floor-schedule --title 'Add the floor schedule' --body-file {body}"
     decision, reason = confirm_push.decide(command, str(path))
     assert decision == "ask" and "Adds the floor schedule." in reason
+
+
+def test_emoji_with_joiners_and_selectors_are_allowed_in_a_body(repo):
+    path, _ = repo
+    (path / "body.md").write_text("Done ✔️ ⚠️ \U0001f468‍\U0001f4bb\n")
+    assert confirm_push.decide("gh pr comment 1 --body-file body.md", str(path))[0] == "ask"
 
 
 def test_gh_new_is_gated_like_create(repo):
@@ -343,6 +363,14 @@ def test_a_fifo_body_file_is_denied_without_blocking(repo):
     "git commit -m \"Explain gh pr comment gating\"; python3 x.py",
     "uv run pytest -k \"gh api\"",
     "git add . && git commit -m 'gate gh api writes'",
+    "cat > msg.txt <<'EOF'\nHook: gate gh api writes\nEOF\ngit commit -F msg.txt",
+    "cat > notes.md <<'EOF'\nuse gh pr comment --body-file\nEOF\ngit add notes.md",
+    "bash -c \"make test\"",
+    "python3 -c 'print(1)'",
+    "uv run pytest -c pytest.ini",
+    "git -c core.x=y commit -m 'msg'",
+    "gh pr -R owner/repo view 3",
+    "gh pr close 3 -d",
     "gh api repos/o/r/pulls/2/comments --paginate -q '.[].body'",
 ])
 def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):

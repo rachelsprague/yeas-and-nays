@@ -26,11 +26,13 @@ whole text, so the user approves exactly what's posted. Every other form is
 denied: inline or attached text, stdin, --fill, templates, editors, every
 other `gh api` write (merges, contents and refs included, which are push
 equivalents, and any bundled short flag with -X, -f or -F) and graphql
-mutations, close/reopen with a comment, gh aliases,
+mutations, close/reopen with a comment, flags before the action (`gh pr
+-b x comment`), `gh pr revert`, gh aliases,
 characters the shell would expand after this check (backticks, $, globs,
 braces, line breaks), body files with control or invisible characters or in
 dot directories, a post chained with or redirected from anything else, and a
-posting command written to a script and run in the same command.
+posting command in code that runs: an interpreter's -c/-e code, a heredoc
+script fed to an interpreter, or a heredoc-written file the same command runs.
 
 This is a guard against pushing by accident, not against a determined
 attempt to get around it: it only sees command text, which can always be
@@ -89,8 +91,6 @@ LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
 # A gh command that posts PR or issue text, as it may appear inside a script a heredoc writes.
 LOOSE_POST = re.compile(r"\bgh\b[^\n;&|]{0,80}?\b(pr|issue)\s+(create|edit|comment|review|close|reopen)\b"
                         r"|\bgh\s+(api|alias)\b")
-# Heredoc targets that run what they're fed (scripts), as opposed to cat or git reading text.
-INTERPRETERS = SHELLS | {"python", "python3", "node", "ruby", "perl", "uv"}
 # A posting gh command in code: as a shell line, or as an argv list (['gh', 'pr', 'comment', ...]).
 CODE_POST = re.compile(LOOSE_POST.pattern + r"|\bgh\b\W{1,6}(pr|issue|api|alias)\b")
 
@@ -154,7 +154,7 @@ def split_heredocs(command: str) -> tuple[str, list[str], list[str], list[tuple[
                 kept += body
             else:
                 scripts.append("\n".join(body))
-                if target in INTERPRETERS:
+                if is_runner(target):
                     run.append(scripts[-1])
                 elif out := re.search(r"(?<![<\d&])>>?\s*([^\s;&|<>]+)", HEREDOC.sub(" ", line)):
                     written.append((out.group(1).strip("\"'"), scripts[-1]))
@@ -247,18 +247,26 @@ def runs_posting_code(command: str, written: list[tuple[str, str]]) -> str | Non
     the argument to an interpreter's -c/-e, or a file a heredoc writes and the same command
     then runs. Quoted text elsewhere (a commit message mentioning `gh api`) doesn't."""
     toks = tokens(strip_redirects(command))
-    runners = INTERPRETERS - {".", "source"}
     for k, t in enumerate(toks[:-1]):
-        if t in ("-c", "-e") and any(os.path.basename(w) in runners for w in toks[max(0, k - 3):k]):
+        # -c, -e, or bundled (-Bc, -le), after an interpreter a few words back (uv run python -c).
+        if re.fullmatch(r"-[A-Za-z]*[ce]", t) and any(is_runner(w) for w in toks[max(0, k - 3):k]):
             if CODE_POST.search(re.sub(r"[\"'\\]", "", toks[k + 1])):
                 return "This command runs code (-c/-e) that contains a gh command posting to GitHub."
-    # The heredoc's own `> file` redirect isn't in toks (strip_redirects drops it), so any word
-    # naming the file (`bash s.sh`, `./s.sh`) means the command goes on to run it.
+    # A written file is run when an interpreter is given it (`bash s.sh`) or it's in command
+    # position (`./s.sh`); any other mention (`git commit -F msg.txt`) is just reading it.
     for path, body in written:
         name = os.path.basename(path)
-        if CODE_POST.search(re.sub(r"[\"'\\]", "", body)) and any(os.path.basename(t) == name for t in toks):
-            return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
+        if not CODE_POST.search(re.sub(r"[\"'\\]", "", body)):
+            continue
+        for k, t in enumerate(toks):
+            if os.path.basename(t) == name and (k == 0 or toks[k - 1] in SEPARATORS or is_runner(toks[k - 1])):
+                return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
     return None
+
+
+def is_runner(word: str) -> bool:
+    """Whether a word is an interpreter that runs code: a shell, python (any version), node, ruby, perl, uv."""
+    return bool(re.fullmatch(r"(sh|bash|zsh|dash|ksh|python[\d.]*|node|ruby|perl|uv)", os.path.basename(word)))
 
 
 def _post_in_segment(seg: list[str]) -> list[dict]:
@@ -287,9 +295,33 @@ def _gh_pair(args: list[str]) -> tuple[str, ...]:
     return (pair[0], "create") if len(pair) == 2 and pair[1] == "new" else pair
 
 
+def _flag_before_action(args: list[str]) -> bool:
+    """Whether a flag other than -R/--repo comes between the group and the action
+    (`gh pr -b hi comment 1`): gh accepts that, and the flag's value would be read here as
+    the action, so the post would go ungated."""
+    k, seen_group = 0, False
+    while k < len(args):
+        a = args[k]
+        if a in REPO_FLAGS:
+            k += 2
+            continue
+        if not a.startswith("-"):
+            if seen_group:
+                return False  # reached the action
+            seen_group = True
+        elif seen_group:
+            return True
+        k += 1
+    return False
+
+
 def _post_kind(args: list[str]) -> str | None:
     words = _gh_words(args)
     pair = _gh_pair(args)
+    if words[:1] in (["pr"], ["issue"]) and _flag_before_action(args):
+        return "flag-first"
+    if tuple(words[:2]) == ("pr", "revert"):  # creates a branch and a PR with free text
+        return "revert"
     if pair in (("alias", "set"), ("alias", "import")):
         return "alias"
     if pair in POSTING_FLAGS:
@@ -370,21 +402,25 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
     return text, ""
 
 
-# Characters that render as nothing or as blank space: fillers, braille blank, variation selectors.
-BLANK_LOOKING = {"ᅟ", "ᅠ", "⠀", "ㅤ", "ﾠ"}
+# Characters that render as nothing or as blank space: fillers, braille blank, the combining
+# grapheme joiner, Khmer and Mongolian invisibles, the object replacement character.
+BLANK_LOOKING = {"ᅟ", "ᅠ", "⠀", "ㅤ", "ﾠ", "͏", "឴", "឵",
+                 "᠋", "᠌", "᠍", "᠎", "￼"}
+EMOJI_JOINERS = {"‍", "︎", "️"}  # zero-width joiner and text/emoji selectors
 
 
 def hides_text(text: str) -> bool:
     """Whether text has characters that could make the prompt show something other than what's
     posted: control and format characters (ANSI escapes, bidi overrides, zero-width), enclosing
-    marks, private-use and unassigned code points, variation selectors, blank-looking letters,
-    and any space other than a plain one."""
+    marks, private-use code points, variation selectors other than the emoji ones, blank-looking
+    letters, and any space other than a plain one. The emoji joiner and selectors are allowed
+    (✔️, ⚠️); unassigned code points are too, since they depend on the Python's Unicode version."""
     for c in text:
-        cat = unicodedata.category(c)
-        if c in "\n\t":
+        if c in "\n\t" or c in EMOJI_JOINERS:
             continue
-        if (cat in ("Cc", "Cf", "Zl", "Zp", "Me", "Co", "Cn") or (cat == "Zs" and c != " ")
-                or c in BLANK_LOOKING or "︀" <= c <= "️" or "\U000e0100" <= c <= "\U000e01ef"):
+        cat = unicodedata.category(c)
+        if (cat in ("Cc", "Cf", "Zl", "Zp", "Me", "Co") or (cat == "Zs" and c != " ")
+                or c in BLANK_LOOKING or "︀" <= c <= "︍" or "\U000e0100" <= c <= "\U000e01ef"):
             return True
     return False
 
@@ -400,6 +436,10 @@ def post_decision(post: dict, command: str, repo: str) -> tuple[str, str]:
     kind, args = post["kind"], post["args"]
     if kind == "alias":
         return "deny", "gh aliases can hide a post or merge from this hook; run the gh command itself."
+    if kind == "flag-first":
+        return "deny", f"Put flags after the action (`gh pr comment 1 --body-file f`, not `gh pr -b x comment 1`). {FILE_ONLY}"
+    if kind == "revert":
+        return "deny", "gh pr revert creates a branch and a PR with unreviewed text; revert on a branch and open a PR instead."
     if kind == "close-comment":
         return "deny", f"Closing or reopening with a comment posts unreviewed text. Post the comment first. {FILE_ONLY}"
     # The whole command, so nothing before it changes the file or the directory, and nothing
