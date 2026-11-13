@@ -4,7 +4,7 @@
 <div class="lead-vote" style="display: contents" data-show-when="chamber:{{ include.key }}"{% unless include.key == "all" %} hidden{% endunless %}>
   {% include vote_kicker.html vote=v %}
   <h2 class="lead-h"><a class="headline-link" href="{{ v.url }}">{% include vote_title.html vote=v %}</a></h2>
-  <span class="kicker result">{{ v.result_label }}</span>
+  <span class="kicker result">{{ v.result_label | escape }}</span>
   {%- include procedure.html vote=v %}
   {% include tally.html view=view %}
   {%- unless view.has_other %}
@@ -21,7 +21,7 @@
   <p style="font-size: 15px; line-height: 22px" class="soft nums">Voted against party majority: {{ view.against.size }} members</p>
   {%- elsif view.against.size > 0 %}
   <p style="font-size: 15px; line-height: 22px" class="soft">Voted against party majority:
-    {% for a in view.against %}<a class="link" href="{{ a.url }}">{{ a.name }} ({{ a.code }})</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</p>
+    {% for a in view.against %}<a class="link" href="{{ a.url }}">{{ a.name | escape }} ({{ a.code }})</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</p>
   {%- endif %}
   <a class="more" href="{{ v.url }}">Full roll call →</a>
 </div>

@@ -7,8 +7,8 @@ layout: default
     <a class="back" href="/votes/">← All votes</a>
     {% include vote_kicker.html vote=v %}
     <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
-    {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author }}){% endif %}: {{ v.amendment_purpose }}</p>{% endif %}
-    <span class="kicker result">{{ v.result_label }}</span>
+    {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
+    <span class="kicker result">{{ v.result_label | escape }}</span>
     {%- include procedure.html vote=v %}
   </section>
 
@@ -54,7 +54,7 @@ layout: default
   <section class="section" aria-labelledby="summary-h">
     <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label | escape }}</h2>
     {%- if page.sponsor %}
-    <p class="nums" style="font-size: 15px; line-height: 22px">Introduced by <a class="link" href="{{ page.sponsor.url }}">{{ page.sponsor.name }}</a> ({{ page.sponsor.code }}){% if v.introduced_date %} on {{ v.introduced_date | ap_date }}{% endif %}{% if v.cosponsor_count %} · {{ v.cosponsor_count }} cosponsor{% if v.cosponsor_count != 1 %}s{% endif %}{% endif %}</p>
+    <p class="nums" style="font-size: 15px; line-height: 22px">Introduced by <a class="link" href="{{ page.sponsor.url }}">{{ page.sponsor.name | escape }}</a> ({{ page.sponsor.code }}){% if v.introduced_date %} on {{ v.introduced_date | ap_date }}{% endif %}{% if v.cosponsor_count %} · {{ v.cosponsor_count }} cosponsor{% if v.cosponsor_count != 1 %}s{% endif %}{% endif %}</p>
     {%- endif %}
     {%- if page.summary %}
     <p class="small soft">By the Congressional Research Service, Library of Congress, as published. Version: {{ page.summary.version }}, {{ page.summary.version_date | ap_date }}.{% if v.amendment_number or v.amendment_purpose %} It describes the measure, not the amendment voted on.{% endif %}</p>
@@ -81,7 +81,7 @@ layout: default
     <ul class="ruled thin">
       {%- for a in page.against %}
       <li>
-        <a href="{{ a.url }}">{{ a.name }} <span>{{ a.code }}</span></a>
+        <a href="{{ a.url }}">{{ a.name | escape }} <span>{{ a.code }}</span></a>
         <span class="small soft nums">Voted <strong>{{ a.position }}</strong> · {{ a.caucus }} majority voted {{ a.majority }}</span>
       </li>
       {%- endfor %}
@@ -125,7 +125,7 @@ layout: default
         <thead><tr><th scope="col">Member</th><th scope="col">Party</th><th scope="col">{% if v.chamber == "house" %}District{% else %}State{% endif %}</th><th scope="col">Vote</th></tr></thead>
         <tbody>
           {%- for r in page.rows %}
-          <tr data-row data-name="{{ r.name | downcase }}" data-party="{{ r.party }}" data-state="{{ r.state }}" data-position="{{ r.position }}"><td><a class="headline-link" href="/members/{{ r.id }}/">{{ r.name }}</a></td><td class="party">{{ r.party }}</td><td class="nums">{{ r.seat }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position }}</span></td></tr>
+          <tr data-row data-name="{{ r.name | downcase | escape }}" data-party="{{ r.party }}" data-state="{{ r.state }}" data-position="{{ r.position }}"><td><a class="headline-link" href="/members/{{ r.id }}/">{{ r.name | escape }}</a></td><td class="party">{{ r.party }}</td><td class="nums">{{ r.seat }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position }}</span></td></tr>
           {%- endfor %}
         </tbody>
       </table>

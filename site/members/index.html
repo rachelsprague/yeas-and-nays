@@ -44,12 +44,12 @@ nav: members
     <p class="small muted nums" data-count data-noun="members" aria-live="polite">{{ members.size }} members</p>
     <ul class="member-list">
       {%- for m in members %}
-      <li data-row data-chamber="{{ m.chamber }}" data-state="{{ m.state }}" data-party="{{ m.party }}" data-search="{{ m.name | downcase }} {{ m.state | downcase }} {{ m.state_name | downcase }}">
+      <li data-row data-chamber="{{ m.chamber }}" data-state="{{ m.state }}" data-party="{{ m.party }}" data-search="{{ m.name | downcase | escape }} {{ m.state | downcase }} {{ m.state_name | downcase }}">
         <a class="headline-link" href="{{ m.url }}">
           {% include portrait.html member=m size="sm" %}
           <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
             <span class="kicker muted">{{ m.chamber_name }}</span>
-            <span class="n">{{ m.name }}</span>
+            <span class="n">{{ m.name | escape }}</span>
             <span class="d">{{ m.party }} · {{ m.where }}</span>
           </span>
         </a>

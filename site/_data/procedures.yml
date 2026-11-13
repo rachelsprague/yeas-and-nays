@@ -190,11 +190,18 @@ questions:
 
   - key: quorum
     term: Quorum call
-    match: '^(Call of the House|Call by States)'
+    match: '^Call of the House'
     definition: >-
       A roll call to establish that a quorum (a majority of members) is
-      present so business can proceed. At the start of a new Congress, before
-      the House has organized, the Clerk calls the roll by state.
+      present so business can proceed.
+
+  - key: quorum_states
+    term: Quorum call by states (House)
+    match: '^Call by States'
+    definition: >-
+      The quorum call that opens a new Congress. Before the House has
+      organized, the Clerk calls the roll of members-elect by state to
+      establish that a quorum (a majority) is present so business can proceed.
 
   - key: retain_division
     term: Retaining a division (House)

@@ -5,6 +5,6 @@
     <span class="kicker muted nums">{{ v.chamber_name }} · Roll {{ v.roll_number }} · {{ v.vote_date | ap_date }}</span>
     <span class="small soft">{{ v.question | escape }}{% if v.measure_label %}{% unless v.question contains v.measure_label %} · {{ v.measure_label | escape }}{% endunless %}{% endif %}</span>
     <span class="t">{% include vote_title.html vote=v %}</span>
-    <span class="small soft nums">{{ v.result_label }}{% if v.yea_count %} · {{ v.yea_count }}–{{ v.nay_count }}{% endif %}</span>
+    <span class="small soft nums">{{ v.result_label | escape }}{% if v.yea_count %} · {{ v.yea_count }}–{{ v.nay_count }}{% endif %}</span>
   </a>
 </li>

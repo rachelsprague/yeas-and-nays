@@ -33,7 +33,7 @@ class ProcedureTest < Minitest::Test
 
   def test_quorum_calls
     assert_equal "quorum", key("Call of the House")
-    assert_equal "quorum", key("Call by States")
+    assert_equal "quorum_states", key("Call by States")
   end
 
   def test_retaining_divisions
