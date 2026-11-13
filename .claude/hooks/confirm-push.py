@@ -91,8 +91,17 @@ LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
 # A gh command that posts PR or issue text, as it may appear inside a script a heredoc writes.
 LOOSE_POST = re.compile(r"\bgh\b[^\n;&|]{0,80}?\b(pr|issue)\s+(create|edit|comment|review|close|reopen)\b"
                         r"|\bgh\s+(api|alias)\b")
-# A posting gh command in code: as a shell line, or as an argv list (['gh', 'pr', 'comment', ...]).
-CODE_POST = re.compile(LOOSE_POST.pattern + r"|\bgh\b\W{1,6}(pr|issue|api|alias)\b")
+# A gh command on PRs, issues, the API or aliases in code: as a shell line, or as an argv list
+# (['gh', '-R', 'o/r', 'pr', 'comment', ...]). Broader than LOOSE_POST, since it's only
+# applied to code that runs.
+CODE_POST = re.compile(r"\bgh\b[^\n]{0,60}?\b(pr|issue|api|alias)\b")
+# Wrappers that run the command after them (`time python3 - <<EOF`, `nohup ./s.sh`).
+WRAPPERS = {"env", "command", "exec", "time", "nohup", "sudo", "nice", "timeout", "xargs", "builtin"}
+# Words that only read a file named after them (`git commit -F msg.txt`, `git add notes.md`).
+READERS = {"-F", "--file", "--body-file", "-m", "add", "rm", "mv", "cp", "diff", "cat", "head", "tail",
+           "wc", "less", "grep", "open", "stat", "ls"}
+# Interpreter flags that take code (-c, -e, -E, -p, -r, bundled like -Bc or -le, --eval, --command).
+CODE_FLAG = re.compile(r"-[A-Za-z]*[ceEpr]|--(eval|command|exec|print)")
 
 # Posting commands, and the only flags each may use, every one as a separate token. Flags that
 # take a value map to True. Anything else (attached values, --body, --fill, --template,
@@ -156,6 +165,8 @@ def split_heredocs(command: str) -> tuple[str, list[str], list[str], list[tuple[
                 scripts.append("\n".join(body))
                 if is_runner(target):
                     run.append(scripts[-1])
+                elif target == "tee" and (out := re.search(r"\btee\s+(?:-a\s+)?([^\s;&|<>-][^\s;&|<>]*)", line)):
+                    written.append((out.group(1).strip("\"'"), scripts[-1]))
                 elif out := re.search(r"(?<![<\d&])>>?\s*([^\s;&|<>]+)", HEREDOC.sub(" ", line)):
                     written.append((out.group(1).strip("\"'"), scripts[-1]))
     return "\n".join(kept), scripts, run, written
@@ -164,7 +175,7 @@ def split_heredocs(command: str) -> tuple[str, list[str], list[str], list[tuple[
 def heredoc_target(before: str) -> str:
     """The command a heredoc feeds: the first word of the last command before `<<`."""
     segment = re.split(r"[;&|()]", before)[-1].split()
-    while segment and (ASSIGNMENT.fullmatch(segment[0]) or segment[0] in ("env", "command", "exec")):
+    while segment and (ASSIGNMENT.fullmatch(segment[0]) or segment[0] in WRAPPERS):
         segment = segment[1:]
     return os.path.basename(segment[0].strip("\"'\\")) if segment else ""
 
@@ -244,22 +255,32 @@ def find_posts(command: str, depth: int = 0) -> list[dict]:
 
 def runs_posting_code(command: str, written: list[tuple[str, str]]) -> str | None:
     """Why the command runs code that posts to GitHub, or None. Only code that runs counts:
-    the argument to an interpreter's -c/-e, or a file a heredoc writes and the same command
-    then runs. Quoted text elsewhere (a commit message mentioning `gh api`) doesn't."""
+    code given to an interpreter (-c, -e, --eval, ...), or a file a heredoc writes that the
+    same command then runs. Quoted text elsewhere (a commit message mentioning `gh api`)
+    doesn't."""
     toks = tokens(strip_redirects(command))
-    for k, t in enumerate(toks[:-1]):
-        # -c, -e, or bundled (-Bc, -le), after an interpreter a few words back (uv run python -c).
-        if re.fullmatch(r"-[A-Za-z]*[ce]", t) and any(is_runner(w) for w in toks[max(0, k - 3):k]):
+    runner_seen = False
+    for k, t in enumerate(toks):
+        if t in SEPARATORS:
+            runner_seen = False
+        elif is_runner(t):
+            runner_seen = True
+        elif runner_seen and k + 1 < len(toks) and CODE_FLAG.fullmatch(t):
             if CODE_POST.search(re.sub(r"[\"'\\]", "", toks[k + 1])):
                 return "This command runs code (-c/-e) that contains a gh command posting to GitHub."
-    # A written file is run when an interpreter is given it (`bash s.sh`) or it's in command
-    # position (`./s.sh`); any other mention (`git commit -F msg.txt`) is just reading it.
+    # A written file is run unless every mention of it just reads it (`git commit -F msg.txt`,
+    # `git add notes.md`, `cat s.sh`); feeding it to a shell on stdin or through a pipe runs it.
     for path, body in written:
         name = os.path.basename(path)
         if not CODE_POST.search(re.sub(r"[\"'\\]", "", body)):
             continue
+        quoted = re.escape(name)
+        shell = r"(\S*/)?(sh|bash|zsh|dash|ksh|python[\d.]*)\b"
+        if (re.search(rf"\b{shell}[^\n;&|]*<\s*\S*{quoted}", command)
+                or re.search(rf"{quoted}\b[^\n;&]*\|\s*{shell}", command)):
+            return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
         for k, t in enumerate(toks):
-            if os.path.basename(t) == name and (k == 0 or toks[k - 1] in SEPARATORS or is_runner(toks[k - 1])):
+            if os.path.basename(t) == name and not (k > 0 and toks[k - 1] in READERS | {"tee", "-a"}):
                 return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
     return None
 
@@ -304,6 +325,9 @@ def _flag_before_action(args: list[str]) -> bool:
         a = args[k]
         if a in REPO_FLAGS:
             k += 2
+            continue
+        if a in ("-h", "--help") or a.startswith("--repo="):  # help, or -R's attached form
+            k += 1
             continue
         if not a.startswith("-"):
             if seen_group:
@@ -405,22 +429,35 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
 # Characters that render as nothing or as blank space: fillers, braille blank, the combining
 # grapheme joiner, Khmer and Mongolian invisibles, the object replacement character.
 BLANK_LOOKING = {"ᅟ", "ᅠ", "⠀", "ㅤ", "ﾠ", "͏", "឴", "឵",
-                 "᠋", "᠌", "᠍", "᠎", "￼"}
+                 "᠋", "᠌", "᠍", "᠎", "᠏", "￼"}
 EMOJI_JOINERS = {"‍", "︎", "️"}  # zero-width joiner and text/emoji selectors
+# Default-ignorable and noncharacter ranges, denied by range rather than by category, since a
+# code point unassigned in this Python's Unicode table may be an invisible one in a newer table.
+IGNORABLE_RANGES = [("⁠", "⁯"), ("︀", "︍"), ("﷐", "﷯"), ("￰", "￻"),
+                    ("\U000e0000", "\U000e0fff")]
+
+
+def _emoji_base(c: str) -> bool:
+    """A character an emoji joiner or selector may follow: a symbol or emoji, or a keycap base."""
+    return unicodedata.category(c) in ("So", "Sk", "Sm") or ord(c) >= 0x1F000 or c in "0123456789#*"
 
 
 def hides_text(text: str) -> bool:
     """Whether text has characters that could make the prompt show something other than what's
     posted: control and format characters (ANSI escapes, bidi overrides, zero-width), enclosing
-    marks, private-use code points, variation selectors other than the emoji ones, blank-looking
+    marks, private-use code points, default-ignorable ranges and noncharacters, blank-looking
     letters, and any space other than a plain one. The emoji joiner and selectors are allowed
-    (✔️, ⚠️); unassigned code points are too, since they depend on the Python's Unicode version."""
-    for c in text:
-        if c in "\n\t" or c in EMOJI_JOINERS:
+    only right after an emoji or symbol (✔️, ⚠️, 👨‍💻), so they can't carry text on their own."""
+    for i, c in enumerate(text):
+        if c in "\n\t":
             continue
+        if c in EMOJI_JOINERS:
+            if i > 0 and (_emoji_base(text[i - 1]) or text[i - 1] in "️"):
+                continue
+            return True
         cat = unicodedata.category(c)
-        if (cat in ("Cc", "Cf", "Zl", "Zp", "Me", "Co") or (cat == "Zs" and c != " ")
-                or c in BLANK_LOOKING or "︀" <= c <= "︍" or "\U000e0100" <= c <= "\U000e01ef"):
+        if (cat in ("Cc", "Cf", "Zl", "Zp", "Me", "Co") or (cat == "Zs" and c != " ") or c in BLANK_LOOKING
+                or any(lo <= c <= hi for lo, hi in IGNORABLE_RANGES) or (ord(c) & 0xFFFE) == 0xFFFE):
             return True
     return False
 

@@ -269,6 +269,15 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr comment 12 --body-file vs.md",
     "gh pr comment 12 --body-file blank.md",
     "gh pr comment 12 --body-file cgj.md",
+    "gh pr comment 12 --body-file zwj.md",
+    "gh pr comment 12 --body-file fe0f.md",
+    "gh pr comment 12 --body-file ign.md",
+    "gh pr comment 12 --body-file tag.md",
+    "gh pr comment 12 --body-file nonchar.md",
+    "gh pr comment 12 --body-file mongol.md",
+    "gh pr comment 12 --body-file khmer.md",
+    "gh pr --repo=o/r comment 1 --body-file body.md",
+    "gh --repo o/r pr comment 1 -b x",
     # flags between the group and the action, which gh accepts
     "gh pr -b hello comment 1",
     "gh issue --body hi create --title x",
@@ -281,6 +290,18 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "perl -le 'system(\"gh pr comment 1 -b x\")'",
     "python3.12 - <<'EOF'\nimport os\nos.system('gh pr comment 1 -b x')\nEOF",
     "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\n./s.sh",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\nbash -x s.sh",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\nsource s.sh",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\n. ./s.sh",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ntime ./s.sh",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\nsh <s.sh",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ncat s.sh | bash",
+    "tee s.sh <<'EOF' >/dev/null\ngh pr comment 1 -b hi\nEOF\nbash s.sh",
+    "perl -E 'system(\"gh pr comment 1 -b x\")'",
+    "node --eval \"require('child_process').execSync('gh pr comment 1 -b x')\"",
+    "python3 -W ignore -X dev -B -c \"import os; os.system('gh pr comment 1 -b x')\"",
+    "python3 -c \"import subprocess; subprocess.run(['gh', '-R', 'a/b', 'pr', 'comment', '1', '-b', 'x'])\"",
+    "time python3 - <<'EOF'\nimport os\nos.system('gh pr comment 1 -b x')\nEOF",
     # aliases and comments on close/reopen
     "gh alias set c 'pr comment'",
     "gh alias import aliases.yml",
@@ -298,6 +319,9 @@ def test_posting_inline_or_unseen_text_is_denied(repo, command):
     (path / ".env").write_text("KEY=1\n")
     (path / "vs.md").write_text("ok︁\n")
     (path / "cgj.md").write_text("a͏b\n")
+    for name, char in (("zwj.md", "‍"), ("fe0f.md", "️"), ("ign.md", "⁥"), ("tag.md", "\U000e0080"),
+                       ("nonchar.md", "﷐"), ("mongol.md", "᠏"), ("khmer.md", "឴")):
+        (path / name).write_text(f"safe{char}text\n")
     (path / "blank.md").write_text("aㅤb\n")
     assert confirm_push.decide(command, str(path))[0] == "deny"
 
@@ -371,6 +395,14 @@ def test_a_fifo_body_file_is_denied_without_blocking(repo):
     "git -c core.x=y commit -m 'msg'",
     "gh pr -R owner/repo view 3",
     "gh pr close 3 -d",
+    "gh pr --help",
+    "gh pr -h",
+    "gh issue --repo=o/r view 3",
+    "gh pr list --state open",
+    "gh pr view 3 --json title",
+    "uv run pytest -p no:cacheprovider -k \"gh api\"",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ncat s.sh",
+    "tee msg.txt <<'EOF' >/dev/null\nmention gh pr comment\nEOF\ngit commit -F msg.txt",
     "gh api repos/o/r/pulls/2/comments --paginate -q '.[].body'",
 ])
 def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):
