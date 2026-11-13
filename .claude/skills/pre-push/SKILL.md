@@ -1,6 +1,6 @@
 ---
 name: pre-push
-description: Review a branch's commits before pushing it and opening a PR in this public repo — the public-repo checklist (including the PR text), plus a code review and a security review by fresh agents that didn't write the code — then record the review, push the branch, and open the PR. Use before any `git push`, or when the user says "/pre-push", "review before pushing", "push", or "open a PR".
+description: Review a branch's commits before pushing it and opening a PR in this public repo — the public-repo checklist (including the PR text), plus a code review and a security review by fresh agents that didn't write the code — then record the review, push the branch, and open the PR. Also covers text posted to a PR later (comments, review replies, description edits). Use before any `git push` or any PR/issue comment or description edit, or when the user says "/pre-push", "review before pushing", "push", "open a PR", or "comment on the PR".
 ---
 
 # Pre-push review
@@ -175,3 +175,36 @@ main checkout: `git pull --ff-only` on main, `git worktree remove` the
 worktree, `git branch -D` the branch (`-d` refuses, since a squash merge
 leaves the branch's own commits off main), and move the board item to Done
 with the PR number.
+
+## Posting to a PR later: comments, replies, description edits
+
+Anything posted to GitHub is as public as the code, so a PR comment, a
+review comment or reply, an issue comment, or an edit to a PR's title or
+description gets the public-repo checklist (step 2a) before it's posted.
+It's text, not code, so skip the agent reviews:
+
+1. Write the text to a file in your scratchpad.
+2. Run the checklist over it (secrets, personal info, neutrality per
+   STYLE.md, internal notes, no session links), and show the user the text.
+3. Post it from the file, with the gh command alone (no `cd`, `&&`, pipes
+   or redirects around it, each flag and its value as separate words):
+   `gh pr comment <N> --body-file <file>`, `gh pr edit <N> --body-file
+   <file>`, `gh pr review <N> --comment --body-file <file>`, or for a reply
+   to a review comment `gh api repos/<owner>/<repo>/pulls/<N>/comments/<id>/replies
+   -F body=@<file>`. To close with a comment, post the comment first, then
+   close.
+
+The push hook asks before any of these and shows the title and the whole
+file for the user to approve (files over 20,000 bytes are refused rather than
+cut). It denies every other way of posting: inline or attached text
+(`--body`, `-bfoo`, `-f body=...`), stdin, `--fill`, templates, editors,
+every other `gh api` write and graphql mutations, `close`/`reopen -c`, flags
+before the action (`gh pr -b x comment`), `gh pr revert`, gh aliases, and any of `` ` `` `$ \ * ? [ ] { } ~ !` or a line break in the
+command (the shell would expand them after the check; gh's `{owner}` and
+`{repo}` placeholders are fine), so word titles without them. Titles and
+body files can't contain control or invisible characters (emoji like ✔️ and
+👨‍💻 are fine; keycaps like 1️⃣ aren't), and body files must be UTF-8 text
+outside dot directories. Commands over 20,000 characters are denied, so keep
+long text in files. The hook reads command text, so
+gh run from a script or another program isn't gated: post with the gh
+command itself.

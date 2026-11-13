@@ -1,10 +1,13 @@
 """The Claude Code push hook: which commands count as a push, and what it decides."""
 
 import importlib.util
+import io
 import json
+import os
 import pathlib
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -85,6 +88,9 @@ def test_reviewed_push_asks(repo):
     assert confirm_push.decide("git push 2>&1", str(path))[0] == "ask"
     assert confirm_push.decide("git push origin feature > /dev/null", str(path))[0] == "ask"
     assert confirm_push.decide("git push>/dev/null", str(path))[0] == "ask"
+    # Chained redirects, even between git and push, are stripped like single ones.
+    assert confirm_push.decide("git 2>&1>x push", str(path))[0] == "ask"
+    assert confirm_push.decide("git 2>&1</dev/null push", str(path))[0] == "ask"
 
 
 @pytest.mark.parametrize("command", ["git push", "git push origin", "git push origin main", "git push -u origin main"])
@@ -124,15 +130,326 @@ def test_gh_pr_merge_is_denied(repo, command):
 
 
 @pytest.mark.parametrize("command", [
-    "gh pr create --base main --head feature --title 't' --body-file /tmp/body.md",
     "gh pr view 12 && git merge origin/main",
     "gh pr view 12 --json state",
-    "gh pr edit 12 --body-file /tmp/body.md",
+    "gh pr list",
+    "gh api repos/o/r/pulls/2/comments",
+    "gh api repos/o/r/issues/2/comments --paginate",
+    "gh api -X GET repos/o/r/pulls/2/comments -f per_page=100",
+    "gh api -X GET repos/o/r/actions/runs -f status=failure",
     "git merge origin/main",
 ])
-def test_pr_commands_that_dont_merge_are_left_to_normal_permissions(repo, command):
+def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo, command):
     path, _ = repo
     assert confirm_push.decide(command, str(path)) is None
+
+
+@pytest.mark.parametrize("command", [
+    "gh pr create --base main --head feature --title 'Add X' --body-file body.md",
+    "gh pr create -B main -H feature -t 'Add X' -F body.md --draft",
+    "gh pr edit 12 --body-file body.md",
+    "gh pr comment 12 --body-file body.md",
+    "gh pr comment 12 -F body.md",
+    "gh pr comment 12 --edit-last --body-file body.md",
+    "gh -R owner/repo pr comment 12 --body-file body.md",
+    "gh pr -R owner/repo comment 12 --body-file body.md",
+    "gh pr review 12 --comment --body-file body.md",
+    "gh pr review 12 --request-changes -F body.md",
+    "gh issue create --title 'Bug' --body-file body.md",
+    "gh issue comment 3 --body-file body.md",
+    "gh api repos/o/r/issues/12/comments -F body=@body.md",
+    "gh api repos/o/r/pulls/12/comments/99/replies -F body=@body.md",
+    "gh api -X PATCH repos/o/r/issues/comments/5 -F body=@body.md",
+    "gh api --method PATCH repos/o/r/pulls/comments/5 -F body=@body.md",
+])
+def test_posting_text_from_a_file_asks_and_shows_it_in_full(repo, command):
+    path, _ = repo
+    (path / "body.md").write_text("Adds the floor schedule.\n" + "x" * 5000 + "END\n")
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "ask" and "PUBLIC" in reason and "Adds the floor schedule." in reason and "END" in reason
+
+
+def test_the_title_is_shown(repo):
+    path, _ = repo
+    (path / "body.md").write_text("body\n")
+    decision, reason = confirm_push.decide("gh pr create --title 'Add X' --body-file body.md", str(path))
+    assert decision == "ask" and "Title: Add X" in reason
+
+
+def test_edits_and_reviews_without_text_still_ask(repo):
+    path, _ = repo
+    assert confirm_push.decide("gh pr edit 12 --add-label docs", str(path))[0] == "ask"
+    assert confirm_push.decide("gh pr review 12 --approve", str(path))[0] == "ask"
+
+
+@pytest.mark.parametrize("command", [
+    # inline, attached, auto-filled, templated or editor text
+    "gh pr comment 12 --body 'looks good'",
+    "gh pr comment 12 -b 'looks good'",
+    "gh pr comment 12 -bfoo",
+    "gh pr review 12 --request-changes -bfoo",
+    "gh pr edit 12 --body='new text'",
+    "gh pr comment 12 -Fbody.md",
+    "gh pr comment 12 --body-file=body.md",
+    "gh pr create --fill",
+    "gh pr create -f",
+    "gh pr create --title t --template x",
+    "gh pr create -T x",
+    "gh pr comment 12 --editor",
+    "gh pr comment 12 --web",
+    "gh issue comment 3 --body hi",
+    "gh pr comment 12",
+    # stdin, special files, files that can't be shown
+    "gh pr comment 12 --body-file -",
+    "gh pr comment 12 -F-",
+    "gh pr comment 12 --body-file /dev/stdin",
+    "gh pr comment 12 --body-file /dev/fd/0",
+    "gh pr comment 12 --body-file ~/notes.md",
+    "gh pr comment 12 --body-file $F",
+    "gh pr comment 12 --body-file missing.md",
+    "gh pr comment 12 --body-file /etc/hosts",
+    "gh pr comment 12 --body-file big.md",
+    # not the whole command
+    "cat x | gh pr comment 12 --body-file body.md",
+    "gh pr comment 12 --body-file body.md < secret",
+    "echo evil > body.md && gh pr comment 12 --body-file body.md",
+    "cd sub && gh pr comment 12 --body-file body.md",
+    "gh pr comment 12 --body-file body.md && gh pr comment 13 --body-file body.md",
+    "sh -c \"gh pr comment 12 --body hi\"",
+    "env X=1 gh pr comment 12 --body-file body.md",
+    # gh api writes other than the allowed comment shapes
+    "gh api repos/o/r/issues/12/comments -f body='looks good'",
+    "gh api repos/o/r/issues/12/comments -fbody=anything",
+    "gh api repos/o/r/issues/12/comments -Fbody=@body.md",
+    "gh api -XPOST repos/o/r/issues/12/comments -F body=@body.md",
+    "gh api --method=POST repos/o/r/issues/12/comments -F body=@body.md",
+    "gh api -XDELETE repos/o/r/issues/comments/5",
+    "gh api --method=DELETE repos/o/r/issues/comments/5",
+    "gh api -X PATCH repos/o/r/issues/12 -f state=closed",
+    "gh api repos/o/r/pulls/12/comments -f body=@body.md",
+    "gh api repos/o/r/issues/12/comments --input body.json",
+    "gh api repos/o/r/issues/12/comments --input=body.json",
+    "gh api graphql -f query='mutation { addComment(input: {subjectId: \"x\", body: \"hi\"}) { clientMutationId } }'",
+    "gh api graphql -F query=@q.gql",
+    "gh api graphql --input q.json",
+    # shell expansion after the hook has shown the literal text
+    "gh pr create --title \"x`cp evil.md body.md`\" --body-file body.md",
+    "gh pr edit 1 --title 'Use `uv run` in docs' --body-file body.md",
+    "gh pr comment \"1`cmd`\" --body-file body.md",
+    "gh pr create --title * --body-file body.md",
+    "gh pr comment 12 --body-file b?dy.md",
+    "gh pr comment 12 --body-file b{o,a}dy.md",
+    "gh pr create --title 'Cost $5' --body-file body.md",
+    "gh pr create --title 'line one\nline two' --body-file body.md",
+    # every other gh api write, including push-equivalent ones
+    "gh api repositories/123/issues/1/comments -f body=hi",
+    "gh api repositories/123/issues/1/comments -F body=@body.md",
+    "gh api repos/o/r/merges -f base=main -f head=x",
+    "gh api -X PUT repos/o/r/contents/a.txt -f content=x -f message=y",
+    "gh api -X PATCH repos/o/r/git/refs/heads/main -f sha=abc",
+    "gh api -X PATCH repos/o/r/releases/1 -f body=x",
+    "gh api repos/o/r/actions/runs -f status=failure",
+    "gh api graphql -f query=\"$Q\"",
+    # body files that can't be shown faithfully, or shouldn't be
+    "gh pr comment 12 --body-file ctrl.md",
+    "gh pr comment 12 --body-file bidi.md",
+    "gh pr comment 12 --body-file .env",
+    "gh pr comment 12 --body-file .git/config",
+    # bundled short flags and gh's own aliases
+    "gh api repos/o/r/contents/x -iXPUT",
+    "gh api repos/o/r/git/refs/heads/foo -iXDELETE",
+    "gh api -iX DELETE repos/o/r/git/refs/heads/x",
+    "gh api repos/o/r/issues/1/comments -if body=hi",
+    "gh api repos/o/r/issues/1/comments -iF body=@body.md",
+    "gh pr close 1 -dc 'text'",
+    "gh issue new --title x --body y",
+    "gh pr new --title x --body y",
+    "gh pr create --title 'Add ‮evil' --body-file body.md",
+    "gh pr create --title 'Add​this' --body-file body.md",
+    "gh pr comment 12 --body-file vs.md",
+    "gh pr comment 12 --body-file blank.md",
+    "gh pr comment 12 --body-file cgj.md",
+    "gh pr comment 12 --body-file zwj.md",
+    "gh pr comment 12 --body-file fe0f.md",
+    "gh pr comment 12 --body-file ign.md",
+    "gh pr comment 12 --body-file tag.md",
+    "gh pr comment 12 --body-file nonchar.md",
+    "gh pr comment 12 --body-file mongol.md",
+    "gh pr comment 12 --body-file khmer.md",
+    "gh pr --repo=o/r comment 1 --body-file body.md",
+    # chained redirects between gh and the action
+    "gh 2>&1>/dev/null pr comment 3 -b hi",
+    "gh>&2>/dev/null pr comment 3 -b hi",
+    "gh pr 2>&1>/dev/null comment 1 --body hi",
+    "env -u gh -u gh -u gh -u gh -u gh gh pr comment 1 --body hi",
+    # a gh word that's an argument to a wrapper, before the gh that runs
+    "sudo -u gh gh pr comment 1 --body hi",
+    "env -u gh gh pr comment 1 --body hi",
+    "xargs -I gh gh pr comment 1 --body hi",
+    "gh --repo o/r pr comment 1 -b x",
+    # flags between the group and the action, which gh accepts
+    "gh pr -b hello comment 1",
+    "gh issue --body hi create --title x",
+    "gh pr -c hi close 1",
+    "gh pr --comment hi close 1",
+    "gh pr revert 1 --title x --body hi",
+    # aliases and comments on close/reopen
+    "gh alias set c 'pr comment'",
+    "gh alias import aliases.yml",
+    "gh pr close 12 -c 'closing'",
+    "gh pr close 12 --comment='closing'",
+    "gh issue close 3 -c done",
+    "gh issue reopen 3 --comment again",
+])
+def test_posting_inline_or_unseen_text_is_denied(repo, command):
+    path, _ = repo
+    (path / "body.md").write_text("text\n")
+    (path / "big.md").write_text("x" * (confirm_push.MAX_BODY_BYTES + 1))
+    (path / "ctrl.md").write_text("shown\x1b[8mhidden\x1b[0m\n")
+    (path / "bidi.md").write_text("a‮b\n")
+    (path / ".env").write_text("KEY=1\n")
+    (path / "vs.md").write_text("ok︁\n")
+    (path / "cgj.md").write_text("a͏b\n")
+    for name, char in (("zwj.md", "‍"), ("fe0f.md", "️"), ("ign.md", "⁥"), ("tag.md", "\U000e0080"),
+                       ("nonchar.md", "﷐"), ("mongol.md", "᠏"), ("khmer.md", "឴")):
+        (path / name).write_text(f"safe{char}text\n")
+    (path / "blank.md").write_text("aㅤb\n")
+    assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+def test_the_documented_pre_push_pr_command_asks(repo, tmp_path_factory):
+    path, _ = repo
+    body = tmp_path_factory.mktemp("scratchpad") / "pr-body.md"
+    body.write_text("## What\n\nAdds the floor schedule.\n")
+    command = f"gh pr create --base main --head wren/floor-schedule --title 'Add the floor schedule' --body-file {body}"
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "ask" and "Adds the floor schedule." in reason
+
+
+def test_emoji_with_joiners_and_selectors_are_allowed_in_a_body(repo):
+    path, _ = repo
+    (path / "body.md").write_text("Done ✔️ ⚠️ \U0001f468‍\U0001f4bb\n")
+    assert confirm_push.decide("gh pr comment 1 --body-file body.md", str(path))[0] == "ask"
+
+
+@pytest.mark.parametrize("text", [
+    "a+‍b",           # joiner after an ASCII symbol
+    "1‍2️3",     # joiners and selectors after digits
+    "✔️️",  # a second selector
+    "✔‍",        # joiner with nothing to join
+    "1️⃣",       # keycap
+    "a\U00016fe4b",        # Khitan filler
+    "a\U0001d159b",        # null notehead
+    "a〿b",            # ideographic half fill space
+    "5 ×️ 3",    # selector after a math symbol
+    "€‍±",  # joiner between currency and math symbols
+])
+def test_emoji_joiners_and_selectors_cant_carry_hidden_data(text):
+    assert confirm_push.hides_text(text)
+
+
+@pytest.mark.parametrize("text", ["✔️ done", "⚠️", "\U0001f468‍\U0001f4bb",
+                                  "❤️‍\U0001f525", "\U0001f44d\U0001f3fd", "→ — …",
+                                  "ℹ️", "‼️", "↔️", "©️", "™️"])
+def test_ordinary_emoji_and_punctuation_are_fine(text):
+    assert not confirm_push.hides_text(text)
+
+
+def test_very_long_git_or_gh_commands_are_denied(repo):
+    path, _ = repo
+    assert confirm_push.decide("gh pr view 1 " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
+    assert confirm_push.decide("echo " + "x" * (confirm_push.MAX_COMMAND_CHARS - 10), str(path)) is None
+    # Every long command, since quotes or a backslash-newline can split `gh` past any check for it.
+    assert confirm_push.decide("g''h pr " * 3000, str(path))[0] == "deny"
+    assert confirm_push.decide("g\\\nh pr view " + "1" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
+    assert confirm_push.decide("echo " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
+
+
+@pytest.mark.parametrize("command", [" gh api" * 2850, "gh " * 6600, "gh pr " * 3300,
+                                     "gh pr view " + "1" * 19900, "1" * 19900 + " gh pr comment"])
+def test_many_gh_words_in_one_command_stay_fast(repo, command):
+    path, _ = repo
+    start = time.time()
+    confirm_push.decide(command, str(path))
+    assert time.time() - start < 1
+
+
+def test_gh_new_is_gated_like_create(repo):
+    path, _ = repo
+    (path / "body.md").write_text("text\n")
+    assert confirm_push.decide("gh issue new --title 'Bug' --body-file body.md", str(path))[0] == "ask"
+
+
+def test_outside_a_git_repo_the_working_directory_is_not_a_body_file_root(repo, monkeypatch):
+    path, _ = repo
+    monkeypatch.setattr(confirm_push, "git", lambda *a: "")  # as if `rev-parse --show-toplevel` failed
+    roots = confirm_push._allowed_roots(str(path))
+    assert os.path.realpath(path) not in roots and os.path.realpath("/tmp") in roots
+
+
+def test_gh_owner_repo_placeholders_are_allowed(repo):
+    path, _ = repo
+    (path / "body.md").write_text("text\n")
+    command = "gh api repos/{owner}/{repo}/issues/1/comments -F body=@body.md"
+    assert confirm_push.decide(command, str(path))[0] == "ask"
+
+
+def test_a_body_file_symlinked_outside_the_repo_is_denied(repo):
+    path, _ = repo
+    (path / "link.md").symlink_to("/etc/hosts")
+    assert confirm_push.decide("gh pr comment 12 --body-file link.md", str(path))[0] == "deny"
+
+
+def test_a_fifo_body_file_is_denied_without_blocking(repo):
+    path, _ = repo
+    os.mkfifo(path / "pipe.md")
+    assert confirm_push.decide("gh pr comment 12 --body-file pipe.md", str(path))[0] == "deny"
+
+
+@pytest.mark.parametrize("command", [
+    "gh pr close 12",
+    "gh pr close 12 --delete-branch",
+    "gh issue reopen 3",
+    "gh api graphql -f query='{ viewer { login } }'",
+    "git commit -m 'Hook now catches gh pr create and gh pr comment'",
+    "echo \"run gh pr comment later\"",
+    "git commit -F - <<'EOF'\nThe hook asks before gh pr create, gh pr review and gh api writes.\nEOF",
+    "cat > notes.md <<'EOF'\nuse gh api to read comments; gh pr comment posts\nEOF",
+    # quoted mentions next to an interpreter: not code that runs
+    "git commit -m \"Explain gh api usage\" && uv run pytest",
+    "git commit -m \"Explain gh pr comment gating\"; python3 x.py",
+    "uv run pytest -k \"gh api\"",
+    "git add . && git commit -m 'gate gh api writes'",
+    "cat > msg.txt <<'EOF'\nHook: gate gh api writes\nEOF\ngit commit -F msg.txt",
+    "cat > notes.md <<'EOF'\nuse gh pr comment --body-file\nEOF\ngit add notes.md",
+    "bash -c \"make test\"",
+    "python3 -c 'print(1)'",
+    "uv run pytest -c pytest.ini",
+    "git -c core.x=y commit -m 'msg'",
+    "gh pr -R owner/repo view 3",
+    "gh pr close 3 -d",
+    "gh pr --help",
+    "gh pr -h",
+    "gh issue --repo=o/r view 3",
+    "gh pr list --state open",
+    "gh pr view 3 --json title",
+    "uv run pytest -p no:cacheprovider -k \"gh api\"",
+    "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ncat s.sh",
+    "tee msg.txt <<'EOF' >/dev/null\nmention gh pr comment\nEOF\ngit commit -F msg.txt",
+    "gh api repos/o/r/pulls/2/comments --paginate -q '.[].body'",
+])
+def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path)) is None
+
+
+def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
+    def boom(*a):
+        raise RuntimeError("x")
+    monkeypatch.setattr(confirm_push, "decide", boom)
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"tool_input": {"command": "gh pr view 1"}})))
+    confirm_push.main()
+    assert json.loads(capsys.readouterr().out)["hookSpecificOutput"]["permissionDecision"] == "deny"
 
 
 @pytest.mark.parametrize("command", [
@@ -158,7 +475,6 @@ def test_pr_commands_that_dont_merge_are_left_to_normal_permissions(repo, comman
     "export GIT_DIR=../other/.git; git push",
     "export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null; git push",
     "git push origin main && git push",
-    "python3 -c \"import subprocess; subprocess.run(['git', 'push', '--no-verify'])\"",
     "git $'pu\\x73h'",
     "git push --no-v''erify",
     "git config core.hooks''Path /dev/null && git push",
@@ -171,6 +487,10 @@ def test_pr_commands_that_dont_merge_are_left_to_normal_permissions(repo, comman
     "git push origin main#x; git push origin feature",
     "git push origin feature && git push origin feature",
     "git push  # ship it",
+    "git 2>&1>/dev/null push --force origin main",
+    "git>&2>/dev/null push -u origin foo",
+    "git 0<&0<x push origin main",
+    "git -C . 2>&1>x push --force",
 ])
 def test_uncovered_push_forms_are_denied_even_when_reviewed(repo, command):
     path, head = repo
@@ -377,8 +697,6 @@ def test_prose_about_github_and_pre_push_is_not_a_push(repo, command):
     # `<<EOF` inside a quoted message, with no delimiter line: the next line is still a command.
     "git commit -m \"fix; cat <<EOF\"\ngit push origin HEAD:main",
     "sh <<EOF\necho finch's\ngit push --no-verify\nEOF",
-    "python3 - <<'PY'\nimport subprocess\nsubprocess.run(['git', 'push', '--force'])\nPY",
-    "python3 - <<'PY'\nimport os; os.system('gh pr merge 12')\nPY",
     "echo finch's && git push --force origin main",
     "echo don't; gh pr merge 3",
 ])
