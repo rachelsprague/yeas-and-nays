@@ -190,10 +190,20 @@ questions:
 
   - key: quorum
     term: Quorum call
-    match: '^Call of the House'
+    match: '^(Call of the House|Call by States)'
     definition: >-
       A roll call to establish that a quorum (a majority of members) is
-      present so business can proceed.
+      present so business can proceed. At the start of a new Congress, before
+      the House has organized, the Clerk calls the roll by state.
+
+  - key: retain_division
+    term: Retaining a division (House)
+    match: '^On Retaining Division'
+    definition: >-
+      Some measures are made up of separate parts called divisions. When the
+      terms for debating the measure allow it, the House votes separately on
+      whether to keep each division. A division that is not retained is
+      removed from the measure. The measure still needs its own vote to pass.
 
   - key: speaker
     term: Election of the Speaker (House)

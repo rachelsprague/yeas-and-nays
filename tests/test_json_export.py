@@ -57,3 +57,59 @@ def test_summary_carries_the_version_it_describes():
         "version_date": dt.date(2025, 2, 5), "version_code": "00",
     }
     assert summary_document(None) is None
+
+
+def _warehouse(path, sponsored_rows):
+    """A minimal warehouse with the tables run() reads: two members, one vote."""
+    import duckdb
+
+    con = duckdb.connect(str(path))
+    con.execute("create table members as select * from (values ('A000001'), ('B000002')) t(bioguide_id)")
+    con.execute("create table member_stats as select 'A000001' as bioguide_id, 1 as votes_cast")
+    con.execute("""create table votes as select 'h119-1-0001' as vote_id, 'house' as chamber, 1 as session,
+                   1 as roll_number, date '2025-01-03' as vote_date, timestamp '2025-01-03 12:00' as vote_time_et,
+                   'H R 1' as measure_number""")
+    con.execute("""create table positions as select 'h119-1-0001' as vote_id, 'A000001' as bioguide_id,
+                   'A (R-TX-1)' as member_label, 'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
+                   'yes' as position, 'yes' as caucus_majority_position, false as voted_against_party_majority""")
+    con.execute("""create table sponsored_bills (bioguide_id varchar, bill_id varchar, bill_type varchar,
+                   bill_number varchar, title varchar, introduced_date date, latest_action_date date,
+                   latest_action_text varchar, policy_area varchar, congress_gov_url varchar,
+                   latest_vote_id varchar)""")
+    for row in sponsored_rows:
+        con.execute("insert into sponsored_bills (bioguide_id, bill_type, bill_number, introduced_date) "
+                    "values (?, ?, ?, ?)", row)
+    con.execute("""create table vote_summaries (vote_id varchar, version_code varchar, action_date date,
+                   action_desc varchar, summary_html varchar)""")
+    con.close()
+
+
+def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [
+        ("A000001", "hr", "9", dt.date(2025, 3, 1)),
+        ("A000001", "hr", "10", dt.date(2025, 3, 1)),
+        ("A000001", "hres", "2", dt.date(2025, 5, 1)),
+    ])
+    out = tmp_path / "out"
+    (out / "members").mkdir(parents=True)
+    (out / "members" / "Z000009.json").write_text("{}")  # member no longer in the warehouse
+
+    run(warehouse, out)
+
+    a = json.loads((out / "members" / "A000001.json").read_text())
+    assert [b["measure_label"] for b in a["sponsored"]] == ["H.Res. 2", "H.R. 10", "H.R. 9"]
+    assert json.loads((out / "members" / "B000002.json").read_text()) == {"bioguide_id": "B000002", "sponsored": []}
+    assert sorted(p.name for p in (out / "members").iterdir()) == ["A000001.json", "B000002.json"]
+    assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True
+
+
+def test_run_flags_missing_sponsored_lists(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    run(warehouse, tmp_path / "out")
+    assert json.loads((tmp_path / "out" / "meta.json").read_text())["has_sponsored_bills"] is False

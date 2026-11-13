@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: hooks all ingest stage model export bot-preview site site-serve test pytest clean
+.PHONY: hooks all ingest stage model export bot-preview site site-serve test pytest sitetest clean
 
 all: ingest stage model export
 
@@ -26,10 +26,13 @@ site:            ## build the Jekyll site from data/out/ into site/_site/
 site-serve:      ## build and serve the site at http://localhost:4000
 	cd site && bundle install --quiet && bundle exec jekyll serve
 
-test: pytest     ## parser tests (dbt tests run as part of `make model`)
+test: pytest sitetest  ## Python and site plugin tests (dbt tests run as part of `make model`)
 
 pytest:
 	uv run pytest -q
+
+sitetest:        ## tests for the site's Jekyll plugin
+	cd site && bundle install --quiet && bundle exec ruby test/yan_data_test.rb
 
 hooks:           ## install the git pre-push hook (refuses pushes without a /pre-push review)
 	git config core.hooksPath .githooks

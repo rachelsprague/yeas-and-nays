@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 import os
 
 from yan.ingest.congress_gov import needs_fetch
@@ -93,3 +94,39 @@ def test_fetch_sponsored_drops_an_item_repeated_across_pages(monkeypatch):
     ]
     doc = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
     assert [i["number"] for i in doc["sponsoredLegislation"]] == ["3", "2", "1"]
+
+
+def test_members_in_congress_keeps_terms_that_reach_into_this_congress(monkeypatch):
+    from yan.ingest import congress_gov
+
+    terms = [
+        {"bioguide_id": "B000002", "term_end": "2027-01-03"},
+        {"bioguide_id": "A000001", "term_end": "2031-01-03"},
+        {"bioguide_id": "A000001", "term_end": "2025-01-03"},  # earlier term, same member
+        {"bioguide_id": "C000003", "term_end": "2025-01-03"},  # ended as this Congress began
+        {"bioguide_id": "D000004", "term_end": "2023-01-03"},
+    ]
+    monkeypatch.setattr(congress_gov.legislators, "parse_dir", lambda _: ([], terms, []))
+    assert congress_gov.members_in_congress() == ["A000001", "B000002"]
+
+
+def test_parse_sponsored_flattens_each_item():
+    from yan.stage.congress_gov import parse_sponsored
+
+    doc = {"bioguideId": "M001184", "sponsoredLegislation": [
+        {"congress": 119, "type": "HRES", "number": 12, "title": "Original title",
+         "latestTitle": "Latest title", "introducedDate": "2025-01-09",
+         "latestAction": {"actionDate": "2025-02-01", "text": "Referred to committee."},
+         "policyArea": {"name": "Taxation"}},
+        {"congress": 119, "type": "S", "number": "4", "title": "Only title",
+         "latestAction": None, "policyArea": None},
+    ]}
+    rows = parse_sponsored(json.dumps(doc).encode(), "119/sponsored/M001184.json")
+    assert rows[0] == {
+        "source_file": "119/sponsored/M001184.json", "bioguide_id": "M001184", "congress": "119",
+        "bill_type": "hres", "bill_number": "12", "title": "Latest title", "introduced_date": "2025-01-09",
+        "latest_action_date": "2025-02-01", "latest_action_text": "Referred to committee.",
+        "policy_area": "Taxation",
+    }
+    assert rows[1]["title"] == "Only title"
+    assert rows[1]["latest_action_date"] is None and rows[1]["policy_area"] is None

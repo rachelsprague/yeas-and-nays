@@ -6,3 +6,7 @@ gem "jekyll", "~> 4.4"
 gem "bigdecimal"
 gem "csv"
 gem "logger"
+
+group :test do
+  gem "minitest"
+end

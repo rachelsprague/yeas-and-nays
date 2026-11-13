@@ -14,3 +14,4 @@ exclude:
   - Gemfile.lock
   - vendor
   - .bundle
+  - test
