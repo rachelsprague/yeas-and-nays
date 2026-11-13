@@ -1,15 +1,16 @@
 ---
 name: pick
-description: Pick the next unclaimed item from BOARD.md to work on — a priority item from Next or a quick win from Later — preferring one that doesn't touch files another session is actively changing, then claim it. Use when the user says "/pick", "pick something", "what should I work on next", or "grab the next item".
+description: Pick the next unclaimed item from BOARD.md to work on — a priority item from Next or a quick win from Later — preferring one that doesn't touch files another session is actively changing, then confirm it with the user and claim it. Use when the user says "/pick", "pick something", "what should I work on next", or "grab the next item".
 ---
 
 # Pick the next board item
 
 Several sessions may work in this repo at once. This skill picks one item
 that no one has claimed and that is unlikely to collide with work in
-flight, then claims it under the rules in CLAUDE.md > Backlog > Claiming
-items. An optional argument narrows the pick: `priority` (Next only),
-`quick` (quick wins only), or a word to match against item text.
+flight, confirms it with the user, then claims it under the rules in
+CLAUDE.md > Backlog > Claiming items. An optional argument narrows the
+pick: `priority` (Next only), `quick` (quick wins only), or a word to
+match against item text.
 
 ## 1. Start from the main checkout
 
@@ -58,26 +59,29 @@ Drop any item that is:
 Prefer Next over Later when both are clear. Among equals, prefer the item
 listed first, and items whose details are already written down.
 
-## 4. Propose and claim
+## 4. Propose and confirm
 
 Tell the user the pick in a few lines: the item, why it's next, the files
 it likely touches, and any overlap you couldn't rule out. Name one or two
 runners-up. If nothing qualifies, say why (all claimed, all overlap,
-all need a decision) and stop without claiming.
+all need a decision) and stop.
 
-Then claim it right away, so another session can't take it first:
+Then ask the user to confirm the pick or choose a runner-up
+(`AskUserQuestion`, with the pick first and marked recommended). Don't
+claim, edit, or enter a worktree until they answer.
+
+## 5. Claim
+
+Claim the item the user chose:
 
 1. If you have no alias yet this session, pick one short lowercase word not
    used in any claim on the board and tell the user.
-2. Re-read `BOARD.md` right before editing. If the item was claimed in the
-   meantime, go back to step 3.
+2. Re-read `BOARD.md` right before editing. If the item was claimed while
+   the user was deciding, say so and go back to step 3.
 3. Move the item to Now and append
    ` — claimed by **<alias>** (YYYY-MM-DD HH:MM local, from <column>)`.
 
-If the user picks a runner-up instead, release the first claim (move it
-back to its column) and claim theirs.
-
-## 5. Start
+## 6. Start
 
 Read the item's `backlog/<slug>.md` if it has one, then enter a worktree
 on its own branch (`<alias>/<short-slug>`) before the first edit, and
