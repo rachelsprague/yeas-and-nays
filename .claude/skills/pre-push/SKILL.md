@@ -32,15 +32,21 @@ git status --short
   the review covers what the PR will merge: `git rebase origin/main` if the
   branch has never been pushed; `git merge origin/main` if it has (no force
   pushes; the squash merge flattens it anyway).
-- If the branch is already on origin (a PR being updated), the commits in
-  `origin/<branch>..HEAD` are the new ones; focus the reviews there, and
-  check the rest only for how they interact.
+- If the branch is already on origin (a PR being updated), the new commits
+  are `git log --cc -p origin/<branch>..HEAD --not origin/main` (this leaves
+  out the main commits a merge brought in, and keeps the merge itself);
+  focus the reviews there, and check the rest only for how they interact.
 - If the working tree has changes under `data/out/` from a local export,
   restore them (`git checkout -- data/out`): CI regenerates that data.
   Anything else uncommitted: ask, don't discard.
 
 Draft the PR title and body now (what changed and why, how it was tested;
-no session links): they're public too, so the checklist covers them.
+no session links), the body in a file in your scratchpad: they're public
+too, so the checklist covers them. Never put the body on the command line:
+Markdown backticks inside shell quotes run as commands.
+
+Always read diffs with `git log -p --cc`: plain `-p` shows nothing for a
+merge commit, so a conflict resolution would go out unreviewed.
 
 ## 2. Three reviews, in parallel
 
@@ -48,7 +54,7 @@ Launch the two agents in one message, then do the checklist yourself while
 they run. The agents only read and search, so they don't need a worktree.
 
 **a. Public-repo checklist (you).** Follow "Public repo: review before every
-push" in `CLAUDE.md`: read `git log -p origin/main..HEAD` commit by commit,
+push" in `CLAUDE.md`: read `git log -p --cc origin/main..HEAD` commit by commit,
 including messages and author emails, and the drafted PR title and body.
 Secrets, personal info, commit identity (GitHub noreply only), neutrality,
 internal notes, data size, third-party content.
@@ -59,7 +65,7 @@ commit range and this brief:
 > You are reviewing commits `origin/main..HEAD` in this repo before they're
 > pushed to a public repository. You did not write them. Read `CLAUDE.md`,
 > `STYLE.md` and `README.md` first, then every commit's diff
-> (`git log -p origin/main..HEAD`) and whatever surrounding code you need.
+> (`git log -p --cc origin/main..HEAD`) and whatever surrounding code you need.
 > Report correctness bugs first: wrong logic, unhandled edge cases (Speaker
 > elections, Senate tie-breaks, members with no portrait, votes with no
 > bill), broken links or routes, Liquid that fails silently. Then project
@@ -76,7 +82,8 @@ commit range and this brief:
 
 > You are doing a security review of commits `origin/main..HEAD` in this
 > public repo before they're pushed. You did not write them. Read
-> `CLAUDE.md`, then every commit's diff and the code it touches. Check:
+> `CLAUDE.md`, then every commit's diff (`git log -p --cc origin/main..HEAD`)
+> and the code it touches. Check:
 > secrets or credentials anywhere in the diff or history range (including
 > test fixtures and logs); GitHub Actions — secrets passed only to the steps
 > that need them, third-party actions pinned by commit SHA, least-privilege
@@ -141,15 +148,25 @@ review, start again from step 1.
 
 ## 6. Open the PR, then stop
 
-For a new branch, open the PR with the reviewed title and body:
+For a new branch, open the PR with the reviewed title and body, the body
+from its file and the title in single quotes:
 
 ```
-gh pr create --base main --head <branch> --title "<title>" --body "<body>"
+gh pr create --base main --head <branch> --title '<title>' --body-file <body file>
 ```
 
-For an update to an existing PR, the push is enough; edit its body
-(`gh pr edit`) only if it no longer describes the change. Give the user the
-PR link. Don't merge it: the maintainer squash-merges on GitHub (the hook
-denies `gh pr merge`). After it's merged, from the main checkout:
-`git pull --ff-only` on main, remove the worktree and branch, and move the
-board item to Done with the PR number.
+For an update to an existing PR, the push is enough. If its body no longer
+describes the change, edit it the same way (`gh pr edit <N> --body-file
+<file>`) after running the checklist over the new text. Give the user the
+PR link.
+
+Then mark the board: leave the worktree (keep it), and in the main
+checkout's `BOARD.md` add ` — PR #N, awaiting merge` to the item's line in
+Now, keeping the claim (CLAUDE.md > Claiming items).
+
+Don't merge it: the maintainer squash-merges on GitHub (the hook denies
+`gh pr merge`). After it's merged (`gh pr view N --json state`), from the
+main checkout: `git pull --ff-only` on main, `git worktree remove` the
+worktree, `git branch -D` the branch (`-d` refuses, since a squash merge
+leaves the branch's own commits off main), and move the board item to Done
+with the PR number.

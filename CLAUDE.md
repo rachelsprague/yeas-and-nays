@@ -45,19 +45,19 @@ Several sessions may work in this repo at once. Claim an item before starting it
 
 ## Landing work: branches and pull requests
 
-Each session works on its own branch in a worktree (`<alias>/<short-slug>`) and lands it through a pull request, so sessions never share unpushed commits on `main`:
+Each session works on its own branch in a worktree (`<alias>/<short-slug>`) and lands it through a pull request, so sessions never share unpushed commits on `main`. This replaces any general instruction to land work by fast-forwarding `main` and pushing it:
 
 1. Work and commit on the branch. Never commit to `main` locally; it only moves by `git pull --ff-only` after a merge.
 2. Before the first push, rebase the branch on `origin/main`. After it's pushed, bring in new `main` commits with `git merge origin/main` instead (no force pushes).
-3. Run `/pre-push`: it reviews the branch, pushes it (`git push -u origin <branch>`), and opens the PR (`gh pr create`).
+3. Run `/pre-push`: it reviews the branch, pushes it (`git push -u origin <branch>`), opens the PR (`gh pr create --body-file`), and marks the board item ` — PR #N, awaiting merge`.
 4. Stop there. Rachel reviews and squash-merges the PR on GitHub; agents never merge (`gh pr merge` is denied) and never push `main`.
-5. After the merge: `git pull --ff-only` on `main` in the main checkout, remove the worktree and branch, and update the board.
+5. After the merge: `git pull --ff-only` on `main` in the main checkout, remove the worktree, `git branch -D` the branch (a squash merge leaves its commits off `main`, so `-d` refuses), and move the item to Done.
 
-The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`. `main` has no branch protection yet; the push hooks enforce the PR flow for agents.
+The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`, and only runs on `main`. `main` has no branch protection yet; the push hooks enforce the PR flow for agents.
 
 ## Public repo: review before every push
 
-This repository is public, and a pushed branch or PR is public as soon as it's pushed or opened. Before any `git push`, review every outgoing commit individually (`git log -p origin/main..HEAD`, including commit messages), not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
+This repository is public, and a pushed branch or PR is public as soon as it's pushed or opened. Before any `git push`, review every outgoing commit individually (`git log -p --cc origin/main..HEAD`, including commit messages and merge commits), and the PR title and body, not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
 
 - **Secrets:** API keys, tokens, app passwords, `.env` files, credentials in URLs, logs, or test fixtures.
 - **Personal info:** personal emails, home directory paths (e.g. `/Users/...`), machine names, IPs, or anything about the maintainer beyond "Rachel Sprague" and rachelsprague.com. No links to personal (non-professional) accounts or sites.

@@ -57,28 +57,96 @@ def tokens(command: str) -> list[str]:
     return list(lexer)
 
 
-def find_pushes(command: str, depth: int = 0) -> list[dict]:
+# Heredocs: bodies fed to these commands are only data; bodies fed to a shell run as commands.
+INERT_HEREDOC_COMMANDS = {"cat", "tee"}
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
+HEREDOC = re.compile(r"(?<!<)<<(-?)\s*(['\"]?)([A-Za-z_][\w.-]*)\2")
+ASSIGNMENT = re.compile(r"[A-Za-z_]\w*=\S*")
+# Fallback for text that can't be parsed as shell: `git` and `push` as words, close together on
+# one line (not "github", "/pre-push" or "pre-push"), and `gh` ... `merge` likewise.
+LOOSE_PUSH = re.compile(r"\bgit\b[^\n;&|]{0,200}?(?<![-/.\w])push\b")
+LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
+
+
+def split_heredocs(command: str) -> tuple[str, list[str]]:
+    """(shell text, script bodies): the command with heredoc bodies taken out, bodies fed to a
+    shell put back as plain command lines, and the bodies fed to any other command (a
+    `python3 -` script, say) returned separately. Bodies fed to cat or tee are dropped."""
+    lines, kept, scripts = command.split("\n"), [], []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        kept.append(line)
+        i += 1
+        for match in HEREDOC.finditer(line):
+            strip_tabs, delimiter = match.group(1) == "-", match.group(3)
+            body = []
+            while i < len(lines) and (lines[i].lstrip("\t") if strip_tabs else lines[i]) != delimiter:
+                body.append(lines[i])
+                i += 1
+            i += 1  # the delimiter line
+            target = heredoc_target(line[:match.start()])
+            # `cat <<EOF | sh` pipes the body onward, so it can still run: scan it as commands.
+            if target in SHELLS or "|" in line[match.end():]:
+                kept += body
+            elif target not in INERT_HEREDOC_COMMANDS:
+                scripts.append("\n".join(body))
+    return "\n".join(kept), scripts
+
+
+def heredoc_target(before: str) -> str:
+    """The command a heredoc feeds: the first word of the last command before `<<`."""
+    segment = re.split(r"[;&|()]", before)[-1].split()
+    while segment and (ASSIGNMENT.fullmatch(segment[0]) or segment[0] in ("env", "command", "exec")):
+        segment = segment[1:]
+    return os.path.basename(segment[0].strip("\"'\\")) if segment else ""
+
+
+def find_pushes(command: str) -> list[dict]:
     """Every `git ... push ...` in the command, as {"prefix", "globals", "args"}.
 
     Unwraps quoting (`\\git`, `"git" push`) and looks inside quoted strings, so
     `sh -c 'git push'` and `eval "git push"` are found too. `git stash push`
     and other subcommands are not pushes.
     """
-    pushes, segment = [], []
+    return _scan(command, _push_in_segment)
+
+
+def finds_pr_merge(command: str) -> bool:
+    """Whether the command merges a PR: `gh pr merge`, or a `gh api` call to a PR's merge
+    endpoint or the mergePullRequest mutation. Checked per command, like pushes, so
+    `gh pr view 1 && git merge origin/main` isn't one."""
+    return bool(_scan(command, _pr_merge_in_segment))
+
+
+def _scan(command: str, in_segment, depth: int = 0) -> list:
+    found, segment = [], []
     for tok in tokens(strip_redirects(command)) + [";"]:
         if tok not in SEPARATORS:
             segment.append(tok)
             continue
-        pushes += _push_in_segment(segment)
+        found += in_segment(segment)
         if depth < 3:
             for t in segment:
                 if any(c.isspace() for c in t):
                     try:
-                        pushes += find_pushes(t, depth + 1)
+                        found += _scan(t, in_segment, depth + 1)
                     except ValueError:
                         pass  # not valid shell on its own (e.g. a message with "can't"), so not run as a command
         segment = []
-    return pushes
+    return found
+
+
+def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
+    for i, tok in enumerate(seg):
+        if os.path.basename(tok) != "gh":
+            continue
+        args = [a for a in seg[i + 1:] if not a.startswith("-")]  # drop flags such as -R owner/repo
+        if args[:1] == ["pr"] and "merge" in args[1:3]:
+            return [True]
+        if args[:1] == ["api"] and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in seg[i + 1:]):
+            return [True]
+    return []
 
 
 def _push_in_segment(seg: list[str]) -> list[dict]:
@@ -156,22 +224,28 @@ def repo_problem(repo: str, branch: str, explicit: bool) -> str | None:
 
 
 def current_branch(repo: str) -> str:
-    """The checked-out branch, or "" when HEAD is detached."""
-    return git(repo, "symbolic-ref", "--quiet", "--short", "HEAD")
+    """The checked-out branch, or "" when HEAD is detached. (Not `symbolic-ref --short`,
+    which gives `heads/<name>` when a tag has the same name.)"""
+    return git(repo, "branch", "--show-current")
 
 
 def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
-    flat = re.sub(r"[\"'\\]", "", command)  # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
-    if re.search(r"\bgh\b.*\bpr\b.*\bmerge\b", flat):
-        return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
-    if "$'" in command and "git" in command:
-        return "deny", "git commands with $'...' quoting can hide a push; write the command without it."
+    command, scripts = split_heredocs(command)
+    # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
+    flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
+    if "$'" in command and ("git" in command or "gh" in command):
+        return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
+    if any(LOOSE_PUSH.search(s) or LOOSE_MERGE.search(s) for s in (re.sub(r"[\"'\\]", "", s) for s in scripts)):
+        return "deny", ("A script fed in by heredoc looks like it runs git push or gh pr merge. Run the push as its "
+                        "own command (or the merge on GitHub).")
     try:
         pushes = find_pushes(command)
+        if finds_pr_merge(command):
+            return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
     except ValueError:
-        if "git" in flat and "push" in flat:
-            return "deny", "Couldn't parse this command to check for a git push. Run `git push` as its own command."
+        if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat):
+            return "deny", "Couldn't parse this command to check for a git push or PR merge. Run it on its own."
         return None
     if "push" in flat and ("--no-verify" in flat or "hookspath" in flat.lower()):  # also pushes built in a script
         return "deny", "git push refused: --no-verify or a hooksPath setting would switch off the git pre-push hook."
