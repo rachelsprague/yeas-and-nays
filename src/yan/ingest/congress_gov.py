@@ -16,9 +16,13 @@ For every member who served in this Congress, also fetches
 introduced, all Congresses, paged) and keeps the items from this Congress.
 Re-fetched weekly. Likewise /member/{bioguide_id}/cosponsored-legislation,
 which runs to thousands of items (dozens of pages) for long-serving members
-and isn't sorted by Congress, so every page is read; to keep each hourly run
-short, at most COSPONSORED_REQUEST_BUDGET requests go to it per run, stalest
-lists first. The API key is read from CONGRESS_API_KEY and sent only
+and isn't sorted by Congress, so every page is read. To keep each hourly run
+inside the job's timeout, a run fetches cosponsored lists, stalest first, only
+until it has used COSPONSORED_REQUEST_BUDGET requests or
+COSPONSORED_TIME_BUDGET (the list in progress is finished, so a run can go
+over by one list), and fetches none when this step has already run
+SKIP_COSPONSORED_AFTER (the weekly sponsored refresh). A list that fails is
+logged and skipped, so it can't stop the run. The API key is read from CONGRESS_API_KEY and sent only
 in the X-Api-Key header, never in a URL. Without a key this step is skipped.
 """
 
@@ -27,6 +31,8 @@ import json
 import logging
 import os
 import time
+
+import httpx
 
 from yan.config import CONGRESS, RAW_DIR, SESSIONS
 from yan.http import Client, write_atomic
@@ -44,9 +50,14 @@ MEMBER_LIST_URL = API + "/member/{bioguide_id}/{endpoint}?format=json&limit={lim
 PAGE_SIZE = 250  # the API maximum
 REFETCH_AFTER = dt.timedelta(days=7)
 RECENT_VOTE_DAYS = 7
-# Requests per run for cosponsored lists: about 10 minutes, and well under the API's
-# 5,000 an hour. The first fill takes a day or so of hourly runs; then lists refresh weekly.
+# Per run, cosponsored lists stop starting once either budget is used. Member-list requests
+# take about 2.5-4.6 s each in Actions, so the time budget usually binds first. The first
+# fill takes a day or two of hourly runs; then lists refresh weekly.
 COSPONSORED_REQUEST_BUDGET = 300
+COSPONSORED_TIME_BUDGET = dt.timedelta(minutes=10)
+# The weekly sponsored refresh alone takes about 45 minutes; skip cosponsored lists on that
+# run so the job stays inside its 75-minute timeout.
+SKIP_COSPONSORED_AFTER = dt.timedelta(minutes=30)
 
 
 def raw_path(bill_type: str, bill_number: str, kind: str = "summaries"):
@@ -137,6 +148,7 @@ def ingest(client: Client) -> None:
         log.warning("congress.gov: CONGRESS_API_KEY not set; skipping bill details and summaries")
         return
 
+    started = time.monotonic()
     today = dt.date.today()
     bills = voted_bills()
     fetched = 0
@@ -161,18 +173,38 @@ def ingest(client: Client) -> None:
         write_atomic(sponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
     log.info("congress.gov: %d members, %d sponsored-legislation lists fetched", len(members), len(stale))
 
-    # Stalest first (never fetched, then oldest file), so lists rotate through the budget.
+    ingest_cosponsored(client, key, members, today, started)
+
+
+def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.date, started: float) -> None:
+    """Fetch stale cosponsored lists, stalest first (never fetched, then oldest file), so
+    lists rotate through the per-run budgets. `started` is when this step began
+    (time.monotonic())."""
     stale = sorted(
         (m for m in members if needs_fetch(cosponsored_path(m), dt.date.min, today)),
         key=lambda m: cosponsored_path(m).stat().st_mtime if cosponsored_path(m).exists() else 0,
     )
-    used = fetched = 0
+    if time.monotonic() - started >= SKIP_COSPONSORED_AFTER.total_seconds():
+        log.info("congress.gov: skipping %d stale cosponsored-legislation lists this run (step already "
+                 "ran %d min)", len(stale), (time.monotonic() - started) // 60)
+        return
+    deadline = time.monotonic() + COSPONSORED_TIME_BUDGET.total_seconds()
+    used = fetched = failed = 0
     for bioguide_id in stale:
-        if used >= COSPONSORED_REQUEST_BUDGET:
+        if used >= COSPONSORED_REQUEST_BUDGET or time.monotonic() >= deadline:
             break
-        doc, requests = fetch_cosponsored(client, key, bioguide_id)
+        try:
+            doc, requests = fetch_cosponsored(client, key, bioguide_id)
+        except (httpx.HTTPError, ValueError) as e:
+            # Log the error type and status only; the list stays stale and is retried next run.
+            status = getattr(getattr(e, "response", None), "status_code", None)
+            log.warning("congress.gov: cosponsored list for %s failed (%s, HTTP %s); skipping",
+                        bioguide_id, type(e).__name__, status)
+            used += 1
+            failed += 1
+            continue
         write_atomic(cosponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
         used += requests
         fetched += 1
-    log.info("congress.gov: %d of %d stale cosponsored-legislation lists fetched (%d requests)",
-             fetched, len(stale), used)
+    log.info("congress.gov: %d of %d stale cosponsored-legislation lists fetched, %d failed (%d requests)",
+             fetched, len(stale), failed, used)

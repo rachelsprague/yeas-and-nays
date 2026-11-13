@@ -135,6 +135,55 @@ def test_ingest_fetches_stalest_cosponsored_lists_within_the_budget(monkeypatch,
     assert fetched == ["A1", "D4"]
 
 
+def _cosponsored_setup(monkeypatch, tmp_path, fetch):
+    """Point cosponsored paths at tmp_path, stub the fetch, and drive time.monotonic() by hand."""
+    from yan.ingest import congress_gov
+
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(congress_gov.time, "monotonic", lambda: clock["now"])
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "fetch_cosponsored", fetch)
+    return congress_gov, clock
+
+
+def test_cosponsored_lists_stop_starting_after_the_time_budget(monkeypatch, tmp_path):
+    fetched = []
+
+    def slow_fetch(client, key, bioguide_id):
+        fetched.append(bioguide_id)
+        clock["now"] += 6 * 60  # each list takes 6 minutes
+        return {"bioguideId": bioguide_id, "cosponsoredLegislation": []}, 1
+
+    congress_gov, clock = _cosponsored_setup(monkeypatch, tmp_path, slow_fetch)
+    congress_gov.ingest_cosponsored(None, "k", ["A1", "B2", "C3"], TODAY, started=clock["now"])
+    # A1 ends at 6 min, B2 starts before the 10-minute budget and ends at 12; C3 waits.
+    assert fetched == ["A1", "B2"]
+
+
+def test_cosponsored_lists_are_skipped_after_a_long_sponsored_refresh(monkeypatch, tmp_path):
+    fetched = []
+    congress_gov, clock = _cosponsored_setup(
+        monkeypatch, tmp_path, lambda c, k, m: fetched.append(m) or ({}, 1))
+    started = clock["now"] - 31 * 60  # the step has already run 31 minutes
+    congress_gov.ingest_cosponsored(None, "k", ["A1"], TODAY, started=started)
+    assert fetched == []
+
+
+def test_a_failing_cosponsored_list_is_skipped_and_the_rest_fetched(monkeypatch, tmp_path):
+    import httpx
+
+    def fetch(client, key, bioguide_id):
+        if bioguide_id == "A1":
+            request = httpx.Request("GET", "https://api.congress.gov/v3/member/A1/cosponsored-legislation")
+            raise httpx.HTTPStatusError("boom", request=request, response=httpx.Response(500, request=request))
+        return {"bioguideId": bioguide_id, "cosponsoredLegislation": []}, 1
+
+    congress_gov, clock = _cosponsored_setup(monkeypatch, tmp_path, fetch)
+    congress_gov.ingest_cosponsored(None, "k", ["A1", "B2"], TODAY, started=clock["now"])
+    assert not (tmp_path / "A1.json").exists()  # stays stale, retried next run
+    assert (tmp_path / "B2.json").exists()
+
+
 def test_fetch_sponsored_drops_an_item_repeated_across_pages(monkeypatch):
     from yan.ingest import congress_gov
 
