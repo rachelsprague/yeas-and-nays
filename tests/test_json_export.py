@@ -160,6 +160,28 @@ def test_run_flags_missing_sponsored_lists(tmp_path):
     assert json.loads((tmp_path / "out" / "meta.json").read_text())["has_sponsored_bills"] is False
 
 
+def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
+    import duckdb
+
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    con = duckdb.connect(str(warehouse))
+    for measure in ("PN1272-13", "PN1272-3", "H.R. 2347"):
+        con.execute("""insert into floor_schedule (chamber, item_id, filed_date, question, measure_number, title)
+                       values ('senate', 's-' || ?, date '2026-11-11', 'On the Cloture Motion', ?, 'T')""",
+                    [measure, measure])
+    con.execute("insert into senate_sessions values ('2026-11-12 12:00', '2026-11-12 16:52', '2026-11-16 15:00')")
+    con.close()
+
+    run(warehouse, tmp_path / "out")
+
+    doc = json.loads((tmp_path / "out" / "floor_schedule.json").read_text())
+    assert [i["measure_label"] for i in doc["items"]] == ["H.R. 2347", "PN1272-3", "PN1272-13"]
+    assert doc["senate_next_convene_et"] == "2026-11-16T15:00:00"
+
+
 def test_floor_schedule_labels_items_and_takes_the_latest_next_convene():
     items = [
         {"measure_number": "H. Res. 1650", "bill_type": "hres", "bill_number": "1650", "amends": None},

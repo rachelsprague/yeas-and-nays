@@ -208,9 +208,13 @@ unit_tests:
           - {docnum: PN1, status_text: "Cloture motion presented in Senate."}
           - {docnum: PN1, status_text: "Cloture invoked in Senate by Yea-Nay Vote. 50 - 44. Record Vote Number:"}
           - {docnum: PN2, status_text: "Cloture motion withdrawn by unanimous consent in Senate."}
+          - {docnum: PN3, status_text: "Confirmed by the Senate by Voice Vote."}
+          - {docnum: H.R. 2, status_text: "Passed Senate without amendment by Unanimous Consent."}
+          - {docnum: S.Amdt. 7, status_text: "Amendment SA 7 agreed to in Senate by Unanimous Consent."}
           # Not cloture events
           - {docnum: H.R. 1, status_text: "Considered by Senate."}
           - {docnum: S.Amdt. 8, status_text: "SA 8 fell when cloture invoked on amendment SA 9."}
+          - {docnum: PN4, status_text: "Motion to proceed to executive session to consideration of nomination agreed to in Senate by Voice Vote."}
     expect:
       rows:
         - {docnum: H.R. 1, event: filed, target: the motion to proceed to the measure}
@@ -220,12 +224,16 @@ unit_tests:
         - {docnum: PN1, event: filed, target: ""}
         - {docnum: PN1, event: voted, target: ""}
         - {docnum: PN2, event: withdrawn, target: ""}
+        - {docnum: PN3, event: disposed, target: null}
+        - {docnum: H.R. 2, event: disposed, target: null}
+        - {docnum: S.Amdt. 7, event: disposed, target: null}
 
   - name: floor_schedule_keeps_filed_cloture_motions_and_links_the_vote_that_followed
     description: >
-      A cloture motion is listed until a later status line records the vote; a roll call
-      on it can arrive first and is linked. House items removed from the schedule drop out,
-      and a House item links the first roll call on the measure in its week.
+      A cloture motion is listed until a later status line records the vote or disposes of
+      the document; a roll call on it can arrive first and is linked. House items removed
+      from the schedule drop out, and a House item links the first deciding vote on the
+      measure in its week, not procedural votes before it.
     model: floor_schedule
     given:
       - input: ref('stg_floor__house_items')
@@ -243,19 +251,38 @@ unit_tests:
           # H.R. 9: cloture on the motion to proceed voted; cloture on the measure filed
           - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the motion to proceed to the measure, event: filed, activity_date: 2026-11-05, status_order: 0, document_title: B9}
           - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the motion to proceed to the measure, event: voted, activity_date: 2026-11-09, status_order: 0, document_title: B9}
+          # ...and re-filed the same day an earlier cloture vote on the measure failed
+          - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the measure, event: voted, activity_date: 2026-11-11, status_order: 0, document_title: B9}
           - {docnum: H.R. 9, document_prefix: HR, bill_type: hr, bill_number: "9", target: the measure, event: filed, activity_date: 2026-11-11, status_order: 1, document_title: B9}
+          # PN3: filed, then confirmed by voice vote with no cloture vote -> not listed
+          - {docnum: PN3, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N3}
+          - {docnum: PN3, document_prefix: PN, target: null, event: disposed, activity_date: 2026-11-12, status_order: 0, document_title: N3}
+          # Cloture on an amendment links the roll call on that amendment
+          - {docnum: S.Amdt. 9, document_prefix: SA, target: amendment SA 9, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: A9}
+          # H.R. 4: cloture on the measure and on a committee substitute; only the measure's is matched
+          - {docnum: H.R. 4, document_prefix: HR, bill_type: hr, bill_number: "4", target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: B4}
+          - {docnum: H.R. 4, document_prefix: HR, bill_type: hr, bill_number: "4", target: the committee-reported substitute, event: filed, activity_date: 2026-11-10, status_order: 1, document_title: B4}
       - input: ref('int_votes_unioned')
         rows:
-          - {vote_id: h119-2-0001, chamber: house, congress: 119, bill_type: hr, bill_number: "5", vote_date: 2026-11-10, vote_time_et: "2026-11-10 14:00:00"}
-          - {vote_id: h119-2-0002, chamber: house, congress: 119, bill_type: hr, bill_number: "5", vote_date: 2026-11-11, vote_time_et: "2026-11-11 14:00:00"}
+          # H.R. 5: an amendment vote, then passage; the item links passage
+          - {vote_id: h119-2-0001, chamber: house, congress: 119, bill_type: hr, bill_number: "5", question: On Agreeing to the Amendment, vote_date: 2026-11-10, vote_time_et: "2026-11-10 14:00:00"}
+          - {vote_id: h119-2-0002, chamber: house, congress: 119, bill_type: hr, bill_number: "5", question: On Passage, vote_date: 2026-11-11, vote_time_et: "2026-11-11 14:00:00"}
+          - {vote_id: h119-2-0003, chamber: house, congress: 119, bill_type: hr, bill_number: "5", question: On Motion to Reconsider, vote_date: 2026-11-11, vote_time_et: "2026-11-11 15:00:00"}
           # A vote on H.R. 7 the week before doesn't count
-          - {vote_id: h119-2-0000, chamber: house, congress: 119, bill_type: hr, bill_number: "7", vote_date: 2026-11-04, vote_time_et: "2026-11-04 14:00:00"}
+          - {vote_id: h119-2-0000, chamber: house, congress: 119, bill_type: hr, bill_number: "7", question: On Passage, vote_date: 2026-11-04, vote_time_et: "2026-11-04 14:00:00"}
           - {vote_id: s119-2-0010, chamber: senate, congress: 119, measure_number: PN2, question: On the Cloture Motion PN2, vote_date: 2026-11-12, vote_time_et: "2026-11-12 13:00:00"}
           # Cloture on the motion to proceed doesn't settle cloture on the measure
           - {vote_id: s119-2-0009, chamber: senate, congress: 119, measure_number: H.R. 9, question: On Cloture on the Motion to Proceed H.R. 9, vote_date: 2026-11-09, vote_time_et: "2026-11-09 17:00:00"}
+          # The failed cloture vote on H.R. 9 the day it was re-filed
+          - {vote_id: s119-2-0011, chamber: senate, congress: 119, measure_number: H.R. 9, question: On the Cloture Motion H.R. 9, vote_date: 2026-11-11, vote_time_et: "2026-11-11 12:00:00"}
+          - {vote_id: s119-2-0012, chamber: senate, congress: 119, amendment_number: S.Amdt. 9, question: On the Cloture Motion S.Amdt. 9, vote_date: 2026-11-12, vote_time_et: "2026-11-12 14:00:00"}
+          - {vote_id: s119-2-0013, chamber: senate, congress: 119, measure_number: H.R. 4, question: On the Cloture Motion H.R. 4, vote_date: 2026-11-12, vote_time_et: "2026-11-12 15:00:00"}
     expect:
       rows:
-        - {item_id: h-2026-11-09-1, vote_id: h119-2-0001, question: null}
+        - {item_id: h-2026-11-09-1, vote_id: h119-2-0002, question: null}
         - {item_id: h-2026-11-09-3, vote_id: null, question: null}
         - {item_id: s-PN2, vote_id: s119-2-0010, question: On the Cloture Motion}
         - {item_id: s-H.R. 9-measure, vote_id: null, question: On the Cloture Motion}
+        - {item_id: s-S.Amdt. 9, vote_id: s119-2-0012, question: On the Cloture Motion}
+        - {item_id: s-H.R. 4-measure, vote_id: s119-2-0013, question: On the Cloture Motion}
+        - {item_id: s-H.R. 4-the-committee-reported-substitute, vote_id: null, question: On the Cloture Motion}

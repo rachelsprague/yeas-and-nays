@@ -110,6 +110,25 @@ def test_ingest_senate_fetches_recent_days_skips_unpublished_and_prunes(monkeypa
     assert sorted(p.name for p in tmp_path.iterdir()) == ["2026-11-11.xml", "session_days.xml"]
 
 
+def test_a_malformed_or_wrong_congress_file_is_not_saved(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path / "house")
+    monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path / "senate")
+    week = (FIXTURES / "house_floor_2026-11-09.xml").read_bytes().replace(b'congress-num="119"', b'congress-num="120"')
+    client = _client({
+        ingest.HOUSE_URL.format(week=dt.date(2026, 11, 9)): httpx.Response(200, content=week),
+        ingest.SENATE_DAYS_URL: httpx.Response(200, content=SESSION_DAYS),
+        ingest.SENATE_DAY_URL.format(day=dt.date(2026, 11, 11)):
+            httpx.Response(200, content=b"<daily_senate_floor_activity><date>"),
+    })
+
+    ingest.ingest(client, dt.date(2026, 11, 12))
+
+    assert not (tmp_path / "house").exists() or not list((tmp_path / "house").iterdir())
+    assert sorted(p.name for p in (tmp_path / "senate").iterdir()) == ["session_days.xml"]
+    assert "not from the 119th Congress" in caplog.text
+    assert "senate floor schedule not updated" in caplog.text
+
+
 def test_a_failed_fetch_logs_and_keeps_the_last_good_files(monkeypatch, tmp_path, caplog):
     monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path / "house")
     monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path / "senate")

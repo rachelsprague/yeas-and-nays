@@ -109,7 +109,12 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             select chamber, item_id, week_date, filed_date, category, question, measure_number,
                    bill_type, bill_number, title, amends, congress_gov_url, vote_id
             from floor_schedule
-            order by chamber, week_date, category_order, item_order, filed_date, measure_number
+            order by chamber, week_date, category_order, item_order, filed_date,
+                -- Numbers in numeric order: PN1272-3 before PN1272-13.
+                regexp_extract(measure_number, '^\\D*'),
+                try_cast(regexp_extract(measure_number, '(\\d+)', 1) as integer),
+                try_cast(regexp_extract(measure_number, '-(\\d+)', 1) as integer),
+                item_id
         """)
         senate_sessions = _rows(con, """
             select convene_time_et, adjourn_time_et, next_convene_time_et
