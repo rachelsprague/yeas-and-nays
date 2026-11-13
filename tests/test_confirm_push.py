@@ -7,6 +7,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -326,13 +327,16 @@ def test_emoji_with_joiners_and_selectors_are_allowed_in_a_body(repo):
     "✔‍",        # joiner with nothing to join
     "1️⃣",       # keycap
     "a\U00016fe4b",        # Khitan filler
+    "a\U0001d159b",        # null notehead
+    "a〿b",            # ideographic half fill space
 ])
 def test_emoji_joiners_and_selectors_cant_carry_hidden_data(text):
     assert confirm_push.hides_text(text)
 
 
 @pytest.mark.parametrize("text", ["✔️ done", "⚠️", "\U0001f468‍\U0001f4bb",
-                                  "❤️‍\U0001f525", "\U0001f44d\U0001f3fd", "→ — …"])
+                                  "❤️‍\U0001f525", "\U0001f44d\U0001f3fd", "→ — …",
+                                  "ℹ️", "‼️", "↔️", "©️", "™️"])
 def test_ordinary_emoji_and_punctuation_are_fine(text):
     assert not confirm_push.hides_text(text)
 
@@ -341,6 +345,16 @@ def test_very_long_git_or_gh_commands_are_denied(repo):
     path, _ = repo
     assert confirm_push.decide("gh pr view 1 " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path))[0] == "deny"
     assert confirm_push.decide("echo " + "x" * confirm_push.MAX_COMMAND_CHARS, str(path)) is None
+    # Quotes inside the word don't get around the cap.
+    assert confirm_push.decide("g''h pr " * 3000, str(path))[0] == "deny"
+
+
+@pytest.mark.parametrize("command", [" gh api" * 2850, "gh " * 6600, "gh pr " * 3300])
+def test_many_gh_words_in_one_command_stay_fast(repo, command):
+    path, _ = repo
+    start = time.time()
+    confirm_push.decide(command, str(path))
+    assert time.time() - start < 1
 
 
 def test_gh_new_is_gated_like_create(repo):

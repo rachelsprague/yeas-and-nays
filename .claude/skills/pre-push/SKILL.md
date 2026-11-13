@@ -204,5 +204,7 @@ command (the shell would expand them after the check; gh's `{owner}` and
 `{repo}` placeholders are fine), so word titles without them. Titles and
 body files can't contain control or invisible characters (emoji like ✔️ and
 👨‍💻 are fine; keycaps like 1️⃣ aren't), and body files must be UTF-8 text
-outside dot directories. The hook reads command text, so gh run from a
-script or another program isn't gated: post with the gh command itself.
+outside dot directories. Commands over 20,000 characters that mention git or
+gh are denied, so keep long text in files. The hook reads command text, so
+gh run from a script or another program isn't gated: post with the gh
+command itself.

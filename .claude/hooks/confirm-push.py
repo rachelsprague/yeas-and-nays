@@ -31,6 +31,8 @@ mutations, close/reopen with a comment, flags before the action (`gh pr
 expand after this check (backticks, $, globs, braces, line breaks), titles
 and body files with control or invisible characters, body files in dot
 directories, and a post chained with or redirected from anything else.
+Commands over 20,000 characters that mention git or gh are denied outright,
+so every check stays fast (a hook that times out doesn't block the command).
 
 This is a guard against pushing or posting by accident, not against a
 determined attempt to get around it: it only sees command text, which can
@@ -87,7 +89,7 @@ ASSIGNMENT = re.compile(r"[A-Za-z_]\w*=\S*")
 # one line (not "github", "/pre-push" or "pre-push"), and `gh` ... `merge` likewise.
 LOOSE_PUSH = re.compile(r"\bgit\b[^\n;&|]{0,200}?(?<![-/.\w])push\b")
 LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
-# A gh command that posts PR or issue text, as it may appear inside a script a heredoc writes.
+# A gh command that posts PR or issue text, for commands that can't be parsed as shell.
 LOOSE_POST = re.compile(r"\bgh\b[^\n;&|]{0,80}?\b(pr|issue)\s+(create|edit|comment|review|close|reopen)\b"
                         r"|\bgh\s+(api|alias)\b")
 
@@ -195,16 +197,19 @@ def _scan(command: str, in_segment, depth: int = 0) -> list:
 
 
 def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
-    for i, tok in enumerate(seg):
-        if os.path.basename(tok) != "gh":
+    """One pass (linear, so long commands stay fast): after a `gh` word, `pr` then `merge`
+    wherever flags put them (`gh -R o/r pr merge 3`, `gh pr -R o/r merge`), an API merge
+    endpoint, or an alias that mentions merge (`gh alias set m 'pr merge'`)."""
+    seen_gh = seen_pr = seen_api = seen_alias = False
+    for a in seg:
+        if os.path.basename(a) == "gh":
+            seen_gh = True
             continue
-        rest = seg[i + 1:]
-        # `pr` then `merge`, wherever flags put them (`gh -R o/r pr merge 3`, `gh pr -R o/r merge`).
-        if "pr" in rest and "merge" in rest[rest.index("pr") + 1:]:
-            return [True]
-        if "api" in rest and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in rest):
-            return [True]
-        if "alias" in rest and any("merge" in a for a in rest):  # `gh alias set m 'pr merge'`
+        if not seen_gh:
+            continue
+        seen_pr, seen_api, seen_alias = seen_pr or a == "pr", seen_api or a == "api", seen_alias or a == "alias"
+        if (seen_pr and a == "merge") or (seen_alias and "merge" in a) or (
+                seen_api and re.search(r"/pulls/\d+/merge\b|mergePullRequest", a)):
             return [True]
     return []
 
@@ -233,9 +238,11 @@ def find_posts(command: str, depth: int = 0) -> list[dict]:
 
 
 def _post_in_segment(seg: list[str]) -> list[dict]:
-    for i, tok in enumerate(seg):
-        if os.path.basename(tok) == "gh" and (kind := _post_kind(seg[i + 1:])):
-            return [{"kind": kind, "args": seg[i + 1:]}]
+    """The segment's gh command, if it posts. Only the first `gh` word is the command (any later
+    one is its argument), which also keeps this linear in the segment's length."""
+    i = next((i for i, tok in enumerate(seg) if os.path.basename(tok) == "gh"), None)
+    if i is not None and (kind := _post_kind(seg[i + 1:])):
+        return [{"kind": kind, "args": seg[i + 1:]}]
     return []
 
 
@@ -371,17 +378,24 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
 # Characters that render as nothing or as blank space: fillers, braille blank, the combining
 # grapheme joiner, Khmer and Mongolian invisibles, the object replacement character.
 BLANK_LOOKING = {"ᅟ", "ᅠ", "⠀", "ㅤ", "ﾠ", "͏", "឴", "឵",
-                 "᠋", "᠌", "᠍", "᠎", "᠏", "￼", "\U00016fe4"}
+                 "᠋", "᠌", "᠍", "᠎", "᠏", "￼", "\U00016fe4", "〿",
+                 "\U0001d159", "\U0001da7f", "\U0001da80"}
 # Default-ignorable and noncharacter ranges, denied by range rather than by category, since a
 # code point unassigned in this Python's Unicode table may be an invisible one in a newer table.
 IGNORABLE_RANGES = [("⁠", "⁯"), ("︀", "︍"), ("﷐", "﷯"), ("￰", "￻"),
                     ("\U000e0000", "\U000e0fff")]
 
 
+# Emoji that aren't in a symbol category: ℹ (letter), ‼ ⁉ 〽 (punctuation), © ® (Latin-1 symbols).
+EMOJI_NON_SYMBOLS = set("ℹ‼⁉〽〰©®")
+
+
 def _is_emoji(c: str) -> bool:
-    """A non-ASCII pictographic symbol (✔ ⚠ ❤ 👨 💻): the only thing an emoji joiner or selector
-    may attach to. Keycaps (1️⃣) aren't, since their enclosing mark is denied anyway."""
-    return ord(c) >= 0x2000 and (unicodedata.category(c) == "So" or ord(c) >= 0x1F000)
+    """A non-ASCII symbol or emoji (✔ ⚠ ❤ ↔ ™ ℹ ‼ © 👨 💻): the only thing an emoji joiner or
+    selector may attach to. Keycaps (1️⃣) and tag-sequence flags aren't, since their enclosing
+    mark and tag characters are denied anyway."""
+    return ord(c) >= 0x80 and (unicodedata.category(c).startswith("S") or ord(c) >= 0x1F000
+                               or c in EMOJI_NON_SYMBOLS)
 
 
 def hides_text(text: str) -> bool:
@@ -589,7 +603,7 @@ def current_branch(repo: str) -> str:
 def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
     # Keeps every check fast: a hook that times out doesn't block the command.
-    if len(command) > MAX_COMMAND_CHARS and re.search(r"\b(git|gh)\b", command):
+    if len(command) > MAX_COMMAND_CHARS and re.search(r"\b(git|gh)\b", re.sub(r"[\"'\\]", "", command)):
         return "deny", f"Commands that mention git or gh are limited to {MAX_COMMAND_CHARS} characters here; split it up."
     if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
         return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
