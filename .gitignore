@@ -239,3 +239,6 @@ site/vendor/
 # Local backlog (this repo is public; see CLAUDE.md).
 /BOARD.md
 /backlog/
+
+# Claude Code worktrees for parallel sessions (see CLAUDE.md).
+/.claude/worktrees/

@@ -36,10 +36,11 @@ Being gitignored, they exist only in the main checkout, and a session isolated i
 
 Several sessions may work in this repo at once. Claim an item before starting it so no other session picks it up:
 
-- **Alias:** at your first claim, pick one short lowercase word as your alias (e.g. `heron`), tell the user, and use it for the rest of the session.
-- **Claim:** re-read `BOARD.md` right before editing it, then move the item to Now and append ` — claimed by **<alias>** (YYYY-MM-DD HH:MM)`. Claim only what you're about to start. Claim at the end of the line, never as a leading `[word]` (the dashboard reads that as a role).
+- **Alias:** at your first claim, pick one short lowercase word as your alias, not one already used in a claim on the board, tell the user, and use it for the rest of the session.
+- **Claim:** re-read `BOARD.md` right before editing it, then move the item to Now and append ` — claimed by **<alias>** (YYYY-MM-DD HH:MM local, from <column>)`, naming the column it came from. Claim only what you're about to start. Claim at the end of the line, never as a leading `[word]` (the board dashboard reads that as a role).
 - **Respect claims:** never work on an item another alias has claimed. If a claim looks abandoned, ask the user before taking it over.
-- **Release:** when the work ships, move the item to Done per the usual one-line note, without the claim. If you stop before finishing, remove the claim, put the item back in its column, and add a short note of where it stands.
+- **Release:** when the work ships, move the item to Done per the usual one-line note, without the claim. If you stop before finishing, remove the claim, put the item back in the column it came from, and add a short note of where it stands.
+- **Subagents** work under the claim of the session that spawned them; they don't claim items themselves.
 
 ## Public repo: review before every push
 
