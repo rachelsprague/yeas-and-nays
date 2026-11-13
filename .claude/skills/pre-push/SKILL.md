@@ -46,7 +46,9 @@ too, so the checklist covers them. Never put the body on the command line:
 Markdown backticks inside shell quotes run as commands.
 
 Always read diffs with `git log -p --cc`: plain `-p` shows nothing for a
-merge commit, so a conflict resolution would go out unreviewed.
+merge commit, so a conflict resolution would go out unreviewed. `--cc`
+still hides a conflict resolved by taking one side outright, so also read
+the net `git diff origin/main...HEAD` when the branch has a merge.
 
 ## 2. Three reviews, in parallel
 
@@ -149,7 +151,8 @@ review, start again from step 1.
 ## 6. Open the PR, then stop
 
 For a new branch, open the PR with the reviewed title and body, the body
-from its file and the title in single quotes:
+from its file and the title in single quotes (word the title without an
+apostrophe):
 
 ```
 gh pr create --base main --head <branch> --title '<title>' --body-file <body file>

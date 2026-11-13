@@ -57,9 +57,9 @@ def tokens(command: str) -> list[str]:
     return list(lexer)
 
 
-# Heredocs: bodies fed to these commands are only data; bodies fed to a shell run as commands.
-INERT_HEREDOC_COMMANDS = {"cat", "tee"}
-SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
+# Heredoc bodies fed to a shell run as commands; any other body (cat into a file, a python
+# script) is checked word by word, since what it writes may be run later in the command.
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "source", "."}
 HEREDOC = re.compile(r"(?<!<)<<(-?)\s*(['\"]?)([A-Za-z_][\w.-]*)\2")
 ASSIGNMENT = re.compile(r"[A-Za-z_]\w*=\S*")
 # Fallback for text that can't be parsed as shell: `git` and `push` as words, close together on
@@ -69,9 +69,11 @@ LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
 
 
 def split_heredocs(command: str) -> tuple[str, list[str]]:
-    """(shell text, script bodies): the command with heredoc bodies taken out, bodies fed to a
-    shell put back as plain command lines, and the bodies fed to any other command (a
-    `python3 -` script, say) returned separately. Bodies fed to cat or tee are dropped."""
+    """(shell text, other bodies): the command with heredoc bodies taken out, bodies fed to a
+    shell (or piped onward, as in `cat <<EOF | sh`) put back as plain command lines, and every
+    other body (a note written with cat, a `python3 -` script) returned separately for a
+    word-level check. A `<<WORD` whose delimiter line never comes (say, inside a quoted
+    commit message) isn't a heredoc, so the lines after it stay commands."""
     lines, kept, scripts = command.split("\n"), [], []
     i = 0
     while i < len(lines):
@@ -80,16 +82,15 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
         i += 1
         for match in HEREDOC.finditer(line):
             strip_tabs, delimiter = match.group(1) == "-", match.group(3)
-            body = []
-            while i < len(lines) and (lines[i].lstrip("\t") if strip_tabs else lines[i]) != delimiter:
-                body.append(lines[i])
-                i += 1
-            i += 1  # the delimiter line
-            target = heredoc_target(line[:match.start()])
-            # `cat <<EOF | sh` pipes the body onward, so it can still run: scan it as commands.
-            if target in SHELLS or "|" in line[match.end():]:
+            end = i
+            while end < len(lines) and (lines[end].lstrip("\t") if strip_tabs else lines[end]) != delimiter:
+                end += 1
+            if end == len(lines):
+                continue  # no delimiter line: not a heredoc
+            body, i = lines[i:end], end + 1
+            if heredoc_target(line[:match.start()]) in SHELLS or "|" in line[match.end():]:
                 kept += body
-            elif target not in INERT_HEREDOC_COMMANDS:
+            else:
                 scripts.append("\n".join(body))
     return "\n".join(kept), scripts
 
@@ -141,10 +142,13 @@ def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
     for i, tok in enumerate(seg):
         if os.path.basename(tok) != "gh":
             continue
-        args = [a for a in seg[i + 1:] if not a.startswith("-")]  # drop flags such as -R owner/repo
-        if args[:1] == ["pr"] and "merge" in args[1:3]:
+        rest = seg[i + 1:]
+        # `pr` then `merge`, wherever flags put them (`gh -R o/r pr merge 3`, `gh pr -R o/r merge`).
+        if "pr" in rest and "merge" in rest[rest.index("pr") + 1:]:
             return [True]
-        if args[:1] == ["api"] and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in seg[i + 1:]):
+        if "api" in rest and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in rest):
+            return [True]
+        if "alias" in rest and any("merge" in a for a in rest):  # `gh alias set m 'pr merge'`
             return [True]
     return []
 
@@ -231,14 +235,14 @@ def current_branch(repo: str) -> str:
 
 def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
+    if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
+        return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
     command, scripts = split_heredocs(command)
     # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
     flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
-    if "$'" in command and ("git" in command or "gh" in command):
-        return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
     if any(LOOSE_PUSH.search(s) or LOOSE_MERGE.search(s) for s in (re.sub(r"[\"'\\]", "", s) for s in scripts)):
-        return "deny", ("A script fed in by heredoc looks like it runs git push or gh pr merge. Run the push as its "
-                        "own command (or the merge on GitHub).")
+        return "deny", ("A heredoc in this command mentions git push or gh pr merge, and what it writes may be run. "
+                        "Run the push as its own command (or merge on GitHub); for notes, write the text to a file.")
     try:
         pushes = find_pushes(command)
         if finds_pr_merge(command):
@@ -287,8 +291,8 @@ def main() -> None:
         command = (payload.get("tool_input") or {}).get("command") or ""
         repo = payload.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or "."
         result = decide(command, repo)
-    except Exception as e:  # fail closed: a crash must not let a push through
-        if "push" not in raw:
+    except Exception as e:  # fail closed: a crash must not let a push or merge through
+        if "push" not in raw and "merge" not in raw:
             return
         result = "deny", f"The push hook failed ({type(e).__name__}: {e}); not allowing a command that may push."
     if result is None:
