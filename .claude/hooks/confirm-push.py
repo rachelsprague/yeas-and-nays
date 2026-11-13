@@ -25,7 +25,8 @@ directory, small enough to show in full. Those ask, showing the title and the
 whole text, so the user approves exactly what's posted. Every other form is
 denied: inline or attached text, stdin, --fill, templates, editors, every
 other `gh api` write (merges, contents and refs included, which are push
-equivalents) and graphql mutations, close/reopen with a comment, gh aliases,
+equivalents, and any bundled short flag with -X, -f or -F) and graphql
+mutations, close/reopen with a comment, gh aliases,
 characters the shell would expand after this check (backticks, $, globs,
 braces, line breaks), body files with control or invisible characters or in
 dot directories, a post chained with or redirected from anything else, and a
@@ -90,6 +91,8 @@ LOOSE_POST = re.compile(r"\bgh\b[^\n;&|]{0,80}?\b(pr|issue)\s+(create|edit|comme
                         r"|\bgh\s+(api|alias)\b")
 # Heredoc targets that run what they're fed (scripts), as opposed to cat or git reading text.
 INTERPRETERS = SHELLS | {"python", "python3", "node", "ruby", "perl", "uv"}
+# A posting gh command in code: as a shell line, or as an argv list (['gh', 'pr', 'comment', ...]).
+CODE_POST = re.compile(LOOSE_POST.pattern + r"|\bgh\b\W{1,6}(pr|issue|api|alias)\b")
 
 # Posting commands, and the only flags each may use, every one as a separate token. Flags that
 # take a value map to True. Anything else (attached values, --body, --fill, --template,
@@ -123,15 +126,16 @@ MAX_BODY_BYTES = 20_000  # shown in full in the approval prompt; anything longer
 SHELL_EXPANDED = re.compile(r"[`$\\\n\r*?\[\]{}~!]")
 
 
-def split_heredocs(command: str) -> tuple[str, list[str], list[str]]:
-    """(shell text, other bodies, interpreter bodies): the command with heredoc bodies taken
-    out, bodies fed to a shell (or piped onward, as in `cat <<EOF | sh`) put back as plain
-    command lines, and every other body (a note written with cat, a `python3 -` script)
-    returned separately for a word-level check; the third list is the subset fed to an
-    interpreter (`python3 -`), as opposed to text read by cat or git. A `<<WORD` whose
+def split_heredocs(command: str) -> tuple[str, list[str], list[str], list[tuple[str, str]]]:
+    """(shell text, other bodies, interpreter bodies, written files): the command with heredoc
+    bodies taken out, bodies fed to a shell (or piped onward, as in `cat <<EOF | sh`) put back
+    as plain command lines, and every other body (a note written with cat, a `python3 -`
+    script) returned separately for a word-level check; the third list is the subset fed to
+    an interpreter (`python3 -`), as opposed to text read by cat or git, and the fourth is
+    (file, body) for bodies redirected into a file (`cat > s.sh <<EOF`). A `<<WORD` whose
     delimiter line never comes (say, inside a quoted commit message) isn't a heredoc, so the
     lines after it stay commands."""
-    lines, kept, scripts, run = command.split("\n"), [], [], []
+    lines, kept, scripts, run, written = command.split("\n"), [], [], [], []
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -152,7 +156,9 @@ def split_heredocs(command: str) -> tuple[str, list[str], list[str]]:
                 scripts.append("\n".join(body))
                 if target in INTERPRETERS:
                     run.append(scripts[-1])
-    return "\n".join(kept), scripts, run
+                elif out := re.search(r"(?<![<\d&])>>?\s*([^\s;&|<>]+)", HEREDOC.sub(" ", line)):
+                    written.append((out.group(1).strip("\"'"), scripts[-1]))
+    return "\n".join(kept), scripts, run, written
 
 
 def heredoc_target(before: str) -> str:
@@ -236,6 +242,25 @@ def find_posts(command: str, depth: int = 0) -> list[dict]:
     return found
 
 
+def runs_posting_code(command: str, written: list[tuple[str, str]]) -> str | None:
+    """Why the command runs code that posts to GitHub, or None. Only code that runs counts:
+    the argument to an interpreter's -c/-e, or a file a heredoc writes and the same command
+    then runs. Quoted text elsewhere (a commit message mentioning `gh api`) doesn't."""
+    toks = tokens(strip_redirects(command))
+    runners = INTERPRETERS - {".", "source"}
+    for k, t in enumerate(toks[:-1]):
+        if t in ("-c", "-e") and any(os.path.basename(w) in runners for w in toks[max(0, k - 3):k]):
+            if CODE_POST.search(re.sub(r"[\"'\\]", "", toks[k + 1])):
+                return "This command runs code (-c/-e) that contains a gh command posting to GitHub."
+    # The heredoc's own `> file` redirect isn't in toks (strip_redirects drops it), so any word
+    # naming the file (`bash s.sh`, `./s.sh`) means the command goes on to run it.
+    for path, body in written:
+        name = os.path.basename(path)
+        if CODE_POST.search(re.sub(r"[\"'\\]", "", body)) and any(os.path.basename(t) == name for t in toks):
+            return f"This command writes {path} with a gh command that posts to GitHub, then runs it."
+    return None
+
+
 def _post_in_segment(seg: list[str]) -> list[dict]:
     for i, tok in enumerate(seg):
         if os.path.basename(tok) == "gh" and (kind := _post_kind(seg[i + 1:])):
@@ -256,15 +281,22 @@ def _gh_words(args: list[str]) -> list[str]:
     return words
 
 
+def _gh_pair(args: list[str]) -> tuple[str, ...]:
+    """(group, action) of a gh command, with gh's `new` alias read as `create`."""
+    pair = tuple(_gh_words(args)[:2])
+    return (pair[0], "create") if len(pair) == 2 and pair[1] == "new" else pair
+
+
 def _post_kind(args: list[str]) -> str | None:
     words = _gh_words(args)
-    pair = tuple(words[:2])
+    pair = _gh_pair(args)
     if pair in (("alias", "set"), ("alias", "import")):
         return "alias"
     if pair in POSTING_FLAGS:
         return "post"
-    if pair in COMMENTING_ACTIONS and any(a in ("-c", "--comment") or a.startswith(("-c", "--comment="))
-                                          for a in args):
+    # -c alone, attached (-chi), or bundled with other short flags (-dc).
+    if pair in COMMENTING_ACTIONS and any(a == "--comment" or a.startswith("--comment=")
+                                          or re.match(r"-[A-Za-z]*c", a) for a in args):
         return "close-comment"
     if words[:1] == ["api"] and _api_writes(args):
         return "api"
@@ -275,6 +307,11 @@ def _api_writes(args: list[str]) -> bool:
     """Whether `gh api <args>` writes anything (gh POSTs when given fields, unless the method
     says otherwise), or runs a graphql query the hook can't read. Every write is gated, not
     just PR and issue endpoints: merges, contents and refs are push equivalents."""
+    # pflag accepts bundled short flags (`-iXDELETE`, `-if body=x`): a bundle that includes
+    # -X, -f or -F can't be read reliably, so it counts as a write.
+    if any(re.fullmatch(r"-[A-Za-z]{2,}.*", a) and not a.startswith(("-X", "-f", "-F"))
+           and re.match(r"-[A-Za-z]*[XfF]", a) for a in args):
+        return True
     method = ""
     for k, a in enumerate(args):
         if a in ("-X", "--method") and k + 1 < len(args):
@@ -294,9 +331,11 @@ def _api_writes(args: list[str]) -> bool:
 
 
 def _allowed_roots(repo: str) -> list[str]:
-    """Where a body file may live: the repository, and the temp directories (the scratchpad)."""
-    roots = [git(repo, "rev-parse", "--show-toplevel") or repo, tempfile.gettempdir(), "/tmp"]
-    return [os.path.realpath(r) for r in roots]
+    """Where a body file may live: the repository, and the temp directories (the scratchpad).
+    Outside a git repository, only the temp directories (not the working directory, which
+    could be $HOME)."""
+    top = git(repo, "rev-parse", "--show-toplevel")
+    return [os.path.realpath(r) for r in [*([top] if top else []), tempfile.gettempdir(), "/tmp"]]
 
 
 def read_body(path: str, repo: str) -> tuple[str | None, str]:
@@ -326,11 +365,28 @@ def read_body(path: str, repo: str) -> tuple[str | None, str]:
             text = f.read(MAX_BODY_BYTES + 1).decode("utf-8")
     except (OSError, UnicodeDecodeError):
         return None, f"{path} isn't readable UTF-8 text."
-    # Control characters, bidi overrides and zero-width characters can make the prompt show
-    # something other than what's posted.
-    if any(unicodedata.category(c) in ("Cc", "Cf", "Zl", "Zp") and c not in "\n\t" for c in text):
+    if hides_text(text):
         return None, f"{path} contains control or invisible characters, which could hide text in the prompt."
     return text, ""
+
+
+# Characters that render as nothing or as blank space: fillers, braille blank, variation selectors.
+BLANK_LOOKING = {"ᅟ", "ᅠ", "⠀", "ㅤ", "ﾠ"}
+
+
+def hides_text(text: str) -> bool:
+    """Whether text has characters that could make the prompt show something other than what's
+    posted: control and format characters (ANSI escapes, bidi overrides, zero-width), enclosing
+    marks, private-use and unassigned code points, variation selectors, blank-looking letters,
+    and any space other than a plain one."""
+    for c in text:
+        cat = unicodedata.category(c)
+        if c in "\n\t":
+            continue
+        if (cat in ("Cc", "Cf", "Zl", "Zp", "Me", "Co", "Cn") or (cat == "Zs" and c != " ")
+                or c in BLANK_LOOKING or "︀" <= c <= "️" or "\U000e0100" <= c <= "\U000e01ef"):
+            return True
+    return False
 
 
 FILE_ONLY = ("Text posted to GitHub is public: write it to a file, run the public-repo checklist (CLAUDE.md) "
@@ -359,7 +415,7 @@ def post_decision(post: dict, command: str, repo: str) -> tuple[str, str]:
     if kind == "api":
         return _api_post_decision(args, repo)
 
-    pair = tuple(_gh_words(args)[:2])
+    pair = _gh_pair(args)
     allowed = {**REPO_FLAGS, **POSTING_FLAGS[pair]}
     titles, bodies, positional = [], [], []
     k = 0
@@ -382,6 +438,8 @@ def post_decision(post: dict, command: str, repo: str) -> tuple[str, str]:
         return "deny", f"gh {' '.join(pair)}: expected {'no' if pair[1] == 'create' else 'one'} PR or issue argument."
     if len(bodies) > 1 or len(titles) > 1:
         return "deny", f"gh {' '.join(pair)}: give one title and one body file at most."
+    if any(hides_text(a) for a in args):
+        return "deny", f"gh {' '.join(pair)}: the command has control or invisible characters, which could hide text."
     if not bodies and pair[1] in ("create", "comment"):
         return "deny", f"gh {' '.join(pair)} needs --body-file. {FILE_ONLY}"
     shown = [f"Title: {titles[0]}"] if titles else []
@@ -506,7 +564,7 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
     if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
         return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
-    command, scripts, run_scripts = split_heredocs(command)
+    command, scripts, run_scripts, written = split_heredocs(command)
     # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
     flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
     unquote = lambda s: re.sub(r"[\"'\\]", "", s)  # noqa: E731
@@ -515,7 +573,7 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
                         "Run the push as its own command (or merge on GitHub); for notes, write the text to a file.")
     # Posts only in scripts that run (python3 - <<EOF), so a commit message or note that
     # mentions `gh pr create` isn't refused.
-    if any(LOOSE_POST.search(unquote(s)) for s in run_scripts):
+    if any(CODE_POST.search(unquote(s)) for s in run_scripts):
         return "deny", ("A script in this command runs a gh command that posts to GitHub. Post with the gh command "
                         f"itself. {FILE_ONLY}")
     try:
@@ -523,13 +581,8 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
         if finds_pr_merge(command):
             return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
         posts = find_posts(command)
-        # A posting command written to a script (a heredoc) or passed as code (`python3 -c`)
-        # and run by an interpreter in the same command.
-        if not posts and LOOSE_POST.search(flat):
-            words = {os.path.basename(t) for t in tokens(strip_redirects(command))}
-            if words & (INTERPRETERS - {".", "source"}):
-                return "deny", ("This command runs a script that contains a gh command that posts to GitHub. Post "
-                                f"with the gh command itself. {FILE_ONLY}")
+        if not posts and (why := runs_posting_code(command, written)):
+            return "deny", f"{why} Post with the gh command itself. {FILE_ONLY}"
     except ValueError:
         if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat) or LOOSE_POST.search(unquote(command)):
             return "deny", ("Couldn't parse this command to check for a git push, PR merge or text posted to "

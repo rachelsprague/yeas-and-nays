@@ -254,6 +254,20 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr comment 12 --body-file bidi.md",
     "gh pr comment 12 --body-file .env",
     "gh pr comment 12 --body-file .git/config",
+    # bundled short flags and gh's own aliases
+    "gh api repos/o/r/contents/x -iXPUT",
+    "gh api repos/o/r/git/refs/heads/foo -iXDELETE",
+    "gh api -iX DELETE repos/o/r/git/refs/heads/x",
+    "gh api repos/o/r/issues/1/comments -if body=hi",
+    "gh api repos/o/r/issues/1/comments -iF body=@body.md",
+    "gh pr close 1 -dc 'text'",
+    "gh issue new --title x --body y",
+    "gh pr new --title x --body y",
+    "python3 -c \"import subprocess; subprocess.run(['gh', 'pr', 'comment', '1', '-b', 'x'])\"",
+    "gh pr create --title 'Add ‮evil' --body-file body.md",
+    "gh pr create --title 'Add​this' --body-file body.md",
+    "gh pr comment 12 --body-file vs.md",
+    "gh pr comment 12 --body-file blank.md",
     # aliases and comments on close/reopen
     "gh alias set c 'pr comment'",
     "gh alias import aliases.yml",
@@ -269,7 +283,31 @@ def test_posting_inline_or_unseen_text_is_denied(repo, command):
     (path / "ctrl.md").write_text("shown\x1b[8mhidden\x1b[0m\n")
     (path / "bidi.md").write_text("a‮b\n")
     (path / ".env").write_text("KEY=1\n")
+    (path / "vs.md").write_text("ok️\n")
+    (path / "blank.md").write_text("aㅤb\n")
     assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+def test_the_documented_pre_push_pr_command_asks(repo, tmp_path_factory):
+    path, _ = repo
+    body = tmp_path_factory.mktemp("scratchpad") / "pr-body.md"
+    body.write_text("## What\n\nAdds the floor schedule.\n")
+    command = f"gh pr create --base main --head wren/floor-schedule --title 'Add the floor schedule' --body-file {body}"
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "ask" and "Adds the floor schedule." in reason
+
+
+def test_gh_new_is_gated_like_create(repo):
+    path, _ = repo
+    (path / "body.md").write_text("text\n")
+    assert confirm_push.decide("gh issue new --title 'Bug' --body-file body.md", str(path))[0] == "ask"
+
+
+def test_outside_a_git_repo_the_working_directory_is_not_a_body_file_root(repo, monkeypatch):
+    path, _ = repo
+    monkeypatch.setattr(confirm_push, "git", lambda *a: "")  # as if `rev-parse --show-toplevel` failed
+    roots = confirm_push._allowed_roots(str(path))
+    assert os.path.realpath(path) not in roots and os.path.realpath("/tmp") in roots
 
 
 def test_gh_owner_repo_placeholders_are_allowed(repo):
@@ -300,6 +338,12 @@ def test_a_fifo_body_file_is_denied_without_blocking(repo):
     "echo \"run gh pr comment later\"",
     "git commit -F - <<'EOF'\nThe hook asks before gh pr create, gh pr review and gh api writes.\nEOF",
     "cat > notes.md <<'EOF'\nuse gh api to read comments; gh pr comment posts\nEOF",
+    # quoted mentions next to an interpreter: not code that runs
+    "git commit -m \"Explain gh api usage\" && uv run pytest",
+    "git commit -m \"Explain gh pr comment gating\"; python3 x.py",
+    "uv run pytest -k \"gh api\"",
+    "git add . && git commit -m 'gate gh api writes'",
+    "gh api repos/o/r/pulls/2/comments --paginate -q '.[].body'",
 ])
 def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):
     path, _ = repo

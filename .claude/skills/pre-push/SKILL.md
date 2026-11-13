@@ -200,6 +200,7 @@ cut). It denies every other way of posting: inline or attached text
 (`--body`, `-bfoo`, `-f body=...`), stdin, `--fill`, templates, editors,
 every other `gh api` write and graphql mutations, `close`/`reopen -c`, gh
 aliases, and any of `` ` `` `$ \ * ? [ ] { } ~ !` or a line break in the
-command (the shell would expand them after the check), so word titles
-without them. Body files must be plain UTF-8 text with no control or
-invisible characters, outside dot directories.
+command (the shell would expand them after the check; gh's `{owner}` and
+`{repo}` placeholders are fine), so word titles without them. Titles and
+body files can't contain control or invisible characters, and body files
+must be UTF-8 text outside dot directories.
