@@ -22,7 +22,8 @@
 
 with house_items as (
     select * from {{ ref('stg_floor__house_items') }}
-    where removed_at is null
+    -- A malformed week (null after try_cast) is dropped rather than shown undated.
+    where removed_at is null and week_date is not null
 ),
 
 votes as (
@@ -69,6 +70,7 @@ house as (
 
 events as (
     select * from {{ ref('int_senate_cloture_events') }}
+    where activity_date is not null and status_order is not null
 ),
 
 -- The latest filing for each document and target.

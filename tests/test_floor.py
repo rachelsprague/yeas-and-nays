@@ -95,6 +95,32 @@ def test_ingest_house_saves_published_weeks_and_prunes_old_ones(monkeypatch, tmp
     assert (tmp_path / "2026-11-09.xml").read_bytes() == week
 
 
+def test_an_error_on_this_weeks_house_file_still_fetches_next_week(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path)
+    monkeypatch.setattr("yan.http.RETRY_BACKOFF_SECONDS", [])
+    week = (FIXTURES / "house_floor_2026-11-09.xml").read_bytes()
+    client = _client({
+        ingest.HOUSE_URL.format(week=dt.date(2026, 11, 9)): httpx.Response(500),
+        ingest.HOUSE_URL.format(week=dt.date(2026, 11, 16)): httpx.Response(200, content=week),
+    })
+
+    ingest.ingest_house(client, dt.date(2026, 11, 12))
+
+    assert [p.name for p in tmp_path.iterdir()] == ["2026-11-16.xml"]
+    assert "house floor schedule for week of 2026-11-09 not updated" in caplog.text
+
+
+def test_a_404_is_not_published_rather_than_an_error(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path)
+    client = _client({ingest.HOUSE_URL.format(week=dt.date(2026, 11, 9)): httpx.Response(404)})
+
+    with caplog.at_level("INFO"):
+        ingest.ingest_house(client, dt.date(2026, 11, 12))
+
+    assert "week of 2026-11-09: not published" in caplog.text
+    assert "not updated" not in caplog.text
+
+
 def test_ingest_senate_fetches_recent_days_skips_unpublished_and_prunes(monkeypatch, tmp_path):
     monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path)
     (tmp_path / "2026-10-01.xml").write_text("out of the window")
@@ -151,5 +177,6 @@ def test_a_failed_fetch_logs_and_keeps_the_last_good_files(monkeypatch, tmp_path
     ingest.ingest(client, dt.date(2026, 11, 12))  # doesn't raise
 
     assert (tmp_path / "senate" / "session_days.xml").read_bytes() == SESSION_DAYS
-    assert "house floor schedule not updated" in caplog.text
+    assert "house floor schedule for week of 2026-11-09 not updated" in caplog.text
+    assert "house floor schedule for week of 2026-11-16 not updated" in caplog.text
     assert "senate floor schedule not updated" in caplog.text

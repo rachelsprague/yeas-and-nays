@@ -76,16 +76,24 @@ def ingest_house(client: Client, today: dt.date) -> None:
     weeks = (this_week, this_week + dt.timedelta(days=7))
     prune(house_dir(), {f"{week:%Y-%m-%d}.xml" for week in weeks})
     for week in weeks:
-        resp = client.get(HOUSE_URL.format(week=week))
-        # An unpublished week answers 200 with an HTML error page, or 404.
-        if resp.status_code in (200, 404) and b"<floorschedule" not in resp.content:
-            log.info("house floor schedule for week of %s: not published", week)
-            continue
-        resp.raise_for_status()
-        if ET.fromstring(resp.content).get("congress-num") != str(CONGRESS):
-            raise ValueError(f"House floor schedule for week of {week} is not from the {CONGRESS}th Congress")
-        write_atomic(house_dir() / f"{week:%Y-%m-%d}.xml", resp.content)
-        log.info("house floor schedule for week of %s: saved", week)
+        # Each week on its own, so an error on this week's file doesn't skip next week's.
+        try:
+            ingest_house_week(client, week)
+        except (httpx.HTTPError, ValueError, ET.ParseError) as e:
+            log.warning("house floor schedule for week of %s not updated: %s", week, e)
+
+
+def ingest_house_week(client: Client, week: dt.date) -> None:
+    resp = client.get(HOUSE_URL.format(week=week))
+    # An unpublished week answers 200 with an HTML error page, or 404.
+    if resp.status_code in (200, 404) and b"<floorschedule" not in resp.content:
+        log.info("house floor schedule for week of %s: not published", week)
+        return
+    resp.raise_for_status()
+    if ET.fromstring(resp.content).get("congress-num") != str(CONGRESS):
+        raise ValueError(f"House floor schedule for week of {week} is not from the {CONGRESS}th Congress")
+    write_atomic(house_dir() / f"{week:%Y-%m-%d}.xml", resp.content)
+    log.info("house floor schedule for week of %s: saved", week)
 
 
 def ingest_senate(client: Client, today: dt.date) -> None:

@@ -1,6 +1,7 @@
+-- try_cast: a malformed value becomes null instead of failing the build (see stg_floor__house_items).
 select
-    cast(activity_date as date) as activity_date,
-    cast(status_order as integer) as status_order,
+    try_cast(activity_date as date) as activity_date,
+    try_cast(status_order as integer) as status_order,
     docnum,
     document_prefix,
     document_num,
