@@ -56,6 +56,7 @@ def repo(tmp_path):
     run("add", ".githooks")
     run("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "x")
     run("config", "core.hooksPath", ".githooks")
+    run("checkout", "-q", "-b", "feature")  # pushes go from a branch; main lands through PRs
     return tmp_path, run("rev-parse", "HEAD")
 
 
@@ -78,13 +79,70 @@ def test_unreviewed_push_is_denied(repo):
 def test_reviewed_push_asks(repo):
     path, head = repo
     record(path, head)
-    assert confirm_push.decide("git push origin main", str(path))[0] == "ask"
+    assert confirm_push.decide("git push -u origin feature", str(path))[0] == "ask"
+    assert confirm_push.decide("git push --set-upstream origin feature", str(path))[0] == "ask"
+    assert confirm_push.decide("git push origin feature", str(path))[0] == "ask"
     assert confirm_push.decide("git push 2>&1", str(path))[0] == "ask"
-    assert confirm_push.decide("git push origin main > /dev/null", str(path))[0] == "ask"
+    assert confirm_push.decide("git push origin feature > /dev/null", str(path))[0] == "ask"
     assert confirm_push.decide("git push>/dev/null", str(path))[0] == "ask"
 
 
+@pytest.mark.parametrize("command", ["git push", "git push origin", "git push origin main", "git push -u origin main"])
+def test_push_from_main_is_denied_even_when_reviewed(repo, command):
+    path, head = repo
+    git(path, "checkout", "-q", "main")
+    record(path, head)
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "deny" and "pull request" in reason
+
+
+def test_push_from_detached_head_is_denied(repo):
+    path, head = repo
+    record(path, head)
+    git(path, "checkout", "-q", "--detach")
+    assert confirm_push.decide("git push", str(path))[0] == "deny"
+
+
 @pytest.mark.parametrize("command", [
+    "gh pr merge 12 --squash",
+    "gh pr merge --auto",
+    "cd /tmp && gh pr merge",
+    "gh pr \\\n  merge 12",
+    "gh pr -R owner/repo merge 12",
+    "gh -R owner/repo pr merge 12",
+    "gh --repo owner/repo pr merge 12 --squash --delete-branch",
+    "gh -R owner/repo api repos/o/r/pulls/3/merge -X PUT",
+    "gh alias set m 'pr merge'",
+    "gh api -X PUT repos/o/r/pulls/12/merge",
+    "gh api graphql -f query='mutation { mergePullRequest(input: {}) { clientMutationId } }'",
+    "sh -c 'gh pr merge 12'",
+])
+def test_gh_pr_merge_is_denied(repo, command):
+    path, _ = repo
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "deny" and "maintainer" in reason
+
+
+@pytest.mark.parametrize("command", [
+    "gh pr create --base main --head feature --title 't' --body-file /tmp/body.md",
+    "gh pr view 12 && git merge origin/main",
+    "gh pr view 12 --json state",
+    "gh pr edit 12 --body-file /tmp/body.md",
+    "git merge origin/main",
+])
+def test_pr_commands_that_dont_merge_are_left_to_normal_permissions(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path)) is None
+
+
+@pytest.mark.parametrize("command", [
+    "git push origin main",
+    "git push origin other",
+    "git push -u origin other",
+    "git push origin feature:other",
+    "git push origin HEAD",
+    "git push -f origin feature",
+    "git push --force-with-lease origin feature",
     "git push --no-verify",
     "git push origin feature:main",
     "git push --all",
@@ -111,6 +169,7 @@ def test_reviewed_push_asks(repo):
     "git status  # check first\ngit push --force origin main",
     "open http://localhost:4000/#x; git push --all",
     "git push origin main#x; git push origin feature",
+    "git push origin feature && git push origin feature",
     "git push  # ship it",
 ])
 def test_uncovered_push_forms_are_denied_even_when_reviewed(repo, command):
@@ -175,8 +234,8 @@ def test_push_denied_when_git_hook_edited(repo):
     ["remote.origin.pushurl", "https://example.com/other.git"],
     ["push.default", "matching"],
     ["push.default", "upstream"],
-    ["branch.main.remote", "other"],
-    ["branch.main.merge", "refs/heads/other"],
+    ["branch.feature.remote", "other"],
+    ["branch.feature.merge", "refs/heads/main"],
     ["url.https://example.com/.pushInsteadOf", "https://github.com/"],
 ])
 def test_push_denied_when_config_changes_what_is_pushed(repo, config):
@@ -186,20 +245,147 @@ def test_push_denied_when_config_changes_what_is_pushed(repo, config):
     assert confirm_push.decide("git push", str(path))[0] == "deny"
 
 
-def test_push_allowed_when_main_tracks_origin_main(repo):
+@pytest.mark.parametrize("config", [
+    ["alias.ship", "!git push"],
+    ["remote.origin.push", "+refs/heads/*:refs/heads/*"],
+    ["remote.origin.pushurl", "https://example.com/other.git"],
+    ["push.default", "matching"],
+    ["url.https://example.com/.pushInsteadOf", "https://github.com/"],
+])
+def test_explicit_push_still_denied_when_config_changes_what_is_pushed(repo, config):
     path, head = repo
     record(path, head)
-    git(path, "config", "branch.main.remote", "origin")
-    git(path, "config", "branch.main.merge", "refs/heads/main")
+    git(path, "config", *config)
+    assert confirm_push.decide("git push -u origin feature", str(path))[0] == "deny"
+
+
+def test_branch_with_a_name_outside_the_plain_set_is_denied(repo):
+    path, head = repo
+    git(path, "checkout", "-q", "-b", "a+b")
+    record(path, head)
+    assert confirm_push.decide("git push -u origin a+b", str(path))[0] == "deny"
+
+
+def test_branch_named_like_a_tag_uses_its_own_config(repo):
+    path, head = repo
+    git(path, "tag", "feature")  # `symbolic-ref --short` would now say heads/feature
+    record(path, head)
+    git(path, "config", "branch.feature.merge", "refs/heads/main")
+    assert confirm_push.decide("git push", str(path))[0] == "deny"
+
+
+def test_explicit_push_allowed_when_a_new_branch_tracks_origin_main(repo):
+    path, head = repo
+    record(path, head)
+    git(path, "config", "branch.feature.remote", "origin")
+    git(path, "config", "branch.feature.merge", "refs/heads/main")  # `worktree add -b x origin/main` does this
+    assert confirm_push.decide("git push -u origin feature", str(path))[0] == "ask"
+    assert confirm_push.decide("git push", str(path))[0] == "deny"  # would go to main
+
+
+def test_push_allowed_when_branch_tracks_its_origin_branch(repo):
+    path, head = repo
+    record(path, head)
+    git(path, "config", "branch.feature.remote", "origin")
+    git(path, "config", "branch.feature.merge", "refs/heads/feature")
     git(path, "config", "push.default", "simple")
     assert confirm_push.decide("git push", str(path))[0] == "ask"
 
 
-def test_bare_push_denied_off_main(repo):
+@pytest.fixture
+def worktree(repo, tmp_path_factory):
+    """A linked worktree of `repo` on branch `wt`, as the worktree tool makes them."""
+    path, head = repo
+    wt = tmp_path_factory.mktemp("wt") / "checkout"
+    git(path, "worktree", "add", "-q", "-b", "wt", str(wt))
+    return path, wt, head
+
+
+def test_push_from_a_worktree_with_relative_hooks_path(worktree):
+    path, wt, head = worktree
+    record(path, head)
+    assert confirm_push.decide("git push -u origin wt", str(wt))[0] == "ask"
+
+
+def test_push_from_a_worktree_with_hooks_path_to_the_main_checkout(worktree):
+    path, wt, head = worktree
+    record(path, head)
+    git(path, "config", "core.hooksPath", str(path / ".githooks"))  # as the worktree tool writes it
+    assert confirm_push.decide("git push -u origin wt", str(wt))[0] == "ask"
+
+
+def test_push_from_a_worktree_denied_when_its_own_hook_edited(worktree):
+    path, wt, head = worktree
+    record(path, head)
+    (wt / ".githooks" / "pre-push").write_text("#!/bin/sh\nexit 0\n")  # relative hooks path: git runs this one
+    assert "differs" in confirm_push.decide("git push -u origin wt", str(wt))[1]
+
+
+def test_push_from_a_worktree_with_hooks_path_to_itself(worktree):
+    path, wt, head = worktree
+    record(path, head)
+    git(path, "config", "core.hooksPath", str(wt / ".githooks"))
+    assert confirm_push.decide("git push -u origin wt", str(wt))[0] == "ask"
+
+
+def test_push_denied_with_hooks_path_to_another_worktree(worktree, tmp_path_factory):
+    path, wt, head = worktree
+    other = tmp_path_factory.mktemp("wt2") / "checkout"
+    git(path, "worktree", "add", "-q", "-b", "wt2", str(other))
+    record(path, head)
+    git(path, "config", "core.hooksPath", str(other / ".githooks"))
+    assert confirm_push.decide("git push -u origin wt", str(wt))[0] == "deny"
+
+
+def test_push_from_a_worktree_denied_when_main_checkout_hook_edited(worktree):
+    path, wt, head = worktree
+    record(path, head)
+    git(path, "config", "core.hooksPath", str(path / ".githooks"))
+    (path / ".githooks" / "pre-push").write_text("#!/bin/sh\nexit 0\n")
+    assert "differs" in confirm_push.decide("git push -u origin wt", str(wt))[1]
+
+
+NOTES = "Set up finch's notes: install via /install-github-app, then run /pre-push."
+
+
+@pytest.mark.parametrize("command", [
+    f"cat > backlog/notes.md <<'EOF'\n{NOTES}\nEOF",
+    f"tee -a BOARD.md <<EOF >/dev/null\n{NOTES}\nEOF\necho done",
+    f"cat <<-EOF > x.md\n\t{NOTES}\n\tEOF",
+    # A python script that only edits text: prose with an apostrophe, "github", "/pre-push".
+    f"python3 - <<'PY'\nprint(\"{NOTES}\")\nPY",
+    # Unparseable (unbalanced quote), but nothing pushes: "github" and "pre-push" aren't git push.
+    f"echo {NOTES}",
+])
+def test_prose_about_github_and_pre_push_is_not_a_push(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path)) is None
+
+
+@pytest.mark.parametrize("command", [
+    "bash <<'EOF'\ngit push origin main\nEOF",
+    "cat <<'EOF' | sh\ngit push origin main\nEOF",
+    "tee /dev/null <<EOF | bash\ngit push --all\nEOF",
+    # A body written with cat or tee, then run.
+    "cat > x.sh <<'EOF'\ngit push origin main\nEOF\nsh x.sh",
+    "cat <<EOF > f.sh && bash f.sh\ngit push origin main\nEOF",
+    "tee x.sh <<'EOF' >/dev/null\ngh pr merge 5\nEOF\nbash x.sh",
+    "x=$(cat <<EOF\ngit push origin main\nEOF\n)\neval \"$x\"",
+    "bash <(cat <<EOF\ngit push origin main\nEOF\n)",
+    "cat <<EOF >> ~/.zshrc\nalias gp='git push origin HEAD:main'\nEOF",
+    "source /dev/stdin <<'EOF'\ngit $'\\x70ush' origin main\nEOF",
+    # `<<EOF` inside a quoted message, with no delimiter line: the next line is still a command.
+    "git commit -m \"fix; cat <<EOF\"\ngit push origin HEAD:main",
+    "sh <<EOF\necho finch's\ngit push --no-verify\nEOF",
+    "python3 - <<'PY'\nimport subprocess\nsubprocess.run(['git', 'push', '--force'])\nPY",
+    "python3 - <<'PY'\nimport os; os.system('gh pr merge 12')\nPY",
+    "echo finch's && git push --force origin main",
+    "echo don't; gh pr merge 3",
+])
+def test_pushes_inside_heredocs_or_unparseable_commands_are_still_denied(repo, command):
     path, head = repo
     record(path, head)
-    git(path, "checkout", "-q", "-b", "feature")
-    assert "isn't main" in confirm_push.decide("git push", str(path))[1]
+    assert confirm_push.decide(command, str(path))[0] == "deny"
 
 
 def test_non_push_command_gets_no_decision(repo):

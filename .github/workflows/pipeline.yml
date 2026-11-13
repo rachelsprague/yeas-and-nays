@@ -17,6 +17,9 @@ concurrency:
 
 jobs:
   update:
+    # Only main: a dispatch on a PR branch would run unmerged code with the
+    # secrets (and post, if publishing is on), then push the branch onto main.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:

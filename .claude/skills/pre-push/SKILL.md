@@ -1,32 +1,54 @@
 ---
 name: pre-push
-description: Review every outgoing commit before a git push in this public repo — the public-repo checklist, plus a code review and a security review by fresh agents that didn't write the code — then record the review so the push hook allows the push. Use before any `git push`, or when the user says "/pre-push", "review before pushing", or "push".
+description: Review a branch's commits before pushing it and opening a PR in this public repo — the public-repo checklist (including the PR text), plus a code review and a security review by fresh agents that didn't write the code — then record the review, push the branch, and open the PR. Use before any `git push`, or when the user says "/pre-push", "review before pushing", "push", or "open a PR".
 ---
 
 # Pre-push review
 
-This repo is public, and two hooks block a push until this review has been
-recorded for the exact commit being pushed: `.claude/hooks/confirm-push.py`
-(Claude Code, checks the command) and `.githooks/pre-push` (git, checks the
-commits actually pushed; install once per clone with `make hooks`). The
-point is independence: the agent that wrote the code is the worst-placed to
-review it, so the code and security reviews run in fresh agents that see
-only the diff and the repo.
+This repo is public, and work lands through pull requests: a session pushes
+its own branch, opens a PR, and the maintainer squash-merges it on GitHub.
+Two hooks block a push until this review has been recorded for the exact
+commit being pushed: `.claude/hooks/confirm-push.py` (Claude Code, checks
+the command; it also denies pushing main and `gh pr merge`) and
+`.githooks/pre-push` (git, checks the commits actually pushed; install once
+per clone with `make hooks`). A pushed branch is public as soon as it's
+pushed, so the review comes first. The point is independence: the agent
+that wrote the code is the worst-placed to review it, so the code and
+security reviews run in fresh agents that see only the diff and the repo.
 
 ## 1. Scope
 
+Run this from the branch's worktree, not from main.
+
 ```
 git fetch origin
+git branch --show-current
 git log --format='%h %an <%ae> %s' origin/main..HEAD
 git status --short
 ```
 
-- If `origin/main` has commits that `HEAD` doesn't, stop and rebase first;
-  the review has to cover what will actually be pushed.
+- On main, or nothing outgoing: say so and stop. Work belongs on a branch.
+- If `origin/main` has commits the branch doesn't, bring them in first so
+  the review covers what the PR will merge: `git rebase origin/main` if the
+  branch has never been pushed; `git merge origin/main` if it has (no force
+  pushes; the squash merge flattens it anyway).
+- If the branch is already on origin (a PR being updated), the new commits
+  are `git log --cc -p origin/<branch>..HEAD --not origin/main` (this leaves
+  out the main commits a merge brought in, and keeps the merge itself);
+  focus the reviews there, and check the rest only for how they interact.
 - If the working tree has changes under `data/out/` from a local export,
   restore them (`git checkout -- data/out`): CI regenerates that data.
   Anything else uncommitted: ask, don't discard.
-- Nothing outgoing: say so and stop.
+
+Draft the PR title and body now (what changed and why, how it was tested;
+no session links), the body in a file in your scratchpad: they're public
+too, so the checklist covers them. Never put the body on the command line:
+Markdown backticks inside shell quotes run as commands.
+
+Always read diffs with `git log -p --cc`: plain `-p` shows nothing for a
+merge commit, so a conflict resolution would go out unreviewed. `--cc`
+still hides a conflict resolved by taking one side outright, so also read
+the net `git diff origin/main...HEAD` when the branch has a merge.
 
 ## 2. Three reviews, in parallel
 
@@ -34,10 +56,10 @@ Launch the two agents in one message, then do the checklist yourself while
 they run. The agents only read and search, so they don't need a worktree.
 
 **a. Public-repo checklist (you).** Follow "Public repo: review before every
-push" in `CLAUDE.md`: read `git log -p origin/main..HEAD` commit by commit,
-including messages and author emails. Secrets, personal info, commit
-identity (GitHub noreply only), neutrality, internal notes, data size,
-third-party content.
+push" in `CLAUDE.md`: read `git log -p --cc origin/main..HEAD` commit by commit,
+including messages and author emails, and the drafted PR title and body.
+Secrets, personal info, commit identity (GitHub noreply only), neutrality,
+internal notes, data size, third-party content.
 
 **b. Code review (fresh `general-purpose` agent).** Prompt it with the
 commit range and this brief:
@@ -45,7 +67,7 @@ commit range and this brief:
 > You are reviewing commits `origin/main..HEAD` in this repo before they're
 > pushed to a public repository. You did not write them. Read `CLAUDE.md`,
 > `STYLE.md` and `README.md` first, then every commit's diff
-> (`git log -p origin/main..HEAD`) and whatever surrounding code you need.
+> (`git log -p --cc origin/main..HEAD`) and whatever surrounding code you need.
 > Report correctness bugs first: wrong logic, unhandled edge cases (Speaker
 > elections, Senate tie-breaks, members with no portrait, votes with no
 > bill), broken links or routes, Liquid that fails silently. Then project
@@ -62,7 +84,8 @@ commit range and this brief:
 
 > You are doing a security review of commits `origin/main..HEAD` in this
 > public repo before they're pushed. You did not write them. Read
-> `CLAUDE.md`, then every commit's diff and the code it touches. Check:
+> `CLAUDE.md`, then every commit's diff (`git log -p --cc origin/main..HEAD`)
+> and the code it touches. Check:
 > secrets or credentials anywhere in the diff or history range (including
 > test fixtures and logs); GitHub Actions — secrets passed only to the steps
 > that need them, third-party actions pinned by commit SHA, least-privilege
@@ -113,13 +136,40 @@ against pushing by accident, not against skipping the review on purpose.
 Only record it after the review above has actually run. Any new commit
 changes HEAD, so the hook will require a fresh review.
 
-## 5. Push
+## 5. Push the branch
 
-Run `git push` (or `git push origin main`) on main, as the whole command,
-with nothing chained before or after it. Anything else (other refspecs,
-`--all`, `--tags`, `-C`, `cd ... &&`, `--no-verify`) is denied, and so is a
-push while a git alias, push refspec or push URL changes what gets sent, or
-while `.githooks/` has uncommitted changes. The git hook also refuses
-non-fast-forward pushes. The hook still asks the user to approve; the report above
-is what they approve against. If anything is committed after the review,
-start again from step 1.
+Run `git push -u origin <branch>` (the current branch; `git push` once it
+tracks origin/<branch>) as the whole command, with nothing chained before or
+after it. Anything else (main, another branch, refspecs, `--force`, `--all`,
+`--tags`, `-C`, `cd ... &&`, `--no-verify`) is denied, and so is a push
+while a git alias, push refspec or push URL changes what gets sent, or while
+`.githooks/` has uncommitted changes. The git hook also refuses
+non-fast-forward pushes. The hook still asks the user to approve; the report
+above is what they approve against. If anything is committed after the
+review, start again from step 1.
+
+## 6. Open the PR, then stop
+
+For a new branch, open the PR with the reviewed title and body, the body
+from its file and the title in single quotes (word the title without an
+apostrophe):
+
+```
+gh pr create --base main --head <branch> --title '<title>' --body-file <body file>
+```
+
+For an update to an existing PR, the push is enough. If its body no longer
+describes the change, edit it the same way (`gh pr edit <N> --body-file
+<file>`) after running the checklist over the new text. Give the user the
+PR link.
+
+Then mark the board: leave the worktree (keep it), and in the main
+checkout's `BOARD.md` add ` — PR #N, awaiting merge` to the item's line in
+Now, keeping the claim (CLAUDE.md > Claiming items).
+
+Don't merge it: the maintainer squash-merges on GitHub (the hook denies
+`gh pr merge`). After it's merged (`gh pr view N --json state`), from the
+main checkout: `git pull --ff-only` on main, `git worktree remove` the
+worktree, `git branch -D` the branch (`-d` refuses, since a squash merge
+leaves the branch's own commits off main), and move the board item to Done
+with the PR number.

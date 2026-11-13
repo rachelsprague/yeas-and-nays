@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """PreToolUse hook (Bash): gate every `git push` on a pre-push review.
 
+Work lands through pull requests: a session pushes its own branch and opens a
+PR, and the maintainer squash-merges it on GitHub. So:
+
 - No review recorded for the commit being pushed: deny, and tell Claude to run
   the /pre-push skill (public-repo checklist + fresh-agent code and security
   reviews), which records the review when it finishes.
 - Review recorded: ask, so the user approves the push against the report.
 - Anything else is denied outright: the push must be the whole command
-  (`git push`, `git push origin`, or `git push origin main`, on main), and
-  the repo's state must not change what it sends (aliases, push refspecs,
-  push URLs, an edited or missing git hook).
+  (`git push`, `git push origin`, or `git push [-u] origin <branch>`, where
+  <branch> is the current branch and isn't main), and the repo's state must
+  not change what it sends (aliases, push refspecs, push URLs, an edited or
+  missing git hook). Pushing main and `gh pr merge` are denied: PRs are merged
+  on GitHub by the maintainer.
 
 This is a guard against pushing by accident, not against a determined
 attempt to get around it: it only sees command text, which can always be
@@ -34,8 +39,8 @@ import sys
 HOOKS_PATH = ".githooks"
 # git's global options that take a separate value (`-C dir`, `--git-dir dir`).
 GLOBAL_OPTS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env", "--super-prefix"}
-# The only push forms the review covers: HEAD, or main, to origin.
-ALLOWED_ARGS = [[], ["origin"], ["origin", "main"]]
+# Branch names the hook will push: plain names, nothing git or the shell could read as more.
+BRANCH_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]*")
 SEPARATORS = {";", "&", "&&", "|", "||", "(", ")", "{", "}", "!"}
 
 
@@ -52,28 +57,100 @@ def tokens(command: str) -> list[str]:
     return list(lexer)
 
 
-def find_pushes(command: str, depth: int = 0) -> list[dict]:
+# Heredoc bodies fed to a shell run as commands; any other body (cat into a file, a python
+# script) is checked word by word, since what it writes may be run later in the command.
+SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "source", "."}
+HEREDOC = re.compile(r"(?<!<)<<(-?)\s*(['\"]?)([A-Za-z_][\w.-]*)\2")
+ASSIGNMENT = re.compile(r"[A-Za-z_]\w*=\S*")
+# Fallback for text that can't be parsed as shell: `git` and `push` as words, close together on
+# one line (not "github", "/pre-push" or "pre-push"), and `gh` ... `merge` likewise.
+LOOSE_PUSH = re.compile(r"\bgit\b[^\n;&|]{0,200}?(?<![-/.\w])push\b")
+LOOSE_MERGE = re.compile(r"\bgh\b[^\n;&|]{0,200}?(?<![-/.\w])merge\b")
+
+
+def split_heredocs(command: str) -> tuple[str, list[str]]:
+    """(shell text, other bodies): the command with heredoc bodies taken out, bodies fed to a
+    shell (or piped onward, as in `cat <<EOF | sh`) put back as plain command lines, and every
+    other body (a note written with cat, a `python3 -` script) returned separately for a
+    word-level check. A `<<WORD` whose delimiter line never comes (say, inside a quoted
+    commit message) isn't a heredoc, so the lines after it stay commands."""
+    lines, kept, scripts = command.split("\n"), [], []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        kept.append(line)
+        i += 1
+        for match in HEREDOC.finditer(line):
+            strip_tabs, delimiter = match.group(1) == "-", match.group(3)
+            end = i
+            while end < len(lines) and (lines[end].lstrip("\t") if strip_tabs else lines[end]) != delimiter:
+                end += 1
+            if end == len(lines):
+                continue  # no delimiter line: not a heredoc
+            body, i = lines[i:end], end + 1
+            if heredoc_target(line[:match.start()]) in SHELLS or "|" in line[match.end():]:
+                kept += body
+            else:
+                scripts.append("\n".join(body))
+    return "\n".join(kept), scripts
+
+
+def heredoc_target(before: str) -> str:
+    """The command a heredoc feeds: the first word of the last command before `<<`."""
+    segment = re.split(r"[;&|()]", before)[-1].split()
+    while segment and (ASSIGNMENT.fullmatch(segment[0]) or segment[0] in ("env", "command", "exec")):
+        segment = segment[1:]
+    return os.path.basename(segment[0].strip("\"'\\")) if segment else ""
+
+
+def find_pushes(command: str) -> list[dict]:
     """Every `git ... push ...` in the command, as {"prefix", "globals", "args"}.
 
     Unwraps quoting (`\\git`, `"git" push`) and looks inside quoted strings, so
     `sh -c 'git push'` and `eval "git push"` are found too. `git stash push`
     and other subcommands are not pushes.
     """
-    pushes, segment = [], []
+    return _scan(command, _push_in_segment)
+
+
+def finds_pr_merge(command: str) -> bool:
+    """Whether the command merges a PR: `gh pr merge`, or a `gh api` call to a PR's merge
+    endpoint or the mergePullRequest mutation. Checked per command, like pushes, so
+    `gh pr view 1 && git merge origin/main` isn't one."""
+    return bool(_scan(command, _pr_merge_in_segment))
+
+
+def _scan(command: str, in_segment, depth: int = 0) -> list:
+    found, segment = [], []
     for tok in tokens(strip_redirects(command)) + [";"]:
         if tok not in SEPARATORS:
             segment.append(tok)
             continue
-        pushes += _push_in_segment(segment)
+        found += in_segment(segment)
         if depth < 3:
             for t in segment:
                 if any(c.isspace() for c in t):
                     try:
-                        pushes += find_pushes(t, depth + 1)
+                        found += _scan(t, in_segment, depth + 1)
                     except ValueError:
                         pass  # not valid shell on its own (e.g. a message with "can't"), so not run as a command
         segment = []
-    return pushes
+    return found
+
+
+def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
+    for i, tok in enumerate(seg):
+        if os.path.basename(tok) != "gh":
+            continue
+        rest = seg[i + 1:]
+        # `pr` then `merge`, wherever flags put them (`gh -R o/r pr merge 3`, `gh pr -R o/r merge`).
+        if "pr" in rest and "merge" in rest[rest.index("pr") + 1:]:
+            return [True]
+        if "api" in rest and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in rest):
+            return [True]
+        if "alias" in rest and any("merge" in a for a in rest):  # `gh alias set m 'pr merge'`
+            return [True]
+    return []
 
 
 def _push_in_segment(seg: list[str]) -> list[dict]:
@@ -102,66 +179,107 @@ def git(repo: str, *args: str) -> str:
     return out.stdout.strip() if out.returncode == 0 else ""
 
 
-def repo_problem(repo: str, ref: str) -> str | None:
-    """Why the repo's own state means the review can't vouch for this push, or None."""
+def hooks_dir(repo: str) -> str | None:
+    """The directory git runs hooks from, if core.hooksPath is one of the forms we accept.
+
+    `make hooks` writes `.githooks`, which git resolves against the worktree being
+    pushed from; Claude Code's worktree tool rewrites it in the shared config to an
+    absolute path, the main checkout's `.githooks`. Accept exactly those strings:
+    resolving other spellings here (`..`, `~`) wouldn't match how git does it.
+    """
     top = git(repo, "rev-parse", "--show-toplevel")
-    hook = os.path.join(top, HOOKS_PATH, "pre-push") if top else ""
-    # `make hooks` writes `.githooks`; Claude Code's worktree tool rewrites it to
-    # this checkout's absolute path in the shared config. Accept exactly those two
-    # strings: resolving the value here (`..`, `~`) wouldn't match how git does it.
+    common = git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if not top or not common:
+        return None
     configured = git(repo, "config", "core.hooksPath")
-    if not top or configured not in (HOOKS_PATH, os.path.join(top, HOOKS_PATH)) or not os.access(hook, os.X_OK):
+    if configured == HOOKS_PATH:
+        return os.path.join(top, HOOKS_PATH)
+    # The main checkout is the parent of the common .git directory (in it, that's `top` too).
+    checkouts = {top, os.path.dirname(common)} if os.path.basename(common) == ".git" else {top}
+    for checkout in checkouts:
+        if configured == os.path.join(checkout, HOOKS_PATH):
+            return configured
+    return None
+
+
+def repo_problem(repo: str, branch: str, explicit: bool) -> str | None:
+    """Why the repo's own state means the review can't vouch for pushing `branch`, or None.
+
+    `explicit` is a push that names `origin <branch>`: it goes to origin's branch of the
+    same name whatever the branch tracks (a new worktree branch often tracks origin/main),
+    so only a bare `git push` needs the branch to track origin/<branch>.
+    """
+    hooks = hooks_dir(repo)
+    if not hooks or not os.access(os.path.join(hooks, "pre-push"), os.X_OK):
         return f"the git pre-push hook isn't installed in this clone. Run `make hooks` (sets core.hooksPath to {HOOKS_PATH})."
-    if git(repo, "status", "--porcelain", "--", HOOKS_PATH):
+    if git(os.path.dirname(hooks), "status", "--porcelain", "--", HOOKS_PATH):
         return f"{HOOKS_PATH}/ differs from the committed version, so the git pre-push hook can't be trusted."
     aliases = git(repo, "config", "--get-regexp", r"^alias\.").splitlines()
     if any("push" in line.split(maxsplit=1)[-1] for line in aliases):
         return "a git alias runs a push; aliases can skip both push checks. Remove it first."
     push_config = git(repo, "config", "--get-regexp", r"^(remote\.origin\.(push|pushurl|mirror)|remote\.pushdefault"
                       r"|branch\..*\.pushremote|url\..*\.(push)?insteadof)$")
-    if (push_config or git(repo, "config", "push.default") not in ("", "simple", "current")
-            or git(repo, "config", "branch.main.remote") not in ("", "origin")
-            or git(repo, "config", "branch.main.merge") not in ("", "refs/heads/main")):
+    tracking_ok = explicit or (git(repo, "config", f"branch.{branch}.remote") in ("", "origin")
+                               and git(repo, "config", f"branch.{branch}.merge") in ("", f"refs/heads/{branch}"))
+    if push_config or git(repo, "config", "push.default") not in ("", "simple", "current") or not tracking_ok:
         return ("git config changes what `git push` sends or where (push refspecs or URLs, url.*.insteadOf, "
-                "push.default other than simple/current, or main not tracking origin/main).")
-    if ref == "HEAD" and git(repo, "rev-parse", "--abbrev-ref", "HEAD") != "main":
-        return "the current branch isn't main. The review covers one commit on main."
+                f"push.default other than simple/current, or {branch} not tracking origin/{branch}).")
     return None
+
+
+def current_branch(repo: str) -> str:
+    """The checked-out branch, or "" when HEAD is detached. (Not `symbolic-ref --short`,
+    which gives `heads/<name>` when a tag has the same name.)"""
+    return git(repo, "branch", "--show-current")
 
 
 def decide(command: str, repo: str) -> tuple[str, str] | None:
     """(decision, reason) for a command that pushes, or None for one that doesn't."""
-    flat = re.sub(r"[\"'\\]", "", command)  # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
-    if "$'" in command and "git" in command:
-        return "deny", "git commands with $'...' quoting can hide a push; write the command without it."
+    if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
+        return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
+    command, scripts = split_heredocs(command)
+    # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
+    flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
+    if any(LOOSE_PUSH.search(s) or LOOSE_MERGE.search(s) for s in (re.sub(r"[\"'\\]", "", s) for s in scripts)):
+        return "deny", ("A heredoc in this command mentions git push or gh pr merge, and what it writes may be run. "
+                        "Run the push as its own command (or merge on GitHub); for notes, write the text to a file.")
     try:
         pushes = find_pushes(command)
+        if finds_pr_merge(command):
+            return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
     except ValueError:
-        if "git" in flat and "push" in flat:
-            return "deny", "Couldn't parse this command to check for a git push. Run `git push` as its own command."
+        if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat):
+            return "deny", "Couldn't parse this command to check for a git push or PR merge. Run it on its own."
         return None
     if "push" in flat and ("--no-verify" in flat or "hookspath" in flat.lower()):  # also pushes built in a script
         return "deny", "git push refused: --no-verify or a hooksPath setting would switch off the git pre-push hook."
     if not pushes:
         return None
 
-    allowed = [["git", "push", *args] for args in ALLOWED_ARGS]
-    if len(pushes) > 1 or tokens(strip_redirects(command)) not in allowed:
-        return "deny", ("git push refused: run the push as its own command, exactly `git push`, `git push origin`, "
-                        "or `git push origin main` from the repo root, with nothing before or after it. The review "
-                        "covers one commit on main; push anything else by hand.")
+    branch = current_branch(repo)
+    if branch == "main":
+        return "deny", ("git push refused: changes land through pull requests. Work on a branch (in a worktree), "
+                        "run /pre-push, push the branch, and open a PR; the maintainer merges it.")
+    if not branch or not BRANCH_NAME.fullmatch(branch):
+        return "deny", "git push refused: check out a branch with a plain name (letters, digits, . _ / -) first."
 
-    ref = "main" if pushes[0]["args"] == ["origin", "main"] else "HEAD"
-    if reason := repo_problem(repo, ref):
+    allowed = [["git", "push"], ["git", "push", "origin"], ["git", "push", "origin", branch],
+               ["git", "push", "-u", "origin", branch], ["git", "push", "--set-upstream", "origin", branch]]
+    if len(pushes) > 1 or tokens(strip_redirects(command)) not in allowed:
+        return "deny", (f"git push refused: run the push as its own command, exactly `git push -u origin {branch}` "
+                        "(or `git push` once it tracks origin), with nothing before or after it. The review covers "
+                        "the current branch's commit; push anything else by hand.")
+
+    if reason := repo_problem(repo, branch, explicit=branch in pushes[0]["args"]):
         return "deny", f"git push refused: {reason}"
 
-    sha = git(repo, "rev-parse", ref)
+    sha = git(repo, "rev-parse", "HEAD")
     common = git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir")
     if sha and common and os.path.isfile(os.path.join(common, "pre-push-reviewed", sha)):
-        return "ask", (f"git push to a PUBLIC repo. The /pre-push review (public-repo checklist, code review, "
-                       f"security review) is recorded for {ref} {sha[:7]}. Approve if its report, shown above, "
+        return "ask", (f"git push of {branch} to a PUBLIC repo. The /pre-push review (public-repo checklist, code "
+                       f"review, security review) is recorded for {sha[:7]}. Approve if its report, shown above, "
                        "is acceptable.")
-    return "deny", (f"No pre-push review is recorded for {ref} {sha[:7]}. This repo is public: run the /pre-push "
+    return "deny", (f"No pre-push review is recorded for {branch} {sha[:7]}. This repo is public: run the /pre-push "
                     "skill first (public-repo checklist plus fresh-agent code and security reviews). It records "
                     "the review for this exact commit; any later commit needs a new review.")
 
@@ -173,8 +291,8 @@ def main() -> None:
         command = (payload.get("tool_input") or {}).get("command") or ""
         repo = payload.get("cwd") or os.environ.get("CLAUDE_PROJECT_DIR") or "."
         result = decide(command, repo)
-    except Exception as e:  # fail closed: a crash must not let a push through
-        if "push" not in raw:
+    except Exception as e:  # fail closed: a crash must not let a push or merge through
+        if "push" not in raw and "merge" not in raw:
             return
         result = "deny", f"The push hook failed ({type(e).__name__}: {e}); not allowing a command that may push."
     if result is None:
