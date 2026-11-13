@@ -35,7 +35,9 @@
         var want = c.value.trim().toLowerCase();
         if (!want) continue;
         var have = (row.getAttribute("data-" + key) || "").toLowerCase();
-        if (c.tagName === "INPUT" ? have.indexOf(want) === -1 : have.split(" ").indexOf(want) === -1) return false;
+        // Search boxes match a substring; selects match the whole value
+        // ("Not Voting", "Johnson (LA)" contain spaces).
+        if (c.tagName === "INPUT" ? have.indexOf(want) === -1 : have !== want) return false;
       }
       for (var tab in tabState) {
         var value = tabState[tab];
