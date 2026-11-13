@@ -51,9 +51,20 @@ def headline_title(vote: dict, decision: Decision) -> str:
         m = re.fullmatch(r"(.+?), of [^,]+, to be (.+)", title)
         return f"{m.group(1)} as {m.group(2)}" if m else title
     if decision.kind == "cloture":
-        # Official forms: "Motion to Invoke Cloture: Motion to Proceed to S. 5",
-        # "Motion to Invoke Cloture on the Motion to Proceed to H.R. 9340"
-        stripped = re.sub(r"^Motion to Invoke Cloture(?::\s*|\s+on\s+)", "", vote.get("vote_title") or "")
+        # Official forms vary: "Motion to Invoke Cloture: Motion to Proceed to S. 5",
+        # "... Cloture on the Motion to Proceed: H.R. 7008", "... Cloture Re: Amdt. No. 4308",
+        # "Upon Reconsideration, Motion to Invoke Cloture ...". All become the most
+        # common form, "Motion to Proceed to {measure}", with reconsideration last
+        # as the Senate also writes it ("..., Upon Reconsideration").
+        stripped = vote.get("vote_title") or ""
+        reconsidered = re.match(r"^Upon Reconsideration[,:]\s*", stripped)
+        if reconsidered:
+            stripped = stripped[reconsidered.end():]
+        stripped = re.sub(r"^Motion to Invoke Cloture(?::\s*|\s+Re:\s*|\s+on\s+)(?:the\s+)?", "", stripped)
+        stripped = re.sub(r"^Motion to Proceed(?::\s*|\s+to\s+)", "Motion to Proceed to ", stripped,
+                          flags=re.IGNORECASE)
+        if reconsidered and not stripped.endswith("Upon Reconsideration"):
+            stripped += ", Upon Reconsideration"
         return stripped or title
     return title
 

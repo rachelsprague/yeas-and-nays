@@ -130,6 +130,32 @@ def test_nomination_post_with_tie_break():
     ]
 
 
+@pytest.mark.parametrize("vote_title, expected", [
+    ("Motion to Invoke Cloture: Motion to Proceed to S. 5",
+     "Senate invokes cloture on Motion to Proceed to S. 5"),
+    ("Motion to Invoke Cloture on the Motion to Proceed to H.R. 2347",
+     "Senate invokes cloture on Motion to Proceed to H.R. 2347"),
+    ("Motion to Invoke Cloture on the Motion to Proceed: H.R. 7008",
+     "Senate invokes cloture on Motion to Proceed to H.R. 7008"),
+    ("Motion to Invoke Cloture: Motion to proceed to S. 1582",
+     "Senate invokes cloture on Motion to Proceed to S. 1582"),
+    ("Motion to Invoke Cloture Re: Amdt. No. 4308",
+     "Senate invokes cloture on Amdt. No. 4308"),
+    ("Upon Reconsideration, Motion to Invoke Cloture Re: Motion to Proceed to H.R. 7147",
+     "Senate invokes cloture on Motion to Proceed to H.R. 7147, Upon Reconsideration"),
+    ("Upon Reconsideration: Motion to Invoke Cloture on the Motion to Proceed to H.R. 5371",
+     "Senate invokes cloture on Motion to Proceed to H.R. 5371, Upon Reconsideration"),
+    ("Motion to Invoke Cloture: Motion to Proceed to S. 3012, Upon Reconsideration",
+     "Senate invokes cloture on Motion to Proceed to S. 3012, Upon Reconsideration"),
+    ("Motion to Invoke Cloture: Todd Blanche to be Attorney General",
+     "Senate invokes cloture on Todd Blanche to be Attorney General"),
+])
+def test_cloture_headline_uses_one_form(vote_title, expected):
+    vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                       vote_title=vote_title, tie_breaker_by=None, tie_breaker_vote=None)
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == expected
+
+
 def test_no_party_break_line_when_nobody_broke():
     vote = senate_vote(tie_breaker_by=None, tie_breaker_vote=None, yea_count=51, nay_count=49)
     assert "Voted against" not in format_post(doc(vote), decide(vote))
