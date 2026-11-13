@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000530",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10545","bill_number":"10545","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10545","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10545","policy_area":"Government Operations and Politics","title":"Freedom from Intimidation in Elections Act"},
     {"bill_id":"119-hr-10151","bill_number":"10151","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10151","introduced_date":"2026-08-27","latest_action_date":"2026-08-27","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10151","policy_area":"Environmental Protection","title":"Water Authority Cybersecurity Protection Act"},

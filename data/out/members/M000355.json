@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M000355",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-860","bill_number":"860","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/860","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment by Unanimous Consent. (consideration: CR S4762-4763; text: CR S4761)","latest_vote_id":null,"measure_label":"S.Res. 860","policy_area":"Government Operations and Politics","title":"A resolution recognizing September 15, 2026, as \"National Voter Registration Day\"."},
     {"bill_id":"119-s-4530","bill_number":"4530","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/4530","introduced_date":"2026-05-14","latest_action_date":"2026-05-29","latest_action_text":"Became Public Law No: 119-95.","latest_vote_id":null,"measure_label":"S. 4530","policy_area":"Government Operations and Politics","title":"A bill to amend chapters 83 and 84 of title 5, United States Code, to authorize an increase of the retirement age for members of the Capitol Police."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000605",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hjres-219","bill_number":"219","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/219","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.J.Res. 219","policy_area":"Law","title":"Proposing an amendment to the Constitution of the United States to require a Judge to be a natural born citizen of the United States."},
     {"bill_id":"119-hr-10305","bill_number":"10305","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10305","introduced_date":"2026-09-08","latest_action_date":"2026-09-15","latest_action_text":"Ordered to be Reported (Amended) by Voice Vote.","latest_vote_id":null,"measure_label":"H.R. 10305","policy_area":"Water Resources Development","title":"Strengthening Oversight in Public Buildings Act"},

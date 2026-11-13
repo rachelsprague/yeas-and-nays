@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001230",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10827","bill_number":"10827","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10827","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the Committee on Foreign Affairs, and in addition to the Committees on the Judiciary, and Financial Services, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10827","policy_area":"International Affairs","title":"Protection of Syrian Religious and Ethnic Minorities Act"},
     {"bill_id":"119-hr-10524","bill_number":"10524","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10524","introduced_date":"2026-09-21","latest_action_date":"2026-09-21","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10524","policy_area":"Finance and Financial Sector","title":"HELPER Plus Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001231",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10232","bill_number":"10232","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10232","introduced_date":"2026-09-02","latest_action_date":"2026-09-02","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10232","policy_area":"Education","title":"To prohibit the transfer of certain offices and functions of the Department of Education to other Federal agencies, and for other purposes."},
     {"bill_id":"119-hr-9411","bill_number":"9411","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9411","introduced_date":"2026-06-23","latest_action_date":"2026-06-23","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 9411","policy_area":"Armed Forces and National Security","title":"Next Mission Act"},

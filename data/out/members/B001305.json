@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001305",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5557","bill_number":"5557","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5557","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5557","policy_area":"Science, Technology, Communications","title":"SCALE Biology Act"},
     {"bill_id":"119-s-5517","bill_number":"5517","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5517","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Armed Services.","latest_vote_id":null,"measure_label":"S. 5517","policy_area":"Armed Forces and National Security","title":"Fort Bragg Land Transfer for Veterans Act"},

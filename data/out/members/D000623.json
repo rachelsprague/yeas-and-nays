@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000623",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10775","bill_number":"10775","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10775","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10775","policy_area":"Science, Technology, Communications","title":"Bots Research Act"},
     {"bill_id":"119-hr-10662","bill_number":"10662","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10662","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10662","policy_area":"Transportation and Public Works","title":"Better Transit for Riders Act"},

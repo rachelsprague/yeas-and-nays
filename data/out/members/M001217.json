@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001217",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-8702","bill_number":"8702","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8702","introduced_date":"2026-05-07","latest_action_date":"2026-05-08","latest_action_text":"Referred to the Subcommittee on Counterterrorism and Intelligence.","latest_vote_id":null,"measure_label":"H.R. 8702","policy_area":"Crime and Law Enforcement","title":"Secret Service Transfer Act of 2026"},
     {"bill_id":"119-hr-8701","bill_number":"8701","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8701","introduced_date":"2026-05-07","latest_action_date":"2026-05-08","latest_action_text":"Referred to the Subcommittee on Transportation and Maritime Security.","latest_vote_id":null,"measure_label":"H.R. 8701","policy_area":"Transportation and Public Works","title":"Transportation Security Administration Transfer Act of 2026"},

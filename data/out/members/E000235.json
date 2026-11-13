@@ -1,5 +1,6 @@
 {
   "bioguide_id": "E000235",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10776","bill_number":"10776","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10776","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10776","policy_area":"Animals","title":"To amend the Marine Mammal Protection Act of 1972 to change certain requirements regarding certain allowed take of marine mammals, and for other purposes."},
     {"bill_id":"119-hr-10756","bill_number":"10756","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10756","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10756","policy_area":"Public Lands and Natural Resources","title":"Regional Ocean Partnerships Reauthorization Act"},

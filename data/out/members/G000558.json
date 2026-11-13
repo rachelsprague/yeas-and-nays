@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000558",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9393","bill_number":"9393","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9393","introduced_date":"2026-06-23","latest_action_date":"2026-07-21","latest_action_text":"Ordered to be Reported in the Nature of a Substitute by the Yeas and Nays: 45 - 0.","latest_vote_id":null,"measure_label":"H.R. 9393","policy_area":"Health","title":"Lower Costs, More Transparency Act of 2026"},
     {"bill_id":"119-hr-8739","bill_number":"8739","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8739","introduced_date":"2026-05-12","latest_action_date":"2026-05-14","latest_action_text":"Forwarded by Subcommittee to Full Committee by Voice Vote.","latest_vote_id":null,"measure_label":"H.R. 8739","policy_area":"Environmental Protection","title":"Brownfields Revitalization for a Better Tomorrow Act"},

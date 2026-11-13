@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000568",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1650","bill_number":"1650","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1650","introduced_date":"2026-11-09","latest_action_date":"2026-11-10","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":"h119-2-0319","measure_label":"H.Res. 1650","policy_area":"Congress","title":"Providing for consideration of the bill (H.R. 1013) to amend the Federal securities laws to enhance 403(b) plans, and for other purposes."},
     {"bill_id":"119-hr-10621","bill_number":"10621","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10621","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10621","policy_area":"Health","title":"Medicaid Fraud Fighting and Taxpayer Protection Act"},

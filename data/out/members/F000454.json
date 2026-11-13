@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000454",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10298","bill_number":"10298","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10298","introduced_date":"2026-09-04","latest_action_date":"2026-09-04","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10298","policy_area":"Education","title":"Public Service Loan Forgiveness Inclusion Act of 2026"},
     {"bill_id":"119-hr-10230","bill_number":"10230","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10230","introduced_date":"2026-09-02","latest_action_date":"2026-09-02","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10230","policy_area":"Finance and Financial Sector","title":"Strengthening Oversight for the Financial Sector Act of 2026"},

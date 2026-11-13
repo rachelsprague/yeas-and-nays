@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001176",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-953","bill_number":"953","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/953","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the Committee on the Judiciary. (text: CR S5415-5416)","latest_vote_id":null,"measure_label":"S.Res. 953","policy_area":null,"title":"A resolution condemning the horrific and senseless attack in Bend, Oregon, and expressing support and prayers for all those impacted by the tragedy."},
     {"bill_id":"119-sjres-221","bill_number":"221","bill_type":"sjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-joint-resolution/221","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Read twice and referred to the Committee on Foreign Relations under authority of the order of the Senate of 09/30/2026.","latest_vote_id":null,"measure_label":"S.J.Res. 221","policy_area":"International Affairs","title":"A joint resolution providing for congressional disapproval of the agreement for civilian nuclear cooperation between the United States and the Kingdom of Saudi Arabia pursuant to section 123 of the Atomic Energy Act of 1954."},

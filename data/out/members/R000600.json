@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000600",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-8904","bill_number":"8904","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8904","introduced_date":"2026-05-19","latest_action_date":"2026-06-03","latest_action_text":"Subcommittee Hearings Held","latest_vote_id":null,"measure_label":"H.R. 8904","policy_area":"Public Lands and Natural Resources","title":"To amend the Magnuson-Stevens Fishery Conservation and Management Act to provide for the regulation of fishing in marine national monuments."},
     {"bill_id":"119-hr-6158","bill_number":"6158","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/6158","introduced_date":"2025-11-19","latest_action_date":"2025-11-19","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 6158","policy_area":"Immigration","title":"American Samoa Statutory Nationality and Citizenship Act"},

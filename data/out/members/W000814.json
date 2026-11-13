@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000814",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9338","bill_number":"9338","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9338","introduced_date":"2026-06-18","latest_action_date":"2026-07-21","latest_action_text":"Ordered to be Reported in the Nature of a Substitute by the Yeas and Nays: 41 - 8.","latest_vote_id":null,"measure_label":"H.R. 9338","policy_area":"Transportation and Public Works","title":"Pipeline Safety Authorization Act of 2026"},
     {"bill_id":"119-hr-9325","bill_number":"9325","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9325","introduced_date":"2026-06-15","latest_action_date":"2026-06-15","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 9325","policy_area":"Public Lands and Natural Resources","title":"Lone Star Coastal National Recreation Area Act"},

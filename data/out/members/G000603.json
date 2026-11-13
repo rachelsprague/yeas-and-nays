@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000603",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10620","bill_number":"10620","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10620","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10620","policy_area":"Transportation and Public Works","title":"Barron’s Law"},
     {"bill_id":"119-hr-10268","bill_number":"10268","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10268","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 10268","policy_area":"Agriculture and Food","title":"Ending Restaurant Purchases with SNAP Act of 2026"},

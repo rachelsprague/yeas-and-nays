@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001215",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10632","bill_number":"10632","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10632","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10632","policy_area":"Health","title":"Medicaid Whistleblower Protection Act"},
     {"bill_id":"119-hr-10450","bill_number":"10450","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10450","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the Committee on Oversight and Government Reform, and in addition to the Committees on House Administration, the Judiciary, and Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10450","policy_area":"Government Operations and Politics","title":"REVEAL Act"},

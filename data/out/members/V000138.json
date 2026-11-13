@@ -1,5 +1,6 @@
 {
   "bioguide_id": "V000138",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10989","bill_number":"10989","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10989","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10989","policy_area":null,"title":"Smart Transmission Line Placement Act"},
     {"bill_id":"119-hr-10988","bill_number":"10988","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10988","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10988","policy_area":null,"title":"Lower Electricity Bills Act"},

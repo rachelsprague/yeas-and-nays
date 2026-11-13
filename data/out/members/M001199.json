@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001199",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10890","bill_number":"10890","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10890","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10890","policy_area":"Taxation","title":"To amend the Internal Revenue Code of 1986 to establish the motor fuel deduction."},
     {"bill_id":"119-hr-10889","bill_number":"10889","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10889","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10889","policy_area":"Taxation","title":"GAS Act of 2026"},

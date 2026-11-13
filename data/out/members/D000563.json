@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000563",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5714","bill_number":"5714","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5714","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on the Judiciary. (text: CR S5415)","latest_vote_id":null,"measure_label":"S. 5714","policy_area":null,"title":"A bill to subject professional baseball clubs to the antitrust laws."},
     {"bill_id":"119-s-5632","bill_number":"5632","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5632","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs. (text: CR S5264)","latest_vote_id":null,"measure_label":"S. 5632","policy_area":"Government Operations and Politics","title":"National Archives Protection Act"},

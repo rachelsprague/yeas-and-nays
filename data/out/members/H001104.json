@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001104",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5638","bill_number":"5638","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5638","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5638","policy_area":"Immigration","title":"Protecting American Workers Through H–1B Modernization Act."},
     {"bill_id":"119-s-5523","bill_number":"5523","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5523","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"S. 5523","policy_area":"Crime and Law Enforcement","title":"Measuring Illicit Fentanyl Trafficking Act"},

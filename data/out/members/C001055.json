@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001055",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1593","bill_number":"1593","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1593","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.Res. 1593","policy_area":"Arts, Culture, Religion","title":"Recognizing the month of October 2026 as Filipino American History Month and celebrating the history and culture of Filipino Americans and their immense contributions to the United States."},
     {"bill_id":"119-hr-10378","bill_number":"10378","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10378","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10378","policy_area":"Government Operations and Politics","title":"Problem Solvers TRUST Act"},

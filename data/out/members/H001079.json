@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001079",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-951","bill_number":"951","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/951","introduced_date":"2026-10-15","latest_action_date":"2026-11-10","latest_action_text":"Resolution agreed to in Senate without amendment and with a preamble by Unanimous Consent. (consideration: CR S5525)","latest_vote_id":null,"measure_label":"S.Res. 951","policy_area":"Health","title":"A resolution designating September 2026 as \"National Infant Mortality Awareness Month\", raising awareness of infant mortality, and increasing efforts to reduce infant mortality."},
     {"bill_id":"119-s-5613","bill_number":"5613","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5613","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5613","policy_area":"Foreign Trade and International Finance","title":"Ecuador Shrimp Tariff Act"},

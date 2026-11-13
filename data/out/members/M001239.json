@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001239",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9756","bill_number":"9756","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9756","introduced_date":"2026-07-16","latest_action_date":"2026-07-16","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9756","policy_area":"Health","title":"MAT Act of 2026"},
     {"bill_id":"119-hr-9633","bill_number":"9633","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9633","introduced_date":"2026-07-09","latest_action_date":"2026-07-09","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9633","policy_area":"Immigration","title":"Birthright Citizenship Clarification Act of 2026"},

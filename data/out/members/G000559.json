@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000559",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hconres-119","bill_number":"119","bill_type":"hconres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-concurrent-resolution/119","introduced_date":"2026-09-21","latest_action_date":"2026-09-21","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.Con.Res. 119","policy_area":"International Affairs","title":"Celebrating the 65th anniversary of the establishment of the Peace Corps, and commending its volunteers and contributions to global peace, friendship, and development."},
     {"bill_id":"119-hr-10267","bill_number":"10267","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10267","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10267","policy_area":"Transportation and Public Works","title":"Cabin Air Safety Act of 2026"},

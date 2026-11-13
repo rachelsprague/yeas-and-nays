@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001288",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5713","bill_number":"5713","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5713","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5713","policy_area":null,"title":"A bill to protect employees from discrimination based on family caregiver responsibilities, and for other purposes."},
     {"bill_id":"119-s-5702","bill_number":"5702","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5702","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5702","policy_area":null,"title":"A bill to improve maternal health policies in correctional facilities, and for other purposes."},

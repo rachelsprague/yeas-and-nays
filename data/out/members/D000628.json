@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000628",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10549","bill_number":"10549","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10549","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10549","policy_area":"Health","title":"Patients Choice in Specialty Pharmacy Act"},
     {"bill_id":"119-hr-9847","bill_number":"9847","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9847","introduced_date":"2026-07-22","latest_action_date":"2026-07-22","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 9847","policy_area":"Health","title":"Improving CARE for Youth Act"},

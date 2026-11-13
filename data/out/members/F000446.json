@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000446",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-8967","bill_number":"8967","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8967","introduced_date":"2026-05-21","latest_action_date":"2026-05-21","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 8967","policy_area":"Health","title":"Rural Community Hospital Demonstration Program Reauthorization"},
     {"bill_id":"119-hr-8891","bill_number":"8891","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8891","introduced_date":"2026-05-19","latest_action_date":"2026-05-19","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 8891","policy_area":"Health","title":"Rural MOMS Act of 2026"},

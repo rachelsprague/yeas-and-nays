@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000800",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5712","bill_number":"5712","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5712","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Armed Services.","latest_vote_id":null,"measure_label":"S. 5712","policy_area":null,"title":"A bill to require reporting by the Department of Defense on the use of open-air burn pits, and for other purposes."},
     {"bill_id":"119-sres-941","bill_number":"941","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/941","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5270-5271)","latest_vote_id":null,"measure_label":"S.Res. 941","policy_area":"Animals","title":"A resolution expressing support for the designation of the week of October 24, 2026, to October 31, 2026, as \"Bat Week\"."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000590",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-3813","bill_number":"3813","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/3813","introduced_date":"2025-06-06","latest_action_date":"2025-06-06","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 3813","policy_area":"International Affairs","title":"Special Relationship Military Improvement Act of 2025"},
     {"bill_id":"119-hr-3765","bill_number":"3765","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/3765","introduced_date":"2025-06-05","latest_action_date":"2025-06-06","latest_action_text":"Referred to the Subcommittee on Coast Guard and Maritime Transportation.","latest_vote_id":null,"measure_label":"H.R. 3765","policy_area":"Armed Forces and National Security","title":"FALCONS Act"},

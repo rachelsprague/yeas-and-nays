@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001066",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9856","bill_number":"9856","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9856","introduced_date":"2026-07-22","latest_action_date":"2026-07-22","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 9856","policy_area":"Sports and Recreation","title":"Prediction Markets Are Gambling Act"},
     {"bill_id":"119-hr-9352","bill_number":"9352","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9352","introduced_date":"2026-06-18","latest_action_date":"2026-06-18","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9352","policy_area":"Labor and Employment","title":"AI-Related Job Impacts Clarity Act"},

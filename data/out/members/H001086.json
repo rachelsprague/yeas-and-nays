@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001086",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10336","bill_number":"10336","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10336","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10336","policy_area":"Health","title":"Dietary Supplement Innovation Act"},
     {"bill_id":"119-hres-1507","bill_number":"1507","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1507","introduced_date":"2026-09-02","latest_action_date":"2026-09-02","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1507","policy_area":"Arts, Culture, Religion","title":"Honoring the life and legacy of Dolly Parton, a daughter of Tennessee whose extraordinary contributions to music, philanthropy, literacy, education, health, conservation, and culture enriched the lives of countless Americans."},

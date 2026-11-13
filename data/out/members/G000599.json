@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000599",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10270","bill_number":"10270","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10270","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10270","policy_area":"Health","title":"Supporting 9–8–8 Crisis Stabilization Act"},
     {"bill_id":"119-hr-9906","bill_number":"9906","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9906","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 9906","policy_area":"Taxation","title":"FIXER Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000595",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10763","bill_number":"10763","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10763","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10763","policy_area":"Health","title":"Know Your Risk Act"},
     {"bill_id":"119-hr-9223","bill_number":"9223","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9223","introduced_date":"2026-06-09","latest_action_date":"2026-06-09","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9223","policy_area":"Education","title":"To amend the Individuals with Disabilities Education Act to authorize the Secretary of Education to extend paperwork reduction waivers, and for other purposes."},

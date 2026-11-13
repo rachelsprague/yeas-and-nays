@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000603",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5589","bill_number":"5589","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5589","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Foreign Relations.","latest_vote_id":null,"measure_label":"S. 5589","policy_area":"International Affairs","title":"No United States Aid for Terrorism Act"},
     {"bill_id":"119-sjres-217","bill_number":"217","bill_type":"sjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-joint-resolution/217","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Foreign Relations.","latest_vote_id":null,"measure_label":"S.J.Res. 217","policy_area":"International Affairs","title":"A joint resolution providing for congressional disapproval of the proposed foreign military sale to the Kingdom of Saudi Arabia of certain defense articles and services."},

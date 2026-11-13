@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001201",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10348","bill_number":"10348","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10348","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Referred to the Committee on Ways and Means, and in addition to the Committee on Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10348","policy_area":"Health","title":"Health Care Fraud Prevention and Enforcement Act"},
     {"bill_id":"119-hr-9485","bill_number":"9485","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9485","introduced_date":"2026-06-25","latest_action_date":"2026-06-25","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 9485","policy_area":"Families","title":"Supporting Older Foster Youth Act"},

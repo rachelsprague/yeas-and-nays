@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001228",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10793","bill_number":"10793","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10793","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10793","policy_area":"Armed Forces and National Security","title":"To modify the authority of Department of Defense for installation support services and intergovernmental support agreements, and for other purposes."},
     {"bill_id":"119-hr-9794","bill_number":"9794","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9794","introduced_date":"2026-07-20","latest_action_date":"2026-07-20","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 9794","policy_area":"Armed Forces and National Security","title":"To direct the Secretary of Defense to establish the Senator Robert J. Dole Greatest Generation Education Program."},

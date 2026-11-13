@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000480",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1561","bill_number":"1561","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1561","introduced_date":"2026-09-17","latest_action_date":"2026-09-17","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.Res. 1561","policy_area":"Health","title":"Expressing support for the designation of the third week of September as \"Fungal Disease Awareness Week\" and encouraging efforts to improve awareness, diagnosis, treatment, surveillance, and prevention of fungal diseases in the United States."},
     {"bill_id":"119-hjres-210","bill_number":"210","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/210","introduced_date":"2026-08-06","latest_action_date":"2026-09-16","latest_action_text":"Received in the Senate.","latest_vote_id":"h119-2-0306","measure_label":"H.J.Res. 210","policy_area":"Environmental Protection","title":"Providing for congressional disapproval under chapter 8 of title 5, United States Code, of the rule submitted by the Environmental Protection Agency relating to \"California State Nonroad Engine Pollution Control Standards; Ocean-Going Vessels At-Berth; Notice of Decision\"."},

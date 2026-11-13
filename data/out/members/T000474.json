@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000474",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10901","bill_number":"10901","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10901","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10901","policy_area":"Housing and Community Development","title":"Streamlining Affordable Housing Act of 2026"},
     {"bill_id":"119-hr-10835","bill_number":"10835","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10835","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10835","policy_area":"Labor and Employment","title":"Advanced Manufacturing Jobs in America Act of 2026"},

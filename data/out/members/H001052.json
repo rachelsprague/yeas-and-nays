@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001052",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10392","bill_number":"10392","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10392","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10392","policy_area":"Taxation","title":"To temporarily suspend the imposition of certain fuel taxes."},
     {"bill_id":"119-hr-8646","bill_number":"8646","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8646","introduced_date":"2026-05-01","latest_action_date":"2026-06-08","latest_action_text":"Received in the Senate.","latest_vote_id":"h119-2-0205","measure_label":"H.R. 8646","policy_area":"Economics and Public Finance","title":"Agriculture, Rural Development, Food and Drug Administration, and Related Agency Appropriations Act, 2027"},

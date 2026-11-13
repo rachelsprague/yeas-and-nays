@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000570",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5662","bill_number":"5662","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5662","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5662","policy_area":"Labor and Employment","title":"CARE Act of 2026"},
     {"bill_id":"119-s-5635","bill_number":"5635","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5635","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5635","policy_area":"Education","title":"Arts Education for All Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000553",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1644","bill_number":"1644","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1644","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1644","policy_area":"Crime and Law Enforcement","title":"Original National Domestic Violence Awareness Month Resolution of 2026"},
     {"bill_id":"119-hres-1495","bill_number":"1495","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1495","introduced_date":"2026-08-27","latest_action_date":"2026-08-27","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.Res. 1495","policy_area":"Congress","title":"Honoring the life and legacy of Congressman Sylvester Turner, a tireless champion of Houston's diverse communities."},

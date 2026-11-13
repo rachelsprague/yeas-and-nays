@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C000059",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9838","bill_number":"9838","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9838","introduced_date":"2026-07-22","latest_action_date":"2026-07-22","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committees on Transportation and Infrastructure, and Natural Resources, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9838","policy_area":"Energy","title":"National Security Interstate Pipeline Act"},
     {"bill_id":"119-hr-9495","bill_number":"9495","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9495","introduced_date":"2026-06-26","latest_action_date":"2026-06-26","latest_action_text":"Placed on the Union Calendar, Calendar No. 621.","latest_vote_id":null,"measure_label":"H.R. 9495","policy_area":"Armed Forces and National Security","title":"Department of Defense Appropriations Act, 2027"},

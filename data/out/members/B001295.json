@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001295",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9237","bill_number":"9237","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9237","introduced_date":"2026-06-10","latest_action_date":"2026-11-11","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":"h119-2-0249","measure_label":"H.R. 9237","policy_area":"Armed Forces and National Security","title":"Take Care of America’s Veterans Act"},
     {"bill_id":"119-hr-9214","bill_number":"9214","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9214","introduced_date":"2026-06-09","latest_action_date":"2026-06-09","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 9214","policy_area":"Government Operations and Politics","title":"TSP Modernization Act"},

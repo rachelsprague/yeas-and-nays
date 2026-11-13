@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000486",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10748","bill_number":"10748","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10748","introduced_date":"2026-10-05","latest_action_date":"2026-10-05","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 10748","policy_area":"International Affairs","title":"Balkans Security Cooperation Act"},
     {"bill_id":"119-hr-10107","bill_number":"10107","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10107","introduced_date":"2026-08-13","latest_action_date":"2026-08-13","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10107","policy_area":"Government Operations and Politics","title":"Families Deserve to Know Act"},

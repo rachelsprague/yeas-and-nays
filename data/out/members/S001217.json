@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001217",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5684","bill_number":"5684","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5684","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs under authority of the order of the Senate of 09/30/2026.","latest_vote_id":null,"measure_label":"S. 5684","policy_area":"Government Operations and Politics","title":"No Cash for Incompetent and Malicious Contractors Act"},
     {"bill_id":"119-s-5682","bill_number":"5682","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5682","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Read twice and referred to the Committee on Foreign Relations under authority of the order of the Senate of 09/30/2026.","latest_vote_id":null,"measure_label":"S. 5682","policy_area":"International Affairs","title":"Foreign Government-Owned Media FARA Registration Act"},

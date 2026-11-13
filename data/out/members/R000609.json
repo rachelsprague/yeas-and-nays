@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000609",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9503","bill_number":"9503","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9503","introduced_date":"2026-06-29","latest_action_date":"2026-09-16","latest_action_text":"Ordered to be Reported (Amended) by Voice Vote.","latest_vote_id":null,"measure_label":"H.R. 9503","policy_area":"Crime and Law Enforcement","title":"Officer Leslie Coffelt U.S. Secret Service Police Act of 2026"},
     {"bill_id":"119-hr-8842","bill_number":"8842","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8842","introduced_date":"2026-05-15","latest_action_date":"2026-05-18","latest_action_text":"Referred to the Subcommittee on Transportation and Maritime Security.","latest_vote_id":null,"measure_label":"H.R. 8842","policy_area":"Transportation and Public Works","title":"FAST Act"},

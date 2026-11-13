@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001184",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hconres-126","bill_number":"126","bill_type":"hconres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-concurrent-resolution/126","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.Con.Res. 126","policy_area":null,"title":"Directing the President, pursuant to section 5(c) of the War Powers Resolution, to remove United States Armed Forces from hostilities with Iran."},
     {"bill_id":"119-hres-1655","bill_number":"1655","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1655","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":"h119-2-0317","measure_label":"H.Res. 1655","policy_area":null,"title":"Impeaching Peter Brian Hegseth, Secretary of Defense, for high crimes and misdemeanors."},

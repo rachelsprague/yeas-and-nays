@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000788",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1620","bill_number":"1620","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1620","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.Res. 1620","policy_area":"Crime and Law Enforcement","title":"Supporting the goals and ideals of \"National Nonviolence Week\" to raise awareness of youth violence in the United States."},
     {"bill_id":"119-hjres-216","bill_number":"216","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/216","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.J.Res. 216","policy_area":"Crime and Law Enforcement","title":"Proposing an amendment to the Constitution of the United States to prohibit the use of slavery and involuntary servitude as a punishment for a crime."},

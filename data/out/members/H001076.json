@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001076",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5671","bill_number":"5671","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5671","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5671","policy_area":"Health","title":"State Strategic Stockpile Act of 2026"},
     {"bill_id":"119-sres-921","bill_number":"921","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/921","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Referred to the Committee on Appropriations. (text: CR S5176)","latest_vote_id":null,"measure_label":"S.Res. 921","policy_area":"Economics and Public Finance","title":"A resolution expressing the sense of the Senate that the advertisements promoting President Donald Trump that aired in September 2026, which included the direct language \"paid for by the U.S. Government,\" should not be paid for by the United States Government."},

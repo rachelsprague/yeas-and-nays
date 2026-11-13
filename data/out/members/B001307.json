@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001307",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10795","bill_number":"10795","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10795","introduced_date":"2026-10-13","latest_action_date":"2026-10-13","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 10795","policy_area":"International Affairs","title":"Sudan IMPACT Act"},
     {"bill_id":"119-hr-9663","bill_number":"9663","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9663","introduced_date":"2026-07-14","latest_action_date":"2026-07-14","latest_action_text":"Referred to the House Committee on Science, Space, and Technology.","latest_vote_id":null,"measure_label":"H.R. 9663","policy_area":"Environmental Protection","title":"State Standing Committee Act"},

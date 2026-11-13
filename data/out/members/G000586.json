@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000586",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10518","bill_number":"10518","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10518","introduced_date":"2026-09-21","latest_action_date":"2026-09-21","latest_action_text":"Referred to the Committee on Education and Workforce, and in addition to the Committee on the Budget, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10518","policy_area":"Education","title":"Diversify Act"},
     {"bill_id":"119-hr-9853","bill_number":"9853","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9853","introduced_date":"2026-07-22","latest_action_date":"2026-07-22","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9853","policy_area":"Education","title":"Right to Learn Act of 2026"},

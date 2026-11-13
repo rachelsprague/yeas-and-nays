@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001120",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-8297","bill_number":"8297","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8297","introduced_date":"2026-04-15","latest_action_date":"2026-04-15","latest_action_text":"Referred to the Committee on Oversight and Government Reform, and in addition to the Committee on the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 8297","policy_area":"Civil Rights and Liberties, Minority Issues","title":"District of Columbia Firearm Freedom Act"},
     {"bill_id":"119-hr-7572","bill_number":"7572","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7572","introduced_date":"2026-02-13","latest_action_date":"2026-02-13","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 7572","policy_area":"Crime and Law Enforcement","title":"No Vigilante Checkpoints and Civil Rights Protection Act of 2026"},

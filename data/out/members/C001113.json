@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001113",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sconres-41","bill_number":"41","bill_type":"sconres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-concurrent-resolution/41","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Referred to the Committee on Health, Education, Labor, and Pensions. (text: CR S5359)","latest_vote_id":null,"measure_label":"S.Con.Res. 41","policy_area":null,"title":"A concurrent resolution recognizing the significance of equal pay and the disparity in wages paid to Latinas in comparison to White, non-Hispanic men."},
     {"bill_id":"119-s-5681","bill_number":"5681","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5681","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5681","policy_area":"Housing and Community Development","title":"A bill to provide for the protection of the duties of the Inspector General of the Federal Housing Finance Agency."},

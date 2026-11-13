@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001213",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9368","bill_number":"9368","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9368","introduced_date":"2026-06-18","latest_action_date":"2026-07-15","latest_action_text":"Placed on the Union Calendar, Calendar No. 653.","latest_vote_id":null,"measure_label":"H.R. 9368","policy_area":"Government Operations and Politics","title":"Voter ID Act"},
     {"bill_id":"119-hr-9367","bill_number":"9367","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9367","introduced_date":"2026-06-18","latest_action_date":"2026-06-24","latest_action_text":"Ordered to be Reported (Amended) by the Yeas and Nays: 5 - 4.","latest_vote_id":null,"measure_label":"H.R. 9367","policy_area":"Government Operations and Politics","title":"Stop Lawmakers From Predicting Act"},

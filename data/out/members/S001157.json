@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001157",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1200","bill_number":"1200","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1200","introduced_date":"2026-04-20","latest_action_date":"2026-04-20","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.Res. 1200","policy_area":"Health","title":"Supporting the designation of March 2026 as Endometriosis Awareness Month."},
     {"bill_id":"119-hres-972","bill_number":"972","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/972","introduced_date":"2025-12-19","latest_action_date":"2025-12-19","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.Res. 972","policy_area":"Civil Rights and Liberties, Minority Issues","title":"Recognizing the significance of Atlanta, Georgia, as the cradle of the civil rights movement."},

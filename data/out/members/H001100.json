@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001100",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10758","bill_number":"10758","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10758","introduced_date":"2026-10-06","latest_action_date":"2026-10-20","latest_action_text":"Referred to the Subcommittee on Health.","latest_vote_id":null,"measure_label":"H.R. 10758","policy_area":"Armed Forces and National Security","title":"Veterans Outdoor Rehabilitation Act"},
     {"bill_id":"119-hr-10411","bill_number":"10411","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10411","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 10411","policy_area":"Agriculture and Food","title":"To direct the Secretary of Agriculture to consider certain acreage not planted due to a lack of irrigation water to be eligible for prevented planting payments, and for other purposes."},

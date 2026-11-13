@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M000934",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-955","bill_number":"955","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/955","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment by Unanimous Consent. (consideration: CR S5524; text: CR S5416)","latest_vote_id":null,"measure_label":"S.Res. 955","policy_area":null,"title":"A resolution permitting the collection of clothing, toys, food, and housewares during the holiday season for charitable purposes in Senate buildings."},
     {"bill_id":"119-sres-913","bill_number":"913","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/913","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5064-5065; text: CR S5074-5075)","latest_vote_id":null,"measure_label":"S.Res. 913","policy_area":"Congress","title":"A resolution relating to the death of the Honorable Nancy Kassebaum, former United States Senator for the State of Kansas."},

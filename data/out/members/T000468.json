@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000468",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10834","bill_number":"10834","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10834","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10834","policy_area":"Transportation and Public Works","title":"Gas Money Saved Act"},
     {"bill_id":"119-hres-1585","bill_number":"1585","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1585","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.Res. 1585","policy_area":"Public Lands and Natural Resources","title":"Expressing support for \"National Public Lands Day\" and encouraging the people of the United States to visit public lands on this fee-free day and recognize their spiritual and cultural value, as well as their contribution to the economy of the United States."},

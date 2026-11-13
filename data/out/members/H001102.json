@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001102",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9611","bill_number":"9611","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9611","introduced_date":"2026-07-09","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported (Amended) by the Yeas and Nays: 20 - 16.","latest_vote_id":null,"measure_label":"H.R. 9611","policy_area":"Education","title":"Less Bureaucracy, Better Higher Education Act"},
     {"bill_id":"119-hr-9610","bill_number":"9610","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9610","introduced_date":"2026-07-09","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported (Amended) by the Yeas and Nays: 19 - 16.","latest_vote_id":null,"measure_label":"H.R. 9610","policy_area":"Education","title":"Less Bureaucracy, Better K–12 Education Act"},

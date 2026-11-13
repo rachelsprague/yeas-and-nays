@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000187",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10640","bill_number":"10640","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10640","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10640","policy_area":"Health","title":"Urban Health Transformation Act of 2026"},
     {"bill_id":"119-hr-10325","bill_number":"10325","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10325","introduced_date":"2026-09-08","latest_action_date":"2026-09-16","latest_action_text":"Ordered to be Reported Unfavorably (Amended) by the Yeas and Nays: 21 - 28.","latest_vote_id":null,"measure_label":"H.R. 10325","policy_area":"Finance and Financial Sector","title":"To increase the mandatory contribution amount of Federal Home Loan Banks to the Affordable Housing Program, and for other purposes."},

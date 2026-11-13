@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000555",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5709","bill_number":"5709","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5709","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"S. 5709","policy_area":null,"title":"A bill to require the Secretary of Veterans Affairs to conduct an epidemiological study of certain health effects that have been experienced by women veterans, and for other purposes."},
     {"bill_id":"119-s-5594","bill_number":"5594","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5594","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5594","policy_area":null,"title":"Data Protection Act of 2026"},

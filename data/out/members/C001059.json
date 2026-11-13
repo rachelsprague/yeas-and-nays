@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001059",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10772","bill_number":"10772","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10772","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10772","policy_area":"Armed Forces and National Security","title":"Frontline Innovation Act"},
     {"bill_id":"119-hres-1611","bill_number":"1611","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1611","introduced_date":"2026-10-05","latest_action_date":"2026-10-05","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.Res. 1611","policy_area":"Energy","title":"Expressing support for the designation of October 8, 2026, as \"National Hydrogen and Fuel Cell Day\"."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001053",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1500","bill_number":"1500","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1500","introduced_date":"2026-08-31","latest_action_date":"2026-08-31","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1500","policy_area":"Sports and Recreation","title":"Congratulating the University of Oklahoma baseball team for winning the 2026 Men's College World Series."},
     {"bill_id":"119-hr-9770","bill_number":"9770","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9770","introduced_date":"2026-07-18","latest_action_date":"2026-07-22","latest_action_text":"Received in the Senate.","latest_vote_id":"h119-2-0272","measure_label":"H.R. 9770","policy_area":"Economics and Public Finance","title":"Continuing Appropriations Act, 2027"},

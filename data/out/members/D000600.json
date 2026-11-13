@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000600",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10257","bill_number":"10257","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10257","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10257","policy_area":"Government Operations and Politics","title":"To require the United States Postal Service to designate ZIP Codes for certain communities."},
     {"bill_id":"119-hres-1440","bill_number":"1440","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1440","introduced_date":"2026-07-20","latest_action_date":"2026-07-20","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.Res. 1440","policy_area":"Government Operations and Politics","title":"Commemorating the 100th anniversary of the city of Miami Springs, Florida."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001087",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9776","bill_number":"9776","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9776","introduced_date":"2026-07-20","latest_action_date":"2026-07-20","latest_action_text":"Referred to the Committee on Transportation and Infrastructure, and in addition to the Committee on Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9776","policy_area":"Water Resources Development","title":"FLOWS Act of 2026"},
     {"bill_id":"119-hr-9624","bill_number":"9624","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9624","introduced_date":"2026-07-09","latest_action_date":"2026-07-20","latest_action_text":"Ordered to be Reported (Amended) by Voice Vote.","latest_vote_id":null,"measure_label":"H.R. 9624","policy_area":"Armed Forces and National Security","title":"Intelligence Authorization Act for Fiscal Year 2027"},

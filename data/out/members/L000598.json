@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000598",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9913","bill_number":"9913","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9913","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9913","policy_area":"Commerce","title":"Safe Sips Act of 2026"},
     {"bill_id":"119-hres-1394","bill_number":"1394","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1394","introduced_date":"2026-06-29","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported by the Yeas and Nays: 14 - 9.","latest_vote_id":null,"measure_label":"H.Res. 1394","policy_area":"Crime and Law Enforcement","title":"Condemning prosecution policies that give preferential treatment to foreign nationals over United States citizens."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000622",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5696","bill_number":"5696","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5696","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"S. 5696","policy_area":null,"title":"A bill to amend title 38, United States Code, to improve presumptions of toxic exposure, and for other purposes."},
     {"bill_id":"119-s-5556","bill_number":"5556","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5556","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Foreign Relations.","latest_vote_id":null,"measure_label":"S. 5556","policy_area":"International Affairs","title":"Accessible Ukraine Act"},

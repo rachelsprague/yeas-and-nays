@@ -1,5 +1,6 @@
 {
   "bioguide_id": "O000177",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9636","bill_number":"9636","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9636","introduced_date":"2026-07-09","latest_action_date":"2026-07-09","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9636","policy_area":"Labor and Employment","title":"Improving CTU Act of 2026"},
     {"bill_id":"119-hr-9606","bill_number":"9606","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9606","introduced_date":"2026-07-09","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported (Amended) by the Yeas and Nays: 20 - 16.","latest_vote_id":null,"measure_label":"H.R. 9606","policy_area":"Education","title":"Less Bureaucracy, Better Child Care for Student Parents Act"},

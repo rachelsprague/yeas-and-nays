@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000165",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9536","bill_number":"9536","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9536","introduced_date":"2026-06-30","latest_action_date":"2026-06-30","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9536","policy_area":"Law","title":"FEES Act of 2026"},
     {"bill_id":"119-hr-8240","bill_number":"8240","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8240","introduced_date":"2026-04-09","latest_action_date":"2026-04-09","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 8240","policy_area":"Immigration","title":"SAFER Act of 2026"},

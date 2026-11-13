@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001229",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10371","bill_number":"10371","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10371","introduced_date":"2026-09-14","latest_action_date":"2026-11-11","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":null,"measure_label":"H.R. 10371","policy_area":"Commerce","title":"Ensuring SBA Implementation of GAO Recommendations Act of 2026"},
     {"bill_id":"119-hr-9810","bill_number":"9810","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9810","introduced_date":"2026-07-21","latest_action_date":"2026-07-21","latest_action_text":"Referred to the House Committee on Small Business.","latest_vote_id":null,"measure_label":"H.R. 9810","policy_area":"Commerce","title":"Small Business Development Centers Improvement Act of 2026"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001327",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1630","bill_number":"1630","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1630","introduced_date":"2026-10-19","latest_action_date":"2026-10-19","latest_action_text":"Referred to the Committee on Education and Workforce, and in addition to the Committee on Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.Res. 1630","policy_area":"Families","title":"Expressing the importance of raising awareness of opportunity youth and the necessity of investing in and supporting reconnection to education and career pathways across the United States."},
     {"bill_id":"119-hr-10770","bill_number":"10770","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10770","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10770","policy_area":"Health","title":"340B Rebate Model Delay Act"},

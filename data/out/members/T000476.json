@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000476",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-946","bill_number":"946","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/946","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5272-5273)","latest_vote_id":null,"measure_label":"S.Res. 946","policy_area":"Armed Forces and National Security","title":"A resolution designating September 30, 2026, as \"National Veterans Suicide Prevention Day\"."},
     {"bill_id":"119-s-5529","bill_number":"5529","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5529","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5529","policy_area":"Commerce","title":"DEFEND IP Act"},

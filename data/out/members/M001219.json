@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001219",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10408","bill_number":"10408","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10408","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10408","policy_area":"Government Operations and Politics","title":"Guam-Federal Consultation Act"},
     {"bill_id":"119-hr-10407","bill_number":"10407","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10407","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10407","policy_area":"Families","title":"Childcare Cost Relief Act of 2026"},

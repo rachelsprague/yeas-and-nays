@@ -1,5 +1,6 @@
 {
   "bioguide_id": "V000135",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10948","bill_number":"10948","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10948","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10948","policy_area":"Armed Forces and National Security","title":"Hire Our Heroes Act"},
     {"bill_id":"119-hr-10067","bill_number":"10067","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10067","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10067","policy_area":"Crime and Law Enforcement","title":"Ride in Freedom Act"},

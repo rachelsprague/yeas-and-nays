@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000491",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9153","bill_number":"9153","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9153","introduced_date":"2026-06-04","latest_action_date":"2026-06-04","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 9153","policy_area":"Armed Forces and National Security","title":"To amend the National Defense Authorization Act for Fiscal Year 2025 to exempt certain military installations from guidance regarding the maintenance of the aggregate square footage of facilities of the Department of Defense."},
     {"bill_id":"119-hr-8087","bill_number":"8087","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8087","introduced_date":"2026-03-25","latest_action_date":"2026-03-25","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 8087","policy_area":"Finance and Financial Sector","title":"Main Street Depositor Protection Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001205",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10282","bill_number":"10282","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10282","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10282","policy_area":"Taxation","title":"Stronger Start for Working Families Act"},
     {"bill_id":"119-hr-10193","bill_number":"10193","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10193","introduced_date":"2026-08-31","latest_action_date":"2026-08-31","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10193","policy_area":"Social Welfare","title":"We Can't Wait Act of 2026"},

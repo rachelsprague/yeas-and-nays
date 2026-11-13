@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001205",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10942","bill_number":"10942","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10942","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10942","policy_area":"Finance and Financial Sector","title":"No Bonuses in Bankruptcy Act of 2026"},
     {"bill_id":"119-hr-10895","bill_number":"10895","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10895","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the Committee on Education and Workforce, and in addition to the Committee on House Administration, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10895","policy_area":"Education","title":"Teaching Engaged Citizenship Act of 2026"},

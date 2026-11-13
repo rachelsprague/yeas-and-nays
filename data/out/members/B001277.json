@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001277",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5618","bill_number":"5618","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5618","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5618","policy_area":"Law","title":"Judicial Ethics Enforcement Act of 2026"},
     {"bill_id":"119-sres-943","bill_number":"943","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/943","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5271)","latest_vote_id":null,"measure_label":"S.Res. 943","policy_area":"Transportation and Public Works","title":"A resolution supporting the goals and ideals of a National Move Over Law Day."},

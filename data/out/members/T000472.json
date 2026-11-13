@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000472",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10946","bill_number":"10946","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10946","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 10946","policy_area":"Congress","title":"Congressional Office of Technology Improvement and Enhancement Act"},
     {"bill_id":"119-hr-10323","bill_number":"10323","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10323","introduced_date":"2026-09-08","latest_action_date":"2026-09-08","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10323","policy_area":"Labor and Employment","title":"Thirty-Two Hour Workweek Act"},

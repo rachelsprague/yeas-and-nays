@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001208",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5554","bill_number":"5554","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5554","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5554","policy_area":"Health","title":"Ovarian Cancer IMPACT Act"},
     {"bill_id":"119-sres-907","bill_number":"907","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/907","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the Committee on Health, Education, Labor, and Pensions. (text: CR S5009-5010)","latest_vote_id":null,"measure_label":"S.Res. 907","policy_area":"Health","title":"A resolution supporting the designation of September 2026 as \"National Ovarian Cancer Awareness Month\"."},

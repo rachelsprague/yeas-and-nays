@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001194",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5664","bill_number":"5664","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5664","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5664","policy_area":"Labor and Employment","title":"FUTURE of Workers Act"},
     {"bill_id":"119-s-5614","bill_number":"5614","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5614","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5614","policy_area":"Education","title":"Beyond the Box for Higher Education Act of 2026"},

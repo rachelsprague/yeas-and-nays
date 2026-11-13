@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001184",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5641","bill_number":"5641","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5641","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5641","policy_area":"Taxation","title":"Opportunities for Nuclear Energy Investment Act"},
     {"bill_id":"119-sres-947","bill_number":"947","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/947","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5273)","latest_vote_id":null,"measure_label":"S.Res. 947","policy_area":"Health","title":"A resolution designating September 2026 as \"National Childhood Cancer Awareness Month\"."},

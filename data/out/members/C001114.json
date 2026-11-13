@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001114",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5674","bill_number":"5674","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5674","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5674","policy_area":"Commerce","title":"Recycled Materials Attribution Act of 2026"},
     {"bill_id":"119-s-5668","bill_number":"5668","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5668","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5668","policy_area":"Science, Technology, Communications","title":"Methane Monitoring Science Act of 2026"},

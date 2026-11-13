@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001046",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5675","bill_number":"5675","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5675","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Agriculture, Nutrition, and Forestry.","latest_vote_id":null,"measure_label":"S. 5675","policy_area":"Armed Forces and National Security","title":"Nutrition Continuity for Military Families Act of 2026"},
     {"bill_id":"119-s-5659","bill_number":"5659","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5659","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5659","policy_area":"Education","title":"Literacy Improvement for Transformation Act of 2026"},

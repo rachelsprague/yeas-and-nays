@@ -1,5 +1,6 @@
 {
   "bioguide_id": "V000130",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-11008","bill_number":"11008","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/11008","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 11008","policy_area":null,"title":"To require U.S. Citizenship and Immigration Services to facilitate naturalization services for noncitizen veterans who have been removed from the United States or are inadmissible."},
     {"bill_id":"119-hr-10149","bill_number":"10149","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10149","introduced_date":"2026-08-24","latest_action_date":"2026-08-24","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10149","policy_area":null,"title":"For the relief of Maria Cordova."},

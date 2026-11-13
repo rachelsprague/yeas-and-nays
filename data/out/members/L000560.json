@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000560",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10882","bill_number":"10882","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10882","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10882","policy_area":"Armed Forces and National Security","title":"Veteran Breast Cancer Fairness Act"},
     {"bill_id":"119-hr-10679","bill_number":"10679","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10679","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 10679","policy_area":"Government Operations and Politics","title":"America Votes Act of 2026"},

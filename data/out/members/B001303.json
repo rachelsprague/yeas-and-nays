@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001303",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5640","bill_number":"5640","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5640","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Environment and Public Works.","latest_vote_id":null,"measure_label":"S. 5640","policy_area":"Environmental Protection","title":"Data Center Transparency Act of 2026"},
     {"bill_id":"119-sres-930","bill_number":"930","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/930","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Referred to the Committee on Health, Education, Labor, and Pensions. (text: CR S5265-5266)","latest_vote_id":null,"measure_label":"S.Res. 930","policy_area":"Health","title":"A resolution expressing support for the recognition of October 2026, as \"World Menopause Awareness Month\" and for global awareness and access to care during menopausal transition and post-menopause."},

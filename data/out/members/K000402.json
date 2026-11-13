@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000402",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10191","bill_number":"10191","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10191","introduced_date":"2026-08-31","latest_action_date":"2026-08-31","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10191","policy_area":"Government Operations and Politics","title":"To require curbside delivery of mail at certain housing developments, and for other purposes."},
     {"bill_id":"119-hr-10162","bill_number":"10162","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10162","introduced_date":"2026-08-27","latest_action_date":"2026-08-27","latest_action_text":"Referred to the Committee on Science, Space, and Technology, and in addition to the Committee on Transportation and Infrastructure, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10162","policy_area":"Environmental Protection","title":"STORMWATER Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000597",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10500","bill_number":"10500","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10500","introduced_date":"2026-09-17","latest_action_date":"2026-09-17","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10500","policy_area":"Energy","title":"Unleashing American Pipelines Act"},
     {"bill_id":"119-hr-10276","bill_number":"10276","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10276","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 10276","policy_area":"Government Operations and Politics","title":"Ballots by Election Day Act"},

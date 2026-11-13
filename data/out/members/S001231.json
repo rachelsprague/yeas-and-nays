@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001231",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10990","bill_number":"10990","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10990","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committee on the Budget, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10990","policy_area":null,"title":"For the relief of Paula Valentina Albornoz Hernández, Eliana Karina Hernández Peranquive, Nicole Alejandra Albornoz Hernández, and Leonardo Albornoz Rodríguez."},
     {"bill_id":"119-hres-1637","bill_number":"1637","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1637","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1637","policy_area":"Civil Rights and Liberties, Minority Issues","title":"Recognizing the significance of equal pay and the pay disparity between disabled women and nondisabled men."},

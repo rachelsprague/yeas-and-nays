@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000600",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10892","bill_number":"10892","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10892","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Science, Space, and Technology, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10892","policy_area":"Commerce","title":"Performance Life Disclosure Act of 2026"},
     {"bill_id":"119-hr-10829","bill_number":"10829","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10829","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10829","policy_area":"Commerce","title":"One Front Door for Elder Fraud Act of 2026"},

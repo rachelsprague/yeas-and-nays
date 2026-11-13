@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001110",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10863","bill_number":"10863","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10863","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10863","policy_area":"Armed Forces and National Security","title":"Vets and Pets Act"},
     {"bill_id":"119-hr-10815","bill_number":"10815","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10815","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10815","policy_area":"Taxation","title":"Bright Beginnings Act"},

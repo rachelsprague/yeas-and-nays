@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001224",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10896","bill_number":"10896","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10896","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10896","policy_area":"Immigration","title":"To terminate the diversity immigrant visa program."},
     {"bill_id":"119-hr-10766","bill_number":"10766","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10766","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10766","policy_area":"Armed Forces and National Security","title":"To direct the Secretary of Defense to update the Critical Asset List of the Department of Defense to incorporate assets critical to the development, deployment, and operation of the Golden Dome missile defense system."},

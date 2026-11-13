@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001108",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1543","bill_number":"1543","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1543","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":null,"measure_label":"H.Res. 1543","policy_area":"Congress","title":"Recommending that the House of Representatives find Leon D. Black in contempt of Congress for refusal to comply with subpoenas duly issued by the Committee on Oversight and Government Reform."},
     {"bill_id":"119-hr-10389","bill_number":"10389","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10389","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10389","policy_area":"Law","title":"Survivor’s Voice Protection Act"},

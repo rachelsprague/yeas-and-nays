@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000802",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5669","bill_number":"5669","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5669","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5669","policy_area":"Taxation","title":"End Tax Breaks for Dark Money Act"},
     {"bill_id":"119-s-5656","bill_number":"5656","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5656","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5656","policy_area":"Crime and Law Enforcement","title":"Domestic Violence SAFE Notice Act"},

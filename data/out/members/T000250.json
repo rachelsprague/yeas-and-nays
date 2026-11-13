@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000250",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-928","bill_number":"928","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/928","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5186; text: CR S5178)","latest_vote_id":null,"measure_label":"S.Res. 928","policy_area":"Congress","title":"A resolution to authorize testimony, document production, and representation by the Senate Legal Counsel in the case of United States v. Terry."},
     {"bill_id":"119-s-5359","bill_number":"5359","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5359","introduced_date":"2026-08-07","latest_action_date":"2026-09-30","latest_action_text":"Committee on Energy and Natural Resources. Ordered to be reported with an amendment in the nature of a substitute favorably.","latest_vote_id":null,"measure_label":"S. 5359","policy_area":"Public Lands and Natural Resources","title":"Pennington County Land Conveyance Act"},

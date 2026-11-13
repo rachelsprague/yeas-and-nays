@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001177",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10192","bill_number":"10192","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10192","introduced_date":"2026-08-31","latest_action_date":"2026-08-31","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10192","policy_area":"Government Operations and Politics","title":"GRANT Reform Act of 2026"},
     {"bill_id":"119-hr-10128","bill_number":"10128","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10128","introduced_date":"2026-08-20","latest_action_date":"2026-09-02","latest_action_text":"Subcommittee Hearings Held","latest_vote_id":null,"measure_label":"H.R. 10128","policy_area":"Public Lands and Natural Resources","title":"To codify Secretary's Order 3434 of the Department of the Interior."},

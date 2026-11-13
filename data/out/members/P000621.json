@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000621",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1588","bill_number":"1588","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1588","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.Res. 1588","policy_area":"International Affairs","title":"Congratulating the People's Republic of Bangladesh on assuming the Presidency of the 81st session of the United Nations General Assembly."},
     {"bill_id":"119-hr-10596","bill_number":"10596","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10596","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10596","policy_area":"Environmental Protection","title":"Safe Water for Schools Act of 2026"},

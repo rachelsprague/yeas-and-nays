@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000145",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5715","bill_number":"5715","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5715","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs. (Sponsor introductory remarks on measure: CR S5415)","latest_vote_id":null,"measure_label":"S. 5715","policy_area":null,"title":"A bill to amend title 38, United States Code, and the United States Housing Act of 1937, to make certain improvements to the supported housing program for veterans commonly known as \"HUD-VASH\", and for other purposes."},
     {"bill_id":"119-s-5694","bill_number":"5694","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5694","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Read twice and referred to the Committee on Indian Affairs. (Sponsor introductory remarks on measure: CR S5358)","latest_vote_id":null,"measure_label":"S. 5694","policy_area":null,"title":"A bill to take certain land in the State of California into trust for the benefit of the Barona Group of Capitan Grande Band of Mission Indians of the Barona Reservation, California, and for other purposes."},

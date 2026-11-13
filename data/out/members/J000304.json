@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000304",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10126","bill_number":"10126","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10126","introduced_date":"2026-08-20","latest_action_date":"2026-08-20","latest_action_text":"Referred to the Committee on Armed Services, and in addition to the Committee on Foreign Affairs, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10126","policy_area":"Armed Forces and National Security","title":"DEMAND Act of 2026"},
     {"bill_id":"119-hr-9909","bill_number":"9909","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9909","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 9909","policy_area":"Armed Forces and National Security","title":"Small Unmanned Aircraft Systems Operational Test, Evaluation, and Training Corridor Act"},

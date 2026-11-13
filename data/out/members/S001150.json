@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001150",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5604","bill_number":"5604","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5604","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Environment and Public Works.","latest_vote_id":null,"measure_label":"S. 5604","policy_area":"Environmental Protection","title":"Improving Species Recovery Act"},
     {"bill_id":"119-sres-932","bill_number":"932","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/932","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Referred to the Committee on Foreign Relations. (text: CR S5266-5267)","latest_vote_id":null,"measure_label":"S.Res. 932","policy_area":"International Affairs","title":"A resolution requesting information on Venezuela's human rights practices pursuant to section 502B(c) of the Foreign Assistance Act of 1961."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001125",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10961","bill_number":"10961","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10961","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10961","policy_area":null,"title":"To direct the Secretary of Veterans Affairs to report on the Warrior Training Advancement Course of the Veterans Benefits Administration."},
     {"bill_id":"119-hres-1646","bill_number":"1646","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1646","introduced_date":"2026-11-02","latest_action_date":"2026-11-02","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.Res. 1646","policy_area":"Health","title":"Supporting the recognition of November as \"Bladder Health Awareness Month\", supporting efforts to increase public education, reduce stigma, and improve access to care for bladder health conditions, and for other purposes."},

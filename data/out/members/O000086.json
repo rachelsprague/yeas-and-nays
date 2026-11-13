@@ -1,5 +1,6 @@
 {
   "bioguide_id": "O000086",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9926","bill_number":"9926","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9926","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 9926","policy_area":"Transportation and Public Works","title":"PATH Act"},
     {"bill_id":"119-hr-9604","bill_number":"9604","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9604","introduced_date":"2026-07-09","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported (Amended) by the Yeas and Nays: 20 - 15.","latest_vote_id":null,"measure_label":"H.R. 9604","policy_area":"Education","title":"Less Bureaucracy, Better Tribal Education Act"},

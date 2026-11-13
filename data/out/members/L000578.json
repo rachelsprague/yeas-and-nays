@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000578",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-6200","bill_number":"6200","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/6200","introduced_date":"2025-11-20","latest_action_date":"2025-11-20","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 6200","policy_area":"Environmental Protection","title":"ESSENTIAL Act"},
     {"bill_id":"119-hr-5961","bill_number":"5961","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/5961","introduced_date":"2025-11-07","latest_action_date":"2025-11-07","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 5961","policy_area":"Finance and Financial Sector","title":"Flood Insurance for Farmers Act of 2025"},

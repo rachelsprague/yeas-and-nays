@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001226",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10851","bill_number":"10851","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10851","introduced_date":"2026-10-19","latest_action_date":"2026-10-19","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10851","policy_area":"Energy","title":"Socket Full of Sunshine Act"},
     {"bill_id":"119-hr-9614","bill_number":"9614","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9614","introduced_date":"2026-07-09","latest_action_date":"2026-11-10","latest_action_text":"Received in the Senate and Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"H.R. 9614","policy_area":"Government Operations and Politics","title":"NRC Staff Pay Alignment Act"},

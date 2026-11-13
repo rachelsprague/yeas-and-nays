@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000404",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10341","bill_number":"10341","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10341","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10341","policy_area":"Immigration","title":"Marianas Tourism Advancement Act of 2026"},
     {"bill_id":"119-hr-10318","bill_number":"10318","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10318","introduced_date":"2026-09-08","latest_action_date":"2026-09-08","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10318","policy_area":"Energy","title":"PACMESA"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000034",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10788","bill_number":"10788","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10788","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committees on Education and Workforce, and Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10788","policy_area":"Health","title":"Lower Premiums, Faster Payments Act"},
     {"bill_id":"119-hr-10453","bill_number":"10453","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10453","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10453","policy_area":"Science, Technology, Communications","title":"Communications and Technology Transparency Act of 2026"},

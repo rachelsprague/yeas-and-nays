@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001099",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10964","bill_number":"10964","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10964","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10964","policy_area":null,"title":"To designate the facility of the United States Postal Service located at 2503 South Washington Avenue in Titusville, Florida, as the \"Agent Kevin Morris Post Office\"."},
     {"bill_id":"119-hr-10781","bill_number":"10781","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10781","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10781","policy_area":"Government Operations and Politics","title":"National American History and Founders Month Act"},

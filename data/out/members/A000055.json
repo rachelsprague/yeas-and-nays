@@ -1,5 +1,6 @@
 {
   "bioguide_id": "A000055",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9260","bill_number":"9260","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9260","introduced_date":"2026-06-11","latest_action_date":"2026-06-11","latest_action_text":"Placed on the Union Calendar, Calendar No. 604.","latest_vote_id":null,"measure_label":"H.R. 9260","policy_area":"Economics and Public Finance","title":"Departments of Labor, Health and Human Services, and Education, and Related Agencies Appropriations Act, 2027"},
     {"bill_id":"119-hr-6170","bill_number":"6170","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/6170","introduced_date":"2025-11-20","latest_action_date":"2025-11-20","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 6170","policy_area":"Crime and Law Enforcement","title":"ADOPT Act of 2025"},

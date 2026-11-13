@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001088",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5676","bill_number":"5676","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5676","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5676","policy_area":"Education","title":"Strengthening Civics Education Act"},
     {"bill_id":"119-s-5637","bill_number":"5637","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5637","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Foreign Relations.","latest_vote_id":null,"measure_label":"S. 5637","policy_area":"International Affairs","title":"STRATA Act of 2026"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001216",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10969","bill_number":"10969","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10969","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10969","policy_area":null,"title":"Healthy Meal Time Act of 2026"},
     {"bill_id":"119-hr-10604","bill_number":"10604","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10604","introduced_date":"2026-09-24","latest_action_date":"2026-10-14","latest_action_text":"Referred to the Subcommittee on Economic Opportunity.","latest_vote_id":null,"measure_label":"H.R. 10604","policy_area":"Armed Forces and National Security","title":"Zeus 95 Memorial Act"},

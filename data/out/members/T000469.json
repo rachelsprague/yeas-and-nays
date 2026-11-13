@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000469",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10611","bill_number":"10611","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10611","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10611","policy_area":"Sports and Recreation","title":"TIME Act of 2026"},
     {"bill_id":"119-hr-10469","bill_number":"10469","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10469","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10469","policy_area":"Energy","title":"Regional Energy Hubs Act of 2026"},

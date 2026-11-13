@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000377",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5686","bill_number":"5686","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5686","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Read twice and referred to the Committee on Armed Services under authority of the order of the Senate of 09/30/2026.","latest_vote_id":null,"measure_label":"S. 5686","policy_area":"Armed Forces and National Security","title":"No Public Executions in America Act"},
     {"bill_id":"119-s-5623","bill_number":"5623","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5623","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Foreign Relations.","latest_vote_id":null,"measure_label":"S. 5623","policy_area":"International Affairs","title":"Reaffirming Extended Nuclear Deterrence Act of 2026"},

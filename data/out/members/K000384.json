@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000384",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5660","bill_number":"5660","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5660","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5660","policy_area":"Education","title":"SUCCESS Act of 2026"},
     {"bill_id":"119-s-5657","bill_number":"5657","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5657","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5657","policy_area":"Education","title":"SOS Campus Act"},

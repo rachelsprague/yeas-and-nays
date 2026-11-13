@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001103",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1617","bill_number":"1617","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1617","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.Res. 1617","policy_area":null,"title":"Recognizes October as \"American Pharmacy Month\" in honor of the contributions of pharmacists and pharmacy teams in providing safe, accessible, affordable, and effective patient care services and products to all residents and protecting public health in communities across the United States;."},
     {"bill_id":"119-hr-9266","bill_number":"9266","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9266","introduced_date":"2026-06-11","latest_action_date":"2026-06-11","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 9266","policy_area":"Transportation and Public Works","title":"Chief Chris Eddy’s Law"},

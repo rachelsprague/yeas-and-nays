@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000389",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10879","bill_number":"10879","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10879","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10879","policy_area":"Labor and Employment","title":"Workers’ Right to Compete Act"},
     {"bill_id":"119-hr-10878","bill_number":"10878","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10878","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10878","policy_area":"Government Operations and Politics","title":"Truth and Accountability Commission Act"},

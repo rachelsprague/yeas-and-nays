@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001292",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10249","bill_number":"10249","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10249","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10249","policy_area":"Crime and Law Enforcement","title":"Kids Safety on Set Act of 2026"},
     {"bill_id":"119-hr-10120","bill_number":"10120","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10120","introduced_date":"2026-08-20","latest_action_date":"2026-08-20","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10120","policy_area":"Water Resources Development","title":"National Flood Impact Reduction and Resilience Act of 2026"},

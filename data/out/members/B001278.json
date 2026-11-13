@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001278",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10975","bill_number":"10975","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10975","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10975","policy_area":"Finance and Financial Sector","title":"Fair Manufactured Housing Lending Act"},
     {"bill_id":"119-hres-1625","bill_number":"1625","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1625","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1625","policy_area":"Education","title":"Expressing support for a whole child approach to education and recognizing the role of parents, educators, and community members in providing a whole child approach to education for each student."},

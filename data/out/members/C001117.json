@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001117",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10539","bill_number":"10539","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10539","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10539","policy_area":"Energy","title":"Integrated Local, Regional, and Interregional Transmission Planning Act of 2026"},
     {"bill_id":"119-hr-10488","bill_number":"10488","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10488","introduced_date":"2026-09-17","latest_action_date":"2026-09-17","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committees on Transportation and Infrastructure, Agriculture, Natural Resources, and Science, Space, and Technology, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10488","policy_area":"Environmental Protection","title":"Environmental Health Restoration Act of 2026"},

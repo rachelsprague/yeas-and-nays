@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001285",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1592","bill_number":"1592","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1592","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1592","policy_area":"Education","title":"Expressing support for the designation of October 2026 as \"National Learning Disabilities Awareness Month\"."},
     {"bill_id":"119-hr-8496","bill_number":"8496","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8496","introduced_date":"2026-04-27","latest_action_date":"2026-04-27","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 8496","policy_area":"Animals","title":"Marine Mammal Climate Change Protection Act of 2026"},

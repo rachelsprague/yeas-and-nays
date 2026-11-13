@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000605",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5639","bill_number":"5639","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5639","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5639","policy_area":"Finance and Financial Sector","title":"Portal for Appraisal Licensing Act of 2026"},
     {"bill_id":"119-s-5629","bill_number":"5629","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5629","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"S. 5629","policy_area":"Armed Forces and National Security","title":"Gene Murphy Veterans’ Bill of Rights Act of 2026"},

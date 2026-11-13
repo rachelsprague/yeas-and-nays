@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000585",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10023","bill_number":"10023","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10023","introduced_date":"2026-08-03","latest_action_date":"2026-08-03","latest_action_text":"Referred to the Committee on Ways and Means, and in addition to the Committees on Agriculture, Energy and Commerce, and Education and Workforce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10023","policy_area":"Social Welfare","title":"ASSET Act"},
     {"bill_id":"119-hr-8174","bill_number":"8174","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8174","introduced_date":"2026-04-02","latest_action_date":"2026-04-02","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 8174","policy_area":"Finance and Financial Sector","title":"To amend title 31, United States Code, to prohibit the issuance of United States currency and securities containing the signature of the sitting President."},

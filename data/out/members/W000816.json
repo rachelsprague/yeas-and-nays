@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000816",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10329","bill_number":"10329","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10329","introduced_date":"2026-09-10","latest_action_date":"2026-11-11","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":null,"measure_label":"H.R. 10329","policy_area":"Commerce","title":"Combating Foreign Threats to Main Street Act of 2026"},
     {"bill_id":"119-hr-10012","bill_number":"10012","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10012","introduced_date":"2026-07-30","latest_action_date":"2026-08-07","latest_action_text":"Referred to the Subcommittee on Health.","latest_vote_id":null,"measure_label":"H.R. 10012","policy_area":"Health","title":"Veterans Medicare Premium Transparency Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000592",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10780","bill_number":"10780","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10780","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the Committee on Rules, and in addition to the Committees on the Budget, House Administration, Appropriations, and Oversight and Government Reform, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10780","policy_area":"Economics and Public Finance","title":"Congressional Budget Reform Act"},
     {"bill_id":"119-hr-10555","bill_number":"10555","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10555","introduced_date":"2026-09-24","latest_action_date":"2026-09-30","latest_action_text":"Referred to the Subcommittee on Economic Opportunity.","latest_vote_id":null,"measure_label":"H.R. 10555","policy_area":"Armed Forces and National Security","title":"VETS Access Act"},

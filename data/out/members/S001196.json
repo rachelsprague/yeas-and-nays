@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001196",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9203","bill_number":"9203","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9203","introduced_date":"2026-06-08","latest_action_date":"2026-09-08","latest_action_text":"Placed on the Union Calendar, Calendar No. 700.","latest_vote_id":null,"measure_label":"H.R. 9203","policy_area":"Education","title":"Student Protection and University Accountability Act"},
     {"bill_id":"119-hr-8559","bill_number":"8559","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8559","introduced_date":"2026-04-28","latest_action_date":"2026-04-28","latest_action_text":"Referred to the House Committee on Science, Space, and Technology.","latest_vote_id":null,"measure_label":"H.R. 8559","policy_area":"Government Operations and Politics","title":"To amend the National Defense Authorization Act for Fiscal Year 2021 to prohibit certain institutions of higher education from receiving research and development awards, and for other purposes."},

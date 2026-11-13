@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001220",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9936","bill_number":"9936","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9936","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 9936","policy_area":"Government Operations and Politics","title":"PERFORM Act"},
     {"bill_id":"119-hr-9394","bill_number":"9394","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9394","introduced_date":"2026-06-23","latest_action_date":"2026-09-16","latest_action_text":"Received in the Senate and Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"H.R. 9394","policy_area":"Emergency Management","title":"Civil Preparedness for Agroterrorism Exercise Act of 2026"},

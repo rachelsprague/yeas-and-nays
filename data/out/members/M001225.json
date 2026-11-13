@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001225",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10940","bill_number":"10940","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10940","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10940","policy_area":"Science, Technology, Communications","title":"READI Act of 2026"},
     {"bill_id":"119-hr-10583","bill_number":"10583","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10583","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10583","policy_area":"Crime and Law Enforcement","title":"Garrett’s Law"},

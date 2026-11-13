@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000491",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10613","bill_number":"10613","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10613","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10613","policy_area":"Taxation","title":"Housing COST Act"},
     {"bill_id":"119-hr-10349","bill_number":"10349","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10349","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10349","policy_area":"Health","title":"EMT Act"},

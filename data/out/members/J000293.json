@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000293",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sconres-38","bill_number":"38","bill_type":"sconres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-concurrent-resolution/38","introduced_date":"2026-08-07","latest_action_date":"2026-08-07","latest_action_text":"Placed on Senate Legislative Calendar under General Orders. Calendar No. 550. (text: CR S4571-4577)","latest_vote_id":null,"measure_label":"S.Con.Res. 38","policy_area":"Economics and Public Finance","title":"A concurrent resolution setting forth the congressional budget for the United States Government for fiscal year 2027 and setting forth the appropriate budgetary levels for fiscal years 2028 through 2036."},
     {"bill_id":"119-sres-765","bill_number":"765","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/765","introduced_date":"2026-06-09","latest_action_date":"2026-06-09","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S2705; text: CR S2703)","latest_vote_id":null,"measure_label":"S.Res. 765","policy_area":"Health","title":"A resolution expressing support for the designation of July 2026 as \"National Sarcoma Awareness Month\"."},

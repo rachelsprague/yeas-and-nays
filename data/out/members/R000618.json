@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000618",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5459","bill_number":"5459","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5459","introduced_date":"2026-09-23","latest_action_date":"2026-09-23","latest_action_text":"Read twice and referred to the Committee on Agriculture, Nutrition, and Forestry.","latest_vote_id":null,"measure_label":"S. 5459","policy_area":"Agriculture and Food","title":"Agricultural Data Privacy Act of 2026"},
     {"bill_id":"119-sres-866","bill_number":"866","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/866","introduced_date":"2026-09-17","latest_action_date":"2026-09-30","latest_action_text":"Resolution agreed to in Senate without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299)","latest_vote_id":null,"measure_label":"S.Res. 866","policy_area":"Health","title":"A resolution supporting the designation of October 2026 as \"Substance Use & Misuse Prevention Month\" to raise awareness of substance use and misuse in the United States."},

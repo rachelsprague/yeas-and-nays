@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000617",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-11007","bill_number":"11007","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/11007","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 11007","policy_area":null,"title":"To amend title 38, United States Code, to prohibit certain conflicts of interest in the Department of Veterans Affairs, and for other purposes."},
     {"bill_id":"119-hres-1627","bill_number":"1627","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1627","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.Res. 1627","policy_area":"Immigration","title":"Reaffirming the commitment of the House of Representatives to preserve and expand pathways to citizenship."},

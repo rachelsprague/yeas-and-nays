@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M000312",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10685","bill_number":"10685","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10685","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10685","policy_area":"Immigration","title":"Hong Konger Promise of Refuge Act"},
     {"bill_id":"119-hr-10300","bill_number":"10300","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10300","introduced_date":"2026-09-04","latest_action_date":"2026-09-04","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committee on Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10300","policy_area":"Science, Technology, Communications","title":"Big Tech Accountability Act"},

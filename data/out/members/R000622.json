@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000622",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10804","bill_number":"10804","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10804","introduced_date":"2026-10-13","latest_action_date":"2026-10-13","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10804","policy_area":"Energy","title":"Utility Accountability Act"},
     {"bill_id":"119-hr-10696","bill_number":"10696","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10696","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10696","policy_area":"Commerce","title":"Ad-Free Means Ad-Free Act"},

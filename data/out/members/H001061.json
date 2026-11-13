@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001061",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-945","bill_number":"945","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/945","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5272)","latest_vote_id":null,"measure_label":"S.Res. 945","policy_area":"Animals","title":"A resolution designating November 7, 2026, as \"National Bison Day\"."},
     {"bill_id":"119-sres-922","bill_number":"922","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/922","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5186; text: CR S5176)","latest_vote_id":null,"measure_label":"S.Res. 922","policy_area":"Armed Forces and National Security","title":"A resolution designating October 26, 2026, as the \"Day of the Deployed.\""},

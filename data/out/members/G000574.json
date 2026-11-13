@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000574",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5636","bill_number":"5636","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5636","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5636","policy_area":"Education","title":"Supporting Focus in Schools Act"},
     {"bill_id":"119-sres-918","bill_number":"918","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/918","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Referred to the Committee on Rules and Administration. (text: CR S5172-5174)","latest_vote_id":null,"measure_label":"S.Res. 918","policy_area":"Congress","title":"A resolution establishing the Select Committee on Artificial Intelligence."},

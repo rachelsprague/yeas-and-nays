@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000278",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5485","bill_number":"5485","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5485","introduced_date":"2026-09-23","latest_action_date":"2026-09-23","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5485","policy_area":"Immigration","title":"Americans First Immigration Act"},
     {"bill_id":"119-s-4978","bill_number":"4978","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/4978","introduced_date":"2026-07-14","latest_action_date":"2026-07-14","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 4978","policy_area":"Government Operations and Politics","title":"Stop Settlement Slush Funds Act of 2026"},

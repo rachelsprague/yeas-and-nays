@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001211",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9659","bill_number":"9659","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9659","introduced_date":"2026-07-13","latest_action_date":"2026-07-14","latest_action_text":"Referred to the Subcommittee on Border Security and Enforcement.","latest_vote_id":null,"measure_label":"H.R. 9659","policy_area":"Immigration","title":"Fund Schools, Not ICE Act"},
     {"bill_id":"119-hr-9301","bill_number":"9301","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9301","introduced_date":"2026-06-11","latest_action_date":"2026-06-11","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Foreign Affairs, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9301","policy_area":"Congress","title":"Extreme Heat Congressional Advisory Commission Act"},

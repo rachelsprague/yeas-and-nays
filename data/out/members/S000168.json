@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S000168",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10505","bill_number":"10505","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10505","introduced_date":"2026-09-17","latest_action_date":"2026-09-17","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 10505","policy_area":"Public Lands and Natural Resources","title":"Tropical Forest and Coral Reef Conservation Reauthorization Act of 2026"},
     {"bill_id":"119-hconres-109","bill_number":"109","bill_type":"hconres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-concurrent-resolution/109","introduced_date":"2026-06-09","latest_action_date":"2026-06-18","latest_action_text":"Message on Senate action sent to the House.","latest_vote_id":null,"measure_label":"H.Con.Res. 109","policy_area":"Congress","title":"Allowing Emancipation Hall to be used for a ceremony to dedicate the Semiquincentennial Congressional Time Capsule on Wednesday, June 24, 2026."},

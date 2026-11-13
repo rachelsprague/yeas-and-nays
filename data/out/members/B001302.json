@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001302",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10420","bill_number":"10420","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10420","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the Committee on Natural Resources, and in addition to the Committee on Foreign Affairs, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10420","policy_area":"Water Resources Development","title":"Colorado River Basin Water Security and Infrastructure Act"},
     {"bill_id":"119-hr-9731","bill_number":"9731","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9731","introduced_date":"2026-07-16","latest_action_date":"2026-07-16","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9731","policy_area":"Government Operations and Politics","title":"No GRIFT Act of 2026"},

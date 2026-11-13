@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000405",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10052","bill_number":"10052","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10052","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10052","policy_area":"Civil Rights and Liberties, Minority Issues","title":"Right to Worship Act"},
     {"bill_id":"119-hr-9653","bill_number":"9653","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9653","introduced_date":"2026-07-13","latest_action_date":"2026-07-14","latest_action_text":"Sponsor introductory remarks on measure. (CR H4422)","latest_vote_id":null,"measure_label":"H.R. 9653","policy_area":"Government Operations and Politics","title":"Limiting Excessive Government Obstruction Act"},

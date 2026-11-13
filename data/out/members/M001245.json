@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001245",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10991","bill_number":"10991","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10991","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10991","policy_area":"Health","title":"SPARKS Act"},
     {"bill_id":"119-hr-9320","bill_number":"9320","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9320","introduced_date":"2026-06-15","latest_action_date":"2026-06-15","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9320","policy_area":"Education","title":"All in For Attendance Act"},

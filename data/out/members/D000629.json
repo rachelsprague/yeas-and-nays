@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000629",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10979","bill_number":"10979","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10979","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Science, Space, and Technology.","latest_vote_id":null,"measure_label":"H.R. 10979","policy_area":"Commerce","title":"Defend American Manufacturing Act 2.0"},
     {"bill_id":"119-hr-10731","bill_number":"10731","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10731","introduced_date":"2026-10-05","latest_action_date":"2026-10-05","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10731","policy_area":"Health","title":"Rural Surgery Sustainability Act of 2026"},

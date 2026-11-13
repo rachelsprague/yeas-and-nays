@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001314",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9895","bill_number":"9895","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9895","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 9895","policy_area":"Taxation","title":"American Dream Accounts Act of 2026"},
     {"bill_id":"119-hr-9455","bill_number":"9455","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9455","introduced_date":"2026-06-25","latest_action_date":"2026-06-25","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 9455","policy_area":"Health","title":"SMOOTH Payments Act"},

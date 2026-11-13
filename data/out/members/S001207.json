@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001207",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-6117","bill_number":"6117","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/6117","introduced_date":"2025-11-18","latest_action_date":"2025-11-18","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 6117","policy_area":"Health","title":"Patient Device Data Access Act of 2025"},
     {"bill_id":"119-hr-5658","bill_number":"5658","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/5658","introduced_date":"2025-09-30","latest_action_date":"2026-02-04","latest_action_text":"ASSUMING FIRST SPONSORSHIP - Ms. Ocasio-Cortez asked unanimous consent that she may hereafter be considered as the first sponsor of H.R. 5658, a bill originally introduced by Representative Sherrill, for the purpose of adding cosponsors and requesting reprintings pursuant to clause 7 of rule XII. Agreed to without objection.","latest_vote_id":null,"measure_label":"H.R. 5658","policy_area":"Families","title":"Child Care for Every Community Act"},

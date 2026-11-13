@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000610",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-7987","bill_number":"7987","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7987","introduced_date":"2026-03-18","latest_action_date":"2026-03-18","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 7987","policy_area":"Finance and Financial Sector","title":"CLIMB Act"},
     {"bill_id":"119-hr-5282","bill_number":"5282","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/5282","introduced_date":"2025-09-10","latest_action_date":"2025-09-10","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 5282","policy_area":"Crime and Law Enforcement","title":"Reauthorizing Support and Treatment for Officers in Crisis Act of 2025"},

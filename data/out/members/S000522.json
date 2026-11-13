@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S000522",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10897","bill_number":"10897","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10897","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the Committee on Transportation and Infrastructure, and in addition to the Committees on Energy and Commerce, and the Budget, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10897","policy_area":"Transportation and Public Works","title":"Sami’s Law"},
     {"bill_id":"119-hres-1584","bill_number":"1584","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1584","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.Res. 1584","policy_area":"Civil Rights and Liberties, Minority Issues","title":"Recognizing the 50th anniversary of the Hyde Amendment and its enduring legacy of saving the lives of more than 2,600,000 unborn children and respecting the conscience rights of the American people."},

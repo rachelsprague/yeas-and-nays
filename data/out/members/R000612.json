@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000612",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10478","bill_number":"10478","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10478","introduced_date":"2026-09-17","latest_action_date":"2026-09-29","latest_action_text":"Referred to the Subcommittee on Disability Assistance and Memorial Affairs.","latest_vote_id":null,"measure_label":"H.R. 10478","policy_area":"Armed Forces and National Security","title":"Aid and Attendance Assistance for Veterans Act"},
     {"bill_id":"119-hr-9876","bill_number":"9876","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9876","introduced_date":"2026-07-22","latest_action_date":"2026-07-22","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9876","policy_area":"Immigration","title":"BAN Act"},

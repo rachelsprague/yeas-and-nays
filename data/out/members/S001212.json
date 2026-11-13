@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001212",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10637","bill_number":"10637","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10637","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 10637","policy_area":"Government Operations and Politics","title":"Voter Vouching Transparency Act"},
     {"bill_id":"119-hr-9588","bill_number":"9588","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9588","introduced_date":"2026-07-02","latest_action_date":"2026-07-02","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 9588","policy_area":"Government Operations and Politics","title":"FRAUD Act"},

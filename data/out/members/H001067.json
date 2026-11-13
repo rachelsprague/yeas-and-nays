@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001067",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10159","bill_number":"10159","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10159","introduced_date":"2026-08-27","latest_action_date":"2026-10-14","latest_action_text":"Message on Senate action sent to the House.","latest_vote_id":null,"measure_label":"H.R. 10159","policy_area":"Armed Forces and National Security","title":"To authorize the Secretary of the Army to convey to the State of North Carolina a certain parcel of real property located at Fort Bragg, North Carolina, on which the State shall construct a veterans’ State home, and for other purposes."},
     {"bill_id":"119-hr-7181","bill_number":"7181","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7181","introduced_date":"2026-01-21","latest_action_date":"2026-01-21","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 7181","policy_area":"Environmental Protection","title":"Replacement Parts Availability Act"},

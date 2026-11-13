@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000375",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10912","bill_number":"10912","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10912","introduced_date":"2026-10-26","latest_action_date":"2026-10-26","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 10912","policy_area":"International Affairs","title":"Fast Tracking European Investment in Ukraine’s Defense Act"},
     {"bill_id":"119-hr-10740","bill_number":"10740","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10740","introduced_date":"2026-10-05","latest_action_date":"2026-10-05","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10740","policy_area":"Immigration","title":"To designate Ukraine under section 244 of the Immigration and Nationality Act to provide certain nationals of Ukraine with continued eligibility for temporary protected status, and for other purposes."},

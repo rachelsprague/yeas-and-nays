@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001229",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10830","bill_number":"10830","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10830","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10830","policy_area":"Housing and Community Development","title":"Build More Homes Act"},
     {"bill_id":"119-hr-10705","bill_number":"10705","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10705","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10705","policy_area":"Science, Technology, Communications","title":"Stop SIM Box Scams Act"},

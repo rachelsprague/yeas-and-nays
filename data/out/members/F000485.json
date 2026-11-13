@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000485",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10868","bill_number":"10868","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10868","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10868","policy_area":"Education","title":"Protecting Students from Sexually Explicit Materials Act"},
     {"bill_id":"119-hr-10266","bill_number":"10266","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10266","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the Committee on Education and Workforce, and in addition to the Committee on the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10266","policy_area":"Sports and Recreation","title":"No Elite Athletes Using X-pro status to ensure Prioritizing Recruitment Of Student-athletes (NEAUX PROS) Act"},

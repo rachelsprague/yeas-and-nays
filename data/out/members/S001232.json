@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001232",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5561","bill_number":"5561","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5561","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5561","policy_area":"Sports and Recreation","title":"Protect America's Game Act"},
     {"bill_id":"119-s-5538","bill_number":"5538","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5538","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Armed Services.","latest_vote_id":null,"measure_label":"S. 5538","policy_area":"Armed Forces and National Security","title":"A bill to direct the Secretary of the Navy to recognize certain aspects of the National Navy UDT-SEAL Museum in Fort Pierce, Florida, as a national memorial, national memorial garden, and national K9 memorial, and for other purposes."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H000273",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5587","bill_number":"5587","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5587","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources.","latest_vote_id":null,"measure_label":"S. 5587","policy_area":"Energy","title":"National Critical Minerals Council Act"},
     {"bill_id":"119-sjres-211","bill_number":"211","bill_type":"sjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-joint-resolution/211","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Read twice and referred to the Committee on Foreign Relations.","latest_vote_id":null,"measure_label":"S.J.Res. 211","policy_area":"International Affairs","title":"A joint resolution to direct the removal of United States Armed Forces from hostilities within or against the Islamic Republic of Iran that have not been authorized by Congress."},

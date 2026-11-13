@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000566",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10164","bill_number":"10164","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10164","introduced_date":"2026-08-27","latest_action_date":"2026-08-27","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10164","policy_area":"Health","title":"BEDROCK Act"},
     {"bill_id":"119-hr-9914","bill_number":"9914","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9914","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9914","policy_area":"Law","title":"Collaboration on Adversarial Threats and Security Risks Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "Y000064",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5707","bill_number":"5707","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5707","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5707","policy_area":null,"title":"A bill to amend the Internal Revenue Code of 1986 to establish that employers may offer employees a choice among tax-favored employer contributions."},
     {"bill_id":"119-s-5522","bill_number":"5522","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5522","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"S. 5522","policy_area":"Armed Forces and National Security","title":"Protecting Biological Data as Critical Infrastructure Act"},

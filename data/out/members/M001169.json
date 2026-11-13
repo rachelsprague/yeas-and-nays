@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001169",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5531","bill_number":"5531","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5531","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5531","policy_area":"Taxation","title":"IRL Act"},
     {"bill_id":"119-sres-899","bill_number":"899","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/899","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the Committee on Health, Education, Labor, and Pensions. (text: CR S5006)","latest_vote_id":null,"measure_label":"S.Res. 899","policy_area":"Health","title":"A resolution recognizing suicide as a serious public health problem and expressing support for the designation of September as \"National Suicide Prevention Month\"."},

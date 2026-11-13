@@ -1,5 +1,6 @@
 {
   "bioguide_id": "N000026",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9071","bill_number":"9071","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9071","introduced_date":"2026-05-29","latest_action_date":"2026-05-29","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 9071","policy_area":"Crime and Law Enforcement","title":"Preventing Trafficking of Minors Act of 2026"},
     {"bill_id":"119-hr-9037","bill_number":"9037","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9037","introduced_date":"2026-05-26","latest_action_date":"2026-05-26","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 9037","policy_area":"Transportation and Public Works","title":"To direct the Administrator of the Federal Aviation Administration to improve and expand electronic filing capabilities for Federal Aviation Administration Form 337, and for other purposes."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001198",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5672","bill_number":"5672","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5672","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5672","policy_area":"Health","title":"Patients First Act of 2026"},
     {"bill_id":"119-s-5228","bill_number":"5228","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5228","introduced_date":"2026-08-04","latest_action_date":"2026-08-04","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"S. 5228","policy_area":"Government Operations and Politics","title":"STOP the SWAMP Act"},

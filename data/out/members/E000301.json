@@ -1,5 +1,6 @@
 {
   "bioguide_id": "E000301",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9188","bill_number":"9188","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9188","introduced_date":"2026-06-08","latest_action_date":"2026-06-08","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 9188","policy_area":"Armed Forces and National Security","title":"Military Readiness Permitting Efficiency Act of 2026"},
     {"bill_id":"119-hr-7788","bill_number":"7788","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7788","introduced_date":"2026-03-04","latest_action_date":"2026-03-05","latest_action_text":"Referred to the Subcommittee on Water Resources and Environment.","latest_vote_id":null,"measure_label":"H.R. 7788","policy_area":"Environmental Protection","title":"Maryland Whole Watershed Program Federal Partnership Act"},

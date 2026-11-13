@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001115",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10973","bill_number":"10973","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10973","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10973","policy_area":null,"title":"Master Sergeant Roy P. Benavidez VA Clinic Act of 2026"},
     {"bill_id":"119-hr-10972","bill_number":"10972","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10972","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10972","policy_area":null,"title":"NEW HORIZON Act"},

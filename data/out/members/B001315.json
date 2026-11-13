@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001315",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-8076","bill_number":"8076","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8076","introduced_date":"2026-03-25","latest_action_date":"2026-03-25","latest_action_text":"Referred to the Committee on Oversight and Government Reform, and in addition to the Committees on House Administration, and the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 8076","policy_area":"Government Operations and Politics","title":"PREDICT Act"},
     {"bill_id":"119-hr-7938","bill_number":"7938","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7938","introduced_date":"2026-03-16","latest_action_date":"2026-04-03","latest_action_text":"Referred to the Subcommittee on Nutrition and Foreign Agriculture.","latest_vote_id":null,"measure_label":"H.R. 7938","policy_area":"Agriculture and Food","title":"Grocery, Farm, and Food Worker Stabilization Grant Program Act of 2026"},

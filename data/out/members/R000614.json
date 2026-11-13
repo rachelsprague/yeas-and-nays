@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000614",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10132","bill_number":"10132","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10132","introduced_date":"2026-08-20","latest_action_date":"2026-08-20","latest_action_text":"Referred to the Committee on Transportation and Infrastructure, and in addition to the Committees on Foreign Affairs, and Rules, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10132","policy_area":"Emergency Management","title":"ARTICLE ONE Act"},
     {"bill_id":"119-hr-9773","bill_number":"9773","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9773","introduced_date":"2026-07-20","latest_action_date":"2026-07-21","latest_action_text":"Ordered to be Reported in the Nature of a Substitute by the Yeas and Nays: 16 - 14.","latest_vote_id":null,"measure_label":"H.R. 9773","policy_area":"Immigration","title":"Permanent Trump Secure Border Act"},

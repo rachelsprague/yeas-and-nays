@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000575",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-8800","bill_number":"8800","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8800","introduced_date":"2026-05-13","latest_action_date":"2026-09-14","latest_action_text":"Received in the Senate.","latest_vote_id":"h119-2-0278","measure_label":"H.R. 8800","policy_area":"Armed Forces and National Security","title":"National Defense Authorization Act for Fiscal Year 2027"},
     {"bill_id":"119-hr-6971","bill_number":"6971","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/6971","introduced_date":"2026-01-07","latest_action_date":"2026-01-07","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committees on Rules, the Budget, and Oversight and Government Reform, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 6971","policy_area":"Congress","title":"___ Act of 2025"},

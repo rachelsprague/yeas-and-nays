@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000480",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10219","bill_number":"10219","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10219","introduced_date":"2026-09-01","latest_action_date":"2026-09-01","latest_action_text":"Referred to the Committee on Agriculture, and in addition to the Committee on the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10219","policy_area":"Agriculture and Food","title":"SNAP Fraud Accountability Act"},
     {"bill_id":"119-hjres-199","bill_number":"199","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/199","introduced_date":"2026-07-02","latest_action_date":"2026-07-02","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.J.Res. 199","policy_area":"Congress","title":"Proposing an amendment to the Constitution of the United States to temporarily fill vacancies in the House of Representatives to further the continuity of Congress."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001296",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-11001","bill_number":"11001","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/11001","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 11001","policy_area":null,"title":"To require the United States Postal Service to notify postal customers and certain officials if a post office in a leased facility is at risk of closure and seek to relocate such post office to a new facility within the same ZIP code, and for other purposes."},
     {"bill_id":"119-hr-10251","bill_number":"10251","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10251","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the Committee on Ways and Means, and in addition to the Committee on Rules, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10251","policy_area":"Foreign Trade and International Finance","title":"Back-to-School Supplies Affordability Act"},

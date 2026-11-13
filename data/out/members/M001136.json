@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001136",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10167","bill_number":"10167","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10167","introduced_date":"2026-08-27","latest_action_date":"2026-10-14","latest_action_text":"Message on Senate action sent to the House.","latest_vote_id":null,"measure_label":"H.R. 10167","policy_area":"Finance and Financial Sector","title":"Common Cents Act"},
     {"bill_id":"119-hr-7769","bill_number":"7769","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7769","introduced_date":"2026-03-03","latest_action_date":"2026-03-03","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 7769","policy_area":"Taxation","title":"MINT Act"},

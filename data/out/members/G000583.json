@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000583",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10981","bill_number":"10981","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10981","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Intelligence (Permanent Select), for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10981","policy_area":null,"title":"American AI Security Act"},
     {"bill_id":"119-hr-10928","bill_number":"10928","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10928","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 10928","policy_area":"Agriculture and Food","title":"Farmer Recovery Opportunity and Support for Temperatures Relief Act"},

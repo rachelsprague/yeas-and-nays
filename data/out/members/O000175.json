@@ -1,5 +1,6 @@
 {
   "bioguide_id": "O000175",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1472","bill_number":"1472","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1472","introduced_date":"2026-08-03","latest_action_date":"2026-08-03","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.Res. 1472","policy_area":"Law","title":"Impeaching Allison Dale Burroughs, a judge of the United States District Court for the District of Massachusetts, for high crimes and misdemeanors."},
     {"bill_id":"119-hr-9968","bill_number":"9968","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9968","introduced_date":"2026-07-27","latest_action_date":"2026-07-27","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 9968","policy_area":"Agriculture and Food","title":"Opening Programs to Organic Farms Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000607",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1602","bill_number":"1602","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1602","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.Res. 1602","policy_area":"Health","title":"Recognizing the importance of access to pre-exposure prophylaxis (PrEP) for HIV prevention and supporting the designation of Saturday, October 10, 2026, as \"National PrEP Day\"."},
     {"bill_id":"119-hr-10595","bill_number":"10595","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10595","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the Committee on Ways and Means, and in addition to the Committees on Financial Services, the Judiciary, and Education and Workforce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10595","policy_area":"Finance and Financial Sector","title":"Stop Wall Street Looting Act"},

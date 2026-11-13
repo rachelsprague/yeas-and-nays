@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001111",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5546","bill_number":"5546","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5546","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5546","policy_area":"Health","title":"Jeanette Acosta Invest in Women’s Health Act of 2026"},
     {"bill_id":"119-s-5539","bill_number":"5539","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5539","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5539","policy_area":"Health","title":"Affordability is Access Act of 2026"},

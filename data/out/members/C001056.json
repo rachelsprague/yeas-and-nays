@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001056",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5710","bill_number":"5710","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5710","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5710","policy_area":null,"title":"A bill to support local educational agencies in addressing the student mental health crisis."},
     {"bill_id":"119-s-5677","bill_number":"5677","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5677","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources.","latest_vote_id":null,"measure_label":"S. 5677","policy_area":"Public Lands and Natural Resources","title":"Lone Star Coastal National Recreation Area Act"},

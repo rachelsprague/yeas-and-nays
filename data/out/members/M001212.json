@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001212",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10939","bill_number":"10939","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10939","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10939","policy_area":"International Affairs","title":"Nigerian Accountability Act"},
     {"bill_id":"119-hr-9288","bill_number":"9288","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9288","introduced_date":"2026-06-11","latest_action_date":"2026-06-11","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 9288","policy_area":"Government Operations and Politics","title":"TIMEOUT Act"},

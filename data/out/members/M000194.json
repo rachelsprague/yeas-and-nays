@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M000194",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10966","bill_number":"10966","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10966","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10966","policy_area":null,"title":"Supporting Veteran Mothers Act of 2026"},
     {"bill_id":"119-hr-10958","bill_number":"10958","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10958","introduced_date":"2026-11-05","latest_action_date":"2026-11-05","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10958","policy_area":null,"title":"Clothing Microplastic Transparency Act of 2026"},

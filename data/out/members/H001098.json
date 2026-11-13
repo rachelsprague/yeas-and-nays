@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001098",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10982","bill_number":"10982","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10982","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10982","policy_area":null,"title":"Protecting Vulnerable Patients, Seniors, and Families Act"},
     {"bill_id":"119-hr-10495","bill_number":"10495","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10495","introduced_date":"2026-09-17","latest_action_date":"2026-09-17","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committees on Financial Services, and Agriculture, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10495","policy_area":"Crime and Law Enforcement","title":"CATFISH Act of 2026"},

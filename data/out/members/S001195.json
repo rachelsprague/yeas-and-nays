@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001195",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10357","bill_number":"10357","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10357","introduced_date":"2026-09-14","latest_action_date":"2026-09-16","latest_action_text":"Ordered to be Reported in the Nature of a Substitute by the Yeas and Nays: 38 - 5.","latest_vote_id":null,"measure_label":"H.R. 10357","policy_area":"Taxation","title":"Digital Asset Tax Certainty Act"},
     {"bill_id":"119-hr-9645","bill_number":"9645","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9645","introduced_date":"2026-07-13","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported in the Nature of a Substitute by the Yeas and Nays: 25 - 15.","latest_vote_id":null,"measure_label":"H.R. 9645","policy_area":"Health","title":"Health Care Price Certainty for All Americans Act"},

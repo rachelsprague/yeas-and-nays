@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000295",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9471","bill_number":"9471","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9471","introduced_date":"2026-06-25","latest_action_date":"2026-07-17","latest_action_text":"Referred to the Subcommittee on Economic Opportunity.","latest_vote_id":null,"measure_label":"H.R. 9471","policy_area":"Finance and Financial Sector","title":"SAFE Banking Act of 2026"},
     {"bill_id":"119-hr-9327","bill_number":"9327","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9327","introduced_date":"2026-06-18","latest_action_date":"2026-09-16","latest_action_text":"Received in the Senate.","latest_vote_id":null,"measure_label":"H.R. 9327","policy_area":"Immigration","title":"PEARL Act"},

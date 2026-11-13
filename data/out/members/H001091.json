@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001091",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10850","bill_number":"10850","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10850","introduced_date":"2026-10-19","latest_action_date":"2026-10-19","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10850","policy_area":"Health","title":"SCREENS Act"},
     {"bill_id":"119-hr-10559","bill_number":"10559","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10559","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10559","policy_area":"Health","title":"LARC Access Expansion Act"},

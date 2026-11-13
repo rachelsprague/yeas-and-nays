@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000604",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10871","bill_number":"10871","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10871","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10871","policy_area":"Armed Forces and National Security","title":"Military Family Relocation Support Act"},
     {"bill_id":"119-hr-10870","bill_number":"10870","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10870","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10870","policy_area":"Armed Forces and National Security","title":"Military Domestic Violence Survivors Support Act"},

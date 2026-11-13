@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001095",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9219","bill_number":"9219","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9219","introduced_date":"2026-06-09","latest_action_date":"2026-06-09","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committee on Armed Services, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9219","policy_area":"Armed Forces and National Security","title":"National Defense Infrastructure Protection Act of 2026"},
     {"bill_id":"119-hr-7431","bill_number":"7431","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7431","introduced_date":"2026-02-09","latest_action_date":"2026-02-09","latest_action_text":"Referred to the Committee on House Administration, and in addition to the Committee on Rules, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 7431","policy_area":"Congress","title":"Congressional Civics Act of 2026"},

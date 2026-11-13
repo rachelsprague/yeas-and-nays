@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000475",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10736","bill_number":"10736","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10736","introduced_date":"2026-10-05","latest_action_date":"2026-10-05","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10736","policy_area":"International Affairs","title":"Safeguarding Technology from CCP Influence Act"},
     {"bill_id":"119-hr-10353","bill_number":"10353","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10353","introduced_date":"2026-09-14","latest_action_date":"2026-11-11","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":null,"measure_label":"H.R. 10353","policy_area":"Commerce","title":"SBIC Reporting Modernization Act of 2026"},

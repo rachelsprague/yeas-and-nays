@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001153",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5521","bill_number":"5521","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5521","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5521","policy_area":"Immigration","title":"Ukrainian Adjustment Act of 2026"},
     {"bill_id":"119-s-5501","bill_number":"5501","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5501","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources.","latest_vote_id":null,"measure_label":"S. 5501","policy_area":"Energy","title":"A bill to amend the Alaska Power Administration Asset Sale and Termination Act to modify and continue an exemption from application of the Federal Power Act for the Snettisham Hydroelectric Project, and for other purposes."},

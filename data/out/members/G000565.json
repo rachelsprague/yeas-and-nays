@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000565",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10669","bill_number":"10669","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10669","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10669","policy_area":"Public Lands and Natural Resources","title":"LANDs Act"},
     {"bill_id":"119-hr-10556","bill_number":"10556","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10556","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10556","policy_area":"Armed Forces and National Security","title":"VA Hiring Integrity Act of 2026"},

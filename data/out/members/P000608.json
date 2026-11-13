@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000608",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10591","bill_number":"10591","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10591","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10591","policy_area":"Environmental Protection","title":"Safer Choice Program Authorization Act of 2026"},
     {"bill_id":"119-hr-10302","bill_number":"10302","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10302","introduced_date":"2026-09-04","latest_action_date":"2026-09-04","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10302","policy_area":"Energy","title":"Certainty in Litigation for Electric Asset Reliability (CLEAR) Act of 2026"},

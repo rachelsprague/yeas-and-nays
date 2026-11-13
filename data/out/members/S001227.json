@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001227",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5617","bill_number":"5617","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5617","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5617","policy_area":"Crime and Law Enforcement","title":"Combating Critical Infrastructure Vandalism Act of 2026"},
     {"bill_id":"119-s-5593","bill_number":"5593","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5593","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5593","policy_area":"Families","title":"Yaeli Martinez Child Protection Act"},

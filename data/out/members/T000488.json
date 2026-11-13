@@ -1,5 +1,6 @@
 {
   "bioguide_id": "T000488",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10833","bill_number":"10833","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10833","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10833","policy_area":"Finance and Financial Sector","title":"Doorway to the American Dream Act"},
     {"bill_id":"119-hr-10401","bill_number":"10401","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10401","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10401","policy_area":"Immigration","title":"No ICE Deaths in the Dark Act of 2026"},

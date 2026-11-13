@@ -1,5 +1,6 @@
 {
   "bioguide_id": "V000136",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10949","bill_number":"10949","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10949","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10949","policy_area":"Armed Forces and National Security","title":"To direct the Secretary of Defense to expand the priority list for the Public Schools on Military Installations Program of the Department of Defense."},
     {"bill_id":"119-hr-10903","bill_number":"10903","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10903","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10903","policy_area":"Armed Forces and National Security","title":"Socorro Vet Center Act"},

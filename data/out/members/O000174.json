@@ -1,5 +1,6 @@
 {
   "bioguide_id": "O000174",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5287","bill_number":"5287","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5287","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5287","policy_area":"Health","title":"Colorectal Cancer Early Detection Act"},
     {"bill_id":"119-sres-838","bill_number":"838","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/838","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S4530; text: CR S4525)","latest_vote_id":null,"measure_label":"S.Res. 838","policy_area":"Crime and Law Enforcement","title":"A resolution commemorating the first anniversary of the mass shooting at Fort Stewart, Georgia, on August 6, 2025."},

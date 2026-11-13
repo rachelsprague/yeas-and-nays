@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000606",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10824","bill_number":"10824","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10824","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10824","policy_area":"Health","title":"Stroke Education and EMS Care Improvement Act of 2026"},
     {"bill_id":"119-hr-10800","bill_number":"10800","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10800","introduced_date":"2026-10-13","latest_action_date":"2026-10-13","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10800","policy_area":"Immigration","title":"HEART Act"},

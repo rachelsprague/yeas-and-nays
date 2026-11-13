@@ -1,5 +1,6 @@
 {
   "bioguide_id": "N000015",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10060","bill_number":"10060","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10060","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10060","policy_area":"Taxation","title":"Presidential Tax Accountability and Audit Integrity Act"},
     {"bill_id":"119-hr-9813","bill_number":"9813","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9813","introduced_date":"2026-07-21","latest_action_date":"2026-07-21","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 9813","policy_area":"Taxation","title":"To amend the Internal Revenue Code of 1986 to impose limitations on high-income taxpayers with large retirement account balances."},

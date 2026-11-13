@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000634",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10222","bill_number":"10222","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10222","introduced_date":"2026-09-02","latest_action_date":"2026-09-02","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10222","policy_area":"Immigration","title":"No HUD Funding for Sanctuary Cities Act"},
     {"bill_id":"119-hr-9574","bill_number":"9574","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9574","introduced_date":"2026-07-02","latest_action_date":"2026-07-02","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 9574","policy_area":"Finance and Financial Sector","title":"Informed Investor Access Act"},

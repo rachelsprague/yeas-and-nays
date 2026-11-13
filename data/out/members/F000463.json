@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000463",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-944","bill_number":"944","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/944","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5271-5272)","latest_vote_id":null,"measure_label":"S.Res. 944","policy_area":"Transportation and Public Works","title":"A resolution designating September 2026 as \"School Bus Safety Month\"."},
     {"bill_id":"119-s-5336","bill_number":"5336","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5336","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5336","policy_area":"Transportation and Public Works","title":"Uniform Vehicle Safety Standards Act of 2026"},

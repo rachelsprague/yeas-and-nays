@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000388",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-5468","bill_number":"5468","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/5468","introduced_date":"2025-09-18","latest_action_date":"2025-12-02","latest_action_text":"Referred to the Subcommittee on Conservation, Research, and Biotechnology.","latest_vote_id":null,"measure_label":"H.R. 5468","policy_area":"Agriculture and Food","title":"Community College Agriculture Advancement Act of 2025"},
     {"bill_id":"119-hr-3476","bill_number":"3476","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/3476","introduced_date":"2025-05-17","latest_action_date":"2025-05-17","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 3476","policy_area":"Public Lands and Natural Resources","title":"Forest Conservation Easement Program Act of 2025"},

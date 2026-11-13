@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S000929",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10526","bill_number":"10526","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10526","introduced_date":"2026-09-21","latest_action_date":"2026-09-21","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10526","policy_area":"Government Operations and Politics","title":"To designate the facility of the United States Postal Service located at 501 West Memorial Drive in Muncie, Indiana, as the \"Officer Blake A. Reynolds Post Office Building\"."},
     {"bill_id":"119-hr-10463","bill_number":"10463","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10463","introduced_date":"2026-09-16","latest_action_date":"2026-09-30","latest_action_text":"Referred to the Subcommittee on Disability Assistance and Memorial Affairs.","latest_vote_id":null,"measure_label":"H.R. 10463","policy_area":"Armed Forces and National Security","title":"Combat Veterans Retirement Restoration Act"},

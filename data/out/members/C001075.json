@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001075",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-933","bill_number":"933","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/933","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Referred to the Committee on Health, Education, Labor, and Pensions. (text: CR S5267)","latest_vote_id":null,"measure_label":"S.Res. 933","policy_area":"Education","title":"A resolution expressing support for the designation of October 2026 as \"National Dyslexia Awareness Month\"."},
     {"bill_id":"119-s-5513","bill_number":"5513","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5513","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5513","policy_area":"Health","title":"Domestic Manufacturing Revitalization Act of 2026"},

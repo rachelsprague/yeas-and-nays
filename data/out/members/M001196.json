@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001196",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10404","bill_number":"10404","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10404","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10404","policy_area":null,"title":"For the relief of Sindy Gualdina Rodriguez-Fernandez."},
     {"bill_id":"119-hr-10059","bill_number":"10059","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10059","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10059","policy_area":"Transportation and Public Works","title":"Building Safer Streets Act"},

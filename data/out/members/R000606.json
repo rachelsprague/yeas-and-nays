@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000606",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10941","bill_number":"10941","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10941","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10941","policy_area":"Commerce","title":"Antitrust Accountability and Transparency Act"},
     {"bill_id":"119-hr-10765","bill_number":"10765","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10765","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the Committee on House Administration, and in addition to the Committee on Natural Resources, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10765","policy_area":"Arts, Culture, Religion","title":"Preserving and Remembering the History of Trump and other Tyrants Act"},

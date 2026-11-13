@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001069",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10427","bill_number":"10427","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10427","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10427","policy_area":"Education","title":"MAGNET Act"},
     {"bill_id":"119-hr-10360","bill_number":"10360","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10360","introduced_date":"2026-09-14","latest_action_date":"2026-09-14","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 10360","policy_area":"Armed Forces and National Security","title":"Safeguarding Taxpayer Investment for Executive Airlift Act of 2026"},

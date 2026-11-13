@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C000880",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5608","bill_number":"5608","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5608","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources.","latest_vote_id":null,"measure_label":"S. 5608","policy_area":"Public Lands and Natural Resources","title":"Secure Rural Schools Reauthorization Act of 2026"},
     {"bill_id":"119-sres-942","bill_number":"942","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/942","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5299; text: CR S5271)","latest_vote_id":null,"measure_label":"S.Res. 942","policy_area":"Crime and Law Enforcement","title":"A resolution recognizing and supporting the goals and ideals of National Forensic Science Week."},

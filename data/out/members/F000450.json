@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000450",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10667","bill_number":"10667","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10667","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10667","policy_area":"Emergency Management","title":"Disaster Recovery and Resilience Act of 2026"},
     {"bill_id":"119-hr-10619","bill_number":"10619","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10619","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on the Budget.","latest_vote_id":null,"measure_label":"H.R. 10619","policy_area":"Economics and Public Finance","title":"Spending Safeguard Act"},

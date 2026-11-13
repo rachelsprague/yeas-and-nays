@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001093",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10337","bill_number":"10337","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10337","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10337","policy_area":"Commerce","title":"16 & Up Social Media Act"},
     {"bill_id":"119-hr-10207","bill_number":"10207","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10207","introduced_date":"2026-09-01","latest_action_date":"2026-09-01","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10207","policy_area":"Commerce","title":"GUARDIAN Act"},

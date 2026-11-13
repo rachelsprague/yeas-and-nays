@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000609",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hjres-211","bill_number":"211","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/211","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.J.Res. 211","policy_area":"Environmental Protection","title":"Providing congressional disapproval under chapter 8 of title 5, United States Code, of the rule submitted by the Environmental Protection Agency relating to \"California State Motor Vehicle Pollution Control Standards; Notice of Decision Granting a Waiver of Clean Air Act Preemption for California's 2009 and Subsequent Model Year Greenhouse Gas Emission Standards for New Motor Vehicles\"."},
     {"bill_id":"119-hr-9617","bill_number":"9617","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9617","introduced_date":"2026-07-09","latest_action_date":"2026-09-16","latest_action_text":"Received in the Senate and Read twice and referred to the Committee on Environment and Public Works.","latest_vote_id":null,"measure_label":"H.R. 9617","policy_area":"Environmental Protection","title":"CHARM Act"},

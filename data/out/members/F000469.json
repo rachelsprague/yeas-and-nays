@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000469",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10313","bill_number":"10313","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10313","introduced_date":"2026-09-08","latest_action_date":"2026-09-08","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10313","policy_area":"Public Lands and Natural Resources","title":"To facilitate the conveyance of certain land in Bonners Ferry, Idaho, platted under section 2387 of the Revised Statutes, and for other purposes."},
     {"bill_id":"119-hr-10263","bill_number":"10263","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10263","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10263","policy_area":"Law","title":"Halt Abusive Internet Lawsuits Act of 2026"},

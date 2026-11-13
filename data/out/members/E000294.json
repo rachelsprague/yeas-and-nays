@@ -1,5 +1,6 @@
 {
   "bioguide_id": "E000294",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10493","bill_number":"10493","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10493","introduced_date":"2026-09-17","latest_action_date":"2026-09-17","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10493","policy_area":"Transportation and Public Works","title":"Reclaim Local Control Act"},
     {"bill_id":"119-hr-7156","bill_number":"7156","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7156","introduced_date":"2026-01-20","latest_action_date":"2026-01-20","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 7156","policy_area":"Immigration","title":"SCAM Act"},

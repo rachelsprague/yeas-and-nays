@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M000133",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5706","bill_number":"5706","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5706","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5706","policy_area":null,"title":"A bill to amend the Bank Holding Company Act of 1956 and the Financial Stability Act of 2010 to require a reduction of financial sector emissions to protect financial stability, and for other purposes."},
     {"bill_id":"119-s-5705","bill_number":"5705","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5705","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"S. 5705","policy_area":null,"title":"A bill authorizing grants to support long-term resiliency for archival institutions, libraries, and museums in order to provide continuity and access to covered records."},

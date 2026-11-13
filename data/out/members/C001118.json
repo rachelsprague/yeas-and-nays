@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001118",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10922","bill_number":"10922","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10922","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committees on Agriculture, Ways and Means, Energy and Commerce, and Education and Workforce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10922","policy_area":"Crime and Law Enforcement","title":"Fraud Accountability and Mandatory Sentencing Act"},
     {"bill_id":"119-hr-10843","bill_number":"10843","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10843","introduced_date":"2026-10-19","latest_action_date":"2026-10-19","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10843","policy_area":"Commerce","title":"VACRA"},

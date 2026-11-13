@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001188",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10609","bill_number":"10609","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10609","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10609","policy_area":"Government Operations and Politics","title":"Don’t Spy On Me Act of 2026"},
     {"bill_id":"119-hr-9937","bill_number":"9937","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9937","introduced_date":"2026-07-23","latest_action_date":"2026-07-23","latest_action_text":"Referred to the Committee on the Judiciary, and in addition to the Committees on Energy and Commerce, and Oversight and Government Reform, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9937","policy_area":"Crime and Law Enforcement","title":"No Leniency for Fentanyl Dealers Act"},

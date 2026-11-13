@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000301",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10190","bill_number":"10190","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10190","introduced_date":"2026-08-31","latest_action_date":"2026-08-31","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10190","policy_area":"Public Lands and Natural Resources","title":"Pennington County Land Conveyance Act"},
     {"bill_id":"119-hr-9785","bill_number":"9785","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9785","introduced_date":"2026-07-20","latest_action_date":"2026-10-29","latest_action_text":"Placed on the Union Calendar, Calendar No. 760.","latest_vote_id":null,"measure_label":"H.R. 9785","policy_area":"Water Resources Development","title":"South Dakota Water Feasibility Studies Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001243",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-954","bill_number":"954","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/954","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the Committee on Veterans' Affairs. (text: CR S5416)","latest_vote_id":null,"measure_label":"S.Res. 954","policy_area":null,"title":"A resolution recognizing the service and sacrifice of women veterans."},
     {"bill_id":"119-s-5695","bill_number":"5695","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5695","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5695","policy_area":null,"title":"A bill to amend the Internal Revenue Code of 1986 to eliminate duplicative and misguided enforcement units of the Internal Revenue Service."},

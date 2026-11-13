@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000798",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10639","bill_number":"10639","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10639","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10639","policy_area":"Environmental Protection","title":"Regional Great Lakes Partnership Act of 2026"},
     {"bill_id":"119-hr-10351","bill_number":"10351","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10351","introduced_date":"2026-09-14","latest_action_date":"2026-09-14","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10351","policy_area":"Sports and Recreation","title":"TEAM USA Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001301",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-11000","bill_number":"11000","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/11000","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 11000","policy_area":null,"title":"To amend title 38, United States Code, to promote the establishment of veterans cemeteries, and for other purposes."},
     {"bill_id":"119-hr-10919","bill_number":"10919","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10919","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10919","policy_area":"Health","title":"Safety Net Provider Drug Pricing Protection Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000617",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10774","bill_number":"10774","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10774","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the Committee on Natural Resources, and in addition to the Committee on Agriculture, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10774","policy_area":"Animals","title":"SWIMS Act of 2026"},
     {"bill_id":"119-hr-9736","bill_number":"9736","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9736","introduced_date":"2026-07-16","latest_action_date":"2026-07-16","latest_action_text":"Referred to the House Committee on Appropriations.","latest_vote_id":null,"measure_label":"H.R. 9736","policy_area":"Taxation","title":"Stop CHEATERS Act"},

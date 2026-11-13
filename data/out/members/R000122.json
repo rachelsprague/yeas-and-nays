@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000122",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-926","bill_number":"926","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/926","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5186)","latest_vote_id":null,"measure_label":"S.Res. 926","policy_area":"Education","title":"A resolution designating September 2026 as \"National Literacy Month\"."},
     {"bill_id":"119-s-5549","bill_number":"5549","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5549","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions. (Sponsor introductory remarks on measure: CR S5003-5004)","latest_vote_id":null,"measure_label":"S. 5549","policy_area":"Education","title":"Quality Educator Partnership Act"},

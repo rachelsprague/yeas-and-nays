@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001190",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10805","bill_number":"10805","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10805","introduced_date":"2026-10-13","latest_action_date":"2026-10-13","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10805","policy_area":"Science, Technology, Communications","title":"Don’t Block LGBTQ Act of 2026"},
     {"bill_id":"119-hr-10175","bill_number":"10175","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10175","introduced_date":"2026-08-27","latest_action_date":"2026-08-27","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10175","policy_area":"Foreign Trade and International Finance","title":"Banning Antiquated Duties and Delivering Equitable American Levies (BAD DEAL) Act of 2026"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001328",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1648","bill_number":"1648","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1648","introduced_date":"2026-11-05","latest_action_date":"2026-11-05","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.Res. 1648","policy_area":"Congress","title":"Congress at Work Resolution"},
     {"bill_id":"119-hres-1636","bill_number":"1636","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1636","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.Res. 1636","policy_area":"Congress","title":"Constituent Casework Continuity Resolution"},

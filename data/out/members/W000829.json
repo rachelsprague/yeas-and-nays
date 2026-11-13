@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000829",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10238","bill_number":"10238","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10238","introduced_date":"2026-09-02","latest_action_date":"2026-11-11","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":null,"measure_label":"H.R. 10238","policy_area":"Commerce","title":"Cybersecurity for Small Businesses Act of 2026"},
     {"bill_id":"119-hres-1477","bill_number":"1477","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1477","introduced_date":"2026-08-03","latest_action_date":"2026-08-03","latest_action_text":"Referred to the House Committee on Small Business.","latest_vote_id":null,"measure_label":"H.Res. 1477","policy_area":"Sports and Recreation","title":"Honoring the contributions of small manufacturers of firearms to the economy, culture, and recreational heritage of the United States and supporting the designation of August 2026 as \"National Shooting Sports Month\"."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001291",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10241","bill_number":"10241","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10241","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10241","policy_area":"Transportation and Public Works","title":"I–47 Future Interstate Act of 2026"},
     {"bill_id":"119-hr-9829","bill_number":"9829","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9829","introduced_date":"2026-07-22","latest_action_date":"2026-07-22","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 9829","policy_area":"Health","title":"ORTHO Act"},

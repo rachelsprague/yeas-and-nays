@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000594",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-7593","bill_number":"7593","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7593","introduced_date":"2026-02-17","latest_action_date":"2026-02-17","latest_action_text":"Referred to the House Committee on Armed Services.","latest_vote_id":null,"measure_label":"H.R. 7593","policy_area":"Armed Forces and National Security","title":"Reserve Forces Travel Fairness Act"},
     {"bill_id":"119-hr-7285","bill_number":"7285","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7285","introduced_date":"2026-01-30","latest_action_date":"2026-02-02","latest_action_text":"Referred to the Subcommittee on Border Security and Enforcement.","latest_vote_id":null,"measure_label":"H.R. 7285","policy_area":"Crime and Law Enforcement","title":"Bulletproof Law Enforcement Vehicles Act"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001068",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10674","bill_number":"10674","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10674","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Science, Space, and Technology.","latest_vote_id":null,"measure_label":"H.R. 10674","policy_area":"Energy","title":"National Institutes of Clean Energy Act of 2026"},
     {"bill_id":"119-hr-10623","bill_number":"10623","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10623","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10623","policy_area":"Native Americans","title":"To reaffirm the applicability of the Indian Reorganization Act to the Lytton Rancheria of California, and for other purposes."},

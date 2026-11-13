@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000590",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10885","bill_number":"10885","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10885","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10885","policy_area":"Commerce","title":"PROTECT Small Restaurants Act"},
     {"bill_id":"119-hr-10743","bill_number":"10743","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10743","introduced_date":"2026-10-05","latest_action_date":"2026-10-05","latest_action_text":"Referred to the Committee on Transportation and Infrastructure, and in addition to the Committee on Homeland Security, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10743","policy_area":"Emergency Management","title":"Nonprofit Security Grant Program Funding Improvement Act"},

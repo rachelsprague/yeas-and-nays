@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001319",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5452","bill_number":"5452","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5452","introduced_date":"2026-09-22","latest_action_date":"2026-09-22","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5452","policy_area":"Finance and Financial Sector","title":"A bill to amend the Financial Stability Act of 2010 to provide for tailoring and indexing enhanced regulations."},
     {"bill_id":"119-s-5337","bill_number":"5337","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5337","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5337","policy_area":"Immigration","title":"Keep Our Communities Safe Act of 2026"},

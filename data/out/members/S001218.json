@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001218",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10527","bill_number":"10527","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10527","introduced_date":"2026-09-21","latest_action_date":"2026-09-21","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 10527","policy_area":"Arts, Culture, Religion","title":"Smithsonian Integrity and Historical Independence Act of 2026"},
     {"bill_id":"119-hr-9973","bill_number":"9973","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9973","introduced_date":"2026-07-27","latest_action_date":"2026-07-27","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9973","policy_area":"Native Americans","title":"Indigenous Students Excel through Parity Act of 2026 (II)"},

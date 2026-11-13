@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000399",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10548","bill_number":"10548","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10548","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10548","policy_area":"International Affairs","title":"To amend the African Growth and Opportunity Act to exclude from eligibility each sub-Saharan African country that does not effectively enforce its environmental laws and fulfill its international environmental obligations."},
     {"bill_id":"119-hr-10258","bill_number":"10258","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10258","introduced_date":"2026-09-03","latest_action_date":"2026-09-03","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10258","policy_area":"Taxation","title":"PROOF Act"},

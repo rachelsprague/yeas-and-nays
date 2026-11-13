@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C000127",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5332","bill_number":"5332","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5332","introduced_date":"2026-08-06","latest_action_date":"2026-08-06","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5332","policy_area":"Public Lands and Natural Resources","title":"Cooperative Institute Act of 2026"},
     {"bill_id":"119-s-4802","bill_number":"4802","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/4802","introduced_date":"2026-06-17","latest_action_date":"2026-07-22","latest_action_text":"Committee on Commerce, Science, and Transportation. Ordered to be reported with an amendment in the nature of a substitute favorably.","latest_vote_id":null,"measure_label":"S. 4802","policy_area":"Public Lands and Natural Resources","title":"Hurricane Hunter Aircraft Recapitalization Act"},

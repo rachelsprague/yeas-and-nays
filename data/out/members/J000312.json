@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000312",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5169","bill_number":"5169","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5169","introduced_date":"2026-07-29","latest_action_date":"2026-09-16","latest_action_text":"Committee on Energy and Natural Resources. Hearings held.","latest_vote_id":null,"measure_label":"S. 5169","policy_area":"Public Lands and Natural Resources","title":"Shenandoah Valley Battlefields National Historic District Boundary Expansion and Partnership Act of 2026"},
     {"bill_id":"119-s-5140","bill_number":"5140","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5140","introduced_date":"2026-07-27","latest_action_date":"2026-07-27","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5140","policy_area":"Finance and Financial Sector","title":"Digital Equities and No Automatic Disqualifications Act"},

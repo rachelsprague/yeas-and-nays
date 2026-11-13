@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001204",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10168","bill_number":"10168","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10168","introduced_date":"2026-08-27","latest_action_date":"2026-08-27","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10168","policy_area":"Housing and Community Development","title":"Veterans Housing Opportunity Act"},
     {"bill_id":"119-hr-8489","bill_number":"8489","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8489","introduced_date":"2026-04-23","latest_action_date":"2026-04-23","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 8489","policy_area":"Housing and Community Development","title":"HUD Payment Integrity and Accountability Act of 2026"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000307",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10759","bill_number":"10759","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10759","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the Committee on Financial Services, and in addition to the Committee on Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10759","policy_area":"Foreign Trade and International Finance","title":"Tariff Relief for American Development and Employment Act of 2026"},
     {"bill_id":"119-hr-10560","bill_number":"10560","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10560","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10560","policy_area":"Labor and Employment","title":"Skilled JOBS Act"},

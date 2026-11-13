@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001072",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9265","bill_number":"9265","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9265","introduced_date":"2026-06-11","latest_action_date":"2026-06-11","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 9265","policy_area":"Agriculture and Food","title":"To amend the Richard B. Russell National School Lunch Act to require participation in the summer EBT program as a condition of participating in the school lunch program, and for other purposes."},
     {"bill_id":"119-hr-7281","bill_number":"7281","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7281","introduced_date":"2026-01-30","latest_action_date":"2026-01-30","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 7281","policy_area":"International Affairs","title":"Justice for Shireen Act"},

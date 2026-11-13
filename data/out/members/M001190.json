@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001190",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-3994","bill_number":"3994","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/3994","introduced_date":"2026-03-04","latest_action_date":"2026-03-04","latest_action_text":"Read twice and referred to the Committee on Indian Affairs.","latest_vote_id":null,"measure_label":"S. 3994","policy_area":"Native Americans","title":"PRIME Meat Processing in Indian Country Act"},
     {"bill_id":"119-s-3946","bill_number":"3946","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/3946","introduced_date":"2026-02-26","latest_action_date":"2026-02-26","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 3946","policy_area":"Native Americans","title":"Tribal Firearm Access Act"},

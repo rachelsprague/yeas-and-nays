@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001035",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-950","bill_number":"950","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/950","introduced_date":"2026-10-15","latest_action_date":"2026-11-10","latest_action_text":"Resolution agreed to in Senate without amendment and with a preamble by Unanimous Consent. (consideration: CR S5525)","latest_vote_id":null,"measure_label":"S.Res. 950","policy_area":"Energy","title":"A resolution designating the week of September 14 through September 18, 2026, as \"National Clean Energy Week\"."},
     {"bill_id":"119-s-5250","bill_number":"5250","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5250","introduced_date":"2026-08-05","latest_action_date":"2026-08-05","latest_action_text":"Read twice and referred to the Committee on Finance. (Sponsor introductory remarks on measure: CR S4477-4478)","latest_vote_id":null,"measure_label":"S. 5250","policy_area":"Health","title":"Medicare Home Health Payment Integrity and Protection Act of 2026"},

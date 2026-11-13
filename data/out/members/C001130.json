@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001130",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10755","bill_number":"10755","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10755","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10755","policy_area":"Government Operations and Politics","title":"To designate the facility of the United States Postal Service located at 475 East FM 1382 in Cedar Hill, Texas, as the \"Eugene Gates Jr. Post Office Building\"."},
     {"bill_id":"119-hr-8885","bill_number":"8885","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8885","introduced_date":"2026-05-19","latest_action_date":"2026-05-19","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 8885","policy_area":"Government Operations and Politics","title":"STOP TRUMP ACT"},

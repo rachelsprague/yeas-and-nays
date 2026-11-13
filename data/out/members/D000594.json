@@ -1,5 +1,6 @@
 {
   "bioguide_id": "D000594",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10542","bill_number":"10542","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10542","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 10542","policy_area":"Agriculture and Food","title":"Combating Pasture Mealybug Act"},
     {"bill_id":"119-hr-10086","bill_number":"10086","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10086","introduced_date":"2026-08-13","latest_action_date":"2026-08-13","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10086","policy_area":"Health","title":"Diabetes Prevention Program Reauthorization Act of 2026"},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001096",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5049","bill_number":"5049","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5049","introduced_date":"2026-07-21","latest_action_date":"2026-07-21","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5049","policy_area":"Finance and Financial Sector","title":"CLAIM Act"},
     {"bill_id":"119-s-4835","bill_number":"4835","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/4835","introduced_date":"2026-06-18","latest_action_date":"2026-06-18","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 4835","policy_area":"Foreign Trade and International Finance","title":"Bureau of Industry and Security License Administration Enhancement Act"},

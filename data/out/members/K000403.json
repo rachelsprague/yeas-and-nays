@@ -1,5 +1,6 @@
 {
   "bioguide_id": "K000403",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10956","bill_number":"10956","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10956","introduced_date":"2026-11-05","latest_action_date":"2026-11-05","latest_action_text":"Referred to the Committee on Natural Resources, and in addition to the Committee on Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10956","policy_area":null,"title":"IHS Workforce Parity Act of 2026"},
     {"bill_id":"119-hr-9221","bill_number":"9221","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9221","introduced_date":"2026-06-09","latest_action_date":"2026-06-30","latest_action_text":"Referred to the Subcommittee on Forestry and Horticulture.","latest_vote_id":null,"measure_label":"H.R. 9221","policy_area":"Public Lands and Natural Resources","title":"Outdoor Americans with Disabilities Act"},

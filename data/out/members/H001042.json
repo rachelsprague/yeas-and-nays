@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001042",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-931","bill_number":"931","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/931","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Referred to the Committee on the Judiciary. (text: CR S5265-5266)","latest_vote_id":null,"measure_label":"S.Res. 931","policy_area":"Arts, Culture, Religion","title":"A resolution recognizing the month of October 2026 as Filipino American History Month and celebrating the history and culture of Filipino Americans and their immense contributions to the United States."},
     {"bill_id":"119-s-5578","bill_number":"5578","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5578","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Environment and Public Works.","latest_vote_id":null,"measure_label":"S. 5578","policy_area":"Environmental Protection","title":"A bill to amend the Federal Water Pollution Control Act to establish the Hawaiian Islands Program, and for other purposes."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000831",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10960","bill_number":"10960","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10960","introduced_date":"2026-11-05","latest_action_date":"2026-11-05","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10960","policy_area":null,"title":"Keep Federal Tech Talent Act"},
     {"bill_id":"119-hr-10839","bill_number":"10839","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10839","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Oversight and Government Reform.","latest_vote_id":null,"measure_label":"H.R. 10839","policy_area":"Government Operations and Politics","title":"Heat Island Reduction Act"},

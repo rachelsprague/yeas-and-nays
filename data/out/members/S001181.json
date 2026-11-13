@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001181",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-sres-957","bill_number":"957","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/957","introduced_date":"2026-11-11","latest_action_date":"2026-11-11","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S5572-5573; text: CR S5575-5576)","latest_vote_id":null,"measure_label":"S.Res. 957","policy_area":null,"title":"A resolution expressing support for the designation of November 15, 2026, as \"National Warrior Call Day\" and recognizing the importance of connecting members of the Armed Forces and veterans in the United States to support structures necessary to transition from the battlefield, especially peer-to-peer connection."},
     {"bill_id":"119-s-5633","bill_number":"5633","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5633","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Small Business and Entrepreneurship.","latest_vote_id":null,"measure_label":"S. 5633","policy_area":"Commerce","title":"STEP Improvement Act of 2026"},

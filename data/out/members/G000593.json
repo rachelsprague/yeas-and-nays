@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000593",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10554","bill_number":"10554","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10554","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10554","policy_area":"Crime and Law Enforcement","title":"SCREEN Act of 2026"},
     {"bill_id":"119-hr-9388","bill_number":"9388","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9388","introduced_date":"2026-06-23","latest_action_date":"2026-07-14","latest_action_text":"Received in the Senate and Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"H.R. 9388","policy_area":"Transportation and Public Works","title":"One-Stop Pilot Program Extension Act"},

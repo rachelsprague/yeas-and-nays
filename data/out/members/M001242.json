@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001242",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5689","bill_number":"5689","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5689","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Read twice and referred to the Committee on Finance under authority of the order of the Senate of 09/30/2026.","latest_vote_id":null,"measure_label":"S. 5689","policy_area":"Taxation","title":"RECLAIM Act"},
     {"bill_id":"119-s-5688","bill_number":"5688","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5688","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources under authority of the order of the Senate of 09/30/2026.","latest_vote_id":null,"measure_label":"S. 5688","policy_area":"Energy","title":"Acquired Lands Revenue Modernization Act"},

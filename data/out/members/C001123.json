@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001123",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10978","bill_number":"10978","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10978","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Small Business.","latest_vote_id":null,"measure_label":"H.R. 10978","policy_area":"Commerce","title":"Cutting Red Tape for Small Businesses Act"},
     {"bill_id":"119-hr-10977","bill_number":"10977","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10977","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Referred to the House Committee on Small Business.","latest_vote_id":null,"measure_label":"H.R. 10977","policy_area":null,"title":"Small Business Tariff Relief Hotline Act"},

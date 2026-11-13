@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000809",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9452","bill_number":"9452","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9452","introduced_date":"2026-06-24","latest_action_date":"2026-06-24","latest_action_text":"Referred to the Committee on the Budget, and in addition to the Committee on Rules, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 9452","policy_area":"Economics and Public Finance","title":"Budgeting for a Better America Act"},
     {"bill_id":"119-hr-9170","bill_number":"9170","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9170","introduced_date":"2026-06-05","latest_action_date":"2026-06-05","latest_action_text":"Placed on the Union Calendar, Calendar No. 598.","latest_vote_id":null,"measure_label":"H.R. 9170","policy_area":"Economics and Public Finance","title":"Transportation, Housing and Urban Development, and Related Agencies Appropriations Act, 2027"},

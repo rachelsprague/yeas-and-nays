@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001082",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9468","bill_number":"9468","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9468","introduced_date":"2026-06-25","latest_action_date":"2026-07-15","latest_action_text":"Ordered to be Reported in the Nature of a Substitute by the Yeas and Nays: 40 - 0.","latest_vote_id":null,"measure_label":"H.R. 9468","policy_area":"Health","title":"STAR Act"},
     {"bill_id":"119-hr-9060","bill_number":"9060","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9060","introduced_date":"2026-05-29","latest_action_date":"2026-05-29","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 9060","policy_area":"Taxation","title":"Precious Metals Parity Act"},

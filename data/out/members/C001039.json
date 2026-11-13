@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001039",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10920","bill_number":"10920","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10920","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 10920","policy_area":"Health","title":"Telehealth Access and Licensure Portability Act of 2026"},
     {"bill_id":"119-hr-9139","bill_number":"9139","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9139","introduced_date":"2026-06-04","latest_action_date":"2026-06-04","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 9139","policy_area":"Health","title":"Medicaid Financing Clarification Act of 2026"},

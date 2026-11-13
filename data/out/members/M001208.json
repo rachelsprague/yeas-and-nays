@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001208",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10631","bill_number":"10631","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10631","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.R. 10631","policy_area":"Education","title":"Smaller Class Sizes for Students and Educators Act of 2026"},
     {"bill_id":"119-hres-1580","bill_number":"1580","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1580","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1580","policy_area":"Education","title":"Supporting the designation of the week of September 21 through September 25, 2026, as \"National Hazing Awareness Week\"."},

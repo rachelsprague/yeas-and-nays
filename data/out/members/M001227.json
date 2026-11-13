@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001227",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10914","bill_number":"10914","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10914","introduced_date":"2026-10-26","latest_action_date":"2026-10-26","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.R. 10914","policy_area":"Agriculture and Food","title":"Farming Opportunities Training and Outreach Grant Program Reauthorization Act of 2026"},
     {"bill_id":"119-hr-10240","bill_number":"10240","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10240","introduced_date":"2026-09-03","latest_action_date":"2026-09-10","latest_action_text":"Referred to the Subcommittee on Health.","latest_vote_id":null,"measure_label":"H.R. 10240","policy_area":"Health","title":"Behavioral Health Crisis Services Expansion Act of 2026"},

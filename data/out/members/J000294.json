@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000294",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-625","bill_number":"625","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/625","introduced_date":"2025-08-01","latest_action_date":"2025-08-01","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.Res. 625","policy_area":"International Affairs","title":"Recognizing the 50th anniversary of the independence of the Republic of Cabo Verde and celebrating the contributions of Cabo Verdean-Americans to democracy in Cabo Verde and the United States."},
     {"bill_id":"119-hr-19","bill_number":"19","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/19","introduced_date":"2025-01-03","latest_action_date":null,"latest_action_text":null,"latest_vote_id":null,"measure_label":"H.R. 19","policy_area":null,"title":"Reserved for the Minority Leader."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S000033",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5692","bill_number":"5692","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5692","introduced_date":"2026-11-09","latest_action_date":"2026-11-09","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"S. 5692","policy_area":null,"title":"A bill to prohibit the use of automatic license plate readers by the Federal Government without explicit statutory authorization, to withhold grants awarded by certain agencies from State and local governments that use automatic license plate readers, and to prohibit the use of Federal funds to purchase automatic license plate readers."},
     {"bill_id":"119-s-5493","bill_number":"5493","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5493","introduced_date":"2026-09-23","latest_action_date":"2026-09-23","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5493","policy_area":"Government Operations and Politics","title":"Ban Artificial Superintelligence Act of 2026"},

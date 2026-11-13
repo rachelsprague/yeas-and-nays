@@ -1,5 +1,6 @@
 {
   "bioguide_id": "B001260",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9501","bill_number":"9501","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9501","introduced_date":"2026-06-29","latest_action_date":"2026-09-08","latest_action_text":"Placed on the Union Calendar, Calendar No. 701.","latest_vote_id":null,"measure_label":"H.R. 9501","policy_area":"Taxation","title":"AI Tax Integrity Act of 2026"},
     {"bill_id":"119-hr-8959","bill_number":"8959","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/8959","introduced_date":"2026-05-21","latest_action_date":"2026-05-21","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 8959","policy_area":"Taxation","title":"Semiconductor Superiority Act"},

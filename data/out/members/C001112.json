@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001112",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10536","bill_number":"10536","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10536","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the Committee on Natural Resources, and in addition to the Committee on Science, Space, and Technology, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10536","policy_area":"Public Lands and Natural Resources","title":"Ocean Protection and DDT Reduction Act"},
     {"bill_id":"119-hres-1459","bill_number":"1459","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1459","introduced_date":"2026-07-27","latest_action_date":"2026-07-27","latest_action_text":"Referred to the House Committee on Agriculture.","latest_vote_id":null,"measure_label":"H.Res. 1459","policy_area":"Agriculture and Food","title":"Expressing support for the designation of July 2026 as \"American Grown Flower and Foliage Month\"."},

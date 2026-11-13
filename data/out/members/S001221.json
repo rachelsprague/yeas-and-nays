@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001221",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hjres-221","bill_number":"221","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/221","introduced_date":"2026-11-02","latest_action_date":"2026-11-02","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.J.Res. 221","policy_area":"Government Operations and Politics","title":"Proposing an amendment to the Constitution of the United States giving Congress power to regulate campaign contributions for Federal elections."},
     {"bill_id":"119-hr-10943","bill_number":"10943","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10943","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10943","policy_area":"Immigration","title":"Counsel for Kids Act of 2026"},

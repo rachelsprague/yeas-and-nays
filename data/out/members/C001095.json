@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001095",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5458","bill_number":"5458","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5458","introduced_date":"2026-09-22","latest_action_date":"2026-09-22","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources.","latest_vote_id":null,"measure_label":"S. 5458","policy_area":"Energy","title":"Supply Relief and Domestic Production Cost Reduction Act"},
     {"bill_id":"119-s-5454","bill_number":"5454","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5454","introduced_date":"2026-09-22","latest_action_date":"2026-09-22","latest_action_text":"Read twice and referred to the Committee on Banking, Housing, and Urban Affairs.","latest_vote_id":null,"measure_label":"S. 5454","policy_area":"Finance and Financial Sector","title":"Small Business Audit Correction Act of 2026"},

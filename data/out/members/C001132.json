@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001132",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10864","bill_number":"10864","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10864","introduced_date":"2026-10-22","latest_action_date":"2026-10-22","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10864","policy_area":"Water Resources Development","title":"San Carlos Irrigation Project Divestiture Act of 2026"},
     {"bill_id":"119-hr-10754","bill_number":"10754","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10754","introduced_date":"2026-10-06","latest_action_date":"2026-10-06","latest_action_text":"Referred to the House Committee on Transportation and Infrastructure.","latest_vote_id":null,"measure_label":"H.R. 10754","policy_area":"Transportation and Public Works","title":"Rural Disaster Fairness Act of 2026"},

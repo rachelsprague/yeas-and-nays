@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001145",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10792","bill_number":"10792","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10792","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the Committee on Education and Workforce, and in addition to the Committee on Energy and Commerce, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10792","policy_area":"Commerce","title":"FTC Whistleblower Act of 2026"},
     {"bill_id":"119-hr-10701","bill_number":"10701","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10701","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on the Judiciary, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10701","policy_area":"Commerce","title":"FTC Autonomy Act"},

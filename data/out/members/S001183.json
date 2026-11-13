@@ -1,5 +1,6 @@
 {
   "bioguide_id": "S001183",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10460","bill_number":"10460","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10460","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10460","policy_area":"Immigration","title":"SMARTER Act"},
     {"bill_id":"119-hr-10400","bill_number":"10400","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10400","introduced_date":"2026-09-15","latest_action_date":"2026-09-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10400","policy_area":"Immigration","title":"SMARTER Act"},

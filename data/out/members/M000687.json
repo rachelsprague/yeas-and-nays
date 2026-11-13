@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M000687",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10345","bill_number":"10345","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10345","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.R. 10345","policy_area":"International Affairs","title":"EBOLA Act"},
     {"bill_id":"119-hr-7915","bill_number":"7915","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7915","introduced_date":"2026-03-12","latest_action_date":"2026-03-12","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 7915","policy_area":"Congress","title":"Clarence Mitchell, Jr. Statue Act"},

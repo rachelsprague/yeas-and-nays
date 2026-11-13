@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000805",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5586","bill_number":"5586","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5586","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5586","policy_area":"Health","title":"Ensuring Accurate Payments to Specialty Pharmacies Act"},
     {"bill_id":"119-s-5576","bill_number":"5576","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5576","introduced_date":"2026-09-29","latest_action_date":"2026-09-29","latest_action_text":"Read twice and referred to the Committee on Commerce, Science, and Transportation.","latest_vote_id":null,"measure_label":"S. 5576","policy_area":"Government Operations and Politics","title":"Artificial Intelligence Risk Management and Security Act of 2026"},

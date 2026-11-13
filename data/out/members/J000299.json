@@ -1,5 +1,6 @@
 {
   "bioguide_id": "J000299",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1520","bill_number":"1520","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1520","introduced_date":"2026-09-10","latest_action_date":"2026-09-10","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":null,"measure_label":"H.Res. 1520","policy_area":"Crime and Law Enforcement","title":"Expressing the sense of the House of Representatives regarding the terrorist attacks launched against the United States on September 11, 2001, on the 25th anniversary of that date."},
     {"bill_id":"119-hres-719","bill_number":"719","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/719","introduced_date":"2025-09-16","latest_action_date":"2025-09-19","latest_action_text":"Motion to reconsider laid on the table Agreed to without objection.","latest_vote_id":"h119-1-0282","measure_label":"H.Res. 719","policy_area":"Government Operations and Politics","title":"Honoring the life and legacy of Charles Charlie James Kirk."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000110",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9511","bill_number":"9511","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9511","introduced_date":"2026-06-29","latest_action_date":"2026-06-29","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 9511","policy_area":"Finance and Financial Sector","title":"NFIP Premium Transparency Act"},
     {"bill_id":"119-hjres-164","bill_number":"164","bill_type":"hjres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-joint-resolution/164","introduced_date":"2026-04-30","latest_action_date":"2026-04-30","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.J.Res. 164","policy_area":"Finance and Financial Sector","title":"Providing for congressional disapproval under chapter 8 of title 5, United States Code, of the rule submitted by the Bureau of Consumer Financial Protection relating to the withdrawal of the rule relating to \"Equal Credit Opportunity (Regulation B); Revocations or Unfavorable Changes to the Terms of Existing Credit Arrangements\"."},

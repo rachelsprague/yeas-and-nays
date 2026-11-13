@@ -1,5 +1,6 @@
 {
   "bioguide_id": "W000812",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1419","bill_number":"1419","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1419","introduced_date":"2026-07-06","latest_action_date":"2026-07-06","latest_action_text":"Referred to the Committee on Armed Services, and in addition to the Committee on Veterans' Affairs, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.Res. 1419","policy_area":"Armed Forces and National Security","title":"Celebrating the 200th anniversary of Jefferson Barracks in Missouri and recognizing its contributions to the military history and national security of the United States."},
     {"bill_id":"119-hr-9329","bill_number":"9329","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9329","introduced_date":"2026-06-18","latest_action_date":"2026-09-03","latest_action_text":"Placed on the Union Calendar, Calendar No. 694.","latest_vote_id":null,"measure_label":"H.R. 9329","policy_area":"Finance and Financial Sector","title":"SEC Reform and Restructuring Act"},

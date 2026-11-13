@@ -1,5 +1,6 @@
 {
   "bioguide_id": "R000584",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5484","bill_number":"5484","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5484","introduced_date":"2026-09-23","latest_action_date":"2026-09-23","latest_action_text":"Read twice and referred to the Committee on Energy and Natural Resources.","latest_vote_id":null,"measure_label":"S. 5484","policy_area":"Energy","title":"Affordable HOMES Act of 2026"},
     {"bill_id":"119-s-5374","bill_number":"5374","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5374","introduced_date":"2026-08-07","latest_action_date":"2026-09-30","latest_action_text":"Committee on Energy and Natural Resources. Ordered to be reported without amendment favorably.","latest_vote_id":null,"measure_label":"S. 5374","policy_area":"Public Lands and Natural Resources","title":"A bill to facilitate the conveyance of certain land in Bonners Ferry, Idaho, platted under section 2387 of the Revised Statutes, and for other purposes."},

@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001089",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5418","bill_number":"5418","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5418","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Read twice and referred to the Committee on Finance.","latest_vote_id":null,"measure_label":"S. 5418","policy_area":"Taxation","title":"No Tax Breaks for Data Centers Act"},
     {"bill_id":"119-s-5163","bill_number":"5163","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5163","introduced_date":"2026-07-29","latest_action_date":"2026-09-14","latest_action_text":"Placed on Senate Legislative Calendar under General Orders. Calendar No. 570.","latest_vote_id":null,"measure_label":"S. 5163","policy_area":"Government Operations and Politics","title":"No Bonuses for Bad Service Act"},

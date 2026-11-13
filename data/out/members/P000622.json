@@ -1,5 +1,6 @@
 {
   "bioguide_id": "P000622",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10789","bill_number":"10789","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10789","introduced_date":"2026-10-09","latest_action_date":"2026-10-09","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10789","policy_area":"Energy","title":"Protecting Florida's Offshore Military Readiness Act"},
     {"bill_id":"119-hr-10693","bill_number":"10693","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10693","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Veterans' Affairs.","latest_vote_id":null,"measure_label":"H.R. 10693","policy_area":"Armed Forces and National Security","title":"GI Bill Transferability Act"},

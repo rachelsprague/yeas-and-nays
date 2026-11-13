@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000273",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10934","bill_number":"10934","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10934","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10934","policy_area":"Energy","title":"American Minerals Royalty and Investment Act of 2026"},
     {"bill_id":"119-hr-10826","bill_number":"10826","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10826","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on the Judiciary.","latest_vote_id":null,"measure_label":"H.R. 10826","policy_area":"Immigration","title":"Justice for Citizens Wrongfully Detained by ICE Act"},

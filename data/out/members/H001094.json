@@ -1,5 +1,6 @@
 {
   "bioguide_id": "H001094",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10929","bill_number":"10929","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10929","introduced_date":"2026-10-29","latest_action_date":"2026-10-29","latest_action_text":"Referred to the House Committee on Ways and Means.","latest_vote_id":null,"measure_label":"H.R. 10929","policy_area":"Foreign Trade and International Finance","title":"Protecting American Hemp Farmers Act"},
     {"bill_id":"119-hr-10823","bill_number":"10823","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10823","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 10823","policy_area":"Environmental Protection","title":"Northwest Wetlands Voluntary Incentives Program Act"},

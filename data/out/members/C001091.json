@@ -1,5 +1,6 @@
 {
   "bioguide_id": "C001091",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10642","bill_number":"10642","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10642","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the Committee on Foreign Affairs, and in addition to the Committees on the Judiciary, Financial Services, and Ways and Means, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.R. 10642","policy_area":"International Affairs","title":"Stop the Settlements Act"},
     {"bill_id":"119-hres-1573","bill_number":"1573","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1573","introduced_date":"2026-09-24","latest_action_date":"2026-09-24","latest_action_text":"Referred to the House Committee on Education and Workforce.","latest_vote_id":null,"measure_label":"H.Res. 1573","policy_area":"Arts, Culture, Religion","title":"Recognizing the contributions of Hispanic and Latino Americans to the musical heritage of the United States and designating September 2026 as \"Latin Music Appreciation Month\"."},

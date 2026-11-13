@@ -1,5 +1,6 @@
 {
   "bioguide_id": "V000128",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5626","bill_number":"5626","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5626","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5626","policy_area":"Education","title":"Higher Education Grant Flexibility Act of 2026"},
     {"bill_id":"119-s-5570","bill_number":"5570","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5570","introduced_date":"2026-09-28","latest_action_date":"2026-09-28","latest_action_text":"Read twice and referred to the Committee on Health, Education, Labor, and Pensions.","latest_vote_id":null,"measure_label":"S. 5570","policy_area":"Labor and Employment","title":"Ready to Work Act of 2026"},

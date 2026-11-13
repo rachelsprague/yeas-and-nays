@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001194",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hres-1626","bill_number":"1626","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1626","introduced_date":"2026-10-15","latest_action_date":"2026-10-15","latest_action_text":"Referred to the House Committee on Science, Space, and Technology.","latest_vote_id":null,"measure_label":"H.Res. 1626","policy_area":"Science, Technology, Communications","title":"Supporting the designation of the week of October 18 through 24, 2026, as \"National Chemistry Week\"."},
     {"bill_id":"119-hres-1570","bill_number":"1570","bill_type":"hres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-resolution/1570","introduced_date":"2026-09-21","latest_action_date":"2026-09-21","latest_action_text":"Referred to the House Committee on Foreign Affairs.","latest_vote_id":null,"measure_label":"H.Res. 1570","policy_area":"International Affairs","title":"Marking the eighth anniversary of the unjust imprisonment of Dr. Gulshan Abbas by the Government of the People's Republic of China, condemning the use of transnational repression to retaliate against the exercise of free speech in the United States, and calling for her immediate and unconditional release."},

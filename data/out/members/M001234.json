@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001234",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-9634","bill_number":"9634","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9634","introduced_date":"2026-07-09","latest_action_date":"2026-07-09","latest_action_text":"Referred to the House Committee on House Administration.","latest_vote_id":null,"measure_label":"H.R. 9634","policy_area":"Government Operations and Politics","title":"Voter Choice Act"},
     {"bill_id":"119-hr-9441","bill_number":"9441","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9441","introduced_date":"2026-06-24","latest_action_date":"2026-06-24","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 9441","policy_area":"Health","title":"SAFE Training for OB-GYNs Act"},

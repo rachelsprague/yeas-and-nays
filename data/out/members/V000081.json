@@ -1,5 +1,6 @@
 {
   "bioguide_id": "V000081",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hconres-122","bill_number":"122","bill_type":"hconres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-concurrent-resolution/122","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the Committee on Energy and Commerce, and in addition to the Committee on Foreign Affairs, for a period to be subsequently determined by the Speaker, in each case for consideration of such provisions as fall within the jurisdiction of the committee concerned.","latest_vote_id":null,"measure_label":"H.Con.Res. 122","policy_area":"Health","title":"Expressing support for the recognition of September 26, 2026, as \"World Contraception Day\" and expressing the sense of the House of Representatives regarding global and domestic access to contraception."},
     {"bill_id":"119-hr-10471","bill_number":"10471","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10471","introduced_date":"2026-09-16","latest_action_date":"2026-09-16","latest_action_text":"Referred to the House Committee on Financial Services.","latest_vote_id":null,"measure_label":"H.R. 10471","policy_area":"Finance and Financial Sector","title":"CLAIM Act"},

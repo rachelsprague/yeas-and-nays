@@ -1,5 +1,6 @@
 {
   "bioguide_id": "L000575",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5697","bill_number":"5697","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5697","introduced_date":"2026-11-10","latest_action_date":"2026-11-10","latest_action_text":"Read twice and referred to the Committee on Homeland Security and Governmental Affairs.","latest_vote_id":null,"measure_label":"S. 5697","policy_area":null,"title":"A bill to ensure that Federal agencies rely on the best reasonably available scientific, technical, demographic, economic, and statistical information and evidence to develop, issue or inform the public of the nature and bases of Federal agency rules and guidance, and for other purposes."},
     {"bill_id":"119-s-5667","bill_number":"5667","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5667","introduced_date":"2026-09-30","latest_action_date":"2026-09-30","latest_action_text":"Read twice and referred to the Committee on the Judiciary.","latest_vote_id":null,"measure_label":"S. 5667","policy_area":"Immigration","title":"Ending Birthright Citizenship in U.S. Territories Act"},

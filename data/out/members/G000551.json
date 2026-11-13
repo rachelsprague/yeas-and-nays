@@ -1,5 +1,6 @@
 {
   "bioguide_id": "G000551",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-2053","bill_number":"2053","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/2053","introduced_date":"2025-03-11","latest_action_date":"2025-03-11","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 2053","policy_area":"Energy","title":"Stop Giving Big Oil Free Money Act"},
     {"bill_id":"119-hr-1865","bill_number":"1865","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/1865","introduced_date":"2025-03-05","latest_action_date":"2025-03-05","latest_action_text":"Referred to the House Committee on Natural Resources.","latest_vote_id":null,"measure_label":"H.R. 1865","policy_area":"Energy","title":"Mining Waste, Fraud, and Abuse Prevention Act of 2025"}

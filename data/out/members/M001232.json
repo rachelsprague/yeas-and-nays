@@ -1,5 +1,6 @@
 {
   "bioguide_id": "M001232",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-hr-10684","bill_number":"10684","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/10684","introduced_date":"2026-10-01","latest_action_date":"2026-10-01","latest_action_text":"Referred to the House Committee on Science, Space, and Technology.","latest_vote_id":null,"measure_label":"H.R. 10684","policy_area":"Energy","title":"DOE Bioenergy Program Reauthorization Act"},
     {"bill_id":"119-hr-9286","bill_number":"9286","bill_type":"hr","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/9286","introduced_date":"2026-06-11","latest_action_date":"2026-06-11","latest_action_text":"Referred to the House Committee on Energy and Commerce.","latest_vote_id":null,"measure_label":"H.R. 9286","policy_area":"Science, Technology, Communications","title":"Broadband Deployment and Economic Impact Study Act of 2026"},

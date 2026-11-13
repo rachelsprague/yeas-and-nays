@@ -1,5 +1,6 @@
 {
   "bioguide_id": "F000479",
+  "cosponsored": null,
   "sponsored": [
     {"bill_id":"119-s-5200","bill_number":"5200","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5200","introduced_date":"2026-07-30","latest_action_date":"2026-07-30","latest_action_text":"Read twice and referred to the Committee on Agriculture, Nutrition, and Forestry.","latest_vote_id":null,"measure_label":"S. 5200","policy_area":"Agriculture and Food","title":"Spotted Lanternfly Research and Development Act"},
     {"bill_id":"119-s-4538","bill_number":"4538","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/4538","introduced_date":"2026-05-14","latest_action_date":"2026-09-17","latest_action_text":"Placed on Senate Legislative Calendar under General Orders. Calendar No. 658.","latest_vote_id":null,"measure_label":"S. 4538","policy_area":"Public Lands and Natural Resources","title":"Washington’s Trail—1753 National Historic Trail Feasibility Study Act of 2026"},
