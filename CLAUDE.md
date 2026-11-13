@@ -30,6 +30,17 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 
 Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item) and `backlog/<slug>.md` for details. Both are gitignored because this repo is public. Don't create GitHub issues for this project.
 
+Being gitignored, they exist only in the main checkout, and a session isolated in a worktree can't edit them. So board edits bracket worktree work: claim from the main checkout before entering the worktree, and update the board after leaving it and fast-forwarding `main`.
+
+### Claiming items
+
+Several sessions may work in this repo at once. Claim an item before starting it so no other session picks it up:
+
+- **Alias:** at your first claim, pick one short lowercase word as your alias (e.g. `heron`), tell the user, and use it for the rest of the session.
+- **Claim:** re-read `BOARD.md` right before editing it, then move the item to Now and append ` — claimed by **<alias>** (YYYY-MM-DD HH:MM)`. Claim only what you're about to start. Claim at the end of the line, never as a leading `[word]` (the dashboard reads that as a role).
+- **Respect claims:** never work on an item another alias has claimed. If a claim looks abandoned, ask the user before taking it over.
+- **Release:** when the work ships, move the item to Done per the usual one-line note, without the claim. If you stop before finishing, remove the claim, put the item back in its column, and add a short note of where it stands.
+
 ## Public repo: review before every push
 
 This repository is public. Before any `git push`, review every outgoing commit individually (`git log -p origin/main..HEAD`, including commit messages), not just the net diff. A secret added in one commit and removed in a later one is still published with the history. Report findings to the user. Do not push until the user confirms. Check for:
