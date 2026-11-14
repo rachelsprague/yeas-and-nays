@@ -83,6 +83,7 @@
     var start = null;
 
     svg.addEventListener("pointerdown", function (e) {
+      if (e.pointerType === "mouse" && e.button !== 0) return; // right-click, middle button
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 1) {
         dragged = false;
@@ -112,9 +113,15 @@
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     });
 
+    // A press can end where the svg never hears it (released outside the map,
+    // or a context menu opened by Ctrl-click); drop it so it can't act as a
+    // second finger on the next drag.
     function release(e) { pointers.delete(e.pointerId); }
     svg.addEventListener("pointerup", release);
     svg.addEventListener("pointercancel", release);
+    svg.addEventListener("lostpointercapture", release);
+    svg.addEventListener("pointerleave", function (e) { if (!svg.hasPointerCapture(e.pointerId)) release(e); });
+    svg.addEventListener("contextmenu", function () { pointers.clear(); });
 
     // A click (not the end of a drag) chooses a district instead of following its link.
     svg.addEventListener("click", function (e) {

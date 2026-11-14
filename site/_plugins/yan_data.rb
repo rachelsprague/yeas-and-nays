@@ -247,7 +247,8 @@ module Yan
     end
     { "width" => map["width"], "height" => map["height"], "borders" => map["borders"],
       "cities" => map["cities"] || [], "districts" => districts,
-      "people_json" => JSON.generate(people).gsub("</", "<\\/") }
+      # Every "<" escaped, so nothing in a name can end or confuse the script tag.
+      "people_json" => JSON.generate(people).gsub("<", "\\u003c") }
   end
 
   # Official social media accounts, in one fixed order for every member.

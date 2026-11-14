@@ -8,7 +8,11 @@ nav: members
   <section class="vote-head">
     <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
     <h1 class="vote-h">Find your members of Congress</h1>
-    <p class="soft">Every House district in the {{ site.data.meta.congress | ordinal }} Congress. Zoom in to where you live and choose your district to see your representative and your state's two senators.</p>
+    {%- if map %}
+    <p class="soft">Every House district in the 50 states. Zoom in to where you live and choose your district to see your representative and your state's senators.</p>
+    {%- else %}
+    <p class="soft">The district map for this Congress isn't available yet. Search by name or state below.</p>
+    {%- endif %}
   </section>
 
   {%- if map %}
@@ -18,10 +22,10 @@ nav: members
       <svg viewBox="0 0 {{ map.width }} {{ map.height }}" aria-hidden="true" focusable="false">
         <g class="districts">
           {%- for d in map.districts %}
-          <a href="{{ d.url }}" tabindex="-1" data-seat="{{ d.seat }}"><path d="{{ d.d }}"/><title>{{ d.where }}: {% if d.rep_name %}{{ d.rep_name | escape }} ({{ d.rep_party }}){% else %}vacant{% endif %}</title></a>
+          <a href="{{ d.url | escape }}" tabindex="-1" data-seat="{{ d.seat | escape }}"><path d="{{ d.d | escape }}"/><title>{{ d.where | escape }}: {% if d.rep_name %}{{ d.rep_name | escape }} ({{ d.rep_party }}){% else %}vacant{% endif %}</title></a>
           {%- endfor %}
         </g>
-        <path class="borders" d="{{ map.borders }}"/>
+        <path class="borders" d="{{ map.borders | escape }}"/>
         <g class="cities">
           {%- for c in map.cities %}
           <g class="city t{{ c.tier }}" transform="translate({{ c.x }} {{ c.y }})"><circle/><text>{{ c.name | escape }}</text></g>
@@ -36,7 +40,7 @@ nav: members
       </div>
     </div>
     <div class="dmap-card js-only" data-card aria-live="polite">
-      <p class="soft">Choose a district on the map to see its representative and the state's two senators.</p>
+      <p class="soft">Choose a district on the map to see its representative and the state's senators.</p>
     </div>
     <script type="application/json" data-people>{{ map.people_json }}</script>
   </section>

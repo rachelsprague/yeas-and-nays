@@ -225,12 +225,24 @@ class DistrictMapTest < Minitest::Test
 
   def test_names_cannot_close_the_script_tag
     json = map([member("H1", "house", "KY", 4, name: "</script><b>")])["people_json"]
-    refute_includes json, "</"
+    refute_includes json, "<"
     assert_equal "</script><b>", JSON.parse(json)["KY-4"]["rep"]["name"]
   end
 
   def test_no_map_for_the_congress
     assert_nil Yan.district_map(nil, [])
+  end
+
+  # Every current representative in the exported data has a seat on the map
+  # for the exported Congress, so district numbering matches after a switchover.
+  def test_every_current_representative_is_on_the_current_map
+    out = File.expand_path("../../data/out", __dir__)
+    congress = JSON.parse(File.read(File.join(out, "meta.json")))["congress"]
+    doc = JSON.parse(File.read(File.expand_path("../_maps/#{congress}.json", __dir__)))
+    seats = doc["districts"].map { |d| [d["state"], d["district"]] }
+    reps = JSON.parse(File.read(File.join(out, "members.json")))["members"]
+               .select { |m| m["is_current"] && m["is_voting_member"] && m["chamber"] == "house" }
+    assert_empty reps.map { |m| [m["state"], m["district"].to_i] } - seats
   end
 
   # Both committed maps: the 50 states' 435 seats, numbered as the member data numbers them.

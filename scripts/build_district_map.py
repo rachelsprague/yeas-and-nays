@@ -101,8 +101,10 @@ def fetch(url):
     path = CACHE / url.rsplit("/", 1)[1]
     if not path.exists():
         print(f"downloading {url}", file=sys.stderr)
+        part = path.with_name(path.name + ".part")  # a failed download never leaves a cached file
         with urllib.request.urlopen(url, timeout=120) as r:
-            path.write_bytes(r.read())
+            part.write_bytes(r.read())
+        part.replace(path)
     return path
 
 
@@ -213,14 +215,20 @@ def place_lists(drawn_full, places_placed):
 
 
 def city_labels(places_placed):
-    """[{name, x, y, tier}] for places big enough to label, largest first."""
+    """[{name, x, y, tier}] for places big enough to label, largest first. A name
+    labeled in more than one state gets its state ("Kansas City, MO")."""
     labels = []
-    for _, name, pop, geom in sorted(places_placed, key=lambda p: -p[2]):
+    for state, name, pop, geom in sorted(places_placed, key=lambda p: (-p[2], p[1])):
         tier = next((t for floor, t in LABEL_TIERS if pop >= floor), None)
         if tier is None:
             break
         pt = geom.representative_point()
-        labels.append({"name": name, "x": round(pt.x, 1), "y": round(pt.y, 1), "tier": tier})
+        labels.append({"state": state, "name": name, "x": round(pt.x, 1), "y": round(pt.y, 1), "tier": tier})
+    repeated = {n for n in (l["name"] for l in labels) if sum(l["name"] == n for l in labels) > 1}
+    for label in labels:
+        state = label.pop("state")
+        if label["name"] in repeated:
+            label["name"] += f", {state}"
     return labels
 
 
