@@ -300,6 +300,24 @@ table.roll { border-collapse: collapse; width: 100%; }
 .prose dd { margin: 4px 0 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
 .prose code { font-family: var(--font-mono); font-size: 0.88em; padding: 1px 5px; border-radius: var(--radius-sm); background: var(--surface-alt); }
 
+/* ---- Floor schedule calendar ------------------------------------------ */
+/* Phones: days stack, each with its Senate and House cells. Wider screens:
+   a grid with a column per day and a row per chamber (see Desktop). */
+
+.tabs.wraps { flex-wrap: wrap; column-gap: 18px; row-gap: 0; }
+.cal-wrap, .cal-week { display: flex; flex-direction: column; gap: 12px; }
+.cal-week { margin-top: 12px; }
+.cal { border-top: 1.5px solid var(--ink); }
+.cal-labels { display: none; }
+.cal-day { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.cal-date { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; }
+.cal-cell { display: flex; flex-direction: column; gap: 4px; }
+.cal-cell.blank { display: none; }
+.cal-votes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.cal-votes a { display: flex; flex-direction: column; }
+.cal-votes .n { font-size: 15px; font-weight: 600; }
+.cal-pending-h { margin: 12px 0 0; font-weight: 600; }
+
 /* ---- Footer ------------------------------------------------------------ */
 
 footer.wrap { padding-bottom: 28px; }
@@ -348,4 +366,23 @@ footer.wrap { padding-bottom: 28px; }
   .vrow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 260px; gap: 24px; align-items: baseline; }
 
   .member-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .cal { display: grid; grid-template-rows: auto auto auto; border-bottom: 1px solid var(--line); }
+  .cal.days-5 { grid-template-columns: 72px repeat(5, minmax(0, 1fr)); }
+  .cal.days-6 { grid-template-columns: 72px repeat(6, minmax(0, 1fr)); }
+  .cal.days-7 { grid-template-columns: 72px repeat(7, minmax(0, 1fr)); }
+  .cal-labels, .cal-day { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 0; padding: 0; border-bottom: 0; }
+  .cal-day { border-left: 1px solid var(--line); }
+  .cal-labels > *, .cal-date, .cal-cell { padding: 10px; }
+  .cal-labels > :first-child { padding: 0; }
+  .cal-labels > * + *, .cal-cell { border-top: 1px solid var(--line); }
+  .cal-cell { position: relative; }
+  .cal-cell.blank { display: flex; }
+  .cal-date { flex-wrap: wrap; column-gap: 6px; }
+  .cal-day.today .cal-date { border-top: 3px solid var(--accent); padding-top: 7px; }
+  /* The row labels name the chamber; keep it for screen readers only. */
+  .cal-chamber {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
 }

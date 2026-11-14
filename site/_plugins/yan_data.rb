@@ -79,17 +79,19 @@ module Yan
     rest.empty? ? nil : rest[0].upcase + rest[1..]
   end
 
+  # "3 p.m.", "10:30 a.m.", "noon"
+  def self.clock_label(t)
+    return "noon" if t.hour == 12 && t.minute.zero?
+
+    hour = t.hour % 12
+    hour = 12 if hour.zero?
+    "#{hour}#{t.minute.zero? ? "" : format(":%02d", t.minute)} #{t.hour < 12 ? "a.m." : "p.m."}"
+  end
+
   # "2026-11-16T15:00:00" (Eastern) -> "Monday, Nov. 16, 2026, at 3 p.m. ET"
   def self.convene_label(iso)
     t = DateTime.strptime(iso, "%Y-%m-%dT%H:%M:%S")
-    clock =
-      if t.hour == 12 && t.minute.zero? then "noon"
-      else
-        hour = t.hour % 12
-        hour = 12 if hour.zero?
-        "#{hour}#{t.minute.zero? ? "" : format(":%02d", t.minute)} #{t.hour < 12 ? "a.m." : "p.m."}"
-      end
-    "#{Date::DAYNAMES[t.wday]}, #{Filters.ap_date(t)}, at #{clock} ET"
+    "#{Date::DAYNAMES[t.wday]}, #{Filters.ap_date(t)}, at #{clock_label(t)} ET"
   end
 
   # The floor schedule for display. Each item links to its roll call once
@@ -121,6 +123,75 @@ module Yan
       "senate" => senate,
       "senate_next_convene" => next_convene && convene_label(next_convene)
     }
+  end
+
+  CALENDAR_WEEKS_BACK = 2
+
+  # The floor schedule as weeks of days, for /schedule/. The sources give no
+  # day for an upcoming vote (the House lists measures by week; a Senate
+  # cloture vote follows its motion by rule, not on a set date), so a day
+  # holds only what is dated: the roll calls taken that day, and the time
+  # the Senate is next due to convene. Items still to come are listed under
+  # their week until its Friday has passed. Weeks run from CALENDAR_WEEKS_BACK
+  # weeks before today's through the latest week anything is scheduled for;
+  # Saturdays and Sundays appear only when a vote was taken or the Senate
+  # convenes on them.
+  # `view` is schedule_view's result; `votes` need url and result_label.
+  def self.schedule_calendar(view, votes, today, next_convene_iso)
+    monday = ->(d) { d - ((d.wday - 1) % 7) }
+    this_week = monday.call(today)
+    convene = next_convene_iso && DateTime.strptime(next_convene_iso, "%Y-%m-%dT%H:%M:%S")
+    # A failed fetch can leave a convene time that has already passed.
+    convene = nil if convene && convene.to_date < today
+    house_weeks = (view["house_weeks"] || []).select { |w| w["week_date"] }
+    listed_weeks = [convene && monday.call(convene.to_date),
+                    *house_weeks.map { |w| Date.parse(w["week_date"]) }].compact
+    last_week = [this_week, *listed_weeks].max
+    first_week = this_week - (7 * CALENDAR_WEEKS_BACK)
+    span = (first_week.to_s..(last_week + 6).to_s)
+    taken = votes.select { |v| span.cover?(v["vote_date"]) }
+                 .sort_by { |v| [v["congress"], v["session"], v["roll_number"]] }
+                 .group_by { |v| [v["vote_date"], v["chamber"]] }
+    # On a weekend, open on the coming week if anything is listed for it.
+    weekend = today.saturday? || today.sunday?
+    default = weekend && listed_weeks.include?(this_week + 7) ? this_week + 7 : this_week
+    # Pending cloture motions go in the week the Senate next convenes.
+    senate_week = convene ? monday.call(convene.to_date) : default
+
+    weeks = (first_week..last_week).step(7).map do |mon|
+      days = (mon..(mon + 6)).select do |d|
+        d.wday.between?(1, 5) || taken.key?([d.to_s, "house"]) || taken.key?([d.to_s, "senate"]) ||
+          d == convene&.to_date
+      end
+      days = days.map do |d|
+        roll_calls = ->(chamber) do
+          (taken[[d.to_s, chamber]] || []).map do |v|
+            { "url" => v["url"], "label" => v["measure_label"] || v["question"], "result_label" => v["result_label"] }
+          end
+        end
+        { "date" => d.to_s, "weekday" => Date::ABBR_DAYNAMES[d.wday],
+          "label" => "#{Filters::AP_MONTHS[d.month - 1]} #{d.day}",
+          "when" => if d < today then "past" elsif d == today then "today" else "future" end,
+          "senate" => roll_calls.call("senate"), "house" => roll_calls.call("house"),
+          "convene" => d == convene&.to_date ? "#{clock_label(convene)} ET" : nil }
+      end
+      house_week = house_weeks.find { |w| w["week_date"] == mon.to_s }
+      # A House item listed but never put to a roll call (a voice vote, or it
+      # didn't come up) drops off once its week's Friday has passed.
+      house_pending = if house_week && mon + 4 >= today
+                        house_week["groups"].map { |g| g.merge("items" => g["items"].reject { |i| i["vote_id"] }) }
+                                            .reject { |g| g["items"].empty? }
+                      else
+                        []
+                      end
+      { "week_date" => mon.to_s, "label" => "Week of #{Filters.ap_date(mon)}",
+        "tab" => { this_week => "This week", this_week + 7 => "Next week" }
+                   .fetch(mon, "#{Filters::AP_MONTHS[mon.month - 1]} #{mon.day}"),
+        "days" => days, "roll_calls" => days.sum { |d| d["senate"].size + d["house"].size },
+        "senate_pending" => mon == senate_week ? view["upcoming_senate"] || [] : [],
+        "house_pending" => house_pending }
+    end
+    { "weeks" => weeks, "default_week" => default.to_s }
   end
 
   def self.vote_url(v)
@@ -314,6 +385,9 @@ module Yan
       # Absent until the pipeline first ingests the floor schedules.
       schedule = read_optional.call("floor_schedule.json") || { "items" => [] }
       site.data["schedule"] = Yan.schedule_view(schedule, votes_by_id)
+      # site.time is Eastern (timezone in _config.yml), the floor's own clock.
+      site.data["schedule_calendar"] = Yan.schedule_calendar(site.data["schedule"], votes, site.time.to_date,
+                                                             schedule["senate_next_convene_et"])
 
       site.data["meta"] = meta
       site.data["members"] = members
