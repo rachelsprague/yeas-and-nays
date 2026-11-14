@@ -143,15 +143,20 @@ module Yan
     convene = next_convene_iso && DateTime.strptime(next_convene_iso, "%Y-%m-%dT%H:%M:%S")
     # A failed fetch can leave a convene time that has already passed.
     convene = nil if convene && convene.to_date < today
-    house_weeks = view["house_weeks"] || []
-    last_week = [this_week, convene && monday.call(convene.to_date),
-                 *house_weeks.map { |w| Date.parse(w["week_date"]) }].compact.max
+    house_weeks = (view["house_weeks"] || []).select { |w| w["week_date"] }
+    listed_weeks = [convene && monday.call(convene.to_date),
+                    *house_weeks.map { |w| Date.parse(w["week_date"]) }].compact
+    last_week = [this_week, *listed_weeks].max
     first_week = this_week - (7 * CALENDAR_WEEKS_BACK)
     span = (first_week.to_s..(last_week + 6).to_s)
     taken = votes.select { |v| span.cover?(v["vote_date"]) }
-                 .sort_by { |v| v["roll_number"] }
+                 .sort_by { |v| [v["congress"], v["session"], v["roll_number"]] }
                  .group_by { |v| [v["vote_date"], v["chamber"]] }
-    senate_week = convene ? monday.call(convene.to_date) : this_week
+    # On a weekend, open on the coming week if anything is listed for it.
+    weekend = today.saturday? || today.sunday?
+    default = weekend && listed_weeks.include?(this_week + 7) ? this_week + 7 : this_week
+    # Pending cloture motions go in the week the Senate next convenes.
+    senate_week = convene ? monday.call(convene.to_date) : default
 
     weeks = (first_week..last_week).step(7).map do |mon|
       days = (mon..(mon + 6)).select do |d|
@@ -186,9 +191,6 @@ module Yan
         "senate_pending" => mon == senate_week ? view["upcoming_senate"] || [] : [],
         "house_pending" => house_pending }
     end
-    # On a weekend, open on the coming week once it has anything listed.
-    weekend = today.saturday? || today.sunday?
-    default = weekend && last_week > this_week ? this_week + 7 : this_week
     { "weeks" => weeks, "default_week" => default.to_s }
   end
 

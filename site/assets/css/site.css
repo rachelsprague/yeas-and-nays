@@ -376,6 +376,7 @@ footer.wrap { padding-bottom: 28px; }
   .cal-labels > *, .cal-date, .cal-cell { padding: 10px; }
   .cal-labels > :first-child { padding: 0; }
   .cal-labels > * + *, .cal-cell { border-top: 1px solid var(--line); }
+  .cal-cell { position: relative; }
   .cal-cell.blank { display: flex; }
   .cal-date { flex-wrap: wrap; column-gap: 6px; }
   .cal-day.today .cal-date { border-top: 3px solid var(--accent); padding-top: 7px; }
