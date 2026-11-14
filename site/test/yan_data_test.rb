@@ -120,6 +120,7 @@ class EscapingTest < Minitest::Test
     assert_includes pages.keys, "/members/index.html"
     assert_includes pages.keys, "/votes/119/house/1/1/index.html"
     assert_includes pages.keys, "/index.html"
+    assert_includes pages["/votes/119/house/1/1/index.html"], '<g class="dot nay" fill="url(#hatch-R)">'
 
     pages.each do |path, html|
       html.scan(/.?jj.?/i).each do |hit|
@@ -160,6 +161,41 @@ class AccountsTest < Minitest::Test
     assert_equal "example.house.gov", Yan.website_label("https://www.example.house.gov/")
     assert_equal "example.gov/www.page", Yan.website_label("http://example.gov/www.page")
     assert_nil Yan.website_label(nil)
+  end
+end
+
+class PartyGridTest < Minitest::Test
+  WORDS = { "yes" => "Yea", "no" => "Nay" }.freeze
+
+  def party(p, yes: 0, no: 0, present: 0, not_voting: 0)
+    { "party" => p, "name" => Yan::PARTY_NAMES[p], "yes" => yes, "no" => no, "present" => present,
+      "not_voting" => not_voting, "other" => 0 }
+  end
+
+  def test_positions_fill_rows_in_order_yea_nay_present_not_voting
+    g = Yan.party_grid([party("R", yes: 24, no: 2, not_voting: 1)], WORDS).first
+    assert_equal [["yea", "Yea", 24], ["nay", "Nay", 2], ["nv", "Not Voting", 1]],
+                 g["runs"].map { |r| r.values_at("mark", "label", "count") }
+    nay = g["runs"][1]["cells"]
+    assert_equal({ "x" => 24 * 12, "y" => 0 }, nay[0]) # last square of the first row
+    assert_equal({ "x" => 0, "y" => 12 }, nay[1])       # wraps to the second row
+    assert_equal [25 * 12 - 2, 2 * 12 - 2], g.values_at("width", "height")
+  end
+
+  def test_a_short_block_is_only_as_wide_as_its_squares
+    g = Yan.party_grid([party("I", yes: 2)], WORDS).first
+    assert_equal [22, 10], g.values_at("width", "height")
+  end
+
+  def test_parties_with_no_members_recorded_are_left_out
+    assert_equal ["D"], Yan.party_grid([party("D", no: 1), party("I")], WORDS).map { |g| g["party"] }
+  end
+
+  def test_no_grid_for_a_vote_by_candidate
+    doc = { "positions" => { "A000001" => "Jeffries", "B000001" => "Johnson" },
+            "party_totals" => { "D" => { "other" => 1 }, "R" => { "other" => 1 } },
+            "against_party_majority" => [], "caucus_majority_position" => {}, "summary" => nil }
+    assert_equal [], Yan.vote_view({}, doc, {})["party_grid"]
   end
 end
 

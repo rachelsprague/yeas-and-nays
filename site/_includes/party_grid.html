@@ -1,0 +1,19 @@
+{%- comment -%} One square per member, a block per party (Yan.party_grid). include.view: a vote view from yan_data.rb.
+Marks match the legend: Yea solid, Nay striped, Present dashed, Not voting open. The By party table is its text version. {%- endcomment -%}
+{%- assign view = include.view -%}
+{%- if view.party_grid.size > 0 %}
+<div class="grid-chart" aria-hidden="true">
+  {%- for g in view.party_grid %}
+  <div class="grid-party">
+    <span class="grid-label party">{{ g.party }} · {{ g.name }}</span>
+    <svg width="{{ g.width }}" height="{{ g.height }}" viewBox="0 0 {{ g.width }} {{ g.height }}">
+      <defs><pattern id="hatch-{{ g.party }}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5"/></pattern></defs>
+      {%- for run in g.runs %}
+      <g class="dot {{ run.mark }}"{% if run.mark == "nay" %} fill="url(#hatch-{{ g.party }})"{% endif %}><title>{{ g.name }}: {{ run.count }} {{ run.label }}</title>
+        {%- for c in run.cells %}<rect x="{{ c.x | plus: 0.5 }}" y="{{ c.y | plus: 0.5 }}" width="9" height="9"/>{% endfor %}</g>
+      {%- endfor %}
+    </svg>
+  </div>
+  {%- endfor %}
+</div>
+{%- endif %}

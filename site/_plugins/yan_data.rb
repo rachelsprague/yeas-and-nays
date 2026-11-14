@@ -241,6 +241,31 @@ module Yan
     { "yes" => yes, "no" => no }
   end
 
+  GRID_COLS = 25 # squares per row, the same in both chambers so their sizes compare
+  GRID_PITCH = 12 # px from one square to the next: a 10px square and a 2px gap
+
+  # One square per member, a block per party: Yea, then Nay, Present and Not
+  # voting, filled row by row. Each run of one position is a group the include
+  # draws with that position's mark; x and y are the square's top-left corner.
+  def self.party_grid(by_party, words)
+    by_party.map do |p|
+      i = 0
+      runs = [["yea", words["yes"], p["yes"]], ["nay", words["no"], p["no"]],
+              ["present", "Present", p["present"]], ["nv", "Not Voting", p["not_voting"]]].filter_map do |mark, label, n|
+        next if n.zero?
+        cells = Array.new(n) do
+          cell = { "x" => (i % GRID_COLS) * GRID_PITCH, "y" => (i / GRID_COLS) * GRID_PITCH }
+          i += 1
+          cell
+        end
+        { "mark" => mark, "label" => label, "count" => n, "cells" => cells }
+      end
+      rows = (i + GRID_COLS - 1) / GRID_COLS
+      { "party" => p["party"], "name" => p["name"], "runs" => runs,
+        "width" => [i, GRID_COLS].min * GRID_PITCH - 2, "height" => rows * GRID_PITCH - 2 }
+    end.reject { |g| g["runs"].empty? }
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
   def self.vote_view(vote, doc, members_by_id)
     words = words(doc["positions"])
@@ -287,7 +312,8 @@ module Yan
     {
       "vote" => vote, "words" => words, "sponsor" => sponsor, "tally" => tally, "has_other" => !other.empty?,
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
-      "by_party" => by_party, "against" => against, "summary" => doc["summary"]
+      "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
+      "against" => against, "summary" => doc["summary"]
     }
   end
 

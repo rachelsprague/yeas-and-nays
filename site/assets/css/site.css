@@ -194,6 +194,17 @@ main.home { gap: 20px; padding-top: 20px; }
 .mark.present { border-style: dashed; }
 .pos { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 
+/* Party grid: one square per member, drawn with the legend marks above. */
+.grid-chart { display: flex; flex-direction: column; gap: 14px; }
+.grid-party { display: flex; flex-direction: column; gap: 6px; }
+.grid-label { font-size: 14px; line-height: 18px; }
+.grid-party svg { display: block; max-width: 100%; height: auto; }
+.dot rect { stroke: var(--ink); stroke-width: 1; }
+.dot.yea rect { fill: var(--ink); }
+.dot.present rect, .dot.nv rect { fill: var(--surface); }
+.dot.present rect { stroke-dasharray: 2 1.5; }
+.grid-chart pattern rect { fill: var(--ink); stroke: none; }
+
 .bar { display: flex; height: 14px; border: 1px solid var(--ink); background: var(--surface); }
 .bar .yea { background: var(--ink); }
 .bar .nay { border-left: 2px solid var(--surface); }
