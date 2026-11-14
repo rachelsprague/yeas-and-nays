@@ -37,6 +37,10 @@ STRING_COLUMNS = {
     ],
     "legislator_terms": [
         "bioguide_id", "term_type", "term_start", "term_end", "state", "party", "caucus",
+        "url", "contact_form", "phone", "office",
+    ],
+    "legislator_social_media": [
+        "bioguide_id", "twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon",
     ],
     "bills": [
         "source_file", "congress", "bill_type", "bill_number", "title", "introduced_date",
@@ -120,3 +124,4 @@ def run() -> None:
     write("legislators", people)
     write("legislator_terms", terms)
     write("legislator_party_affiliations", affiliations)
+    write("legislator_social_media", legislators.parse_social_dir(RAW_DIR / "legislators"))

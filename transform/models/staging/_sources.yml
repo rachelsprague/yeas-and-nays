@@ -49,6 +49,12 @@ sources:
       - name: legislators
         description: One row per person in unitedstates/congress-legislators (current + historical).
       - name: legislator_terms
-        description: One row per term served.
+        description: >
+          One row per term served, with the official website, contact form, phone, and
+          Washington office recorded for that term.
       - name: legislator_party_affiliations
         description: Party periods within a term, present only when a member changed party mid-term.
+      - name: legislator_social_media
+        description: >
+          One row per current member in congress-legislators' social media file: official
+          account names on X (recorded as twitter), Facebook, Instagram, YouTube, and Mastodon.

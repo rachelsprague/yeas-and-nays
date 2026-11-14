@@ -298,3 +298,37 @@ unit_tests:
         - {item_id: s-S.Amdt. 9, vote_id: s119-2-0012, question: On the Cloture Motion}
         - {item_id: s-H.R. 4-measure, vote_id: s119-2-0013, question: On the Cloture Motion}
         - {item_id: s-H.R. 4-the-committee-reported-substitute, vote_id: null, question: On the Cloture Motion}
+
+  - name: members_links_from_latest_term_for_current_members_only
+    description: >
+      Official links come from the member's latest term. phone_tel needs exactly
+      10 digits. A former member's record keeps old links, which are left out.
+    model: members
+    given:
+      - input: ref('int_member_periods')
+        rows:
+          - {bioguide_id: C1, chamber: senate, state: VT, party: D, caucus_party: D, member_label: "One (D-VT)", period_start: "2025-01-03", period_end: "2031-01-03", overlaps_congress: true}
+          - {bioguide_id: C2, chamber: house, state: CA, district: 3, party: R, caucus_party: R, member_label: "Two (R-CA-3)", period_start: "2025-01-03", period_end: "2027-01-03", overlaps_congress: true}
+          - {bioguide_id: F1, chamber: house, state: TX, district: 9, party: D, caucus_party: D, member_label: "Former (D-TX-9)", period_start: "2025-01-03", period_end: "2025-06-01", overlaps_congress: true}
+      - input: ref('int_positions_resolved')
+        rows: []
+      - input: ref('stg_legislators__people')
+        rows:
+          - {bioguide_id: C1, last_name: One, is_current: true}
+          - {bioguide_id: C2, last_name: Two, is_current: true}
+          - {bioguide_id: F1, last_name: Former, is_current: false}
+      - input: ref('stg_legislators__terms')
+        rows:
+          - {bioguide_id: C1, term_start: "2019-01-03", website_url: "https://old.example.gov", phone: "202-224-0000"}
+          - {bioguide_id: C1, term_start: "2025-01-03", website_url: "https://new.example.gov", phone: "202-224-3441"}
+          - {bioguide_id: C2, term_start: "2025-01-03", website_url: "https://two.example.gov", phone: "202-225-0000 ext. 5"}
+          - {bioguide_id: F1, term_start: "2025-01-03", website_url: "https://former.example.gov", phone: "202-225-1111"}
+      - input: ref('stg_legislators__social_media')
+        rows:
+          - {bioguide_id: C1, x_url: "https://x.com/one"}
+          - {bioguide_id: F1, x_url: "https://x.com/former"}
+    expect:
+      rows:
+        - {bioguide_id: C1, website_url: "https://new.example.gov", phone: "202-224-3441", phone_tel: "+12022243441", x_url: "https://x.com/one"}
+        - {bioguide_id: C2, website_url: "https://two.example.gov", phone: "202-225-0000 ext. 5", phone_tel: null, x_url: null}
+        - {bioguide_id: F1, website_url: null, phone: null, phone_tel: null, x_url: null}

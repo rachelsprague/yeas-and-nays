@@ -75,7 +75,10 @@ class EscapingTest < Minitest::Test
   MEMBER = {
     "bioguide_id" => "Z000001", "official_full_name" => 'Jane "JJ" Doe', "first_name" => "Jane",
     "last_name" => "Doe", "party" => "R", "caucus_party" => "R", "chamber" => "house", "state" => "AL",
-    "district" => 4, "is_current" => true, "is_voting_member" => true
+    "district" => 4, "is_current" => true, "is_voting_member" => true,
+    # Links holding the quoted name too, so the escaping check covers their attributes.
+    "website_url" => 'https://example.house.gov/?n="jj"', "phone" => "202-225-0000", "phone_tel" => "+12022250000",
+    "office" => "1 Example House Office Building", "x_url" => 'https://x.com/"jj"', "mastodon_url" => "https://example.social/@ex"
   }.freeze
 
   VOTE = {
@@ -85,13 +88,13 @@ class EscapingTest < Minitest::Test
   }.freeze
 
   # Returns { "/path/index.html" => html } for every page built.
-  def build
+  def build(member = MEMBER)
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
       write = ->(path, obj) { File.write(File.join(data, path), JSON.generate(obj)) }
       write.call("meta.json", { "congress" => 119, "has_sponsored_bills" => true })
-      write.call("members.json", { "members" => [MEMBER] })
+      write.call("members.json", { "members" => [member] })
       write.call("votes.json", { "votes" => [VOTE] })
       write.call("votes/#{VOTE["vote_id"]}.json", {
         "positions" => { "Z000001" => "Nay" }, "party_totals" => { "R" => { "no" => 1 } },
@@ -123,6 +126,40 @@ class EscapingTest < Minitest::Test
         assert_match(/\A;jj&\z/i, hit, "#{path}: member name quotes not escaped")
       end
     end
+  end
+
+  def test_member_page_lists_official_links
+    html = build.fetch("/members/Z000001/index.html")
+    assert_includes html, "Official links"
+    assert_includes html, '<a class="link" href="tel:+12022250000">202-225-0000</a>'
+    assert_includes html, "1 Example House Office Building"
+    assert_match(%r{<a class="link" href="https://x.com/&quot;jj&quot;">X</a> · <a class="link" href="https://example.social/@ex">Mastodon</a>}, html)
+    refute_includes html, "Contact form"
+  end
+
+  def test_member_without_links_has_no_section_and_phone_without_tel_is_text
+    links = %w[website_url phone phone_tel office x_url mastodon_url]
+    html = build(MEMBER.reject { |k, _| links.include?(k) }).fetch("/members/Z000001/index.html")
+    refute_includes html, "Official links"
+
+    html = build(MEMBER.merge("phone" => "202-225-0000 ext. 5", "phone_tel" => nil)).fetch("/members/Z000001/index.html")
+    assert_includes html, '<dd class="nums">202-225-0000 ext. 5</dd>'
+    refute_includes html, "tel:"
+  end
+end
+
+class AccountsTest < Minitest::Test
+  def test_accounts_in_fixed_order_skipping_missing
+    m = { "mastodon_url" => "https://m.example/@a", "x_url" => "https://x.com/a", "facebook_url" => nil }
+    assert_equal [{ "label" => "X", "url" => "https://x.com/a" }, { "label" => "Mastodon", "url" => "https://m.example/@a" }],
+                 Yan.accounts(m)
+    assert_equal [], Yan.accounts({})
+  end
+
+  def test_website_label_strips_only_the_leading_scheme_and_www
+    assert_equal "example.house.gov", Yan.website_label("https://www.example.house.gov/")
+    assert_equal "example.gov/www.page", Yan.website_label("http://example.gov/www.page")
+    assert_nil Yan.website_label(nil)
   end
 end
 

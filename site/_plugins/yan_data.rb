@@ -220,6 +220,19 @@ module Yan
     d.positive? ? "#{state}, #{Filters.ordinal(d)} District" : "#{state}, At Large"
   end
 
+  # Official social media accounts, in one fixed order for every member.
+  ACCOUNTS = [["x_url", "X"], ["facebook_url", "Facebook"], ["instagram_url", "Instagram"],
+              ["youtube_url", "YouTube"], ["mastodon_url", "Mastodon"]].freeze
+
+  def self.accounts(m)
+    ACCOUNTS.filter_map { |key, label| m[key] && { "label" => label, "url" => m[key] } }
+  end
+
+  # "https://www.example.house.gov/" -> "example.house.gov"
+  def self.website_label(url)
+    url && url.sub(%r{\Ahttps?://(www\.)?}, "").chomp("/")
+  end
+
   # The words this vote recorded for yes and no: Yea/Nay, Aye/No or Guilty/Not Guilty.
   def self.words(positions)
     seen = positions.values.uniq
@@ -330,6 +343,8 @@ module Yan
         m["initials"] = "#{m["first_name"].to_s[0]}#{m["last_name"].to_s[0]}"
         m["chamber_name"] = m["chamber"] == "senate" ? "U.S. Senate" : "U.S. House"
         m["where"] = Yan.where(m)
+        m["accounts"] = Yan.accounts(m)
+        m["website_label"] = Yan.website_label(m["website_url"])
       end
       members.sort_by! { |m| [m["last_name"].to_s, m["first_name"].to_s, m["bioguide_id"]] }
       by_id = members.to_h { |m| [m["bioguide_id"], m] }

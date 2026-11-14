@@ -55,6 +55,33 @@ models:
           - not_null:
               config:
                 where: served_in_congress
+      - name: website_url
+        description: >
+          Official website from congress-legislators. This and the other official links below
+          are null for members no longer in office, and for a value that isn't a well-formed link.
+        data_tests:
+          - not_null:
+              config:
+                where: is_current
+                severity: warn
+      - name: contact_form_url
+        description: Official contact form, when congress-legislators lists one (mostly senators).
+      - name: phone
+        description: Washington office phone as recorded, e.g. "202-224-3441".
+        data_tests:
+          - not_null:
+              config:
+                where: is_current
+                severity: warn
+      - name: phone_tel
+        description: The phone number for tel links ("+12022243441"); null unless it has 10 digits.
+      - name: office
+        description: Washington office as recorded, e.g. "511 Hart Senate Office Building".
+      - name: x_url
+        description: >
+          Official account links built from the account names in congress-legislators' social
+          media file (x_url, facebook_url, instagram_url, youtube_url, mastodon_url). The file
+          has no Bluesky field.
 
   - name: member_stats
     description: >

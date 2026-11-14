@@ -1,0 +1,46 @@
+version: 2
+
+# Sources are external Parquet files that dbt can't introspect for column
+# types, so their fixtures are SQL with every column given.
+unit_tests:
+  - name: social_media_links_built_from_account_names
+    description: >
+      Each account name becomes a link. YouTube prefers the channel ID, and a
+      channel ID recorded as the username also links to the channel. A value
+      that doesn't look like an account name gets no link.
+    model: stg_legislators__social_media
+    given:
+      - input: source('staged', 'legislator_social_media')
+        format: sql
+        rows: |
+          select * from (values
+              ('A1', 'SenExample', 'senator.example', 'sen_example', 'SenExample', 'UCabcdefghijklmnopqrstuv', '@SenExample@Example.Social'),
+              ('A2', null, '8037068318', null, '@repexample', null, null),
+              ('A3', null, null, null, 'UCabcdefghijklmnopqrstuv', null, null),
+              ('A4', 'bad handle', 'x"><script>', 'a/b', 'a b', null, 'not-an-address')
+          ) as t (bioguide_id, twitter, facebook, instagram, youtube, youtube_id, mastodon)
+    expect:
+      rows:
+        - {bioguide_id: A1, x_url: "https://x.com/SenExample", facebook_url: "https://www.facebook.com/senator.example", instagram_url: "https://www.instagram.com/sen_example", youtube_url: "https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv", mastodon_url: "https://example.social/@SenExample"}
+        - {bioguide_id: A2, x_url: null, facebook_url: "https://www.facebook.com/8037068318", instagram_url: null, youtube_url: "https://www.youtube.com/@repexample", mastodon_url: null}
+        - {bioguide_id: A3, x_url: null, facebook_url: null, instagram_url: null, youtube_url: "https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv", mastodon_url: null}
+        - {bioguide_id: A4, x_url: null, facebook_url: null, instagram_url: null, youtube_url: null, mastodon_url: null}
+
+  - name: terms_leave_out_malformed_links
+    model: stg_legislators__terms
+    given:
+      - input: source('staged', 'legislator_terms')
+        format: sql
+        rows: |
+          select * from (values
+              ('A1', 'sen', 'https://www.example.senate.gov', 'hhttps://www.example.senate.gov/contact'),
+              ('A2', 'rep', 'javascript:alert(1)', 'https://example.house.gov/"contact')
+          ) as t (bioguide_id, term_type, url, contact_form),
+          (select
+              null::varchar as term_start, null::varchar as term_end, null::varchar as state,
+              null::bigint as district, null::varchar as party, null::varchar as caucus,
+              null::varchar as phone, null::varchar as office)
+    expect:
+      rows:
+        - {bioguide_id: A1, website_url: "https://www.example.senate.gov", contact_form_url: null}
+        - {bioguide_id: A2, website_url: null, contact_form_url: null}
