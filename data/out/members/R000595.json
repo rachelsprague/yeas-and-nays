@@ -1,5 +1,8 @@
 {
   "bioguide_id": "R000595",
-  "cosponsored": null,
+  "cosponsored": [
+    {"bill_id":"119-sres-19","bill_number":"19","bill_type":"sres","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-resolution/19","introduced_date":"2025-01-09","latest_action_date":"2025-01-09","latest_action_text":"Submitted in the Senate, considered, and agreed to without amendment and with a preamble by Unanimous Consent. (consideration: CR S76; text: CR S81)","latest_vote_id":null,"measure_label":"S.Res. 19","policy_area":"Government Operations and Politics","title":"A resolution honoring the life and legacy of President Jimmy Carter and commending President Jimmy Carter for his life-long career of public service, humanitarian leadership, diplomacy, and courageous advocacy."},
+    {"bill_id":"119-s-5","bill_number":"5","bill_type":"s","congress_gov_url":"https://www.congress.gov/bill/119th-congress/senate-bill/5","introduced_date":"2025-01-08","latest_action_date":"2025-01-29","latest_action_text":"Became Public Law No: 119-1.","latest_vote_id":"h119-1-0023","measure_label":"S. 5","policy_area":"Immigration","title":"Laken Riley Act"}
+  ],
   "sponsored": []
 }
