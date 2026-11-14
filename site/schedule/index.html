@@ -14,38 +14,65 @@ nav: schedule
     <p class="soft">What may come up for a recorded vote, from each chamber's own floor records. Listed items may or may not come up, and often move. Once a roll call is taken, the item links to it.</p>
   </section>
 
-  <section aria-labelledby="senate-h" style="display: flex; flex-direction: column; gap: 12px">
-    <h2 id="senate-h" class="kicker">Senate: cloture motions filed</h2>
-    {%- if schedule.senate_next_convene %}
-    <p class="small soft nums">The Senate is scheduled to convene {{ schedule.senate_next_convene }}.</p>
-    {%- endif %}
-    <p class="small soft">{{ cloture.term }}: {{ cloture.definition }} Under Senate Rule XXII, a filed cloture motion is voted on one hour after the Senate meets on the second day after it was filed (or the next day it meets after that), unless the Senate agrees to another time. Source: the Senate's daily floor activity, <a class="link" href="https://www.senate.gov/legislative/LIS/floor_activity/floor_activity.htm">senate.gov</a>.</p>
-    {%- if schedule.senate.size > 0 %}
-    <ul class="ruled">
-      {%- for item in schedule.senate %}
-        {%- include schedule_item.html item=item %}
-      {%- endfor %}
-    </ul>
-    {%- else %}
-    <p class="empty">No cloture motions are pending in the recent floor record.</p>
-    {%- endif %}
-  </section>
+  {%- assign cal = site.data.schedule_calendar %}
+  <section aria-labelledby="cal-h" class="cal-wrap">
+    <div class="head-row">
+      <h2 id="cal-h" class="kicker">Week by week</h2>
+      <div class="tabs wraps js-only" role="group" aria-label="Week">
+        {%- for w in cal.weeks %}
+        <button type="button" data-tab="week" data-value="{{ w.week_date }}" aria-pressed="{% if w.week_date == cal.default_week %}true{% else %}false{% endif %}">{{ w.tab }}</button>
+        {%- endfor %}
+      </div>
+    </div>
+    <p class="small soft">Each day shows the roll calls taken. Neither chamber publishes the day an upcoming vote will happen, so items still to come are listed under their week.</p>
+    {%- for w in cal.weeks %}
+    <section class="cal-week" data-row data-week="{{ w.week_date }}" aria-labelledby="week-{{ w.week_date }}">
+      <h3 id="week-{{ w.week_date }}" class="kicker muted nums">{{ w.label }} · {{ w.roll_calls }} roll call{% if w.roll_calls != 1 %}s{% endif %}</h3>
+      <div class="cal days-{{ w.days.size }}">
+        <div class="cal-labels" aria-hidden="true">
+          <span></span>
+          <span class="kicker soft">Senate</span>
+          <span class="kicker soft">House</span>
+        </div>
+        {%- for d in w.days %}
+        <div class="cal-day {{ d.when }}">
+          <h4 class="cal-date nums"><span class="kicker soft">{{ d.weekday }}</span> {{ d.label }}{% if d.when == "today" %} <span class="kicker tag">Today</span>{% endif %}</h4>
+          {%- include calendar_cell.html day=d chamber="senate" name="Senate" %}
+          {%- include calendar_cell.html day=d chamber="house" name="House" %}
+        </div>
+        {%- endfor %}
+      </div>
 
-  <section aria-labelledby="house-h" style="display: flex; flex-direction: column; gap: 12px; margin-top: 32px">
-    <h2 id="house-h" class="kicker">House: weekly floor schedule</h2>
-    <p class="small soft">The measures the Majority Leader lists as possible for floor consideration each week, under the headings used on the schedule. {{ suspend.term }}: {{ suspend.definition }} Source: <a class="link" href="https://docs.house.gov/floor/">docs.house.gov</a>.</p>
-    {%- for week in schedule.house_weeks %}
-    <h3 class="kicker muted nums" style="margin-top: 12px">Week of {{ week.week_date | ap_date }}</h3>
-      {%- for group in week.groups %}
-      <p class="small soft">{{ group.category | escape }}</p>
+      {%- if w.senate_pending.size > 0 %}
+      <h4 class="small soft cal-pending-h">Senate: cloture motions filed, not yet voted on</h4>
       <ul class="ruled">
-        {%- for item in group.items %}
+        {%- for item in w.senate_pending %}
           {%- include schedule_item.html item=item %}
         {%- endfor %}
       </ul>
-      {%- endfor %}
-    {%- else %}
-    <p class="empty">No House floor schedule is published for this week or next.</p>
+      {%- endif %}
+      {%- if w.house_pending.size > 0 %}
+      <h4 class="small soft cal-pending-h">House: on this week&rsquo;s floor schedule, no roll call yet</h4>
+        {%- for group in w.house_pending %}
+        {%- if group.category %}<p class="small muted">{{ group.category | escape }}</p>{% endif %}
+        <ul class="ruled">
+          {%- for item in group.items %}
+            {%- include schedule_item.html item=item %}
+          {%- endfor %}
+        </ul>
+        {%- endfor %}
+      {%- endif %}
+    </section>
     {%- endfor %}
+  </section>
+
+  <section aria-labelledby="about-h" style="display: flex; flex-direction: column; gap: 12px; margin-top: 32px">
+    <h2 id="about-h" class="kicker">Where this comes from</h2>
+    {%- if schedule.senate_next_convene %}
+    <p class="small soft nums">The Senate is scheduled to convene {{ schedule.senate_next_convene }}.</p>
+    {%- endif %}
+    <p class="small soft"><strong>Senate.</strong> {{ cloture.term }}: {{ cloture.definition }} Under Senate Rule XXII, a filed cloture motion is voted on one hour after the Senate meets on the second day after it was filed (or the next day it meets after that), unless the Senate agrees to another time. Source: the Senate&rsquo;s daily floor activity, <a class="link" href="https://www.senate.gov/legislative/LIS/floor_activity/floor_activity.htm">senate.gov</a>.</p>
+    <p class="small soft"><strong>House.</strong> The measures the Majority Leader lists as possible for floor consideration each week, under the headings used on the schedule. {{ suspend.term }}: {{ suspend.definition }} Source: <a class="link" href="https://docs.house.gov/floor/">docs.house.gov</a>.</p>
+    <p class="small soft"><strong>Roll calls.</strong> From the House Clerk and the Senate&rsquo;s roll call votes, as on every vote page.</p>
   </section>
 </main>

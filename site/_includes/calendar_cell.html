@@ -1,0 +1,29 @@
+{%- comment -%}
+  One chamber's day on the /schedule/ calendar: the roll calls taken that day,
+  and for the Senate the time it convenes. include.day (from
+  Yan.schedule_calendar), include.chamber ("senate" or "house"),
+  include.name ("Senate" or "House"). The chamber name is shown on phones,
+  where days stack; on wider screens the row labels carry it.
+{%- endcomment -%}
+{%- assign d = include.day -%}
+{%- assign list = d[include.chamber] -%}
+{%- assign convene = nil -%}
+{%- if include.chamber == "senate" %}{% assign convene = d.convene %}{% endif -%}
+{%- assign empty_day = false -%}
+{%- if list.size == 0 and convene == nil and d.when == "future" %}{% assign empty_day = true %}{% endif -%}
+<div class="cal-cell{% if empty_day %} blank{% endif %}">
+  <span class="cal-chamber kicker soft">{{ include.name }}</span>
+  {%- if convene %}
+  <span class="small nums">Convenes {{ convene }}</span>
+  {%- endif %}
+  {%- if list.size > 0 %}
+  <span class="small muted nums">{{ list.size }} roll call{% if list.size != 1 %}s{% endif %}</span>
+  <ul class="cal-votes">
+    {%- for v in list %}
+    <li><a class="headline-link" href="{{ v.url | escape }}"><span class="n nums">{{ v.label | escape }}</span><span class="small soft">{{ v.result_label | escape }}</span></a></li>
+    {%- endfor %}
+  </ul>
+  {%- elsif d.when != "future" %}
+  <span class="small muted">No roll calls{% if d.when == "today" %} yet{% endif %}</span>
+  {%- endif %}
+</div>
