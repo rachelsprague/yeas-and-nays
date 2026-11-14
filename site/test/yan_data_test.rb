@@ -75,7 +75,10 @@ class EscapingTest < Minitest::Test
   MEMBER = {
     "bioguide_id" => "Z000001", "official_full_name" => 'Jane "JJ" Doe', "first_name" => "Jane",
     "last_name" => "Doe", "party" => "R", "caucus_party" => "R", "chamber" => "house", "state" => "AL",
-    "district" => 4, "is_current" => true, "is_voting_member" => true
+    "district" => 4, "is_current" => true, "is_voting_member" => true,
+    # Links holding the quoted name too, so the escaping check covers their attributes.
+    "website_url" => 'https://example.house.gov/?n="jj"', "phone" => "202-225-0000", "phone_tel" => "+12022250000",
+    "office" => "1 Example House Office Building", "x_url" => 'https://x.com/"jj"', "mastodon_url" => "https://example.social/@ex"
   }.freeze
 
   VOTE = {
@@ -123,6 +126,24 @@ class EscapingTest < Minitest::Test
         assert_match(/\A;jj&\z/i, hit, "#{path}: member name quotes not escaped")
       end
     end
+  end
+
+  def test_member_page_lists_official_links
+    html = build.fetch("/members/Z000001/index.html")
+    assert_includes html, "Official links"
+    assert_includes html, '<a class="link" href="tel:+12022250000">202-225-0000</a>'
+    assert_includes html, "1 Example House Office Building"
+    assert_match(%r{<a class="link" href="https://x.com/&quot;jj&quot;">X</a> · <a class="link" href="https://example.social/@ex">Mastodon</a>}, html)
+    refute_includes html, "Contact form"
+  end
+end
+
+class AccountsTest < Minitest::Test
+  def test_accounts_in_fixed_order_skipping_missing
+    m = { "mastodon_url" => "https://m.example/@a", "x_url" => "https://x.com/a", "facebook_url" => nil }
+    assert_equal [{ "label" => "X", "url" => "https://x.com/a" }, { "label" => "Mastodon", "url" => "https://m.example/@a" }],
+                 Yan.accounts(m)
+    assert_equal [], Yan.accounts({})
   end
 end
 

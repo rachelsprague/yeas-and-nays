@@ -16,6 +16,29 @@ layout: default
     </div>
   </section>
 
+  {%- if m.website_url or m.contact_form_url or m.phone or m.office or m.accounts.size > 0 %}
+  <section aria-labelledby="links-h" class="facts">
+    <h2 id="links-h" class="kicker soft">Official links</h2>
+    <dl>
+      {%- if m.website_url %}
+      <div><dt>Website</dt><dd><a class="link" href="{{ m.website_url | escape }}">{{ m.website_url | remove_first: "https://" | remove_first: "http://" | remove_first: "www." | escape }}</a></dd></div>
+      {%- endif %}
+      {%- if m.contact_form_url %}
+      <div><dt>Contact form</dt><dd><a class="link" href="{{ m.contact_form_url | escape }}">Online form</a></dd></div>
+      {%- endif %}
+      {%- if m.phone %}
+      <div><dt>Phone</dt><dd class="nums">{% if m.phone_tel %}<a class="link" href="tel:{{ m.phone_tel | escape }}">{{ m.phone | escape }}</a>{% else %}{{ m.phone | escape }}{% endif %}</dd></div>
+      {%- endif %}
+      {%- if m.office %}
+      <div><dt>Washington office</dt><dd>{{ m.office | escape }}</dd></div>
+      {%- endif %}
+      {%- if m.accounts.size > 0 %}
+      <div><dt>Official accounts</dt><dd>{% for a in m.accounts %}<a class="link" href="{{ a.url | escape }}">{{ a.label }}</a>{% unless forloop.last %} · {% endunless %}{% endfor %}</dd></div>
+      {%- endif %}
+    </dl>
+  </section>
+  {%- endif %}
+
   {%- if m.roll_calls %}
   <section aria-labelledby="stats-h" style="display: flex; flex-direction: column; gap: 12px">
     <div class="head-row">
