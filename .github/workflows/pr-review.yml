@@ -1,0 +1,100 @@
+name: PR review
+
+# A second review layer after /pre-push (see CLAUDE.md > Two review layers).
+# /pre-push checks each commit for leaks and correctness before the branch is
+# public; this one reviews the PR as a whole against the current main.
+#
+# pull_request only, never pull_request_target: the job gets the repo's
+# secrets, so it must not run code or prompts from a fork.
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+
+# Comment only: no pushes, no approvals.
+permissions:
+  contents: read
+  pull-requests: write
+
+# One review at a time per PR; a reopen supersedes one still running.
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Skip fork PRs (the action also refuses authors without write access).
+    if: github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # The default pull_request checkout is the PR merged into the current
+      # main.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The reviewer gets no shell (see claude_args below), so fetch the PR
+      # for it here. The number comes in through env, never into the script.
+      # GitHub won't return a diff over ~20k lines or 300 files, so a PR that
+      # big fails here with no review.
+      - name: Save the PR diff and description
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          OUT: ${{ runner.temp }}/pr
+        run: |
+          mkdir -p "$OUT"
+          gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" > "$OUT/diff.patch"
+          gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json title,body > "$OUT/pr.json"
+
+      - uses: anthropics/claude-code-action@d70510b174a1244958df0b03166a54912811f3e6 # v1.0.264
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request as one change. `${{ runner.temp }}/pr/diff.patch`
+            is the whole change, and `${{ runner.temp }}/pr/pr.json` has the
+            title and description. The working tree is the PR merged into the
+            current main, so read files there to see how the change fits with
+            everything else. One exception: CLAUDE.md and `.claude/` in the
+            working tree are main's copies; the PR's versions are under
+            `.claude-pr/`.
+
+            Each commit was already reviewed before the push for secrets,
+            personal info and per-commit correctness, so don't repeat that
+            review. Focus on what only the whole change shows:
+
+            1. Conflicts with the current main: code, data shapes or docs
+               that other merged work changed in a way this PR doesn't expect.
+            2. CLAUDE.md conventions: dbt tests on new models, bot dry-run by
+               default, secrets only in the steps that need them, brand palette.
+            3. STYLE.md: any public text (post templates, page copy, docs,
+               code comments, the PR title and description) must be neutral
+               and factual, with no characterization of legislators, parties
+               or policies.
+            4. Tests and docs: behavior changes without a test, and docs
+               (CLAUDE.md, STYLE.md, README, About page) the change makes wrong.
+
+            Report only findings you are confident are real problems, each
+            with a concrete failure. Skip style nits and speculation. Post
+            each finding as an inline comment on the line it concerns, with
+            confirmed=true. Inline comments use line numbers in the PR head,
+            not the merged working tree: take them from diff.patch. If there
+            are no findings, post nothing.
+            Never approve, request changes, edit files or run code from the PR.
+          # The run summary on the Actions page shows the review even when it
+          # posts nothing. Only authors with write access trigger it.
+          display_report: "true"
+          # Keep the tokens out of reach of a prompt injected through the PR.
+          # .git/config holds the action's GitHub token (in the remote URL)
+          # and /proc the process environment, so file tools can't read
+          # either. No shell at all: commands can read the environment too
+          # (`gh --jq env`, `git diff --no-index`).
+          claude_args: |
+            --model claude-sonnet-5-5
+            --add-dir "${{ runner.temp }}/pr"
+            --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment"
+            --disallowedTools "Bash,Write,Edit,NotebookEdit,WebFetch,WebSearch,Read(./.git/**),Read(//**/.git/**),Read(//proc/**)"

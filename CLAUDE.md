@@ -18,7 +18,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 
 ## Secrets (GitHub Actions)
 
-`BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `CONGRESS_API_KEY`. Never commit credentials or `.env` files. Send the Congress.gov key as an `X-Api-Key` header, not in URLs.
+`BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `CONGRESS_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` (PR review only; a Claude subscription token from `claude setup-token`). Never commit credentials or `.env` files. Send the Congress.gov key as an `X-Api-Key` header, not in URLs.
 
 ## Conventions
 
@@ -54,6 +54,15 @@ Each session works on its own branch in a worktree (`<alias>/<short-slug>`) and 
 5. After the merge: `git pull --ff-only` on `main` in the main checkout, remove the worktree, `git branch -D` the branch (a squash merge leaves its commits off `main`, so `-d` refuses), and move the item to Done.
 
 The hourly pipeline is the one exception: its GitHub Actions job commits data directly to `main`, and only runs on `main`. A GitHub ruleset blocks force pushes to and deletion of `main`, but doesn't require PRs (that would block the data job); the push hooks enforce the PR flow for agents. The repo allows squash merges only, and deletes a PR's branch once it's merged.
+
+### Two review layers
+
+Each review has its own job, so the second finds different things instead of repeating the first:
+
+- **`/pre-push` (before the push, Sonnet):** the public-repo checklist (secrets, personal info, neutrality) and per-commit correctness and security. It must come first: once a branch is pushed, it's public.
+- **PR review (`.github/workflows/pr-review.yml`, Sonnet):** runs once per PR from this repo, when it is opened, reopened or marked ready (drafts and forks skipped; later pushes aren't re-reviewed, to limit usage). It reviews the squashed change merged into the current `main` (collisions with other sessions' merged work), using CLAUDE.md and STYLE.md as the rubric, plus missing tests and stale docs. It posts only findings it's confident about, as inline comments; it can't push, approve, or edit. Its run summary is on the Actions run page.
+
+Handle PR review findings like pre-push ones: fix them on the branch, or add them to `BOARD.md`.
 
 ## Model choice
 
