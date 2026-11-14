@@ -7,9 +7,9 @@
   chamber (as Not Voting when absent), so a member's position rows are the
   roll calls held in their chamber while they were in office.
 
-  - votes_cast: any recorded response other than Not Voting (Present and a
-    candidate's name in a Speaker election count as voting).
-  - missed_votes_pct: Not Voting / roll calls.
+  - votes_cast: any recorded response other than Not Voting or Present (a
+    candidate's name in a Speaker election counts as voting).
+  - missed_votes_pct: (Not Voting + Present) / roll calls.
   - with_party_majority_pct: yes/no votes matching the caucus majority / all
     yes/no votes where the caucus had a majority. Null when there are none.
 -#}
@@ -22,8 +22,8 @@ counts as (
     select
         bioguide_id,
         count(*) as roll_calls,
-        count(*) filter (where position <> 'not_voting') as votes_cast,
-        count(*) filter (where position = 'not_voting') as missed_votes,
+        count(*) filter (where position not in ('not_voting', 'present')) as votes_cast,
+        count(*) filter (where position in ('not_voting', 'present')) as missed_votes,
         count(*) filter (where voted_against_party_majority is not null) as party_majority_votes,
         count(*) filter (where voted_against_party_majority = false) as with_party_majority_votes,
         count(*) filter (where voted_against_party_majority) as against_party_majority_votes
