@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: stg_legislators__social_media
+    description: >
+      One row per member in congress-legislators' social media file, with links built from
+      the recorded account names. A repeated member would be deduplicated in `members`, so
+      these tests flag it; they warn because the accounts are secondary to votes.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null:
+              config:
+                severity: warn

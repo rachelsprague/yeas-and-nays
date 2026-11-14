@@ -157,6 +157,11 @@ module Yan
     ACCOUNTS.filter_map { |key, label| m[key] && { "label" => label, "url" => m[key] } }
   end
 
+  # "https://www.example.house.gov/" -> "example.house.gov"
+  def self.website_label(url)
+    url && url.sub(%r{\Ahttps?://(www\.)?}, "").chomp("/")
+  end
+
   # The words this vote recorded for yes and no: Yea/Nay, Aye/No or Guilty/Not Guilty.
   def self.words(positions)
     seen = positions.values.uniq
@@ -268,6 +273,7 @@ module Yan
         m["chamber_name"] = m["chamber"] == "senate" ? "U.S. Senate" : "U.S. House"
         m["where"] = Yan.where(m)
         m["accounts"] = Yan.accounts(m)
+        m["website_label"] = Yan.website_label(m["website_url"])
       end
       members.sort_by! { |m| [m["last_name"].to_s, m["first_name"].to_s, m["bioguide_id"]] }
       by_id = members.to_h { |m| [m["bioguide_id"], m] }

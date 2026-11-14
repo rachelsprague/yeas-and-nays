@@ -21,7 +21,7 @@ layout: default
     <h2 id="links-h" class="kicker soft">Official links</h2>
     <dl>
       {%- if m.website_url %}
-      <div><dt>Website</dt><dd><a class="link" href="{{ m.website_url | escape }}">{{ m.website_url | remove_first: "https://" | remove_first: "http://" | remove_first: "www." | escape }}</a></dd></div>
+      <div><dt>Website</dt><dd><a class="link" href="{{ m.website_url | escape }}">{{ m.website_label | escape }}</a></dd></div>
       {%- endif %}
       {%- if m.contact_form_url %}
       <div><dt>Contact form</dt><dd><a class="link" href="{{ m.contact_form_url | escape }}">Online form</a></dd></div>
