@@ -60,7 +60,7 @@ The hourly pipeline is the one exception: its GitHub Actions job commits data di
 Each review has its own job, so the second finds different things instead of repeating the first:
 
 - **`/pre-push` (before the push, Sonnet):** the public-repo checklist (secrets, personal info, neutrality) and per-commit correctness and security. It must come first: once a branch is pushed, it's public.
-- **PR review (`.github/workflows/pr-review.yml`, Sonnet):** runs once per PR from this repo, when it is opened, reopened or marked ready (drafts and forks skipped; later pushes aren't re-reviewed, to limit usage). It reviews the squashed change merged into the current `main` (collisions with other sessions' merged work), using CLAUDE.md and STYLE.md as the rubric, plus missing tests and stale docs. It posts only findings it's confident about, as inline comments; it can't push, approve, or edit. Its run summary is on the Actions run page.
+- **PR review (`.github/workflows/pr-review.yml`, Sonnet):** runs once per PR from this repo, when it is opened, reopened or marked ready (drafts and forks skipped; later pushes aren't re-reviewed, to limit usage). It reviews the squashed change merged into the current `main` (collisions with other sessions' merged work), using CLAUDE.md and STYLE.md as the rubric, plus missing tests and stale docs. It posts only findings it's confident about, as inline comments; it can't push, approve, or edit. Its run summary is on the Actions run page, with the run's token usage (it runs on the Claude subscription, so reviews count against plan limits).
 
 Handle PR review findings like pre-push ones: fix them on the branch, or add them to `BOARD.md`.
 

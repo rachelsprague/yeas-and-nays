@@ -47,7 +47,8 @@ jobs:
           gh pr diff "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" > "$OUT/diff.patch"
           gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json title,body > "$OUT/pr.json"
 
-      - uses: anthropics/claude-code-action@d70510b174a1244958df0b03166a54912811f3e6 # v1.0.264
+      - id: review
+        uses: anthropics/claude-code-action@d70510b174a1244958df0b03166a54912811f3e6 # v1.0.264
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -98,3 +99,24 @@ jobs:
             --add-dir "${{ runner.temp }}/pr"
             --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment"
             --disallowedTools "Bash,Write,Edit,NotebookEdit,WebFetch,WebSearch,Read(./.git/**),Read(//**/.git/**),Read(//proc/**)"
+
+      # Token totals for the run, on the Actions page. The subscription token
+      # has no bill, but reviews count against the plan's usage limits; the
+      # cost shown is what the run would cost at API prices. Only numbers and
+      # model names are read from the file, never text Claude wrote.
+      - name: Record token usage
+        if: always() && steps.review.outputs.execution_file != ''
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+        run: |
+          jq -r '
+            [.[] | select(.type == "result")] | last // empty
+            | "### Token usage",
+              "",
+              "| Model | Input | Cache write | Cache read | Output | API-price cost |",
+              "| --- | ---: | ---: | ---: | ---: | ---: |",
+              (.modelUsage // {} | to_entries[]
+                | "| \(.key) | \(.value.inputTokens // 0) | \(.value.cacheCreationInputTokens // 0) | \(.value.cacheReadInputTokens // 0) | \(.value.outputTokens // 0) | $\(((.value.costUSD // 0) * 100 | round) / 100) |"),
+              "",
+              "\(.num_turns) turns, \((.duration_ms // 0) / 1000 | round) s, $\(((.total_cost_usd // 0) * 100 | round) / 100) at API prices."
+          ' "$EXECUTION_FILE" >> "$GITHUB_STEP_SUMMARY"
