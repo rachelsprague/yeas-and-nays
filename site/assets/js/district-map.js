@@ -119,7 +119,9 @@
     function release(e) { pointers.delete(e.pointerId); }
     svg.addEventListener("pointerup", release);
     svg.addEventListener("pointercancel", release);
-    svg.addEventListener("lostpointercapture", release);
+    // Only the svg's own capture: on touch the district under the finger holds
+    // the pointer first, and its loss (when the svg takes over) bubbles up here.
+    svg.addEventListener("lostpointercapture", function (e) { if (e.target === svg) release(e); });
     svg.addEventListener("pointerleave", function (e) { if (!svg.hasPointerCapture(e.pointerId)) release(e); });
     svg.addEventListener("contextmenu", function () { pointers.clear(); });
 
