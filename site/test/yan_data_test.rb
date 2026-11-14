@@ -122,11 +122,32 @@ class EscapingTest < Minitest::Test
     assert_includes pages.keys, "/index.html"
     assert_includes pages["/votes/119/house/1/1/index.html"], '<g class="dot nay" fill="url(#hatch-R)">'
 
+    # The district map's card data is JSON in a script tag, where quotes are
+    # JSON-escaped rather than HTML-escaped (and "</" can't appear).
+    people = %r{<script type="application/json" data-people>(.*?)</script>}m
+    find = pages.fetch("/find/index.html")
+    assert_equal 'Jane "JJ" Doe', JSON.parse(find[people, 1])["AL-4"]["rep"]["name"]
+    pages["/find/index.html"] = find.sub(people, "")
+
     pages.each do |path, html|
       html.scan(/.?jj.?/i).each do |hit|
         assert_match(/\A;jj&\z/i, hit, "#{path}: member name quotes not escaped")
       end
     end
+  end
+
+  # The fixture's Congress (119) uses the real site/_maps/119.json.
+  def test_find_page_draws_every_district_linked_to_its_member
+    pages = build
+    html = pages.fetch("/find/index.html")
+    assert_equal 435, html.scan(" data-seat=").size
+    assert_match(%r{<a href="/members/Z000001/" tabindex="-1" data-seat="AL-4"><path d="M[^"]+"/><title>Alabama, 4th District: Jane &quot;JJ&quot; Doe \(R\)</title></a>}, html)
+    assert_includes html, '<a href="/members/?state=AL" tabindex="-1" data-seat="AL-1">'
+    assert_includes html, "<title>Alabama, 1st District: vacant</title>"
+    assert_match(%r{<g class="city t2" transform="translate\([\d.]+ [\d.]+\)"><circle/><text>Long Beach</text></g>}, html)
+    # The members page reads ?state= into its State filter by the select's name.
+    assert_includes pages.fetch("/members/index.html"), '<select id="m-state" class="field" name="state" data-filter="state">'
+    assert_includes pages.fetch("/index.html"), '<a class="small" href="/find/">'
   end
 
   def test_member_page_lists_official_links
@@ -161,6 +182,67 @@ class AccountsTest < Minitest::Test
     assert_equal "example.house.gov", Yan.website_label("https://www.example.house.gov/")
     assert_equal "example.gov/www.page", Yan.website_label("http://example.gov/www.page")
     assert_nil Yan.website_label(nil)
+  end
+end
+
+class DistrictMapTest < Minitest::Test
+  MAP = { "width" => 100, "height" => 60, "borders" => "M0 0l1 1",
+          "districts" => [{ "state" => "WY", "district" => 0, "d" => "M1 1l1 0 0 1z" },
+                          { "state" => "KY", "district" => 4, "d" => "M2 2l1 0 0 1z",
+                            "places" => %w[Lexington Frankfort], "more_places" => 3 },
+                          { "state" => "KY", "district" => 5, "d" => "M3 3l1 0 0 1z" }] }.freeze
+
+  def member(id, chamber, state, district = nil, name: id, current: true)
+    { "bioguide_id" => id, "name" => name, "url" => "/members/#{id}/", "party" => "R", "chamber" => chamber,
+      "state" => state, "district" => district, "is_current" => current, "is_voting_member" => true }
+  end
+
+  def map(members = [])
+    Yan.district_map(MAP, members)
+  end
+
+  def test_each_district_gets_its_current_representative_and_state_senators
+    members = [member("H1", "house", "KY", 4), member("H0", "house", "KY", 4, current: false),
+               member("S1", "senate", "KY"), member("S2", "senate", "KY"), member("W1", "house", "WY", 0)]
+    m = map(members)
+    assert_equal %w[WY KY-4 KY-5], m["districts"].map { |d| d["seat"] }
+    ky4 = m["districts"][1]
+    assert_equal ["Kentucky, 4th District", "H1", "/members/H1/"], ky4.values_at("where", "rep_name", "url")
+    people = JSON.parse(m["people_json"])
+    assert_equal({ "name" => "H1", "url" => "/members/H1/", "party" => "R" }, people["KY-4"]["rep"])
+    assert_equal %w[S1 S2], people["KY-4"]["senators"].map { |s| s["name"] }
+    assert_equal ["Wyoming, At Large", "W1"], [people["WY"]["where"], people["WY"]["rep"]["name"]]
+    assert_equal [%w[Lexington Frankfort], 3], people["KY-4"].values_at("places", "more_places")
+    assert_equal [[], 0], people["WY"].values_at("places", "more_places")
+  end
+
+  def test_a_vacant_seat_links_to_the_state_list
+    ky5 = map["districts"][2]
+    assert_nil ky5["rep_name"]
+    assert_equal "/members/?state=KY", ky5["url"]
+    assert_nil JSON.parse(map["people_json"])["KY-5"]["rep"]
+  end
+
+  def test_names_cannot_close_the_script_tag
+    json = map([member("H1", "house", "KY", 4, name: "</script><b>")])["people_json"]
+    refute_includes json, "</"
+    assert_equal "</script><b>", JSON.parse(json)["KY-4"]["rep"]["name"]
+  end
+
+  def test_no_map_for_the_congress
+    assert_nil Yan.district_map(nil, [])
+  end
+
+  # Both committed maps: the 50 states' 435 seats, numbered as the member data numbers them.
+  def test_committed_maps_have_every_seat
+    %w[119 120].each do |congress|
+      doc = JSON.parse(File.read(File.expand_path("../_maps/#{congress}.json", __dir__)))
+      seats = doc["districts"].map { |d| [d["state"], d["district"]] }
+      assert_equal 435, seats.uniq.size, congress
+      assert_equal 50, seats.map(&:first).uniq.size, congress
+      assert(seats.select { |_, n| n.zero? }.all? { |s, _| %w[AK DE ND SD VT WY].include?(s) }, congress)
+      assert(doc["districts"].all? { |d| d["d"].start_with?("M") }, congress)
+    end
   end
 end
 

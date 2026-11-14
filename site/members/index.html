@@ -8,7 +8,7 @@ nav: members
   <section class="vote-head">
     <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
     <h1 class="vote-h">Members of Congress</h1>
-    <p class="soft">Every current senator and voting representative. Search by name or state.</p>
+    <p class="soft">Every current senator and voting representative. Search by name or state, or <a href="/find/">choose your state on a map</a>.</p>
   </section>
 
   <section class="filters" aria-label="Search and filters">
@@ -26,7 +26,7 @@ nav: members
     </div>
     <div>
       <label for="m-state" class="kicker">State</label>
-      <select id="m-state" class="field" data-filter="state">
+      <select id="m-state" class="field" name="state" data-filter="state">
         <option value="">All</option>
         {%- assign states = members | map: "state" | uniq | sort -%}
         {%- for s in states %}{% assign m0 = members | where: "state", s | first %}<option value="{{ s }}">{{ m0.state_name }}</option>{% endfor %}
