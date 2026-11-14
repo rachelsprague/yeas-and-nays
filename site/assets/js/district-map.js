@@ -164,7 +164,8 @@
       if (!list.length) div.appendChild(el("span", "soft", none));
       list.forEach(function (m) {
         var a = el("a", "dmap-member", m.name);
-        a.href = m.url;
+        // Built here from the ID, so the link can only ever be a member page.
+        a.href = "/members/" + encodeURIComponent(m.id) + "/";
         a.appendChild(el("span", "soft", " · " + m.party));
         div.appendChild(a);
       });

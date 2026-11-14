@@ -228,7 +228,7 @@ module Yan
   def self.district_map(map, members)
     return nil unless map
 
-    card = ->(m) { { "name" => m["name"], "url" => m["url"], "party" => m["party"] } }
+    card = ->(m) { { "name" => m["name"], "id" => m["bioguide_id"], "party" => m["party"] } }
     current = members.select { |m| m["is_current"] && m["is_voting_member"] }
     reps = current.select { |m| m["chamber"] == "house" }.to_h { |m| [[m["state"], m["district"].to_i], m] }
     senators = current.select { |m| m["chamber"] == "senate" }.group_by { |m| m["state"] }

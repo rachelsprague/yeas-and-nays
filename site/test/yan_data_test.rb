@@ -209,7 +209,7 @@ class DistrictMapTest < Minitest::Test
     ky4 = m["districts"][1]
     assert_equal ["Kentucky, 4th District", "H1", "/members/H1/"], ky4.values_at("where", "rep_name", "url")
     people = JSON.parse(m["people_json"])
-    assert_equal({ "name" => "H1", "url" => "/members/H1/", "party" => "R" }, people["KY-4"]["rep"])
+    assert_equal({ "name" => "H1", "id" => "H1", "party" => "R" }, people["KY-4"]["rep"])
     assert_equal %w[S1 S2], people["KY-4"]["senators"].map { |s| s["name"] }
     assert_equal ["Wyoming, At Large", "W1"], [people["WY"]["where"], people["WY"]["rep"]["name"]]
     assert_equal [%w[Lexington Frankfort], 3], people["KY-4"].values_at("places", "more_places")
