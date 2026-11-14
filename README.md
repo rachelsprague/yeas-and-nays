@@ -25,6 +25,7 @@ Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`. `make hook
 - **Senate:** `senate.gov/legislative/LIS/roll_call_votes/`
 - **Members:** `unitedstates/congress-legislators` (current and historical)
 - **Floor schedules:** House Majority Leader's weekly schedule, `docs.house.gov/floor/` (this week and next); Senate session days (`senate.gov/legislative/schedule/floor_schedule.xml`) and daily floor activity (`senate.gov/legislative/LIS/floor_activity/`, last 10 session days), read for cloture motions filed and voted on
+- **District map:** Census Bureau congressional district boundaries (119th: cartographic boundary file `cb_2024_us_cd119_500k`; 120th: 2026 TIGER/Line `tl_2026_{state}_cd120`), place boundaries (`cb_2024_us_place_500k`) and 2024 city and town population estimates; see `scripts/build_district_map.py`
 - **Bills:** Congress.gov API, `/bill/{congress}/{type}/{number}`, `.../summaries`, `/member/{bioguide_id}/sponsored-legislation`, and `/member/{bioguide_id}/cosponsored-legislation` (key sent as the `X-Api-Key` header)
 
 ## Models
@@ -76,6 +77,8 @@ State (`data/bot/state.json`, committed) records the last vote handled per chamb
 ## Site
 
 `site/` is a Jekyll site that reads `data/out/` directly (`site/_plugins/yan_data.rb`) and generates a page per vote (`/votes/{congress}/{chamber}/{session}/{roll}/`) and per member (`/members/{bioguide_id}/`), plus the home page, the vote and member indexes, and About. The plugin only joins and arranges the pipeline's data; every count and definition comes from the models above. Filters are plain JavaScript over rows already in the page, so everything is readable without it. Colors come from `site/assets/css/tokens.css`; brand assets are linked from `brand/`.
+
+`/find/` is a map of every House district, each paired with its current representative. The shapes, city labels and each district's largest cities and towns are prebuilt into `site/_maps/{congress}.json` by `uv run scripts/build_district_map.py`, run again only when district lines change; the site draws the map for the Congress in `data/out/meta.json`, so the 120th Congress lines take over when its members do. The script keeps a state's 119th lines for the 120th where the Census Bureau's 2026 file doesn't match the plan used in the 2026 election (Missouri; see `KEEP_119`).
 
 ```
 make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bundler)

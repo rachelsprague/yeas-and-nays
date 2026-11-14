@@ -306,6 +306,35 @@ table.roll { border-collapse: collapse; width: 100%; }
 .member-list .n { font-family: var(--font-display); font-size: 19px; line-height: 24px; font-weight: 600; }
 .member-list .d { font-size: 14px; color: var(--ink-soft); }
 
+.find .findrow { padding: 0; }
+
+/* District map (find/index.html, district-map.js): every district alike, no party colors. */
+.dmap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.dmap-view { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dmap svg { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); touch-action: none; cursor: grab; user-select: none; }
+.dmap svg:active { cursor: grabbing; }
+.dmap .districts path { fill: var(--surface-alt); stroke: var(--ink-muted); stroke-opacity: 0.55; stroke-width: 0.6px; vector-effect: non-scaling-stroke; }
+.dmap .districts a:hover path { fill: var(--lilac); }
+.dmap .districts a.on path { fill: var(--accent); }
+.dmap .borders { fill: none; stroke: var(--ink); stroke-width: 1.2px; vector-effect: non-scaling-stroke; pointer-events: none; }
+/* City labels: --u is map units per screen pixel (district-map.js); without JS
+   only the largest cities show, at the whole-map size. */
+.dmap .cities { pointer-events: none; }
+.dmap .city { display: none; }
+.dmap .city.t1, .dmap svg.z2 .city.t2, .dmap svg.z3 .city.t3 { display: inline; }
+.dmap .city circle { r: calc(var(--u, 11) * 2px); fill: var(--ink); }
+.dmap .city text {
+  font-family: var(--font-sans); font-size: calc(var(--u, 11) * 11px); font-weight: 400; fill: var(--ink);
+  stroke: var(--surface); stroke-opacity: 0.6; stroke-width: calc(var(--u, 11) * 2px); stroke-linejoin: round; paint-order: stroke;
+  transform: translate(calc(var(--u, 11) * 4px), calc(var(--u, 11) * 4px));
+}
+.dmap-zoom { gap: 8px; flex-wrap: wrap; align-items: center; }
+.dmap-zoom .button { min-width: 40px; }
+.dmap-card { flex-direction: column; gap: 12px; padding: 14px 0; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); }
+.dmap-card h2 { font-size: 13px; }
+.dmap-row { display: flex; flex-direction: column; gap: 4px; }
+.dmap-member { font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+
 /* ---- About ------------------------------------------------------------- */
 
 .prose { max-width: 720px; display: flex; flex-direction: column; gap: 16px; font-size: 17px; line-height: 27px; }
@@ -385,6 +414,7 @@ footer.wrap { padding-bottom: 28px; }
   .vrow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 260px; gap: 24px; align-items: baseline; }
 
   .member-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .find .findrow { justify-content: flex-start; }
 
   .cal { display: grid; grid-template-rows: auto auto auto; border-bottom: 1px solid var(--line); }
   .cal.days-5 { grid-template-columns: 72px repeat(5, minmax(0, 1fr)); }
@@ -404,4 +434,10 @@ footer.wrap { padding-bottom: 28px; }
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
+}
+
+/* District map: the map on the left, the chosen district's members beside it. */
+@media (min-width: 960px) {
+  .dmap { grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; }
+  .dmap-card { position: sticky; top: 16px; }
 }

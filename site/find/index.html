@@ -1,0 +1,59 @@
+---
+layout: default
+title: Find your members of Congress
+nav: members
+---
+{%- assign map = site.data.district_map -%}
+<main id="main" class="wrap find">
+  <section class="vote-head">
+    <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
+    <h1 class="vote-h">Find your members of Congress</h1>
+    {%- if map %}
+    <p class="soft">Every House district in the 50 states. Zoom in to where you live and choose your district to see your representative and your state's senators.</p>
+    {%- else %}
+    <p class="soft">The district map for this Congress isn't available yet. Search by name or state below.</p>
+    {%- endif %}
+  </section>
+
+  {%- if map %}
+  <section class="dmap" data-dmap aria-label="District map">
+    <div class="dmap-view">
+      {%- comment -%} The map is for pointing; the search below is its keyboard and screen reader route. {%- endcomment %}
+      <svg viewBox="0 0 {{ map.width }} {{ map.height }}" aria-hidden="true" focusable="false">
+        <g class="districts">
+          {%- for d in map.districts %}
+          <a href="{{ d.url | escape }}" tabindex="-1" data-seat="{{ d.seat | escape }}"><path d="{{ d.d | escape }}"/><title>{{ d.where | escape }}: {% if d.rep_name %}{{ d.rep_name | escape }} ({{ d.rep_party }}){% else %}vacant{% endif %}</title></a>
+          {%- endfor %}
+        </g>
+        <path class="borders" d="{{ map.borders | escape }}"/>
+        <g class="cities">
+          {%- for c in map.cities %}
+          <g class="city t{{ c.tier }}" transform="translate({{ c.x }} {{ c.y }})"><circle/><text>{{ c.name | escape }}</text></g>
+          {%- endfor %}
+        </g>
+      </svg>
+      <div class="dmap-zoom js-only" role="group" aria-label="Zoom">
+        <button type="button" class="button" data-zoom="in" aria-label="Zoom in">+</button>
+        <button type="button" class="button" data-zoom="out" aria-label="Zoom out">−</button>
+        <button type="button" class="button" data-zoom="reset">Whole map</button>
+        <span class="small muted">Pinch or hold Ctrl (⌘ on a Mac) and scroll to zoom. Drag to move.</span>
+      </div>
+    </div>
+    <div class="dmap-card js-only" data-card aria-live="polite">
+      <p class="soft">Choose a district on the map to see its representative and the state's senators.</p>
+    </div>
+    <script type="application/json" data-people>{{ map.people_json }}</script>
+  </section>
+  {%- endif %}
+
+  <form class="findrow" role="search" action="/members/" method="get">
+    <label for="f-find">Or search by name or state</label>
+    <div class="findctl">
+      <input id="f-find" class="field" type="search" name="q" placeholder="e.g. Massie or Kentucky">
+      <button class="button" type="submit">Search</button>
+    </div>
+  </form>
+
+  <p class="small muted">District lines from the U.S. Census Bureau. The District of Columbia and the five U.S. territories each elect one member of the House (a delegate, or for Puerto Rico a resident commissioner) who can't vote on the House floor. This site tracks floor votes, so they aren't on the map.</p>
+</main>
+<script src="/assets/js/district-map.js" defer></script>

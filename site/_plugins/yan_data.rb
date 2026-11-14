@@ -6,6 +6,7 @@
 #   site.data["votes"]     data/out/votes.json, newest first, each with a url
 #   site.data["members"]   data/out/members.json, sorted by name, each with a url
 #   site.data["leads"]     the newest vote overall and per chamber, prepared for display
+#   site.data["district_map"]  site/_maps/{congress}.json with each district's member (Yan.district_map)
 #
 # Routes: /votes/{congress}/{chamber}/{session}/{roll}/ (roll numbers restart
 # each session) and /members/{bioguide_id}/.
@@ -220,6 +221,36 @@ module Yan
     d.positive? ? "#{state}, #{Filters.ordinal(d)} District" : "#{state}, At Large"
   end
 
+  # The /find/ district map: shapes from site/_maps/{congress}.json
+  # (scripts/build_district_map.py), each paired with the district's current
+  # representative. "people" holds what the map's card shows for each seat,
+  # with the state's senators. Nil when there's no map for this Congress.
+  def self.district_map(map, members)
+    return nil unless map
+
+    card = ->(m) { { "name" => m["name"], "id" => m["bioguide_id"], "party" => m["party"] } }
+    current = members.select { |m| m["is_current"] && m["is_voting_member"] }
+    reps = current.select { |m| m["chamber"] == "house" }.to_h { |m| [[m["state"], m["district"].to_i], m] }
+    senators = current.select { |m| m["chamber"] == "senate" }.group_by { |m| m["state"] }
+
+    people = {}
+    districts = map["districts"].map do |d|
+      seat = { "chamber" => "house", "state" => d["state"], "district" => d["district"] }
+      key = seat(seat)
+      rep = reps[[d["state"], d["district"]]]
+      people[key] = { "where" => where(seat), "rep" => rep && card.call(rep),
+                      "senators" => (senators[d["state"]] || []).map(&card),
+                      "places" => d["places"] || [], "more_places" => d["more_places"].to_i }
+      { "seat" => key, "d" => d["d"], "where" => people[key]["where"],
+        "rep_name" => rep && rep["name"], "rep_party" => rep && rep["party"],
+        "url" => rep ? rep["url"] : "/members/?state=#{d["state"]}" }
+    end
+    { "width" => map["width"], "height" => map["height"], "borders" => map["borders"],
+      "cities" => map["cities"] || [], "districts" => districts,
+      # Every "<" escaped, so nothing in a name can end or confuse the script tag.
+      "people_json" => JSON.generate(people).gsub("<", "\\u003c") }
+  end
+
   # Official social media accounts, in one fixed order for every member.
   ACCOUNTS = [["x_url", "X"], ["facebook_url", "Facebook"], ["instagram_url", "Instagram"],
               ["youtube_url", "YouTube"], ["mastodon_url", "Mastodon"]].freeze
@@ -432,6 +463,8 @@ module Yan
 
       site.data["meta"] = meta
       site.data["members"] = members
+      map_file = File.join(site.source, "_maps", "#{meta["congress"]}.json")
+      site.data["district_map"] = Yan.district_map(File.exist?(map_file) && JSON.parse(File.read(map_file)), members)
       site.data["votes"] = votes
       site.data["leads"] = {
         "all" => views[votes.first["vote_id"]],
