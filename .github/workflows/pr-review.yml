@@ -104,19 +104,23 @@ jobs:
       # has no bill, but reviews count against the plan's usage limits; the
       # cost shown is what the run would cost at API prices. Only numbers and
       # model names are read from the file, never text Claude wrote.
+      # Reporting only: a missing or malformed file mustn't fail the job.
       - name: Record token usage
         if: always() && steps.review.outputs.execution_file != ''
+        continue-on-error: true
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
         run: |
           jq -r '
+            def usd: (. // 0) * 100 | round
+              | "$\(. / 100 | floor).\(. % 100 | tostring | if length < 2 then "0" + . else . end)";
             [.[] | select(.type == "result")] | last // empty
             | "### Token usage",
               "",
               "| Model | Input | Cache write | Cache read | Output | API-price cost |",
               "| --- | ---: | ---: | ---: | ---: | ---: |",
               (.modelUsage // {} | to_entries[]
-                | "| \(.key) | \(.value.inputTokens // 0) | \(.value.cacheCreationInputTokens // 0) | \(.value.cacheReadInputTokens // 0) | \(.value.outputTokens // 0) | $\(((.value.costUSD // 0) * 100 | round) / 100) |"),
+                | "| \(.key) | \(.value.inputTokens // 0) | \(.value.cacheCreationInputTokens // 0) | \(.value.cacheReadInputTokens // 0) | \(.value.outputTokens // 0) | \(.value.costUSD | usd) |"),
               "",
-              "\(.num_turns) turns, \((.duration_ms // 0) / 1000 | round) s, $\(((.total_cost_usd // 0) * 100 | round) / 100) at API prices."
+              "\(.num_turns // 0) turns, \((.duration_ms // 0) / 1000 | round) s, \(.total_cost_usd | usd) at API prices."
           ' "$EXECUTION_FILE" >> "$GITHUB_STEP_SUMMARY"
