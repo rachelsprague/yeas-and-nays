@@ -441,7 +441,7 @@ class VotePageTest < Minitest::Test
                  seats.transform_values { |s| s["marks"] })
     assert_includes html, %(<th scope="row">Alabama</th><td class="r">1</td><td class="r">1</td><td class="r">1</td><td class="r">1</td>)
     # A000005's state code isn't on the map.
-    assert_includes html, "Not on the map: 1 member from outside the 50 states"
+    assert_includes html, "Not on the map: 1 member with no seat drawn on it"
   end
 
   # The built site's meta is the 119th Congress. A 120th vote has shapes but its

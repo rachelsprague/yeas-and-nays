@@ -78,7 +78,7 @@ layout: default
       </div>
     </details>
     {%- if smap.src %}
-    <p class="small muted js-only">{% if smap.chamber == "house" %}Each district shows its representative's vote.{% else %}Each state is split in two, one side per senator, in alphabetical order from left to right.{% endif %} Hover over or tap a {% if smap.chamber == "house" %}district{% else %}state{% endif %} for names.{% if smap.unmapped > 0 %} Not on the map: {{ smap.unmapped }} member{% if smap.unmapped != 1 %}s{% endif %} from outside the 50 states (the District of Columbia and the territories are in the table).{% endif %} District and state lines from the U.S. Census Bureau.</p>
+    <p class="small muted js-only">{% if smap.chamber == "house" %}Each district shows its representative's vote.{% else %}Each state is split in two, one side per senator, in alphabetical order from left to right.{% endif %} Hover over or tap a {% if smap.chamber == "house" %}district{% else %}state{% endif %} for names.{% if smap.unmapped > 0 %} Not on the map: {{ smap.unmapped }} member{% if smap.unmapped != 1 %}s{% endif %} with no seat drawn on it, such as a delegate from the District of Columbia or a territory.{% endif %} District and state lines from the U.S. Census Bureau.</p>
     {%- endif %}
   </section>
   {%- endif %}
