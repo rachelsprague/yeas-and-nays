@@ -19,16 +19,16 @@ nav: members
   <section class="dmap" data-dmap aria-label="District map">
     <div class="dmap-view">
       {%- comment -%} The map is for pointing; the search below is its keyboard and screen reader route. {%- endcomment %}
-      <svg viewBox="0 0 {{ map.width }} {{ map.height }}" aria-hidden="true" focusable="false">
+      <svg viewBox="0 0 {{ map.width | escape }} {{ map.height | escape }}" aria-hidden="true" focusable="false">
         <g class="districts">
           {%- for d in map.districts %}
-          <a href="{{ d.url | escape }}" tabindex="-1" data-seat="{{ d.seat | escape }}"><path d="{{ d.d | escape }}"/><title>{{ d.where | escape }}: {% if d.rep_name %}{{ d.rep_name | escape }} ({{ d.rep_party }}){% else %}vacant{% endif %}</title></a>
+          <a href="{{ d.url | escape }}" tabindex="-1" data-seat="{{ d.seat | escape }}"><path d="{{ d.d | escape }}"/><title>{{ d.where | escape }}: {% if d.rep_name %}{{ d.rep_name | escape }} ({{ d.rep_party | escape }}){% else %}vacant{% endif %}</title></a>
           {%- endfor %}
         </g>
         <path class="borders" d="{{ map.borders | escape }}"/>
         <g class="cities">
           {%- for c in map.cities %}
-          <g class="city t{{ c.tier }}" transform="translate({{ c.x }} {{ c.y }})"><circle/><text>{{ c.name | escape }}</text></g>
+          <g class="city t{{ c.tier | escape }}" transform="translate({{ c.x | escape }} {{ c.y | escape }})"><circle/><text>{{ c.name | escape }}</text></g>
           {%- endfor %}
         </g>
       </svg>
