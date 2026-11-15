@@ -12,8 +12,10 @@ PR, and the maintainer squash-merges it on GitHub. So:
   (`git push`, `git push origin`, or `git push [-u] origin <branch>`, where
   <branch> is the current branch and isn't main), and the repo's state must
   not change what it sends (aliases, push refspecs, push URLs, an edited or
-  missing git hook). Pushing main and `gh pr merge` are denied: PRs are merged
-  on GitHub by the maintainer.
+  missing git hook, or an alias defined with `git -c alias.*`). Pushing main
+  and `gh pr merge` are denied: PRs are merged on GitHub by the maintainer.
+  So are `gh pr update-branch`, `gh repo sync` and `gh workflow run`, which
+  move branches on GitHub (the pipeline workflow commits to main).
 
 It also gates PR and issue text posted to GitHub, which is just as public.
 `gh pr create / edit / comment / review` and `gh issue create / edit /
@@ -125,6 +127,14 @@ MAX_COMMAND_CHARS = 20_000
 MAX_GH_CANDIDATES = 20  # `gh` words per command segment tried as the start of a post
 # Characters the shell would expand or substitute after the hook has shown the literal text.
 SHELL_EXPANDED = re.compile(r"[`$\\\n\r*?\[\]{}~!]")
+# gh commands that move a branch on GitHub without a push: merging main into a PR branch,
+# syncing a repo's branch, and dispatching a workflow (the pipeline commits to main).
+GH_BRANCH_MOVES = {("pr", "update-branch"), ("repo", "sync"), ("workflow", "run")}
+# Bash's $'...' quoting and the escapes inside it (`$'\x67h'` is `gh`).
+ANSI_C_QUOTED = re.compile(r"\$'((?:[^'\\]|\\.)*)'", re.DOTALL)
+ANSI_C_ESCAPE = re.compile(r"\\(x[0-9A-Fa-f]{1,2}|u[0-9A-Fa-f]{1,4}|U[0-9A-Fa-f]{1,8}|[0-7]{1,3}|.)", re.DOTALL)
+ANSI_C_LETTERS = {"a": "\a", "b": "\b", "e": "\x1b", "E": "\x1b", "f": "\f", "n": "\n", "r": "\r", "t": "\t",
+                  "v": "\v"}
 
 
 def split_heredocs(command: str) -> tuple[str, list[str]]:
@@ -179,6 +189,31 @@ def finds_pr_merge(command: str) -> bool:
     return bool(_scan(command, _pr_merge_in_segment))
 
 
+def finds_branch_move(command: str) -> bool:
+    """Whether the command runs a gh command in GH_BRANCH_MOVES, checked per command like merges."""
+    return bool(_scan(command, _branch_move_in_segment))
+
+
+def finds_config_alias(command: str) -> bool:
+    """Whether a git command defines an alias for itself (`git -c alias.p=push p`), which can
+    run a push this hook doesn't see."""
+    return bool(_scan(command, _config_alias_in_segment))
+
+
+def ansi_c_decoded(command: str) -> str:
+    """The command with each $'...' string replaced by the text bash makes of it. An escape
+    bash would keep as written (`\\g`) loses its backslash here, which only errs toward
+    finding a `git` or `gh`. Raises ValueError for a code point Python can't represent."""
+    def char(m: re.Match) -> str:
+        e = m.group(1)
+        if e[0] in "xuU":
+            return chr(int(e[1:], 16))
+        if e[0] in "01234567":
+            return chr(int(e, 8) & 0xFF)
+        return ANSI_C_LETTERS.get(e, e)
+    return ANSI_C_QUOTED.sub(lambda m: ANSI_C_ESCAPE.sub(char, m.group(1)), command)
+
+
 def _scan(command: str, in_segment, depth: int = 0) -> list:
     found, segment = [], []
     for tok in tokens(strip_redirects(command)) + [";"]:
@@ -213,6 +248,30 @@ def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
         return [True]
     if "alias" in rest and any("merge" in a for a in rest):
         return [True]
+    return []
+
+
+def _branch_move_in_segment(seg: list[str]) -> list[bool]:
+    """The first `gh` word's command, if it's in GH_BRANCH_MOVES (`gh -R o/r repo sync` too)."""
+    i = next((i for i, tok in enumerate(seg) if os.path.basename(tok) == "gh"), None)
+    return [True] if i is not None and _gh_pair(seg[i + 1:]) in GH_BRANCH_MOVES else []
+
+
+def _config_alias_in_segment(seg: list[str]) -> list[bool]:
+    """A `git` word whose global options set an alias.* key with -c or --config-env."""
+    for i, tok in enumerate(seg):
+        if os.path.basename(tok) != "git":
+            continue
+        j = i + 1
+        while j < len(seg) and seg[j].startswith("-"):
+            opt = seg[j]
+            if opt in ("-c", "--config-env") and j + 1 < len(seg):
+                key = seg[j + 1]
+            else:
+                key = opt.partition("=")[2] if opt.startswith("--config-env=") else ""
+            if key.lower().startswith("alias."):
+                return [True]
+            j += 2 if opt in GLOBAL_OPTS_WITH_VALUE else 1
     return []
 
 
@@ -546,11 +605,12 @@ def _push_in_segment(seg: list[str]) -> list[dict]:
 
 
 def strip_redirects(command: str) -> str:
-    """The command without redirections (`2>&1`, `> /dev/null`, `push>/dev/null`, `<<<x`)."""
+    """The command without redirections (`2>&1`, `> /dev/null`, `push>/dev/null`, `<<<x`).
+    Process substitution (`<(gh pr merge 1)`) stays: it's a command, not a file name."""
     # The fd number is optional but, when present, starts at the beginning of a digit run, so a
     # long run of digits isn't retried at every digit (quadratic). The redirect itself may still
     # follow a previous one's digits directly (`2>&1>/dev/null`).
-    return re.sub(r"(?:(?<!\d)\d+)?(>>?|<<<|<)(&\d+|\s*[^\s;&|]+)", " ", command).strip()
+    return re.sub(r"(?:(?<!\d)\d+)?(>>?|<<<|<)(?!\()(&\d+|\s*[^\s;&|]+)", " ", command).strip()
 
 
 def git(repo: str, *args: str) -> str:
@@ -619,8 +679,14 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
     if len(command) > MAX_COMMAND_CHARS:
         return "deny", (f"Commands are limited to {MAX_COMMAND_CHARS} characters here (so the push hook stays "
                         "fast); put long text in a file.")
-    if "$'" in command and ("git" in command or "gh" in command):  # before heredocs are split out
-        return "deny", "git and gh commands with $'...' quoting can hide a push or merge; write the command without it."
+    if "$'" in command:  # before heredocs are split out
+        try:
+            decoded = ansi_c_decoded(command)
+        except ValueError:
+            decoded = "git"
+        if "git" in decoded or "gh" in decoded:
+            return "deny", ("git and gh commands with $'...' quoting can hide a push or merge; write the command "
+                            "without it.")
     command, scripts = split_heredocs(command)
     # `pu""sh`, `--no-v\erify`, `core.hooks''Path`
     flat = re.sub(r"[\"'\\]", "", "\n".join([command, *scripts]))
@@ -632,6 +698,11 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
         pushes = find_pushes(command)
         if finds_pr_merge(command):
             return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
+        if finds_branch_move(command):
+            return "deny", ("gh pr update-branch, gh repo sync and gh workflow run move branches on GitHub (the "
+                            "pipeline commits to main); leave them to the maintainer.")
+        if finds_config_alias(command):
+            return "deny", "git -c alias.* can hide a push from this hook; run the git command itself."
         posts = find_posts(command)
     except ValueError:
         if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat) or LOOSE_POST.search(unquote(command)):

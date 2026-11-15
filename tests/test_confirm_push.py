@@ -145,6 +145,74 @@ def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo
 
 
 @pytest.mark.parametrize("command", [
+    "gh pr update-branch 12",
+    "gh pr update-branch 12 --rebase",
+    "gh -R owner/repo pr update-branch 12",
+    "gh repo sync",
+    "gh repo sync owner/repo --force",
+    "gh workflow run pipeline.yml",
+    "gh workflow -R owner/repo run pipeline.yml --ref main",
+    "sh -c 'gh repo sync'",
+])
+def test_gh_commands_that_move_branches_are_denied(repo, command):
+    path, _ = repo
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "deny" and "maintainer" in reason
+
+
+@pytest.mark.parametrize("command", [
+    "gh workflow list",
+    "gh workflow view pipeline.yml",
+    "gh run list --workflow pipeline.yml",
+    "gh repo view",
+    "gh pr view 12 --json mergeStateStatus",
+])
+def test_gh_commands_that_only_read_workflows_and_repos_are_left_alone(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path)) is None
+
+
+@pytest.mark.parametrize("command", [
+    "cat <(gh pr merge 1)",
+    "diff <(gh pr merge 1) x",
+    "tee >(gh pr merge 1) < x",
+    "$'\\x67h' pr merge 1",
+    "$'\\147\\150' pr merge 1",
+    "$'\\u0067h' pr merge 1",
+    "echo hi; $'\\x67it' push",
+    "$'\\U110000'",
+])
+def test_merges_in_process_substitution_or_ansi_c_escapes_are_denied(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+@pytest.mark.parametrize("command", [
+    "git -c alias.p=push p",
+    "git -c alias.p='!git push' p",
+    "git -c Alias.P=push p",
+    "git -C . -c alias.p=push p",
+    "git --config-env alias.p=PUSHER p",
+    "git --config-env=alias.p=PUSHER p",
+])
+def test_git_aliases_defined_on_the_command_line_are_denied(repo, command):
+    path, _ = repo
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "deny" and "alias" in reason
+
+
+@pytest.mark.parametrize("command", [
+    "printf $'a\\tb\\n'",
+    "cat <(echo hi)",
+    "diff <(sort a) <(sort b)",
+    "git -c color.ui=never log --oneline",
+])
+def test_ansi_c_quotes_process_substitution_and_config_without_git_or_gh_are_left_alone(repo, command):
+    path, _ = repo
+    assert confirm_push.decide(command, str(path)) is None
+
+
+@pytest.mark.parametrize("command", [
     "gh pr create --base main --head feature --title 'Add X' --body-file body.md",
     "gh pr create -B main -H feature -t 'Add X' -F body.md --draft",
     "gh pr edit 12 --body-file body.md",
@@ -491,6 +559,8 @@ def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
     "git>&2>/dev/null push -u origin foo",
     "git 0<&0<x push origin main",
     "git -C . 2>&1>x push --force",
+    "diff <(git push origin feature) x",
+    "cat <(git push)",
 ])
 def test_uncovered_push_forms_are_denied_even_when_reviewed(repo, command):
     path, head = repo
