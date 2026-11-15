@@ -167,8 +167,21 @@ class EscapingTest < Minitest::Test
     assert_includes html, "Official links"
     assert_includes html, '<a class="link" href="tel:+12022250000">202-225-0000</a>'
     assert_includes html, "1 Example House Office Building"
-    assert_match(%r{<a class="link" href="https://x.com/&quot;jj&quot;">X</a> · <a class="link" href="https://example.social/@ex">Mastodon</a>}, html)
+    icons = html[%r{<ul class="account-icons">.*?</ul>}m]
+    assert_equal 3, icons.scan(%r{<li><a href="[^"]*" title="[^"]*"><svg viewBox="0 0 24 24"[^>]*><(path|g) }).size
+    assert_equal ['https://example.house.gov/?n=&quot;jj&quot;', "https://x.com/&quot;jj&quot;", "https://example.social/@ex"],
+                 icons.scan(/<a href="([^"]*)"/).flatten
+    assert_equal ["Website (example.house.gov/?n=&quot;jj&quot;)", "X", "Mastodon"],
+                 icons.scan(%r{<span class="visually-hidden">([^<]*)</span>}).flatten
+    refute_includes html, "Official accounts"
     refute_includes html, "Contact form"
+  end
+
+  def test_member_with_only_a_phone_has_no_icon_row
+    links = %w[website_url office x_url mastodon_url]
+    html = build(MEMBER.reject { |k, _| links.include?(k) }).fetch("/members/Z000001/index.html")
+    assert_includes html, "Official links"
+    refute_includes html, "account-icons"
   end
 
   def test_member_without_links_has_no_section_and_phone_without_tel_is_text
@@ -185,9 +198,15 @@ end
 class AccountsTest < Minitest::Test
   def test_accounts_in_fixed_order_skipping_missing
     m = { "mastodon_url" => "https://m.example/@a", "x_url" => "https://x.com/a", "facebook_url" => nil }
-    assert_equal [{ "label" => "X", "url" => "https://x.com/a" }, { "label" => "Mastodon", "url" => "https://m.example/@a" }],
+    assert_equal [{ "label" => "X", "url" => "https://x.com/a", "icon" => "x" },
+                  { "label" => "Mastodon", "url" => "https://m.example/@a", "icon" => "mastodon" }],
                  Yan.accounts(m)
     assert_equal [], Yan.accounts({})
+  end
+
+  def test_every_account_and_the_website_has_an_icon
+    include_html = File.read(File.join(__dir__, "..", "_includes", "account_icon.html"))
+    (["website"] + Yan::ACCOUNTS.map(&:last)).each { |icon| assert_includes include_html, %(when "#{icon}") }
   end
 
   def test_website_label_strips_only_the_leading_scheme_and_www

@@ -291,6 +291,10 @@ table.roll { border-collapse: collapse; width: 100%; }
 .facts dl > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; line-height: 22px; }
 .facts dt { font-weight: 600; }
 .facts dd { margin: 0; color: var(--ink-soft); overflow-wrap: anywhere; }
+/* 44px tap targets around 24px icons; the negative margin lines the first icon up with the text. */
+.account-icons { display: flex; flex-wrap: wrap; margin: 0 0 0 -10px; padding: 0; list-style: none; }
+.account-icons a { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: var(--ink-soft); }
+.account-icons a:hover { color: var(--accent); }
 
 .tiles { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
 .tiles > div { display: flex; flex-direction: column; gap: 4px; padding-top: 14px; padding-bottom: 14px; }

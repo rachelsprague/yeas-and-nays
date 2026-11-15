@@ -252,11 +252,12 @@ module Yan
   end
 
   # Official social media accounts, in one fixed order for every member.
-  ACCOUNTS = [["x_url", "X"], ["facebook_url", "Facebook"], ["instagram_url", "Instagram"],
-              ["youtube_url", "YouTube"], ["mastodon_url", "Mastodon"]].freeze
+  # "icon" names the mark in _includes/account_icon.html.
+  ACCOUNTS = [["x_url", "X", "x"], ["facebook_url", "Facebook", "facebook"], ["instagram_url", "Instagram", "instagram"],
+              ["youtube_url", "YouTube", "youtube"], ["mastodon_url", "Mastodon", "mastodon"]].freeze
 
   def self.accounts(m)
-    ACCOUNTS.filter_map { |key, label| m[key] && { "label" => label, "url" => m[key] } }
+    ACCOUNTS.filter_map { |key, label, icon| m[key] && { "label" => label, "url" => m[key], "icon" => icon } }
   end
 
   # "https://www.example.house.gov/" -> "example.house.gov"
