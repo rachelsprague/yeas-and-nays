@@ -22,6 +22,7 @@ select
     {{ congress_gov_url('votes.congress', 'votes.bill_type', 'votes.bill_number') }} as congress_gov_url,
     bills.sponsor_bioguide_id,
     bills.cosponsor_count,
+    bills.policy_area,
     bills.introduced_date,
     coalesce(position_summary.member_count, 0) as member_count,
     coalesce(position_summary.against_party_majority_count, 0) as against_party_majority_count

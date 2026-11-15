@@ -164,6 +164,10 @@ models:
           - not_null:
               config:
                 where: bill_type is not null
+      - name: policy_area
+        description: >
+          CRS policy area of the measure (Congress.gov `policyArea`), e.g. "Health". Null for
+          votes with no bill (nominations, quorum calls) and bills CRS hasn't assigned one yet.
       - name: member_count
         description: Number of members with a recorded position on the vote.
       - name: against_party_majority_count

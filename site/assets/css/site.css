@@ -249,6 +249,23 @@ main.home { gap: 20px; padding-top: 20px; }
 .vol-x span.lab { height: auto; padding: 4px 0 0 4px; white-space: nowrap; }
 .vol-caption { min-height: 1.5em; margin-top: 4px; }
 
+/* By policy area: a House and a Senate bar per area, stacked by kind of vote,
+   with a 1px surface gap between segments. Label above the bars on phones,
+   beside them from 760px. */
+.areas { list-style: none; margin: 0 0 16px; padding: 0; border-top: 1px solid var(--line); }
+.area-row { display: grid; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.area-name { font-size: 14px; line-height: 20px; font-weight: 600; }
+.area-lines { display: flex; flex-direction: column; gap: 3px; }
+.area-line { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 8px; }
+.area-ch { line-height: 1; }
+.area-track { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.area-bar { display: flex; gap: 1px; height: 10px; margin: 0; }
+.area-bar > span { display: block; height: 100%; min-width: 1px; }
+.area-n { line-height: 1; color: var(--ink-soft); }
+@media (min-width: 760px) {
+  .area-row { grid-template-columns: 240px 1fr; align-items: center; gap: 16px; }
+}
+
 .bar { display: flex; height: 14px; border: 1px solid var(--ink); background: var(--surface); }
 .bar .yea { background: var(--ink); }
 .bar .nay { border-left: 2px solid var(--surface); }

@@ -257,7 +257,7 @@ class LayoutTest < Minitest::Test
     "/index.html" => "/votes/", "/votes/index.html" => "/votes/", "/votes/119/house/1/1/index.html" => "/votes/",
     "/members/index.html" => "/members/", "/members/Z000001/index.html" => "/members/", "/find/index.html" => "/members/",
     "/schedule/index.html" => "/schedule/", "/about/index.html" => "/about/", "/privacy/index.html" => nil,
-    "/activity/index.html" => nil
+    "/activity/index.html" => "/activity/"
   }.freeze
 
   def test_masthead_and_footer_link_to_the_schedule_and_activity_and_mark_the_current_page
@@ -266,7 +266,7 @@ class LayoutTest < Minitest::Test
     pages.each do |path, html|
       nav = html[%r{<nav class="mainnav" aria-label="Main">(.*?)</nav>}m, 1]
       refute_nil nav, "#{path}: no main nav"
-      assert_equal %w[/votes/ /members/ /schedule/ /about/], nav.scan(/<a href="([^"]+)"/).flatten, path
+      assert_equal %w[/votes/ /members/ /schedule/ /activity/ /about/], nav.scan(/<a href="([^"]+)"/).flatten, path
       assert_equal [CURRENT[path]].compact, nav.scan(/<a href="([^"]+)" aria-current="page">/).flatten, path
       assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/schedule/">Floor schedule</a>', path
       assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/activity/">Floor activity</a>', path
@@ -785,5 +785,62 @@ class VoteVolumeTest < Minitest::Test
     assert_includes html, "Show the House table by week"
     # The top gridline sits inside the chart, not 1px above it where it would be clipped.
     assert_includes html, '<rect class="grid" x="0" y="0"'
+    # No policy_area in this export yet, so no policy area section.
+    refute_includes html, "By policy area"
+  end
+end
+
+class PolicyVolumeTest < Minitest::Test
+  include SiteBuild
+
+  def vote(chamber, area, key = "passage", bill_type: "hr", measure: nil)
+    { "chamber" => chamber, "vote_date" => "2026-11-10", "bill_type" => bill_type, "measure_number" => measure,
+      "policy_area" => area, "procedure" => { "key" => key } }
+  end
+
+  def test_rows_for_votes_with_no_area
+    assert_equal "Health", Yan.policy_row(vote("house", "Health"))
+    assert_equal "Not yet assigned", Yan.policy_row(vote("house", nil))
+    assert_equal "Not yet assigned", Yan.policy_row(vote("house", ""))
+    # Cloture on a nomination counts with nominations, not under "No bill recorded".
+    assert_equal "Nominations", Yan.policy_row(vote("senate", nil, "cloture", bill_type: nil, measure: "PN1181-7"))
+    assert_equal "No bill recorded", Yan.policy_row(vote("senate", nil, "waive", bill_type: nil))
+    assert_equal "No bill recorded", Yan.policy_row(vote("house", nil, "adjourn", bill_type: nil, measure: "ADJOURN"))
+  end
+
+  def test_no_section_until_the_export_carries_policy_area
+    assert_nil Yan.policy_volume([{ "chamber" => "house", "vote_date" => "2026-11-10", "bill_type" => "hr" }])
+  end
+
+  def test_areas_by_total_on_a_shared_scale_with_unassigned_rows_counted_not_drawn
+    votes = Array.new(2) { vote("house", "Taxation") } + [vote("senate", "Taxation", "cloture")] +
+            Array.new(4) { vote("house", "Health", "amendment") } + [vote("senate", "Armed Forces", "rule")] +
+            Array.new(9) { vote("senate", nil, "nomination", bill_type: nil, measure: "PN5") } +
+            [vote("house", nil)]
+    pv = Yan.policy_volume(votes)
+    house, senate = pv["chambers"]
+    # Health 4 and Taxation 3 (both chambers), then Armed Forces 1; ties would go by name.
+    assert_equal ["Health", "Taxation", "Armed Forces"], house["rows"].map { |r| r["area"] }
+    assert_equal 3, pv["area_count"]
+    # The largest drawn bar is House Health (4); the 9 nominations don't set the scale.
+    assert_equal [100.0, 50.0, 0.0], house["rows"].map { |r| r["pct"] }
+    assert_equal [0.0, 25.0, 25.0], senate["rows"].map { |r| r["pct"] }
+    assert_equal [{ "kind" => "procedural", "pct" => 100.0 }], senate["rows"][1]["segments"]
+    assert_equal "Taxation, Senate: 1 roll call · Procedural and other 1", senate["rows"][1]["summary"]
+    assert_equal "Armed Forces, House: no roll calls", house["rows"][2]["summary"]
+    assert_equal [{ "area" => "Nominations", "counts" => "Senate 9" }, { "area" => "Not yet assigned", "counts" => "House 1" }],
+                 pv["other"]
+    assert_equal ["Health", "Taxation", "Armed Forces", "Nominations", "Not yet assigned"], pv["table"].map { |t| t["area"] }
+    assert_equal({ "area" => "Taxation", "house" => 2, "senate" => 1, "total" => 3 }, pv["table"][1])
+    # The legend has only kinds drawn on some area's bar: nominations have no area.
+    assert_equal %w[passage amendment procedural], pv["kinds"].map { |k| k["key"] }
+  end
+
+  def test_activity_page_escapes_area_names
+    v = EscapingTest::VOTE.merge("policy_area" => %q(Arts & "Culture" <x>))
+    html = build_site([EscapingTest::MEMBER], [[v, EscapingTest::DOC]])["/activity/index.html"]
+    assert_includes html, "By policy area"
+    assert_includes html, "Arts &amp; &quot;Culture&quot; &lt;x&gt;"
+    refute_includes html, "<x>"
   end
 end
