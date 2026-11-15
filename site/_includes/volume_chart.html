@@ -13,7 +13,7 @@ under the chart is its text version. {%- endcomment -%}
     </div>
     <svg viewBox="0 0 {{ vol.width }} {{ vol.height }}" preserveAspectRatio="none" height="{{ vol.height }}" role="img"
          aria-label="{{ c.name }}: {{ c.total }} roll calls from the week of {{ vol.first_week | ap_date }} through the week of {{ vol.last_week | ap_date }}, by week and kind of vote. The table below lists each week.">
-      {%- for t in vol.y_ticks %}<rect class="grid" x="0" y="{{ t.y | minus: 1 }}" width="{{ vol.width }}" height="1"/>{% endfor %}
+      {%- for t in vol.y_ticks %}<rect class="grid" x="0" y="{{ t.y | minus: 1 | at_least: 0 }}" width="{{ vol.width }}" height="1"/>{% endfor %}
       {%- for w in c.weeks %}
       <g class="wk" data-summary="{{ w.summary | escape }}"><title>{{ w.summary | escape }}</title>
         <rect class="hit" x="{{ w.x }}" y="0" width="8" height="{{ vol.height }}"/>

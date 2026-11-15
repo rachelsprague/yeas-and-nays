@@ -783,5 +783,7 @@ class VoteVolumeTest < Minitest::Test
     html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])["/activity/index.html"]
     assert_equal 1, html.scan('<g class="wk"').size
     assert_includes html, "Show the House table by week"
+    # The top gridline sits inside the chart, not 1px above it where it would be clipped.
+    assert_includes html, '<rect class="grid" x="0" y="0"'
   end
 end
