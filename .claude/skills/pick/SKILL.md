@@ -85,10 +85,11 @@ them with the shared files.
 Ask in one `AskUserQuestion` call: confirm the pick or choose a runner-up
 (pick first, marked recommended), and, if there are bundle candidates, a
 second question for which to bundle: multi-select, one option per
-candidate plus a "No bundle" option, so it always has two to four options.
-With no candidates, skip that question. If the user chooses a runner-up,
-find its bundle candidates and ask again. Don't claim, edit, or enter a
-worktree until they answer.
+candidate plus a "No bundle" option, so it always has two to four options
+("No bundle" ticked alongside candidates is ambiguous: ask which was
+meant). With no candidates, skip that question. If the user chooses a
+runner-up, find its bundle candidates and ask again. Don't claim, edit,
+or enter a worktree until they answer.
 
 ## 5. Claim
 
