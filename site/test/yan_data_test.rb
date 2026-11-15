@@ -172,6 +172,31 @@ class EscapingTest < Minitest::Test
     end
   end
 
+  # The map's size, party codes and city label positions come from our own
+  # build, but are escaped anyway; this feeds them HTML's special characters.
+  def test_find_page_escapes_map_size_party_and_city_fields
+    hostile = %q(1 "ZQ" <zq> O'Qx & Q)
+    real = Yan.method(:district_map)
+    Yan.define_singleton_method(:district_map) do |map, members|
+      real.call(map, members).merge("width" => hostile, "height" => hostile).tap do |m|
+        m["districts"].each { |d| d["rep_party"] = hostile }
+        m["cities"].each { |c| c.merge!("tier" => hostile, "x" => hostile, "y" => hostile) }
+      end
+    end
+    html = begin
+      build.fetch("/find/index.html")
+    ensure
+      Yan.define_singleton_method(:district_map, real)
+    end
+
+    escaped = "1 &quot;ZQ&quot; &lt;zq&gt; O&#39;Qx &amp; Q"
+    assert_includes html, %(<svg viewBox="0 0 #{escaped} #{escaped}")
+    assert_includes html, "Jane &quot;JJ&quot; &lt;jj&gt; O&#39;Jay &amp; Doe (#{escaped})</title>"
+    assert_includes html, %(<g class="city t#{escaped}" transform="translate(#{escaped} #{escaped})">)
+    html.scan(/.?zq.?/i).each { |hit| assert_match(/\A;zq&\z/i, hit, "quote or angle bracket not escaped") }
+    ["O'Qx", "& Q"].each { |raw| refute_includes html, raw, "apostrophe or ampersand not escaped" }
+  end
+
   # The fixture's Congress (119) uses the real site/_maps/119.json.
   def test_find_page_draws_every_district_linked_to_its_member
     pages = build
