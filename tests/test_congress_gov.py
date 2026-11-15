@@ -214,6 +214,47 @@ def test_members_in_congress_keeps_terms_that_reach_into_this_congress(monkeypat
     assert congress_gov.members_in_congress() == ["A000001", "B000002", "E000005"]
 
 
+def test_members_in_congress_checks_an_open_ended_term_against_its_start(monkeypatch):
+    from yan.ingest import congress_gov
+
+    terms = [
+        {"bioguide_id": "A000001", "term_start": "2025-01-03", "term_end": None},
+        {"bioguide_id": "B000002", "term_start": "2027-01-03", "term_end": None},  # starts as the next Congress begins
+        {"bioguide_id": "C000003", "term_start": "2029-01-03", "term_end": "2031-01-03"},
+    ]
+    monkeypatch.setattr(congress_gov.legislators, "parse_dir", lambda _: ([], terms, []))
+    assert congress_gov.members_in_congress() == ["A000001"]
+
+
+def test_members_in_congress_skips_a_term_with_a_malformed_date(monkeypatch, caplog):
+    from yan.ingest import congress_gov
+
+    terms = [
+        {"bioguide_id": "A000001", "term_start": "2025-01-03", "term_end": "2027-01-03"},
+        {"bioguide_id": "B000002", "term_start": "2025-01-03", "term_end": "Jan 3, 2027"},
+        {"bioguide_id": "C000003", "term_start": "2025-13-01", "term_end": "2027-01-03"},
+        {"bioguide_id": "C000003", "term_start": "2023-01-03", "term_end": "2025-01-03"},
+    ]
+    monkeypatch.setattr(congress_gov.legislators, "parse_dir", lambda _: ([], terms, []))
+    assert congress_gov.members_in_congress() == ["A000001"]
+    assert caplog.text.count("malformed date") == 2
+
+
+def test_fetch_sponsored_keeps_a_bill_type_or_congress_that_differs(monkeypatch):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 2)
+    items = [
+        {"congress": 119, "type": "HR", "number": "2"},
+        {"congress": 119, "type": "HRES", "number": "2"},  # same number, another type: not a repeat
+        {"congress": 118, "type": "S", "number": "5"},  # an earlier Congress's S 5 doesn't hide this one's
+        {"congress": 119, "type": "S", "number": "5"},
+    ]
+    doc = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
+    assert [(i["type"], i["number"]) for i in doc["sponsoredLegislation"]] == [
+        ("HR", "2"), ("HRES", "2"), ("S", "5")]
+
+
 def test_parse_sponsored_flattens_each_item():
     from yan.stage.congress_gov import parse_sponsored
 
@@ -234,6 +275,20 @@ def test_parse_sponsored_flattens_each_item():
     }
     assert rows[1]["title"] == "Only title"
     assert rows[1]["latest_action_date"] is None and rows[1]["policy_area"] is None
+
+
+def test_parse_sponsored_drops_a_repeat_from_an_older_cached_file():
+    from yan.stage.congress_gov import parse_sponsored
+
+    # Files cached before the fetch dropped repeats can hold one.
+    doc = {"bioguideId": "M001184", "sponsoredLegislation": [
+        {"congress": 119, "type": "HR", "number": "2", "title": "First"},
+        {"congress": 119, "type": "HR", "number": 2, "title": "Repeat"},
+        {"congress": 119, "type": "HRES", "number": "2", "title": "Another type"},
+    ]}
+    rows = parse_sponsored(json.dumps(doc).encode(), "119/sponsored/M001184.json")
+    assert [(r["bill_type"], r["bill_number"], r["title"]) for r in rows] == [
+        ("hr", "2", "First"), ("hres", "2", "Another type")]
 
 
 def test_parse_cosponsored_dir_records_every_fetched_list_even_when_empty(tmp_path):

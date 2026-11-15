@@ -81,11 +81,24 @@ def voted_bills() -> dict[tuple[str, str], dt.date]:
 
 def members_in_congress() -> list[str]:
     """Bioguide IDs of everyone with a House or Senate term overlapping this Congress.
-    A term with no end date is treated as ongoing."""
+    A term with no end date is treated as ongoing, and one with no start date as having
+    started before this Congress. A term with a date that doesn't parse is logged and
+    skipped, so one bad row can't stop the ingest."""
     start = dt.date(SESSIONS[1], 1, 3)
+    end = dt.date(SESSIONS[2] + 1, 1, 3)
     _, terms, _ = legislators.parse_dir(RAW_DIR / "legislators")
-    return sorted({t["bioguide_id"] for t in terms
-                   if not t["term_end"] or dt.date.fromisoformat(t["term_end"]) > start})
+    members = set()
+    for t in terms:
+        try:
+            term_start = dt.date.fromisoformat(t["term_start"]) if t.get("term_start") else dt.date.min
+            term_end = dt.date.fromisoformat(t["term_end"]) if t.get("term_end") else dt.date.max
+        except (TypeError, ValueError):
+            log.warning("congress.gov: skipping a term of %s with a malformed date (start %r, end %r)",
+                        t["bioguide_id"], t.get("term_start"), t.get("term_end"))
+            continue
+        if term_start < end and term_end > start:
+            members.add(t["bioguide_id"])
+    return sorted(members)
 
 
 def sponsored_path(bioguide_id: str):
