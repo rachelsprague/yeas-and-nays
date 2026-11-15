@@ -31,10 +31,10 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
     person_rows, term_rows, affiliation_rows = [], [], []
     for p in people:
         ids = p.get("id")
-        bioguide = _bioguide(ids)
+        name = p.get("name", {})
+        bioguide = _bioguide(ids, name.get("official_full") or name.get("last"))
         if not bioguide:
             continue
-        name = p.get("name", {})
         person_rows.append({
             "bioguide_id": bioguide,
             "lis_id": ids.get("lis"),
@@ -85,7 +85,7 @@ def parse_social(entries: list[dict]) -> list[dict]:
     """One row per member with the account names (handles) as recorded."""
     rows = []
     for e in entries:
-        bioguide = _bioguide(e.get("id"))
+        bioguide = _bioguide(e.get("id"), e.get("id"))
         if not bioguide:
             continue
         social = e.get("social", {})
@@ -103,11 +103,14 @@ def parse_social_dir(raw_root: Path) -> list[dict]:
     return parse_social(json.loads(path.read_text()))
 
 
-def _bioguide(ids) -> str | None:
-    """The entry's bioguide ID, or None when it has none or it's malformed (logged)."""
+def _bioguide(ids, label) -> str | None:
+    """The entry's bioguide ID, or None when it has none or it's malformed (logged).
+
+    `label` names the entry in the log when it has no bioguide ID to go by.
+    """
     value = ids.get("bioguide") if isinstance(ids, dict) else None
     if not value:
-        log.warning("legislators: skipping an entry with no bioguide ID")
+        log.warning("legislators: skipping an entry with no bioguide ID (%r)", label)
         return None
     if isinstance(value, str) and BIOGUIDE_ID.fullmatch(value):
         return value

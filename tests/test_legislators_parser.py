@@ -91,6 +91,8 @@ def test_skips_an_entry_without_an_id_block(ids, caplog):
     assert [t["bioguide_id"] for t in terms] == ["X000001"]
     assert parse_social([{"social": {"twitter": "NoId"}}, {"id": ids, "social": {}}]) == []
     assert caplog.text.count("no bioguide ID") == 4
+    assert "'No ID'" in caplog.text and "'Bad ID'" in caplog.text
+    assert f"no bioguide ID ({ids!r})" in caplog.text
 
 
 def test_social_dir_without_the_file_stages_no_accounts(tmp_path):
