@@ -24,6 +24,9 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # The deploy doesn't need the test gems (tests run in test.yml).
+    env:
+      BUNDLE_WITHOUT: test
     steps:
       # ref: main picks up the data commit the update run just pushed.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
