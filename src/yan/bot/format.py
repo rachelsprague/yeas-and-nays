@@ -15,9 +15,9 @@ MAX_GRAPHEMES = 300
 MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
-OPEN_QUOTE, CLOSE_QUOTE = "“", "”"
+CLOSERS = {"(": ")", "“": "”"}
 RECONSIDERED = ", Upon Reconsideration"
-SMALL_WORD_END = re.compile(r"\s(?:of|to|the|and|for)$", flags=re.IGNORECASE)
+SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for)$", flags=re.IGNORECASE)
 
 
 class PostTooLong(ValueError):
@@ -138,17 +138,33 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
         if grapheme_length(text) <= max_length:
             return text
     keep = len(title) - (grapheme_length(text) - max_length) - len(ELLIPSIS)
-    # A cut inside a curly-quoted name ("“Fairness…") gets its closing quote
-    # back, which needs one more character, so it may take a shorter cut.
-    for length in (keep, keep - 1):
-        if length < MIN_TITLE:
-            break
+    # A cut inside a quoted name or parentheses ("“Fairness…", "(the Housing…")
+    # gets its closing marks back, which need more characters, so it may take
+    # a shorter cut.
+    for length in range(keep, MIN_TITLE - 1, -1):
         short = cut_title(title, length)
-        closing = CLOSE_QUOTE if short.count(OPEN_QUOTE) > short.count(CLOSE_QUOTE) else ""
-        text = headline(vote, decision, short + ELLIPSIS + closing) + fixed
+        text = headline(vote, decision, short + ELLIPSIS + closing_marks(short)) + fixed
         if grapheme_length(text) <= max_length:
             return text
     raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
+
+
+def closing_marks(text: str) -> str:
+    """The marks that close each parenthesis or quote text opens and leaves
+    open, innermost first. A straight double quote opens or closes by turn;
+    a stray closing mark is ignored."""
+    open_marks = []
+    for char in text:
+        if char == '"':
+            if open_marks and open_marks[-1] == '"':
+                open_marks.pop()
+            else:
+                open_marks.append('"')
+        elif char in CLOSERS:
+            open_marks.append(CLOSERS[char])
+        elif open_marks and char == open_marks[-1]:
+            open_marks.pop()
+    return "".join(reversed(open_marks))
 
 
 def ends_word(rest: str) -> bool:
@@ -171,13 +187,22 @@ def cut_title(title: str, keep: int) -> str:
         by_word = short.rsplit(" ", 1)[0].rstrip(" ,;:")
         if len(by_word) >= MIN_TITLE:
             short = by_word
-    if at_boundary or short != title[:keep]:
-        # A cut that ends on a whole small word ("Secretary of…") reads as
-        # broken; drop such words too, as long as enough title remains.
-        short = short.rstrip(" ,;:")
-        while True:
-            trimmed = SMALL_WORD_END.sub("", short).rstrip(" ,;:")
-            if trimmed == short or len(trimmed) < MIN_TITLE:
-                break
-            short = trimmed
+    whole_words = at_boundary or short != title[:keep]
+    # A cut that ends on a whole small word ("Secretary of…", 'as "The…') reads
+    # as broken, and so does one just after a period, which mostly ends an
+    # abbreviation ("of H.R.") but can end a sentence ("Code of 1986."). Drop
+    # such words, one at a time since each can bare another ("U.S.C. and"),
+    # as long as enough title remains.
+    short = short.rstrip(" ,;:")
+    while True:
+        if short.endswith(".") and " " in short:
+            trimmed = short.rsplit(" ", 1)[0]
+        elif whole_words:
+            trimmed = SMALL_WORD_END.sub("", short)
+        else:
+            break
+        trimmed = trimmed.rstrip(" ,;:")
+        if trimmed == short or len(trimmed) < MIN_TITLE:
+            break
+        short, whole_words = trimmed, True
     return short.rstrip(" ,;:")

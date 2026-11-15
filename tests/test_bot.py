@@ -279,7 +279,8 @@ def cut_at(vote, prefix, tail):
 
 @pytest.mark.parametrize("prefix, tail, ending", [
     ("Should the Senate concur in the amendment", "? And a long tail ", ' the amendment…"'),
-    ("An Act to amend title 5 (the Housing Act", ") and a long tail ", ' Housing Act…"'),
+    # Closing the parenthesis takes one more character, so the cut moves back a word.
+    ("An Act to amend title 5 (the Housing Act", ") and a long tail ", ' (the Housing…)"'),
     ("An Act relating to benefits for veterans", "’ survivors and a long tail ", ' for veterans…"'),
     # A period mostly ends an abbreviation, so the abbreviated word goes too.
     ("An Act to amend the provisions of H.R", ". 5371 and a long tail ", ' provisions…"'),
@@ -303,6 +304,52 @@ def test_closing_quote_that_does_not_fit_takes_a_shorter_cut():
     prefix, tail = "Disapproving the rule relating to “California State", " Nonroad Standards” " + "y" * 300
     vote = house_vote(question="On Passage", measure_number="H J RES 1", measure_title=prefix + tail)
     assert cut_at(vote, prefix, tail).endswith(' “California…”"')
+
+
+@pytest.mark.parametrize("prefix, tail, ending", [
+    ("An Act to amend title 5 (the Housing Supp", "ly Act) and ", ' (the Housing…)"'),
+    ('Disapproving the rule relating to "California State Non', 'road Standards" ', ' "California State…""'),
+    ("An Act to amend title 5 (the “Fair Housing Non", "road Act”) and ", ' (the “Fair Housing…”)"'),
+])
+def test_cut_inside_parentheses_or_quotes_closes_them(prefix, tail, ending):
+    tail += "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(ending)
+
+
+@pytest.mark.parametrize("prefix, tail, ending", [
+    ("An Act to amend the provisions of H.R.", " 5371 and a long tail ", ' provisions…"'),
+    # An abbreviation that ends a word cut leaves its period too.
+    ("To name the post office in Saint Louis and St. Lou", "is County and a long tail ", ' Saint Louis…"'),
+    # Dropping a small word can bare an abbreviation, which goes too.
+    ("A bill to amend title 5, U.S.C. and", " so on and a long tail ", ' title 5…"'),
+    # A period that ends a sentence goes the same way.
+    ("To amend the Internal Revenue Code of 1986.", " And a long tail ", ' Revenue Code…"'),
+])
+def test_cut_just_after_a_period_drops_the_abbreviated_word(prefix, tail, ending):
+    tail += "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(ending)
+
+
+def test_cut_exactly_after_a_small_word_drops_it():
+    prefix, tail = "An Act relating to the Secretary of", " Defense and a long tail " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(' Secretary…"')
+
+
+def test_small_word_after_a_quote_mark_is_dropped():
+    prefix, tail = 'To designate the facility as "The', ' Liberty Building" and a long tail ' + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(' facility as…"')
+
+
+def test_mid_word_cut_too_short_to_move_back_keeps_a_small_word_start():
+    # Moving back to "Housing Supply Act" leaves too little title, so the cut
+    # stays inside "forestry", and its "for" is not a small word to drop.
+    prefix, tail = "Housing Supply Act for", "estry and a long tail " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(' Act for…"')
 
 
 def test_reconsideration_is_dropped_before_the_title_is_cut():
