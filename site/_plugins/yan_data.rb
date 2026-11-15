@@ -7,6 +7,7 @@
 #   site.data["members"]   data/out/members.json, sorted by name, each with a url
 #   site.data["leads"]     the newest vote overall and per chamber, prepared for display
 #   site.data["vote_volume"]  roll calls per week by chamber and kind of vote (Yan.vote_volume)
+#   site.data["policy_volume"]  roll calls by policy area, chamber and kind of vote (Yan.policy_volume)
 #   site.data["district_map"]  site/_maps/{congress}.json with each district's member (Yan.district_map)
 #
 # Routes: /votes/{congress}/{chamber}/{session}/{roll}/ (roll numbers restart
@@ -422,6 +423,66 @@ module Yan
     }
   end
 
+  # Rows on the policy area chart for votes that can't have a policy area,
+  # listed after the areas themselves.
+  NO_AREA = ["Nominations", "No bill recorded", "Not yet assigned"].freeze
+
+  # A vote's row on the policy area chart: the CRS policy area of its bill;
+  # nominations (PN numbers, including cloture on them) and votes that record
+  # no bill have their own rows, as do bills CRS hasn't assigned an area yet.
+  def self.policy_row(v)
+    return v["measure_number"].to_s.start_with?("PN") ? "Nominations" : "No bill recorded" unless v["bill_type"]
+
+    v["policy_area"].to_s.empty? ? "Not yet assigned" : v["policy_area"]
+  end
+
+  # Roll calls by policy area and chamber, stacked by kind of vote, for the
+  # floor activity page. Areas run from most roll calls in both chambers to
+  # fewest; both chambers share one scale (width in percent of the largest
+  # chamber's area). The NO_AREA rows have no subject to compare, so they're
+  # counted ("other") rather than drawn, where a long Nominations row would
+  # flatten every area; the table lists all rows. Nil until the export
+  # carries policy_area, or when no vote has an area to draw.
+  def self.policy_volume(votes)
+    return nil unless votes.any? { |v| v.key?("policy_area") }
+
+    counts = Hash.new { |h, k| h[k] = Hash.new(0) }
+    votes.each { |v| counts[[policy_row(v), v["chamber"]]][vote_kind(v.dig("procedure", "key"))] += 1 }
+    rows = counts.keys.map(&:first).uniq
+    total = ->(row, chamber = nil) { counts.sum { |(r, c), k| r == row && (chamber.nil? || c == chamber) ? k.values.sum : 0 } }
+    areas = (rows - NO_AREA).sort_by { |r| [-total.call(r), r] }
+    return nil if areas.empty?
+
+    other = NO_AREA & rows
+    max = counts.reject { |(r, _), _| NO_AREA.include?(r) }.values.map { |k| k.values.sum }.max || 1
+    present = CHAMBER_NAMES.select { |chamber, _| counts.keys.any? { |(_, c)| c == chamber } }
+
+    drawn = counts.reject { |(r, _), _| NO_AREA.include?(r) }.values.flat_map(&:keys).uniq
+    {
+      # The legend: only kinds some area's bar has (nominations have no bill, so no area).
+      "kinds" => VOTE_KINDS.select { |k| drawn.include?(k["key"]) }.map { |k| k.slice("key", "label") },
+      "area_count" => areas.size,
+      "other" => other.map do |row|
+        { "area" => row, "counts" => present.filter_map { |c, name| "#{name} #{total.call(row, c)}" if total.call(row, c).positive? }.join(", ") }
+      end,
+      "chambers" => present.map do |chamber, name|
+        { "chamber" => chamber, "name" => name, "rows" => areas.map do |row|
+          c = counts.fetch([row, chamber], Hash.new(0))
+          n = c.values.sum
+          parts = VOTE_KINDS.filter_map { |k| "#{k["label"]} #{c[k["key"]]}" if c[k["key"]].positive? }
+          { "area" => row, "total" => n, "pct" => (100.0 * n / max).round(2),
+            "segments" => VOTE_KINDS.filter_map do |k|
+              { "kind" => k["key"], "pct" => (100.0 * c[k["key"]] / n).round(2) } if c[k["key"]].positive?
+            end,
+            "summary" => "#{row}, #{name}: " +
+              (n.zero? ? "no roll calls" : "#{n} roll call#{"s" unless n == 1} · #{parts.join(" · ")}") }
+        end }
+      end,
+      # The text version: one row per area, both chambers, then the NO_AREA rows.
+      "table" => (areas + other).map { |row| { "area" => row, "house" => total.call(row, "house"), "senate" => total.call(row, "senate"), "total" => total.call(row) } }
+    }
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
   def self.vote_view(vote, doc, members_by_id)
     words = words(doc["positions"])
@@ -599,6 +660,7 @@ module Yan
       site.data["district_map"] = Yan.district_map(File.exist?(map_file) && JSON.parse(File.read(map_file)), members)
       site.data["votes"] = votes
       site.data["vote_volume"] = Yan.vote_volume(votes)
+      site.data["policy_volume"] = Yan.policy_volume(votes)
       site.data["leads"] = {
         "all" => views[votes.first["vote_id"]],
         "house" => (v = votes.find { |x| x["chamber"] == "house" }) && views[v["vote_id"]],

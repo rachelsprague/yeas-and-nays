@@ -1,6 +1,7 @@
 ---
 layout: default
 title: Floor activity
+nav: activity
 description: Roll call votes taken each week in the House and Senate, by kind of vote.
 ---
 {%- assign vol = site.data.vote_volume -%}
@@ -45,6 +46,51 @@ description: Roll call votes taken each week in the House and Senate, by kind of
     {%- endfor %}
     <p class="small muted">Both charts use the same scale. Weeks with no bar had no roll calls in that chamber, such as during a recess.</p>
   </section>
+
+  {%- assign pv = site.data.policy_volume %}
+  {%- if pv %}
+  <section class="section" aria-labelledby="area-h">
+    <h2 id="area-h" class="section-h sm">By policy area</h2>
+    <p class="soft">The Congressional Research Service assigns each bill and resolution one policy area, listed on Congress.gov; the {{ pv.area_count }} with roll calls this Congress are shown here. Every roll call on a measure counts under its area, whatever the question.</p>
+    <ul class="vol-key small" aria-label="Kinds of vote">
+      {%- for k in pv.kinds %}<li><span class="swatch k-{{ k.key }}" aria-hidden="true"></span>{{ k.label }}</li>{% endfor %}
+    </ul>
+    <ol class="areas" aria-hidden="true">
+      {%- for t in pv.table limit: pv.area_count %}
+      {%- assign i = forloop.index0 %}
+      <li class="area-row">
+        <span class="area-name">{{ t.area | escape }}</span>
+        <span class="area-lines">
+          {%- for c in pv.chambers %}{% assign r = c.rows[i] %}
+          <span class="area-line" title="{{ r.summary | escape }}"><span class="area-ch small muted">{{ c.name }}</span><span class="area-track"><span class="area-bar vol" style="width: calc((100% - 40px) * {{ r.pct }} / 100)">
+            {%- for s in r.segments %}<span class="k-{{ s.kind }}" style="width: {{ s.pct }}%"></span>{% endfor -%}
+          </span><span class="area-n small nums">{{ r.total }}</span></span></span>
+          {%- endfor %}
+        </span>
+      </li>
+      {%- endfor %}
+    </ol>
+    {%- if pv.other.size > 0 %}
+    <p class="small">Not drawn above, as no policy area is recorded for them:
+      {%- for o in pv.other %} {{ o.area | escape }} ({{ o.counts | escape }}){% if forloop.last %}.{% else %};{% endif %}{% endfor %}</p>
+    {%- endif %}
+    <p class="small muted">CRS assigns the House's rules (resolutions setting how a measure is debated) to the policy area Congress, so votes on a rule and on ordering the previous question on it count there, not under the measure the rule brings up.</p>
+    <details>
+      <summary class="small">Show the table by policy area</summary>
+      <div class="scroll">
+        <table class="roll nums">
+          <thead><tr><th scope="col">Policy area</th><th scope="col" class="r">House</th><th scope="col" class="r">Senate</th><th scope="col" class="r">Total</th></tr></thead>
+          <tbody>
+            {%- for t in pv.table %}
+            <tr><th scope="row">{{ t.area | escape }}</th><td class="r">{{ t.house }}</td><td class="r">{{ t.senate }}</td><td class="r">{{ t.total }}</td></tr>
+            {%- endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <p class="small muted">Both chambers use the same scale. Policy areas as published on Congress.gov; an area can change if CRS updates it.</p>
+  </section>
+  {%- endif %}
 
   <section class="section" aria-labelledby="kinds-h">
     <h2 id="kinds-h" class="section-h sm">Kinds of vote</h2>
