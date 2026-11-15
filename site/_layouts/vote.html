@@ -51,6 +51,33 @@ layout: default
     </section>
   </div>
 
+  {%- if page.state_grid %}
+  <section class="section" aria-labelledby="state-h">
+    <h2 id="state-h" class="section-h sm">By state</h2>
+    {%- include state_grid.html view=page %}
+    <details>
+      <summary class="small">Show the table by state</summary>
+      <div class="scroll">
+        <table class="roll nums">
+          <thead><tr>
+            <th scope="col">State</th>
+            <th scope="col" class="r">{{ page.words.yes }}</th>
+            <th scope="col" class="r">{{ page.words.no }}</th>
+            <th scope="col" class="r">Present</th>
+            <th scope="col" class="r">Not voting</th>
+          </tr></thead>
+          <tbody>
+            {%- for s in page.state_grid.table %}
+            <tr><th scope="row">{{ s.name }}</th><td class="r">{{ s.yes }}</td><td class="r">{{ s.no }}</td><td class="r">{{ s.present }}</td><td class="r">{{ s.not_voting }}</td></tr>
+            {%- endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <p class="small muted">{% if page.state_grid.unplaced > 0 %}Not shown: {{ page.state_grid.unplaced }} member{% if page.state_grid.unplaced != 1 %}s{% endif %} with no state tile. {% endif %}Each tile is one state's members on this vote, in proportion. The District of Columbia and the territories appear when their delegates are recorded.</p>
+  </section>
+  {%- endif %}
+
   {%- if v.congress_gov_url %}
   <section class="section" aria-labelledby="summary-h">
     <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label | escape }}</h2>

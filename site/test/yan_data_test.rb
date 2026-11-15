@@ -67,10 +67,38 @@ class ProcedureTest < Minitest::Test
   end
 end
 
+# Builds the site from a small export written to a temp dir.
+module SiteBuild
+  SOURCE = File.expand_path("..", __dir__)
+
+  # Returns { "/path/index.html" => html } for every page built from these
+  # members and [vote, vote file] pairs.
+  def build_site(members, votes)
+    Dir.mktmpdir do |tmp|
+      data = File.join(tmp, "data")
+      FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
+      write = ->(path, obj) { File.write(File.join(data, path), JSON.generate(obj)) }
+      write.call("meta.json", { "congress" => 119, "has_sponsored_bills" => true })
+      write.call("members.json", { "members" => members })
+      write.call("votes.json", { "votes" => votes.map(&:first) })
+      votes.each { |v, doc| write.call("votes/#{v["vote_id"]}.json", doc) }
+      members.each { |m| write.call("members/#{m["bioguide_id"]}.json", { "sponsored" => [], "cosponsored" => [] }) }
+
+      site = Jekyll::Site.new(Jekyll.configuration(
+        "source" => SOURCE, "destination" => File.join(tmp, "_site"), "yan_data" => data,
+        "plugins_dir" => File.join(tmp, "none"), # yan_data.rb is already loaded above
+        "quiet" => true
+      ))
+      site.process
+      Dir[File.join(tmp, "_site", "**", "*.html")].to_h { |f| [f.delete_prefix("#{tmp}/_site"), File.read(f)] }
+    end
+  end
+end
+
 # Builds the site from a one-member, one-vote export whose member name holds
 # double quotes, then checks every page escapes them (attributes included).
 class EscapingTest < Minitest::Test
-  SOURCE = File.expand_path("..", __dir__)
+  include SiteBuild
 
   MEMBER = {
     "bioguide_id" => "Z000001", "official_full_name" => 'Jane "JJ" Doe', "first_name" => "Jane",
@@ -87,31 +115,15 @@ class EscapingTest < Minitest::Test
     "measure_title" => "A bill", "sponsor_bioguide_id" => "Z000001"
   }.freeze
 
-  # Returns { "/path/index.html" => html } for every page built.
-  def build(member = MEMBER)
-    Dir.mktmpdir do |tmp|
-      data = File.join(tmp, "data")
-      FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
-      write = ->(path, obj) { File.write(File.join(data, path), JSON.generate(obj)) }
-      write.call("meta.json", { "congress" => 119, "has_sponsored_bills" => true })
-      write.call("members.json", { "members" => [member] })
-      write.call("votes.json", { "votes" => [VOTE] })
-      write.call("votes/#{VOTE["vote_id"]}.json", {
-        "positions" => { "Z000001" => "Nay" }, "party_totals" => { "R" => { "no" => 1 } },
-        # A caucus majority the member voted against, so the against-majority lists name them.
-        "caucus_majority_position" => { "R" => "yes" },
-        "against_party_majority" => [{ "bioguide_id" => "Z000001", "position" => "Nay" }], "summary" => nil
-      })
-      write.call("members/Z000001.json", { "sponsored" => [], "cosponsored" => [] })
+  DOC = {
+    "positions" => { "Z000001" => "Nay" }, "party_totals" => { "R" => { "no" => 1 } },
+    # A caucus majority the member voted against, so the against-majority lists name them.
+    "caucus_majority_position" => { "R" => "yes" },
+    "against_party_majority" => [{ "bioguide_id" => "Z000001", "position" => "Nay" }], "summary" => nil
+  }.freeze
 
-      site = Jekyll::Site.new(Jekyll.configuration(
-        "source" => SOURCE, "destination" => File.join(tmp, "_site"), "yan_data" => data,
-        "plugins_dir" => File.join(tmp, "none"), # yan_data.rb is already loaded above
-        "quiet" => true
-      ))
-      site.process
-      Dir[File.join(tmp, "_site", "**", "*.html")].to_h { |f| [f.delete_prefix("#{tmp}/_site"), File.read(f)] }
-    end
+  def build(member = MEMBER)
+    build_site([member], [[VOTE, DOC]])
   end
 
   def test_member_name_quotes_are_escaped
@@ -290,6 +302,106 @@ class PartyGridTest < Minitest::Test
             "party_totals" => { "D" => { "other" => 1 }, "R" => { "other" => 1 } },
             "against_party_majority" => [], "caucus_majority_position" => {}, "summary" => nil }
     assert_equal [], Yan.vote_view({}, doc, {})["party_grid"]
+  end
+end
+
+class StateGridTest < Minitest::Test
+  WORDS = { "yes" => "Yea", "no" => "Nay" }.freeze
+  MEMBERS = { "A1" => { "state" => "CA" }, "A2" => { "state" => "CA" }, "A3" => { "state" => "CA" },
+              "A4" => { "state" => "CA" }, "B1" => { "state" => "PR" } }.freeze
+
+  def test_a_tile_splits_its_bar_in_proportion_yea_nay_present_not_voting
+    grid = Yan.state_grid({ "A1" => "Not Voting", "A2" => "Yea", "A3" => "Nay", "A4" => "Yea" }, MEMBERS, WORDS)
+    ca = grid["tiles"].find { |t| t["state"] == "CA" }
+    assert_equal [["yea", 2, 0.0, 11.0], ["nay", 1, 11.0, 5.5], ["nv", 1, 16.5, 5.5]],
+                 ca["runs"].map { |r| r.values_at("mark", "count", "x", "width") }
+    assert_equal "2 Yea, 1 Nay, 1 Not Voting", ca["summary"]
+    assert_equal [0, 4 * 30], ca.values_at("x", "y") # row 5, column 1
+  end
+
+  def test_every_state_gets_a_tile_and_territories_only_when_recorded
+    states = Yan.state_grid({ "A1" => "Yea" }, MEMBERS, WORDS)
+    assert_equal 50, states["tiles"].size
+    assert_equal [], states["tiles"].find { |t| t["state"] == "TX" }["runs"]
+    assert_equal ["California"], states["table"].map { |r| r["name"] }
+    assert_equal 8 * 30 - 2, states["height"]
+
+    with_pr = Yan.state_grid({ "A1" => "Yea", "B1" => "Present" }, MEMBERS, WORDS)
+    assert_equal 51, with_pr["tiles"].size
+    assert_equal 9 * 30 - 2, with_pr["height"]
+    assert_equal({ "name" => "Puerto Rico", "yes" => 0, "no" => 0, "present" => 1, "not_voting" => 0 },
+                 with_pr["table"].last)
+  end
+
+  def test_members_without_a_known_state_are_counted_apart
+    grid = Yan.state_grid({ "A1" => "Yea", "Z9" => "Nay", "C1" => "Yea" }, MEMBERS.merge("C1" => { "state" => "ZZ" }), WORDS)
+    assert_equal 2, grid["unplaced"]
+    assert_equal ["California"], grid["table"].map { |r| r["name"] }
+  end
+
+  def test_no_state_grid_without_positions
+    assert_nil Yan.state_grid({}, MEMBERS, WORDS)
+  end
+
+  def test_tiles_do_not_overlap
+    assert_equal Yan::STATE_TILES.size, Yan::STATE_TILES.values.uniq.size
+    assert_equal Yan::STATE_NAMES.keys.sort, Yan::STATE_TILES.keys.sort
+  end
+
+  def test_no_state_grid_for_a_vote_by_candidate
+    doc = { "positions" => { "A1" => "Jeffries" }, "party_totals" => { "D" => { "other" => 1 } },
+            "against_party_majority" => [], "caucus_majority_position" => {}, "summary" => nil }
+    assert_nil Yan.vote_view({}, doc, MEMBERS)["state_grid"]
+  end
+end
+
+# Builds vote pages: one with every position, one Speaker election.
+class VotePageTest < Minitest::Test
+  include SiteBuild
+
+  def member(id, state, district)
+    { "bioguide_id" => id, "official_full_name" => "Member #{id}", "first_name" => "Member", "last_name" => id,
+      "party" => "R", "caucus_party" => "R", "chamber" => "house", "state" => state, "district" => district,
+      "is_current" => true, "is_voting_member" => true }
+  end
+
+  def vote(roll, question)
+    { "vote_id" => "h119-1-000#{roll}", "congress" => 119, "chamber" => "house", "session" => 1,
+      "roll_number" => roll, "vote_date" => "2025-01-03", "question" => question, "result" => "Passed" }
+  end
+
+  def doc(positions, totals)
+    { "positions" => positions, "party_totals" => { "R" => totals }, "caucus_majority_position" => {},
+      "against_party_majority" => [], "summary" => nil }
+  end
+
+  def pages
+    @pages ||= build_site(
+      [member("A000001", "AL", 1), member("A000002", "AL", 2), member("A000003", "AL", 3), member("A000004", "AL", 4), member("A000005", "ZZ", 1)],
+      [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "A000002" => "Present", "A000003" => "Not Voting",
+                                     "A000004" => "Nay", "A000005" => "Yea" },
+                                   { "yes" => 2, "no" => 1, "present" => 1, "not_voting" => 1 })],
+       [vote(2, "Election of the Speaker"), doc({ "A000001" => "Johnson", "A000002" => "Johnson", "A000003" => "Not Voting" },
+                                                { "other" => 2, "not_voting" => 1 })]]
+    )
+  end
+
+  def test_every_position_is_drawn_on_both_grids
+    html = pages.fetch("/votes/119/house/1/1/index.html")
+    %w[yea present nv].each { |mark| assert_equal 2, html.scan(%(<g class="dot #{mark}")).size, mark }
+    assert_includes html, '<g class="dot nay" fill="url(#hatch-R)">'
+    assert_includes html, '<g class="dot nay" fill="url(#hatch-state)">'
+    assert_includes html, "<title>Alabama: 1 Yea, 1 Nay, 1 Present, 1 Not Voting</title>"
+    assert_includes html, "<title>Texas: no members recorded</title>"
+    assert_includes html, %(<th scope="row">Alabama</th><td class="r">1</td><td class="r">1</td><td class="r">1</td><td class="r">1</td>)
+    # A000005's state code has no tile.
+    assert_includes html, "Not shown: 1 member with no state tile."
+  end
+
+  def test_no_grids_for_a_speaker_election
+    html = pages.fetch("/votes/119/house/1/2/index.html")
+    refute_includes html, "grid-chart"
+    refute_includes html, "By state"
   end
 end
 
