@@ -15,6 +15,11 @@
     var W = full.width, H = full.height;
     var view = { x: 0, y: 0, w: W, h: H };
     var selected = null;
+    // Each city label with its dot's map point, to find the ones in a chosen district.
+    var cities = Array.prototype.map.call(svg.querySelectorAll(".city"), function (c) {
+      var m = c.transform.baseVal.consolidate().matrix;
+      return { el: c, point: { x: m.e, y: m.f } };
+    });
 
     // Map units per screen pixel, so labels and dots keep one size at any zoom
     // (--u in site.css), and the zoom level, which decides which cities show.
@@ -137,6 +142,11 @@
       if (selected) selected.classList.remove("on");
       selected = link;
       link.classList.add("on");
+      // Labels on the accent fill switch to its text color, so they stay readable.
+      var path = link.querySelector("path");
+      cities.forEach(function (c) {
+        c.el.classList.toggle("in", !!path.isPointInFill && path.isPointInFill(c.point));
+      });
       show(people[link.dataset.seat]);
     }
 

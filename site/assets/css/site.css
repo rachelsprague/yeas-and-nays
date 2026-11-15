@@ -354,6 +354,10 @@ table.roll { border-collapse: collapse; width: 100%; }
   stroke: var(--surface); stroke-opacity: 0.6; stroke-width: calc(var(--u, 11) * 2px); stroke-linejoin: round; paint-order: stroke;
   transform: translate(calc(var(--u, 11) * 4px), calc(var(--u, 11) * 4px));
 }
+/* Cities in the chosen district sit on its accent fill (district-map.js); a
+   solid halo keeps a label readable where it runs past the district's edge. */
+.dmap .city.in circle { fill: var(--on-accent); }
+.dmap .city.in text { fill: var(--on-accent); stroke: var(--accent); stroke-opacity: 1; }
 .dmap-zoom { gap: 8px; flex-wrap: wrap; align-items: center; }
 .dmap-zoom .button { min-width: 40px; }
 .dmap-card { flex-direction: column; gap: 12px; padding: 14px 0; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); }
