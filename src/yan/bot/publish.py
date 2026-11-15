@@ -15,6 +15,13 @@ class MissingCredentials(RuntimeError):
     pass
 
 
+def _failed(action: str, exc: Exception) -> RuntimeError:
+    """An error naming only the exception type and HTTP status. The SDK's own
+    message can echo inputs or response bodies into public Actions logs."""
+    status = getattr(getattr(exc, "response", None), "status_code", None)
+    return RuntimeError(f"Bluesky {action} failed ({type(exc).__name__}{f', HTTP {status}' if status else ''})")
+
+
 class BlueskyPublisher:
     def __init__(self, client=None):
         handle = os.environ.get("BLUESKY_HANDLE")
@@ -30,13 +37,15 @@ class BlueskyPublisher:
         try:
             self._client.login(handle, password)
         except Exception as exc:
-            # Re-raise without the SDK's message or request details, which can echo inputs.
-            raise RuntimeError(f"Bluesky login failed ({type(exc).__name__})") from None
+            raise _failed("login", exc) from None
 
     def recent_links(self) -> set[str]:
         """Link lines (the last line) of the account's recent posts, so a vote
         already posted isn't posted again even if state wasn't saved."""
-        feed = self._client.get_author_feed(actor=self._handle, limit=POSTED_FEED_LIMIT)
+        try:
+            feed = self._client.get_author_feed(actor=self._handle, limit=POSTED_FEED_LIMIT)
+        except Exception as exc:
+            raise _failed("feed read", exc) from None
         return {item.post.record.text.rsplit("\n", 1)[-1] for item in feed.feed}
 
     def post(self, text: str, url: str) -> None:
@@ -45,4 +54,7 @@ class BlueskyPublisher:
 
         body, link_text = text.rsplit("\n", 1)
         builder = client_utils.TextBuilder().text(body + "\n").link(link_text, url)
-        self._client.send_post(builder, langs=["en"])
+        try:
+            self._client.send_post(builder, langs=["en"])
+        except Exception as exc:
+            raise _failed("post", exc) from None

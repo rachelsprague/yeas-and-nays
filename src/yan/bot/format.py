@@ -15,6 +15,7 @@ MAX_GRAPHEMES = 300
 MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
+OPEN_QUOTE, CLOSE_QUOTE = "“", "”"
 RECONSIDERED = ", Upon Reconsideration"
 SMALL_WORD_END = re.compile(r"\s(?:of|to|the|and|for)$", flags=re.IGNORECASE)
 
@@ -137,13 +138,37 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
         if grapheme_length(text) <= max_length:
             return text
     keep = len(title) - (grapheme_length(text) - max_length) - len(ELLIPSIS)
-    if keep < MIN_TITLE:
-        raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
-    # Cut at a word boundary, so no word or bill number is left half-written,
-    # unless that leaves too little of the title.
+    # A cut inside a curly-quoted name ("“Fairness…") gets its closing quote
+    # back, which needs one more character, so it may take a shorter cut.
+    for length in (keep, keep - 1):
+        if length < MIN_TITLE:
+            break
+        short = cut_title(title, length)
+        closing = CLOSE_QUOTE if short.count(OPEN_QUOTE) > short.count(CLOSE_QUOTE) else ""
+        text = headline(vote, decision, short + ELLIPSIS + closing) + fixed
+        if grapheme_length(text) <= max_length:
+            return text
+    raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
+
+
+def ends_word(short: str, rest: str) -> bool:
+    """Whether a cut between short and rest falls at the end of a word: before
+    a space, or before punctuation that ends one ("Act.", "(H.R. 1)", "?", ”)."""
+    if not re.match(r"[.,;:)?!”’\"']*(\s|$)", rest):
+        return False
+    # A period can also end an abbreviation: "H.R. 1", "S. 5", "U.S. Code".
+    # Cut there, the number or the rest of the name would be lost.
+    if rest.startswith(".") and (re.match(r"\.\s+\d", rest) or "." in short.rsplit(" ", 1)[-1]):
+        return False
+    return True
+
+
+def cut_title(title: str, keep: int) -> str:
+    """The first keep characters of title, cut back to the end of a word so
+    no word or bill number is left half-written, unless that leaves too
+    little of the title. No trailing punctuation; the caller adds the ellipsis."""
     short = title[:keep]
-    rest = title[keep:]
-    at_boundary = rest[0].isspace() or re.match(r"[,;:](\s|$)", rest)
+    at_boundary = ends_word(short, title[keep:])
     if not at_boundary and " " in short:
         by_word = short.rsplit(" ", 1)[0].rstrip(" ,;:")
         if len(by_word) >= MIN_TITLE:
@@ -157,4 +182,4 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
             if trimmed == short or len(trimmed) < MIN_TITLE:
                 break
             short = trimmed
-    return headline(vote, decision, short.rstrip(" ,;:") + ELLIPSIS) + fixed
+    return short.rstrip(" ,;:")

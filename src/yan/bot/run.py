@@ -11,11 +11,11 @@ Dry runs print only: nothing is published and state is never advanced.
 import datetime as dt
 import json
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from yan.bot import state as bot_state
-from yan.bot.format import format_post, grapheme_length
+from yan.bot.format import MAX_GRAPHEMES, PostTooLong, format_post, grapheme_length
 from yan.bot.rules import Decision, decide
 from yan.config import OUT_DIR
 
@@ -49,7 +49,14 @@ def load_vote_doc(vote_id: str, out_dir: Path = OUT_DIR) -> dict:
 def render(vote_id: str, out_dir: Path = OUT_DIR) -> tuple[Decision, str | None]:
     doc = load_vote_doc(vote_id, out_dir)
     decision = decide(doc["vote"])
-    return decision, (format_post(doc, decision) if decision.post else None)
+    if not decision.post:
+        return decision, None
+    try:
+        return decision, format_post(doc, decision)
+    except PostTooLong:
+        # Skip it like any unposted vote, so state still advances past it and
+        # later runs aren't stuck on the same vote.
+        return replace(decision, post=False, reason=f"too long to post in {MAX_GRAPHEMES} characters"), None
 
 
 def print_post(vote: dict, decision: Decision, text: str | None) -> None:
@@ -112,6 +119,9 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
     posts = 0
     for vote in queue:
         decision, text = render(vote["vote_id"], out_dir)
+        if text is None and decision.kind != "skip":
+            # A vote the rules would post that couldn't be (e.g. too long): log why.
+            print_post(vote, decision, text)
         if text is not None:
             if posts == MAX_POSTS_PER_RUN:
                 print("Post limit reached; remaining votes wait for the next run.")
