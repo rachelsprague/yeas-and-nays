@@ -4,9 +4,10 @@
 // Inside a [data-filter-scope]:
 //   [data-filter=key]          <input> (substring of data-key, case-insensitive)
 //                              or <select> (exact match; "" means all)
-//   button[data-tab=key][data-value=v]   tab group; "all" matches every row
-//   [data-row]                 a filterable row, carrying data-{key} attributes.
-//                              Space-separated values match any one of them.
+//   button[data-tab=key][data-value=v]   tab group; "all" matches every row.
+//                              A row matches if any of its space-separated
+//                              data-{key} values equals v.
+//   [data-row]                 a filterable row, carrying data-{key} attributes
 //   [data-limit=n]             on a list: show at most n matching rows
 //   [data-skip-when=key:v ...] on a row: hide while that tab is selected
 //   [data-show-when=key:v]     shown only while that tab is selected
