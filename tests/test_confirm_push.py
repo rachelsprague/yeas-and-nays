@@ -176,7 +176,13 @@ def test_gh_commands_that_only_read_workflows_and_repos_are_left_alone(repo, com
     "cat <(gh pr merge 1)",
     "diff <(gh pr merge 1) x",
     "tee >(gh pr merge 1) < x",
+    "cat < <(gh pr merge 1)",
+    "echo x > >(gh pr merge 1)",
+    "make 2> >(gh pr merge 1)",
     "$'\\x67h' pr merge 1",
+    "$'\\x67'\"h\" pr merge 1",
+    "$'\\x67'\\h pr merge 1",
+    "\"g\"$'\\x69't push origin main",
     "$'\\147\\150' pr merge 1",
     "$'\\u0067h' pr merge 1",
     "echo hi; $'\\x67it' push",
@@ -205,6 +211,7 @@ def test_git_aliases_defined_on_the_command_line_are_denied(repo, command):
     "printf $'a\\tb\\n'",
     "cat <(echo hi)",
     "diff <(sort a) <(sort b)",
+    "while read l; do echo $l; done < <(ls)",
     "git -c color.ui=never log --oneline",
 ])
 def test_ansi_c_quotes_process_substitution_and_config_without_git_or_gh_are_left_alone(repo, command):
@@ -561,6 +568,7 @@ def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
     "git -C . 2>&1>x push --force",
     "diff <(git push origin feature) x",
     "cat <(git push)",
+    "cat < <(git push origin main)",
 ])
 def test_uncovered_push_forms_are_denied_even_when_reviewed(repo, command):
     path, head = repo

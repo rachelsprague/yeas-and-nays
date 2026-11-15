@@ -606,11 +606,11 @@ def _push_in_segment(seg: list[str]) -> list[dict]:
 
 def strip_redirects(command: str) -> str:
     """The command without redirections (`2>&1`, `> /dev/null`, `push>/dev/null`, `<<<x`).
-    Process substitution (`<(gh pr merge 1)`) stays: it's a command, not a file name."""
+    Process substitution (`<(gh pr merge 1)`, `< <(...)`) stays: it's a command, not a file name."""
     # The fd number is optional but, when present, starts at the beginning of a digit run, so a
     # long run of digits isn't retried at every digit (quadratic). The redirect itself may still
     # follow a previous one's digits directly (`2>&1>/dev/null`).
-    return re.sub(r"(?:(?<!\d)\d+)?(>>?|<<<|<)(?!\()(&\d+|\s*[^\s;&|]+)", " ", command).strip()
+    return re.sub(r"(?:(?<!\d)\d+)?(>>?|<<<|<)(?!\()(&\d+|\s*(?![<>]\()[^\s;&|]+)", " ", command).strip()
 
 
 def git(repo: str, *args: str) -> str:
@@ -684,6 +684,7 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
             decoded = ansi_c_decoded(command)
         except ValueError:
             decoded = "git"
+        decoded = re.sub(r"[\"'\\]", "", decoded)  # `$'\x67'"h"` is gh too
         if "git" in decoded or "gh" in decoded:
             return "deny", ("git and gh commands with $'...' quoting can hide a push or merge; write the command "
                             "without it.")
