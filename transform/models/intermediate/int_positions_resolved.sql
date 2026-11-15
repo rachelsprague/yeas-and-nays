@@ -5,8 +5,8 @@
   House records carry the bioguide ID directly. Senate records carry only the
   LIS member ID, which maps to bioguide through congress-legislators (id.lis).
   If a member can't be matched (e.g. a newly seated senator not yet in
-  congress-legislators), bioguide_id is null and the relationships test on
-  the positions mart fails, rather than the row being silently dropped.
+  congress-legislators), bioguide_id is null and the not_null test on the
+  positions mart fails, rather than the row being silently dropped.
 
   Party, caucus, and label come from the member's period covering the vote
   date. The official record occasionally lists a member outside the dates in

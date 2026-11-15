@@ -7,7 +7,11 @@ caucus as of each vote's date.
 
 An entry whose bioguide ID isn't a capital letter and six digits is logged
 and skipped: the ID goes into Congress.gov request URLs, cache file names
-and page URLs.
+and page URLs. An entry with no ID block, or no bioguide ID, is logged and
+skipped too. If the member has votes in the data, a skipped entry shows up
+downstream as a dbt test failure (its vote positions fail the positions
+mart's relationships or not_null test on bioguide_id), so check this log
+when one appears; otherwise the log is the only trace.
 """
 
 import json
@@ -26,13 +30,14 @@ BIOGUIDE_ID = re.compile(r"[A-Z][0-9]{6}")
 def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict], list[dict]]:
     person_rows, term_rows, affiliation_rows = [], [], []
     for p in people:
-        bioguide = _bioguide(p["id"])
+        ids = p.get("id")
+        name = p.get("name", {})
+        bioguide = _bioguide(ids, name.get("official_full") or name.get("last"))
         if not bioguide:
             continue
-        name = p.get("name", {})
         person_rows.append({
             "bioguide_id": bioguide,
-            "lis_id": p["id"].get("lis"),
+            "lis_id": ids.get("lis"),
             "first_name": name.get("first"),
             "last_name": name.get("last"),
             "official_full_name": name.get("official_full"),
@@ -80,7 +85,7 @@ def parse_social(entries: list[dict]) -> list[dict]:
     """One row per member with the account names (handles) as recorded."""
     rows = []
     for e in entries:
-        bioguide = _bioguide(e.get("id", {}))
+        bioguide = _bioguide(e.get("id"), e.get("id"))
         if not bioguide:
             continue
         social = e.get("social", {})
@@ -98,10 +103,14 @@ def parse_social_dir(raw_root: Path) -> list[dict]:
     return parse_social(json.loads(path.read_text()))
 
 
-def _bioguide(ids: dict) -> str | None:
-    """The entry's bioguide ID, or None when it has none or it's malformed (logged)."""
-    value = ids.get("bioguide")
+def _bioguide(ids, label) -> str | None:
+    """The entry's bioguide ID, or None when it has none or it's malformed (logged).
+
+    `label` names the entry in the log when it has no bioguide ID to go by.
+    """
+    value = ids.get("bioguide") if isinstance(ids, dict) else None
     if not value:
+        log.warning("legislators: skipping an entry with no bioguide ID (%r)", label)
         return None
     if isinstance(value, str) and BIOGUIDE_ID.fullmatch(value):
         return value
