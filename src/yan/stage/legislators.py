@@ -7,10 +7,11 @@ caucus as of each vote's date.
 
 An entry whose bioguide ID isn't a capital letter and six digits is logged
 and skipped: the ID goes into Congress.gov request URLs, cache file names
-and page URLs. An entry with no ID block, or no bioguide ID, is skipped too.
-A skipped entry shows up downstream only as a dbt test failure (its vote
-positions fail the positions mart's relationships or not_null test on
-bioguide_id), so check this log when one appears.
+and page URLs. An entry with no ID block, or no bioguide ID, is logged and
+skipped too. If the member has votes in the data, a skipped entry shows up
+downstream as a dbt test failure (its vote positions fail the positions
+mart's relationships or not_null test on bioguide_id), so check this log
+when one appears; otherwise the log is the only trace.
 """
 
 import json
@@ -104,10 +105,9 @@ def parse_social_dir(raw_root: Path) -> list[dict]:
 
 def _bioguide(ids) -> str | None:
     """The entry's bioguide ID, or None when it has none or it's malformed (logged)."""
-    if not isinstance(ids, dict):
-        return None
-    value = ids.get("bioguide")
+    value = ids.get("bioguide") if isinstance(ids, dict) else None
     if not value:
+        log.warning("legislators: skipping an entry with no bioguide ID")
         return None
     if isinstance(value, str) and BIOGUIDE_ID.fullmatch(value):
         return value

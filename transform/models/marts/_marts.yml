@@ -292,7 +292,7 @@ models:
                 to: ref('votes')
                 field: vote_id
       - name: bioguide_id
-        description: Null only if a Senate LIS ID couldn't be matched; the relationships test fails in that case.
+        description: Null only if a Senate LIS ID couldn't be matched; the not_null test fails in that case (relationships skips nulls).
         data_tests:
           - not_null
           - relationships:

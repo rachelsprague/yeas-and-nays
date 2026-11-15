@@ -82,7 +82,7 @@ def test_skips_a_malformed_bioguide_id(bioguide, caplog):
 
 
 @pytest.mark.parametrize("ids", [None, "B000001", ["B000001"]], ids=["null", "string", "list"])
-def test_skips_an_entry_without_an_id_block(ids):
+def test_skips_an_entry_without_an_id_block(ids, caplog):
     entries = [{"name": {"last": "No ID"}, "terms": [{"type": "rep", "start": "2025-01-03"}]},
                {"id": ids, "name": {"last": "Bad ID"}, "terms": [{"type": "rep", "start": "2025-01-03"}]}]
 
@@ -90,6 +90,7 @@ def test_skips_an_entry_without_an_id_block(ids):
     assert [p["bioguide_id"] for p in people] == ["X000001"]
     assert [t["bioguide_id"] for t in terms] == ["X000001"]
     assert parse_social([{"social": {"twitter": "NoId"}}, {"id": ids, "social": {}}]) == []
+    assert caplog.text.count("no bioguide ID") == 4
 
 
 def test_social_dir_without_the_file_stages_no_accounts(tmp_path):
