@@ -1,13 +1,14 @@
 ---
 name: pick
-description: Pick the next unclaimed item from BOARD.md to work on — a priority item from Next or a quick win from Later — preferring one that doesn't touch files another session is actively changing, then confirm it with the user and claim it. Use when the user says "/pick", "pick something", "what should I work on next", or "grab the next item".
+description: Pick the next unclaimed item from BOARD.md to work on — a priority item from Next or a quick win from Later — preferring one that doesn't touch files another session is actively changing, then confirm it with the user and claim it, optionally bundling same-file quick wins. Use when the user says "/pick", "pick something", "what should I work on next", or "grab the next item".
 ---
 
 # Pick the next board item
 
 Several sessions may work in this repo at once. This skill picks one item
 that no one has claimed and that is unlikely to collide with work in
-flight, confirms it with the user, then claims it under the rules in
+flight, offers quick wins that touch the same files as an optional
+bundle, confirms with the user, then claims under the rules in
 CLAUDE.md > Backlog > Claiming items. An optional argument narrows the
 pick: `priority` (Next only), `quick` (quick wins only), or a word to
 match against item text.
@@ -75,24 +76,43 @@ it likely touches, and any overlap you couldn't rule out. Name one or two
 runners-up. If nothing qualifies, say why (all claimed, all overlap,
 all need a decision) and stop.
 
-Then ask the user to confirm the pick or choose a runner-up
-(`AskUserQuestion`, with the pick first and marked recommended). Don't
-claim, edit, or enter a worktree until they answer.
+Then look for a bundle: other small items, from Next or Later, that
+pass every filter in step 3, are as small as a quick win, and touch the
+same files as the pick, so they can ride along in its branch and PR.
+Offer at most three, the ones sharing the most files first, and list
+them with the shared files.
+
+Ask in one `AskUserQuestion` call: confirm the pick or choose a runner-up
+(pick first, marked recommended), and, if there are bundle candidates, a
+second question for which to bundle: multi-select, one option per
+candidate plus a "No bundle" option, so it always has two to four options.
+With no candidates, skip that question. If the user chooses a runner-up,
+find its bundle candidates and ask again. Don't claim, edit, or enter a
+worktree until they answer.
 
 ## 5. Claim
 
-Claim the item the user chose:
+Claim the item the user chose, and each bundled item:
 
 1. If you have no alias yet this session, pick one short lowercase word not
    used in any claim on the board and tell the user.
-2. Re-read `BOARD.md` right before editing. If the item was claimed while
-   the user was deciding, say so and go back to step 3.
+2. Re-read `BOARD.md` right before editing. If the main item was claimed
+   while the user was deciding, say so and go back to step 3. If a bundled
+   item was, drop it from the bundle and tell the user.
 3. Move the item to Now and append
    ` — claimed by **<alias>** (YYYY-MM-DD HH:MM local, from <column>)`.
+   Claim each bundled item the same way, on its own line, naming its own
+   column.
 
 ## 6. Start
 
-Read the item's `backlog/<slug>.md` if it has one, then enter a worktree
+Read the item's `backlog/<slug>.md` if it has one (and each bundled
+item's), then enter a worktree
 on its own branch (`<alias>/<short-slug>`, from `origin/main`) before the
 first edit, and explain the approach before any significant change. The
-work lands through a PR (CLAUDE.md > Landing work).
+work lands through a PR (CLAUDE.md > Landing work). Bundled items share
+the main item's branch and PR: when the PR opens, each line in Now gets
+` — PR #N, awaiting merge`, and once it merges each moves to Done on its
+own line with that PR number. If a bundled item turns out bigger than it
+looked or can't be finished, leave it out of the PR and release its claim
+on its own (back to the column it came from, with a short note).
