@@ -6,6 +6,7 @@
 #   site.data["votes"]     data/out/votes.json, newest first, each with a url
 #   site.data["members"]   data/out/members.json, sorted by name, each with a url
 #   site.data["leads"]     the newest vote overall and per chamber, prepared for display
+#   site.data["vote_volume"]  roll calls per week by chamber and kind of vote (Yan.vote_volume)
 #   site.data["district_map"]  site/_maps/{congress}.json with each district's member (Yan.district_map)
 #
 # Routes: /votes/{congress}/{chamber}/{session}/{roll}/ (roll numbers restart
@@ -340,6 +341,87 @@ module Yan
     }
   end
 
+  # Kinds of vote on the floor activity chart, bottom of each stack first.
+  # Questions group by their procedures.yml key; a key not listed here, or a
+  # question with no definition, counts as procedural and other.
+  VOTE_KINDS = [
+    { "key" => "passage", "label" => "Passage",
+      "procedures" => %w[passage suspend concur concur_amendment veto_override] },
+    { "key" => "amendment", "label" => "Amendments", "procedures" => %w[amendment] },
+    { "key" => "nomination", "label" => "Nominations", "procedures" => %w[nomination] },
+    { "key" => "procedural", "label" => "Procedural and other", "procedures" => [] }
+  ].freeze
+
+  def self.vote_kind(procedure_key)
+    (VOTE_KINDS.find { |k| k["procedures"].include?(procedure_key) } || VOTE_KINDS.last)["key"]
+  end
+
+  VOLUME_SLOT = 8 # chart units per week: a 6-unit bar and a 2-unit gap
+  VOLUME_HEIGHT = 200 # px; the chart stretches to the page width, not its height
+
+  # Roll calls per week (Monday to Sunday), by chamber and kind of vote, for
+  # the floor activity page. Both chambers share the same weeks and scale, so
+  # their bars compare. Weeks with no roll calls are kept, as gaps. Each week
+  # carries its stacked segments (y from the top, in chart units) and a
+  # one-line summary for the hover caption and the table.
+  def self.vote_volume(votes)
+    return nil if votes.empty?
+
+    week_of = ->(v) { d = Date.parse(v["vote_date"]); d - ((d.wday + 6) % 7) }
+    counts = Hash.new { |h, k| h[k] = Hash.new(0) }
+    votes.each { |v| counts[[v["chamber"], week_of.call(v)]][vote_kind(v.dig("procedure", "key"))] += 1 }
+    first, last = votes.map(&week_of).minmax
+    weeks = first.step(last, 7).to_a
+    top = counts.values.map { |c| c.values.sum }.max
+    step = top > 50 ? 20 : top > 20 ? 10 : 5
+    y_max = (top.to_f / step).ceil * step
+    scale = VOLUME_HEIGHT.to_f / y_max
+
+    chambers = CHAMBER_NAMES.filter_map do |chamber, name|
+      totals = Hash.new(0)
+      rows = weeks.each_with_index.map do |start, i|
+        c = counts.fetch([chamber, start], Hash.new(0))
+        y = VOLUME_HEIGHT.to_f
+        segments = VOTE_KINDS.filter_map do |k|
+          n = c.fetch(k["key"], 0)
+          next if n.zero?
+
+          totals[k["key"]] += n
+          h = n * scale
+          y -= h
+          # A 1px surface gap above each segment; a single roll call stays visible.
+          { "kind" => k["key"], "y" => (y + 1).round(1), "h" => [h - 1, 1].max.round(1) }
+        end
+        total = c.values.sum
+        parts = VOTE_KINDS.filter_map { |k| "#{k["label"]} #{c[k["key"]]}" if c[k["key"]].positive? }
+        { "start" => start.iso8601, "x" => i * VOLUME_SLOT, "total" => total, "segments" => segments,
+          "counts" => VOTE_KINDS.to_h { |k| [k["key"], c.fetch(k["key"], 0)] },
+          "summary" => "Week of #{Filters.ap_date(start)}: " +
+            (total.zero? ? "no roll calls" : "#{total} roll call#{"s" unless total == 1} · #{parts.join(" · ")}") }
+      end
+      next if totals.empty?
+
+      { "chamber" => chamber, "name" => name, "weeks" => rows, "total" => totals.values.sum,
+        "totals" => VOTE_KINDS.to_h { |k| [k["key"], totals[k["key"]]] } }
+    end
+
+    {
+      "kinds" => VOTE_KINDS.map { |k| k.slice("key", "label") },
+      "chambers" => chambers, "width" => weeks.size * VOLUME_SLOT, "height" => VOLUME_HEIGHT,
+      "first_week" => first.iso8601, "last_week" => last.iso8601,
+      # Gridlines and their labels, bottom first; y in chart units from the top.
+      "y_ticks" => (0..y_max).step(step).map { |n| { "value" => n, "y" => (VOLUME_HEIGHT - n * scale).round(1) } },
+      # A tick at the week holding each month's 1st; January (with its year) and July are labeled.
+      "x_ticks" => weeks.each_with_index.filter_map do |start, i|
+        month = start + 6
+        next unless month.day <= 7
+
+        label = { 1 => "Jan. #{month.year}", 7 => "July" }[month.month]
+        { "pct" => (100.0 * i / weeks.size).round(2), "label" => label }
+      end
+    }
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
   def self.vote_view(vote, doc, members_by_id)
     words = words(doc["positions"])
@@ -516,6 +598,7 @@ module Yan
       map_file = File.join(site.source, "_maps", "#{meta["congress"]}.json")
       site.data["district_map"] = Yan.district_map(File.exist?(map_file) && JSON.parse(File.read(map_file)), members)
       site.data["votes"] = votes
+      site.data["vote_volume"] = Yan.vote_volume(votes)
       site.data["leads"] = {
         "all" => views[votes.first["vote_id"]],
         "house" => (v = votes.find { |x| x["chamber"] == "house" }) && views[v["vote_id"]],
