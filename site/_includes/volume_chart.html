@@ -1,12 +1,11 @@
 {%- comment -%} Roll calls per week for one chamber, stacked by kind of vote (Yan.vote_volume).
 include.vol: site.data.vote_volume; include.c: one of its chambers. The bars stretch to the page
-width (preserveAspectRatio none), so axis labels are HTML placed by percent. Hovering or tapping
-a week names its counts in the caption (activity.js); without JS each week has a title. The table
-under the chart is its text version. {%- endcomment -%}
+width (preserveAspectRatio none), so axis labels are HTML placed by percent. Hovering a week
+shows its counts in a box, and clicking it lists its roll calls under the chart (activity.js);
+without JS each week has a title. The table under the chart is its text version. {%- endcomment -%}
 {%- assign vol = include.vol -%}
 {%- assign c = include.c -%}
-{%- assign latest = c.weeks | last -%}
-<figure class="vol" data-volume>
+<figure class="vol" data-list-scope>
   <div class="vol-plot">
     <div class="vol-y nums" aria-hidden="true">
       {%- for t in vol.y_ticks %}<span style="top: {{ t.y }}px">{{ t.value }}</span>{% endfor %}
@@ -15,7 +14,7 @@ under the chart is its text version. {%- endcomment -%}
          aria-label="{{ c.name }}: {{ c.total }} roll calls from the week of {{ vol.first_week | ap_date }} through the week of {{ vol.last_week | ap_date }}, by week and kind of vote. The table below lists each week.">
       {%- for t in vol.y_ticks %}<rect class="grid" x="0" y="{{ t.y | minus: 1 | at_least: 0 }}" width="{{ vol.width }}" height="1"/>{% endfor %}
       {%- for w in c.weeks %}
-      <g class="wk" data-summary="{{ w.summary | escape }}"><title>{{ w.summary | escape }}</title>
+      <g class="wk" data-chamber="{{ c.chamber }}" data-week="{{ w.start }}" data-head="{{ w.head | escape }}" data-total="{{ w.total }}" data-kinds="{{ w.kind_counts }}"><title>{{ w.summary | escape }}</title>
         <rect class="hit" x="{{ w.x }}" y="0" width="8" height="{{ vol.height }}"/>
         {%- for s in w.segments %}<rect class="k-{{ s.kind }}" x="{{ w.x | plus: 1 }}" y="{{ s.y }}" width="6" height="{{ s.h }}"/>{% endfor %}
       </g>
@@ -25,7 +24,7 @@ under the chart is its text version. {%- endcomment -%}
   <div class="vol-x small muted nums" aria-hidden="true">
     {%- for t in vol.x_ticks %}<span{% if t.label %} class="lab"{% endif %} style="left: {{ t.pct }}%">{{ t.label }}</span>{% endfor %}
   </div>
-  <figcaption class="vol-caption small nums" data-caption data-default="{{ latest.summary | escape }}">{{ latest.summary | escape }}</figcaption>
+  <figcaption class="vol-list" data-list aria-live="polite"><span class="small muted js-only">Hover over a week for its counts; click it to list its roll calls.</span></figcaption>
 </figure>
 <details>
   <summary class="small">Show the {{ c.name }} table by week</summary>

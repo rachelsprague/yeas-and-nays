@@ -243,11 +243,33 @@ main.home { gap: 20px; padding-top: 20px; }
 .vol-y span { position: absolute; left: 0; transform: translateY(-50%); font-size: 12px; line-height: 1; color: var(--ink-muted); }
 .vol .grid { fill: var(--line); }
 .vol .hit { fill: transparent; }
-.vol .wk.on .hit { fill: var(--surface-alt); }
+.has-js .vol .wk { cursor: pointer; }
+.vol .wk:is(.hover, .on) .hit { fill: var(--surface-alt); }
 .vol-x { position: relative; height: 24px; margin-left: 28px; }
 .vol-x span { position: absolute; top: 0; height: 6px; border-left: 1px solid var(--line); }
 .vol-x span.lab { height: auto; padding: 4px 0 0 4px; white-space: nowrap; }
-.vol-caption { min-height: 1.5em; margin-top: 4px; }
+/* Hover box and the clicked bar's list of roll calls (activity.js). */
+.vol-tip {
+  position: fixed; z-index: 10; pointer-events: none; max-width: 260px;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px 10px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--ink);
+}
+.vol-tip[hidden] { display: none; }
+.tip-kind { display: flex; align-items: center; gap: 6px; }
+.vol-tip .swatch, .vol-votes .swatch { display: inline-block; width: 10px; height: 10px; }
+.vol-tip .k-passage, .vol-votes .k-passage { background: var(--kind-passage); }
+.vol-tip .k-amendment, .vol-votes .k-amendment { background: var(--kind-amendment); }
+.vol-tip .k-nomination, .vol-votes .k-nomination { background: var(--kind-nomination); }
+.vol-tip .k-procedural, .vol-votes .k-procedural { background: var(--kind-procedural); }
+.has-js .vol-list { margin-top: 6px; min-height: 1.5em; }
+.vol-list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 6px 0; }
+.linkish {
+  font: inherit; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer;
+  text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.2em;
+}
+.vol-votes { max-height: 480px; overflow-y: auto; margin: 0; }
+.vol-votes .vote-item a { padding: 12px 0; gap: 4px; }
+.vol-votes .t { font-size: 16px; line-height: 22px; }
 
 /* By policy area: a House and a Senate bar per area, stacked by kind of vote,
    with a 1px surface gap between segments. Label above the bars on phones,
@@ -262,6 +284,9 @@ main.home { gap: 20px; padding-top: 20px; }
 .area-bar { display: flex; gap: 1px; height: 10px; margin: 0; }
 .area-bar > span { display: block; height: 100%; min-width: 1px; }
 .area-n { line-height: 1; color: var(--ink-soft); }
+.has-js .area-line { cursor: pointer; }
+.area-line:is(.hover, .on) .area-ch { color: var(--ink); font-weight: 600; }
+.area-line.on .area-track { outline: 1px solid var(--ink); outline-offset: 2px; }
 @media (min-width: 760px) {
   .area-row { grid-template-columns: 240px 1fr; align-items: center; gap: 16px; }
 }
