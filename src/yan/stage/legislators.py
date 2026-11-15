@@ -7,7 +7,10 @@ caucus as of each vote's date.
 
 An entry whose bioguide ID isn't a capital letter and six digits is logged
 and skipped: the ID goes into Congress.gov request URLs, cache file names
-and page URLs.
+and page URLs. An entry with no ID block, or no bioguide ID, is skipped too.
+A skipped entry shows up downstream only as a dbt test failure (its vote
+positions fail the positions mart's relationships or not_null test on
+bioguide_id), so check this log when one appears.
 """
 
 import json
@@ -26,13 +29,14 @@ BIOGUIDE_ID = re.compile(r"[A-Z][0-9]{6}")
 def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict], list[dict]]:
     person_rows, term_rows, affiliation_rows = [], [], []
     for p in people:
-        bioguide = _bioguide(p["id"])
+        ids = p.get("id")
+        bioguide = _bioguide(ids)
         if not bioguide:
             continue
         name = p.get("name", {})
         person_rows.append({
             "bioguide_id": bioguide,
-            "lis_id": p["id"].get("lis"),
+            "lis_id": ids.get("lis"),
             "first_name": name.get("first"),
             "last_name": name.get("last"),
             "official_full_name": name.get("official_full"),
@@ -80,7 +84,7 @@ def parse_social(entries: list[dict]) -> list[dict]:
     """One row per member with the account names (handles) as recorded."""
     rows = []
     for e in entries:
-        bioguide = _bioguide(e.get("id", {}))
+        bioguide = _bioguide(e.get("id"))
         if not bioguide:
             continue
         social = e.get("social", {})
@@ -98,8 +102,10 @@ def parse_social_dir(raw_root: Path) -> list[dict]:
     return parse_social(json.loads(path.read_text()))
 
 
-def _bioguide(ids: dict) -> str | None:
+def _bioguide(ids) -> str | None:
     """The entry's bioguide ID, or None when it has none or it's malformed (logged)."""
+    if not isinstance(ids, dict):
+        return None
     value = ids.get("bioguide")
     if not value:
         return None
