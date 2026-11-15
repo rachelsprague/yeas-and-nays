@@ -2,7 +2,7 @@
 each House district or each senator's half of a state filled with a mark. Yea solid, Nay striped,
 Present dotted, Not voting open. Without JS it stays hidden; the By state table is its text version. {%- endcomment -%}
 {%- assign map = include.map -%}
-<div class="vmap js-only" data-vmap data-src="{{ map.src }}" data-chamber="{{ map.chamber }}" aria-hidden="true">
+<div class="vmap js-only" data-vmap data-src="{{ map.src | escape }}" data-chamber="{{ map.chamber | escape }}" aria-hidden="true">
   <svg focusable="false">
     <defs>
       <pattern id="vmap-nay" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="bg" width="6" height="6"/><rect width="2.5" height="6"/></pattern>

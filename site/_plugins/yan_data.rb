@@ -309,7 +309,8 @@ module Yan
   def self.state_map(chamber, positions, members_by_id, words)
     return nil if positions.empty?
 
-    labels = { "yes" => words["yes"], "no" => words["no"], "present" => "Present", "not_voting" => "Not Voting" }
+    labels = { "yes" => words["yes"], "no" => words["no"], "present" => "Present", "not_voting" => "Not voting" }
+    house = chamber == "house"
     counts = Hash.new { |h, k| h[k] = Hash.new(0) }
     seats = {}
     unmapped = 0
@@ -317,11 +318,12 @@ module Yan
       m = members_by_id[id] || {}
       kind = position_kind(raw)
       counts[m["state"]][kind] += 1 if STATE_NAMES.key?(m["state"])
-      if !STATE_NAMES.key?(m["state"]) || TERRITORIES.include?(m["state"])
+      # A member's record holds their latest seat: someone who has since moved
+      # to the Senate has no district for a House vote, so they stay off the map.
+      if !STATE_NAMES.key?(m["state"]) || TERRITORIES.include?(m["state"]) || (house && m["chamber"] != "house")
         unmapped += 1
         next
       end
-      house = chamber == "house"
       s = seats[house ? seat(m) : m["state"]] ||= { "where" => house ? where(m) : STATE_NAMES[m["state"]], "marks" => [], "who" => [] }
       s["marks"] << MARKS[kind]
       s["who"] << "#{member_name(m)} (#{m["party"]}), #{labels[kind]}"
@@ -458,8 +460,11 @@ module Yan
         doc = read.call("votes/#{v["vote_id"]}.json")
         view = Yan.vote_view(v, doc, by_id)
         # The By state map's shapes (scripts/build_vote_map.py); the table shows either way.
+        # Members' districts are as of meta's Congress, so only its votes get a map.
         map_src = "/assets/maps/#{v["congress"].to_i}.json"
-        view["state_map"]["src"] = map_src if view["state_map"] && File.exist?(File.join(site.source, map_src))
+        if view["state_map"] && v["congress"].to_i == meta["congress"].to_i && File.exist?(File.join(site.source, map_src))
+          view["state_map"]["src"] = map_src
+        end
         views[v["vote_id"]] = view
 
         against_ids = doc["against_party_majority"].to_h { |a| [a["bioguide_id"], true] }

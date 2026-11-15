@@ -360,8 +360,16 @@ class StateMapTest < Minitest::Test
   def test_house_seats_by_district_with_names_in_the_title
     map = Yan.state_map("house", { "A1" => "Aye", "A2" => "Not Voting", "A3" => "No" }, MEMBERS, WORDS)
     assert_equal({ "marks" => ["yea"], "title" => "California, 12th District: Ann Able (D), Aye" }, seats(map)["CA-12"])
-    assert_equal({ "marks" => ["nv"], "title" => "Wyoming, At Large: Bo Bell (R), Not Voting" }, seats(map)["WY"])
+    assert_equal({ "marks" => ["nv"], "title" => "Wyoming, At Large: Bo Bell (R), Not voting" }, seats(map)["WY"])
     assert_equal "house", map["chamber"]
+  end
+
+  # S1's record is a senator's (their latest seat), so it has no district for a House vote.
+  def test_a_member_now_in_the_senate_stays_off_a_house_map_but_in_the_table
+    map = Yan.state_map("house", { "A1" => "Aye", "S1" => "No" }, MEMBERS, WORDS)
+    assert_equal ["CA-12"], seats(map).keys
+    assert_equal 1, map["unmapped"]
+    assert_equal ["California", "Kentucky"], map["table"].map { |r| r["name"] }
   end
 
   def test_senate_seats_by_state_in_last_name_order
@@ -436,12 +444,16 @@ class VotePageTest < Minitest::Test
     assert_includes html, "Not on the map: 1 member from outside the 50 states"
   end
 
-  def test_no_map_without_shapes_for_the_votes_congress
-    html = build_site([member("A000001", "AL", 1)],
-                      [[vote(1, "On Passage").merge("congress" => 99), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
-           .fetch("/votes/99/house/1/1/index.html")
-    assert_includes html, "By state"
-    refute_includes html, "data-vmap"
+  # The built site's meta is the 119th Congress. A 120th vote has shapes but its
+  # members' districts aren't known; a 99th vote has no shapes at all.
+  def test_map_only_for_votes_in_the_member_datas_congress_with_shapes
+    built = build_site([member("A000001", "AL", 1)],
+                       [99, 120].map { |c| [vote(1, "On Passage").merge("congress" => c), doc({ "A000001" => "Yea" }, { "yes" => 1 })] })
+    %w[99 120].each do |c|
+      html = built.fetch("/votes/#{c}/house/1/1/index.html")
+      assert_includes html, "By state", c
+      refute_includes html, "data-vmap", c
+    end
   end
 
   def test_no_grids_for_a_speaker_election
