@@ -11,6 +11,12 @@
   --aubergine: #5A3463;
   --lilac: #A887B5;
   --paper: #F2EFE6;
+  /* Kinds of vote on the floor activity chart. Never used for parties; no red
+     or blue. Checked as a set for color-blind separation and lightness. */
+  --kind-passage: #7A4C86;
+  --kind-amendment: #0E917E;
+  --kind-nomination: #C08A2E;
+  --kind-procedural: #C9628F;
   --font-display: "Newsreader", Georgia, "Times New Roman", serif;
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -37,6 +43,10 @@
     --ink-muted: #A8A59C;
     --accent: #A887B5;
     --on-accent: #161616;
+    --kind-passage: #8F62AA;
+    --kind-amendment: #2AA88F;
+    --kind-nomination: #BC8628;
+    --kind-procedural: #C9628F;
     color-scheme: dark;
   }
 }

@@ -227,6 +227,28 @@ main.home { gap: 20px; padding-top: 20px; }
 .mark.dots { background: radial-gradient(circle, var(--ink) 1.2px, var(--surface) 1.5px) 0 0 / 4px 4px; }
 .mark.none { background: var(--surface-alt); border-color: var(--line); }
 
+/* Floor activity: roll calls per week, stacked by kind of vote. The SVG
+   stretches across the width; axis labels are HTML so they keep their size. */
+.vol-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 16px; padding: 0; list-style: none; }
+.vol-key li { display: inline-flex; align-items: center; gap: 6px; }
+.vol-key .swatch { width: 12px; height: 12px; }
+.swatch.k-passage, .vol .k-passage { background: var(--kind-passage); fill: var(--kind-passage); }
+.swatch.k-amendment, .vol .k-amendment { background: var(--kind-amendment); fill: var(--kind-amendment); }
+.swatch.k-nomination, .vol .k-nomination { background: var(--kind-nomination); fill: var(--kind-nomination); }
+.swatch.k-procedural, .vol .k-procedural { background: var(--kind-procedural); fill: var(--kind-procedural); }
+.vol-chamber { margin-bottom: 24px; }
+.vol { margin: 8px 0 0; }
+.vol-plot { position: relative; padding-left: 28px; }
+.vol-plot svg { display: block; width: 100%; height: 200px; }
+.vol-y span { position: absolute; left: 0; transform: translateY(-50%); font-size: 12px; line-height: 1; color: var(--ink-muted); }
+.vol .grid { fill: var(--line); }
+.vol .hit { fill: transparent; }
+.vol .wk.on .hit { fill: var(--surface-alt); }
+.vol-x { position: relative; height: 24px; margin-left: 28px; }
+.vol-x span { position: absolute; top: 0; height: 6px; border-left: 1px solid var(--line); }
+.vol-x span.lab { height: auto; padding: 4px 0 0 4px; white-space: nowrap; }
+.vol-caption { min-height: 1.5em; margin-top: 4px; }
+
 .bar { display: flex; height: 14px; border: 1px solid var(--ink); background: var(--surface); }
 .bar .yea { background: var(--ink); }
 .bar .nay { border-left: 2px solid var(--surface); }

@@ -256,10 +256,11 @@ class LayoutTest < Minitest::Test
   CURRENT = {
     "/index.html" => "/votes/", "/votes/index.html" => "/votes/", "/votes/119/house/1/1/index.html" => "/votes/",
     "/members/index.html" => "/members/", "/members/Z000001/index.html" => "/members/", "/find/index.html" => "/members/",
-    "/schedule/index.html" => "/schedule/", "/about/index.html" => "/about/", "/privacy/index.html" => nil
+    "/schedule/index.html" => "/schedule/", "/about/index.html" => "/about/", "/privacy/index.html" => nil,
+    "/activity/index.html" => nil
   }.freeze
 
-  def test_masthead_and_footer_link_to_the_schedule_and_mark_the_current_page
+  def test_masthead_and_footer_link_to_the_schedule_and_activity_and_mark_the_current_page
     pages = build
     assert_empty CURRENT.keys - pages.keys
     pages.each do |path, html|
@@ -268,6 +269,7 @@ class LayoutTest < Minitest::Test
       assert_equal %w[/votes/ /members/ /schedule/ /about/], nav.scan(/<a href="([^"]+)"/).flatten, path
       assert_equal [CURRENT[path]].compact, nav.scan(/<a href="([^"]+)" aria-current="page">/).flatten, path
       assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/schedule/">Floor schedule</a>', path
+      assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/activity/">Floor activity</a>', path
     end
   end
 
@@ -710,5 +712,76 @@ class ScheduleCalendarTest < Minitest::Test
     view = { "house_weeks" => [{ "week_date" => nil, "groups" => [] }], "upcoming_senate" => [] }
     cal = Yan.schedule_calendar(view, [], FRIDAY, nil)
     assert_equal "2026-11-09", cal["weeks"].last["week_date"]
+  end
+end
+
+class VoteVolumeTest < Minitest::Test
+  include SiteBuild
+
+  def vote(chamber, date, key)
+    { "chamber" => chamber, "vote_date" => date, "procedure" => key && { "key" => key } }
+  end
+
+  def test_kinds_group_procedure_keys_and_default_to_procedural
+    assert_equal "passage", Yan.vote_kind("suspend")
+    assert_equal "passage", Yan.vote_kind("veto_override")
+    assert_equal "amendment", Yan.vote_kind("amendment")
+    assert_equal "nomination", Yan.vote_kind("nomination")
+    assert_equal "procedural", Yan.vote_kind("cloture")
+    assert_equal "procedural", Yan.vote_kind("rule")
+    assert_equal "procedural", Yan.vote_kind(nil) # a question with no definition
+  end
+
+  def test_every_grouped_key_is_in_procedures_yml
+    keys = ProcedureTest::PROCEDURES["questions"].map { |q| q["key"] }
+    assert_empty Yan::VOTE_KINDS.flat_map { |k| k["procedures"] } - keys
+  end
+
+  def test_weeks_run_monday_to_sunday_and_empty_weeks_are_kept
+    vol = Yan.vote_volume([
+      vote("senate", "2026-11-09", "cloture"),    # Monday
+      vote("senate", "2026-11-15", "nomination"), # Sunday: same week
+      vote("house", "2026-10-28", "passage")      # two weeks earlier
+    ])
+    assert_equal "2026-10-26", vol["first_week"]
+    assert_equal "2026-11-09", vol["last_week"]
+    house, senate = vol["chambers"]
+    assert_equal %w[2026-10-26 2026-11-02 2026-11-09], senate["weeks"].map { |w| w["start"] }
+    assert_equal [0, 0, 2], senate["weeks"].map { |w| w["total"] }
+    assert_equal [1, 0, 0], house["weeks"].map { |w| w["total"] }
+    assert_equal "Week of Nov. 2, 2026: no roll calls", senate["weeks"][1]["summary"]
+    assert_equal "Week of Nov. 9, 2026: 2 roll calls · Nominations 1 · Procedural and other 1",
+                 senate["weeks"][2]["summary"]
+  end
+
+  def test_segments_stack_from_the_bottom_in_kind_order_on_a_shared_scale
+    votes = Array.new(3) { vote("house", "2026-11-10", "passage") } +
+            Array.new(2) { vote("house", "2026-11-10", "recommit") } +
+            Array.new(4) { vote("senate", "2026-11-10", "nomination") }
+    vol = Yan.vote_volume(votes)
+    assert_equal 5, vol["y_ticks"].last["value"] # busiest week 5, ticks of 5
+    house = vol["chambers"].first["weeks"].first["segments"]
+    # 40 units a vote; each segment gives up 1 unit to the gap above it.
+    assert_equal [{ "kind" => "passage", "y" => 81.0, "h" => 119.0 },
+                  { "kind" => "procedural", "y" => 1.0, "h" => 79.0 }], house
+    assert_equal({ "passage" => 0, "amendment" => 0, "nomination" => 4, "procedural" => 0 },
+                 vol["chambers"].last["totals"])
+  end
+
+  def test_a_chamber_with_no_votes_is_left_out_and_no_votes_means_no_chart
+    assert_equal ["senate"], Yan.vote_volume([vote("senate", "2026-11-10", "cloture")])["chambers"].map { |c| c["chamber"] }
+    assert_nil Yan.vote_volume([])
+  end
+
+  def test_month_ticks_label_january_with_its_year_and_july
+    vol = Yan.vote_volume([vote("house", "2025-06-02", "passage"), vote("house", "2026-01-06", "passage")])
+    assert_equal ["July", "Jan. 2026"], vol["x_ticks"].map { |t| t["label"] }.compact
+    assert_equal 7, vol["x_ticks"].size # July through January
+  end
+
+  def test_activity_page_draws_a_column_per_week_with_a_table
+    html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])["/activity/index.html"]
+    assert_equal 1, html.scan('<g class="wk"').size
+    assert_includes html, "Show the House table by week"
   end
 end

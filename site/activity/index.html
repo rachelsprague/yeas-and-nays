@@ -1,0 +1,65 @@
+---
+layout: default
+title: Floor activity
+description: Roll call votes taken each week in the House and Senate, by kind of vote.
+---
+{%- assign vol = site.data.vote_volume -%}
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
+    <h1 class="vote-h">Floor activity</h1>
+    <p class="soft">Roll call votes taken each week in the House and Senate, by kind of vote. Many recorded votes are not on whether to pass a measure but on how the chamber handles it: whether to take it up, end debate, change it or send it to a committee. <a href="/about/#procedural-votes">How votes work</a></p>
+  </section>
+
+  {%- if vol %}
+  <section class="section" aria-labelledby="totals-h">
+    <h2 id="totals-h" class="section-h sm">So far this Congress</h2>
+    <div class="scroll">
+      <table class="roll nums">
+        <thead><tr>
+          <th scope="col">Chamber</th>
+          {%- for k in vol.kinds %}<th scope="col" class="r">{{ k.label }}</th>{% endfor %}
+          <th scope="col" class="r">Total</th>
+        </tr></thead>
+        <tbody>
+          {%- for c in vol.chambers %}
+          <tr><th scope="row">{{ c.name }}</th>
+            {%- for k in vol.kinds %}<td class="r">{{ c.totals[k.key] }}</td>{% endfor %}<td class="r">{{ c.total }}</td></tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">Through the week of {{ vol.last_week | ap_date }}. Weeks run Monday through Sunday.</p>
+  </section>
+
+  <section class="section" aria-labelledby="weekly-h">
+    <h2 id="weekly-h" class="section-h sm">Roll calls by week</h2>
+    <ul class="vol-key small" aria-label="Kinds of vote">
+      {%- for k in vol.kinds %}<li><span class="swatch k-{{ k.key }}" aria-hidden="true"></span>{{ k.label }}</li>{% endfor %}
+    </ul>
+    {%- for c in vol.chambers %}
+    <section class="vol-chamber" aria-labelledby="vol-{{ c.chamber }}">
+      <h3 id="vol-{{ c.chamber }}" class="kicker soft nums">{{ c.name }} · {{ c.total }} roll calls</h3>
+      {%- include volume_chart.html vol=vol c=c %}
+    </section>
+    {%- endfor %}
+    <p class="small muted">Both charts use the same scale. Weeks with no bar had no roll calls in that chamber, such as during a recess.</p>
+  </section>
+
+  <section class="section" aria-labelledby="kinds-h">
+    <h2 id="kinds-h" class="section-h sm">Kinds of vote</h2>
+    <p class="soft">Each roll call's kind comes from the question voted on, using the same definitions as its vote page.</p>
+    <div class="prose"><dl>
+      <dt>Passage</dt>
+      <dd>Votes on passing a measure or agreeing to a resolution, including under suspension of the rules, agreeing to the other chamber's version (a motion to concur) and overriding a veto. Rules (resolutions setting how the House debates a measure) are counted as procedural.</dd>
+      <dt>Amendments</dt>
+      <dd>Votes on agreeing to an amendment.</dd>
+      <dt>Nominations</dt>
+      <dd>Senate votes on confirming a nomination. A cloture vote on a nomination is counted as procedural.</dd>
+      <dt>Procedural and other</dt>
+      <dd>All other questions: rules, ordering the previous question, cloture, motions to proceed, table, recommit, commit or discharge, waivers, quorum calls and the election of the Speaker, among others.</dd>
+    </dl></div>
+  </section>
+  {%- endif %}
+</main>
+<script src="/assets/js/activity.js" defer></script>
