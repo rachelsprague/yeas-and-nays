@@ -55,7 +55,17 @@ def parse_cosponsored(content: bytes, source_file: str) -> list[dict]:
 
 
 def parse_member_list(content: bytes, source_file: str, list_key: str) -> list[dict]:
+    """One row per bill in a member's list. The fetch drops repeats, but a file cached
+    before it did can still hold one, so repeats (same Congress, type and number) are
+    dropped here too, keeping the first."""
     doc = json.loads(content)
+    seen = set()
+    items = []
+    for item in doc[list_key]:
+        bill = (str(item["congress"]), item["type"].lower(), str(item["number"]))
+        if bill not in seen:
+            seen.add(bill)
+            items.append(item)
     return [
         {
             "source_file": source_file,
@@ -69,7 +79,7 @@ def parse_member_list(content: bytes, source_file: str, list_key: str) -> list[d
             "latest_action_text": (item.get("latestAction") or {}).get("text"),
             "policy_area": (item.get("policyArea") or {}).get("name"),
         }
-        for item in doc[list_key]
+        for item in items
     ]
 
 
