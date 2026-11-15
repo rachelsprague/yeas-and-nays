@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from yan.stage.legislators import parse, parse_social, parse_social_dir
 
 PEOPLE = [
@@ -63,6 +65,20 @@ def test_social_keeps_account_names_as_recorded():
         "bioguide_id": "X000001", "twitter": "SenExample", "facebook": None, "instagram": None,
         "youtube": None, "youtube_id": "UCabc", "mastodon": "@ex@example.social",
     }]
+
+
+@pytest.mark.parametrize("bioguide", ["x000001", "X00001", "X0000001", "X000001\n", "../X000001", 1234567])
+def test_skips_a_malformed_bioguide_id(bioguide, caplog):
+    entry = {"id": {"bioguide": bioguide}, "name": {"last": "Malformed"},
+             "terms": [{"type": "rep", "start": "2025-01-03",
+                        "party_affiliations": [{"start": "2025-01-03", "party": "Independent"}]}]}
+
+    people, terms, affiliations = parse([PEOPLE[0], entry], is_current=True)
+    assert [p["bioguide_id"] for p in people] == ["X000001"]
+    assert [t["bioguide_id"] for t in terms] == ["X000001"]
+    assert affiliations == []
+    assert parse_social([{"id": {"bioguide": bioguide}, "social": {"twitter": "Malformed"}}]) == []
+    assert caplog.text.count("malformed bioguide ID") == 2
 
 
 def test_social_dir_without_the_file_stages_no_accounts(tmp_path):
