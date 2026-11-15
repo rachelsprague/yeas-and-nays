@@ -4,10 +4,15 @@ and official social media accounts.
 A term can carry `party_affiliations` when a member changes party mid-term;
 those periods are emitted as their own rows so dbt can resolve party and
 caucus as of each vote's date.
+
+An entry whose bioguide ID isn't a capital letter and six digits is logged
+and skipped: the ID goes into Congress.gov request URLs, cache file names
+and page URLs.
 """
 
 import json
 import logging
+import re
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -15,12 +20,13 @@ log = logging.getLogger(__name__)
 SOURCES = {"legislators-current.json": True, "legislators-historical.json": False}
 SOCIAL_FILE = "legislators-social-media.json"
 SOCIAL_FIELDS = ["twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon"]
+BIOGUIDE_ID = re.compile(r"[A-Z][0-9]{6}")
 
 
 def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict], list[dict]]:
     person_rows, term_rows, affiliation_rows = [], [], []
     for p in people:
-        bioguide = p["id"].get("bioguide")
+        bioguide = _bioguide(p["id"])
         if not bioguide:
             continue
         name = p.get("name", {})
@@ -74,7 +80,7 @@ def parse_social(entries: list[dict]) -> list[dict]:
     """One row per member with the account names (handles) as recorded."""
     rows = []
     for e in entries:
-        bioguide = e.get("id", {}).get("bioguide")
+        bioguide = _bioguide(e.get("id", {}))
         if not bioguide:
             continue
         social = e.get("social", {})
@@ -90,6 +96,17 @@ def parse_social_dir(raw_root: Path) -> list[dict]:
         log.warning("legislators: %s not found; no social media accounts staged", SOCIAL_FILE)
         return []
     return parse_social(json.loads(path.read_text()))
+
+
+def _bioguide(ids: dict) -> str | None:
+    """The entry's bioguide ID, or None when it has none or it's malformed (logged)."""
+    value = ids.get("bioguide")
+    if not value:
+        return None
+    if isinstance(value, str) and BIOGUIDE_ID.fullmatch(value):
+        return value
+    log.warning("legislators: skipping an entry with malformed bioguide ID %r", value)
+    return None
 
 
 def _text(value) -> str | None:
