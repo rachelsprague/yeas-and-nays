@@ -167,14 +167,15 @@ PR link.
 
 Then mark the board: leave the worktree (keep it), and in the main
 checkout's `BOARD.md` add ` — PR #N, awaiting merge` to the item's line in
-Now, keeping the claim (CLAUDE.md > Claiming items).
+Now, and to each bundled item still in the PR (`/pick` step 6), keeping
+the claims (CLAUDE.md > Claiming items).
 
 Don't merge it: the maintainer squash-merges on GitHub (the hook denies
 `gh pr merge`). After it's merged (`gh pr view N --json state`), from the
 main checkout: `git pull --ff-only` on main, `git worktree remove` the
 worktree, `git branch -D` the branch (`-d` refuses, since a squash merge
-leaves the branch's own commits off main), and move the board item to Done
-with the PR number.
+leaves the branch's own commits off main), and move the board item (and
+each bundled item, on its own line) to Done with the PR number.
 
 ## Posting to a PR later: comments, replies, description edits
 
@@ -199,8 +200,8 @@ file for the user to approve (files over 20,000 bytes are refused rather than
 cut). It denies every other way of posting: inline or attached text
 (`--body`, `-bfoo`, `-f body=...`), stdin, `--fill`, templates, editors,
 every other `gh api` write and graphql mutations, `close`/`reopen -c`, flags
-before the action (`gh pr -b x comment`), `gh pr revert`, gh aliases, and any of `` ` `` `$ \ * ? [ ] { } ~ !` or a line break in the
-command (the shell would expand them after the check; gh's `{owner}` and
+before the action (`gh pr -b x comment`), `gh pr revert`, gh aliases, and any of `` ` `` `$ \ * ? [ ] { } ~`, an exclamation mark, or a line
+break in the command (the shell would expand them after the check; gh's `{owner}` and
 `{repo}` placeholders are fine), so word titles without them. Titles and
 body files can't contain control or invisible characters (emoji like ✔️ and
 👨‍💻 are fine; keycaps like 1️⃣ aren't), and body files must be UTF-8 text
