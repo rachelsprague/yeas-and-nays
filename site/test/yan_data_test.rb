@@ -65,6 +65,13 @@ class ProcedureTest < Minitest::Test
   def test_empty_procedures
     assert_nil Yan.procedure({ "question" => "On Passage" }, {})
   end
+
+  # Every question in the exported votes has a definition, so a new kind of
+  # vote gets one in procedures.yml rather than showing none.
+  def test_every_exported_question_has_a_definition
+    votes = JSON.parse(File.read(File.expand_path("../../data/out/votes.json", __dir__)))["votes"]
+    assert_empty votes.reject { |v| Yan.procedure(v, PROCEDURES) }.map { |v| v["question"] }.uniq
+  end
 end
 
 # Builds the site from a small export written to a temp dir.
