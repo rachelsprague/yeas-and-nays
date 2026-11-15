@@ -202,8 +202,13 @@ main.home { gap: 20px; padding-top: 20px; }
 .dot rect { stroke: var(--ink); stroke-width: 1; }
 .dot.yea rect { fill: var(--ink); }
 .dot.present rect, .dot.nv rect { fill: var(--surface); }
-.dot.present rect { stroke-dasharray: 2 1.5; }
+.dot.present rect { stroke-dasharray: 3 2; }
 .grid-chart pattern rect { fill: var(--ink); stroke: none; }
+
+/* State grid: a tile per state, its delegation as a bar of the same marks. */
+.state-grid { display: block; width: 100%; max-width: 560px; height: auto; }
+.tile-box { fill: none; stroke: var(--line); stroke-width: 1; }
+.tile text { fill: var(--ink); font-family: var(--font-sans); font-size: 10px; font-weight: 600; }
 
 .bar { display: flex; height: 14px; border: 1px solid var(--ink); background: var(--surface); }
 .bar .yea { background: var(--ink); }

@@ -297,6 +297,65 @@ module Yan
     end.reject { |g| g["runs"].empty? }
   end
 
+  # Tile map of the states: [row, column], 1-based, each state one equal tile
+  # in rough geographic position. DC sits under Maryland; the territories get
+  # a row of their own (Pacific left, Caribbean right).
+  STATE_TILES = {
+    "AK" => [1, 1], "ME" => [1, 11],
+    "WI" => [2, 6], "VT" => [2, 10], "NH" => [2, 11],
+    "WA" => [3, 1], "ID" => [3, 2], "MT" => [3, 3], "ND" => [3, 4], "MN" => [3, 5], "IL" => [3, 6], "MI" => [3, 7],
+    "NY" => [3, 9], "MA" => [3, 10],
+    "OR" => [4, 1], "NV" => [4, 2], "WY" => [4, 3], "SD" => [4, 4], "IA" => [4, 5], "IN" => [4, 6], "OH" => [4, 7],
+    "PA" => [4, 8], "NJ" => [4, 9], "CT" => [4, 10], "RI" => [4, 11],
+    "CA" => [5, 1], "UT" => [5, 2], "CO" => [5, 3], "NE" => [5, 4], "MO" => [5, 5], "KY" => [5, 6], "WV" => [5, 7],
+    "VA" => [5, 8], "MD" => [5, 9], "DE" => [5, 10],
+    "AZ" => [6, 2], "NM" => [6, 3], "KS" => [6, 4], "AR" => [6, 5], "TN" => [6, 6], "NC" => [6, 7], "SC" => [6, 8],
+    "DC" => [6, 9],
+    "OK" => [7, 4], "LA" => [7, 5], "MS" => [7, 6], "AL" => [7, 7], "GA" => [7, 8],
+    "HI" => [8, 1], "TX" => [8, 4], "FL" => [8, 9],
+    "GU" => [9, 1], "MP" => [9, 2], "AS" => [9, 3], "PR" => [9, 10], "VI" => [9, 11]
+  }.freeze
+  TERRITORIES = %w[AS DC GU MP PR VI].freeze
+  TILE_PITCH = 30 # px from one tile to the next: a 28px tile and a 2px gap
+  TILE_BAR = 22   # width of the bar inside a tile
+
+  # One tile per state, its delegation's positions as a bar split Yea, Nay,
+  # Present, Not voting (the legend marks), widths in proportion. A state
+  # with no member recorded (a vacant delegation) gets an empty tile; DC and
+  # the territories appear only when their delegates are on the roll call.
+  def self.state_grid(positions, members_by_id, words)
+    counts = Hash.new { |h, k| h[k] = Hash.new(0) }
+    positions.each do |id, raw|
+      state = members_by_id.dig(id, "state") or next
+      counts[state][position_kind(raw)] += 1
+    end
+    tiles = STATE_TILES.filter_map do |state, (row, col)|
+      next if TERRITORIES.include?(state) && !counts.key?(state)
+
+      c = counts[state]
+      total = c.values.sum
+      x = 0.0
+      runs = [["yea", words["yes"], c["yes"]], ["nay", words["no"], c["no"]],
+              ["present", "Present", c["present"]], ["nv", "Not Voting", c["not_voting"]]].filter_map do |mark, label, n|
+        next if n.zero?
+
+        w = TILE_BAR * n.fdiv(total)
+        run = { "mark" => mark, "label" => label, "count" => n, "x" => x.round(2), "width" => w.round(2) }
+        x += w
+        run
+      end
+      { "state" => state, "name" => STATE_NAMES[state], "x" => (col - 1) * TILE_PITCH, "y" => (row - 1) * TILE_PITCH,
+        "runs" => runs, "summary" => runs.map { |r| "#{r["count"]} #{r["label"]}" }.join(", ") }
+    end
+    rows = tiles.map { |t| t["y"] / TILE_PITCH + 1 }.max
+    { "tiles" => tiles, "width" => 11 * TILE_PITCH - 2, "height" => rows * TILE_PITCH - 2,
+      # The text version: one row per state, by name.
+      "table" => tiles.reject { |t| t["runs"].empty? }.sort_by { |t| t["name"] }.map do |t|
+        c = counts[t["state"]]
+        { "name" => t["name"], "yes" => c["yes"], "no" => c["no"], "present" => c["present"], "not_voting" => c["not_voting"] }
+      end }
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
   def self.vote_view(vote, doc, members_by_id)
     words = words(doc["positions"])
@@ -344,6 +403,7 @@ module Yan
       "vote" => vote, "words" => words, "sponsor" => sponsor, "tally" => tally, "has_other" => !other.empty?,
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
       "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
+      "state_grid" => other.empty? ? state_grid(doc["positions"], members_by_id, words) : nil,
       "against" => against, "summary" => doc["summary"]
     }
   end
