@@ -82,23 +82,30 @@ def voted_bills() -> dict[tuple[str, str], dt.date]:
 def members_in_congress() -> list[str]:
     """Bioguide IDs of everyone with a House or Senate term overlapping this Congress.
     A term with no end date is treated as ongoing, and one with no start date as having
-    started before this Congress. A term with a date that doesn't parse is logged and
-    skipped, so one bad row can't stop the ingest."""
+    started before this Congress. A date that doesn't parse is logged and treated as
+    missing, so one bad row can't stop the ingest or drop a sitting member."""
     start = dt.date(SESSIONS[1], 1, 3)
     end = dt.date(SESSIONS[2] + 1, 1, 3)
     _, terms, _ = legislators.parse_dir(RAW_DIR / "legislators")
     members = set()
     for t in terms:
-        try:
-            term_start = dt.date.fromisoformat(t["term_start"]) if t.get("term_start") else dt.date.min
-            term_end = dt.date.fromisoformat(t["term_end"]) if t.get("term_end") else dt.date.max
-        except (TypeError, ValueError):
-            log.warning("congress.gov: skipping a term of %s with a malformed date (start %r, end %r)",
-                        t["bioguide_id"], t.get("term_start"), t.get("term_end"))
-            continue
+        term_start = _term_date(t, "term_start", dt.date.min)
+        term_end = _term_date(t, "term_end", dt.date.max)
         if term_start < end and term_end > start:
             members.add(t["bioguide_id"])
     return sorted(members)
+
+
+def _term_date(term: dict, field: str, missing: dt.date) -> dt.date:
+    value = term.get(field)
+    if not value:
+        return missing
+    try:
+        return dt.date.fromisoformat(value)
+    except (TypeError, ValueError):
+        log.warning("congress.gov: %r has a malformed %s %r; treating it as missing",
+                    term["bioguide_id"], field, value)
+        return missing
 
 
 def sponsored_path(bioguide_id: str):

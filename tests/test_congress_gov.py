@@ -226,18 +226,30 @@ def test_members_in_congress_checks_an_open_ended_term_against_its_start(monkeyp
     assert congress_gov.members_in_congress() == ["A000001"]
 
 
-def test_members_in_congress_skips_a_term_with_a_malformed_date(monkeypatch, caplog):
+def test_members_in_congress_keeps_a_term_with_no_start_date(monkeypatch):
     from yan.ingest import congress_gov
 
     terms = [
-        {"bioguide_id": "A000001", "term_start": "2025-01-03", "term_end": "2027-01-03"},
-        {"bioguide_id": "B000002", "term_start": "2025-01-03", "term_end": "Jan 3, 2027"},
-        {"bioguide_id": "C000003", "term_start": "2025-13-01", "term_end": "2027-01-03"},
-        {"bioguide_id": "C000003", "term_start": "2023-01-03", "term_end": "2025-01-03"},
+        {"bioguide_id": "A000001", "term_start": None, "term_end": "2027-01-03"},
+        {"bioguide_id": "B000002", "term_start": None, "term_end": "2023-01-03"},
     ]
     monkeypatch.setattr(congress_gov.legislators, "parse_dir", lambda _: ([], terms, []))
     assert congress_gov.members_in_congress() == ["A000001"]
-    assert caplog.text.count("malformed date") == 2
+
+
+def test_members_in_congress_treats_a_malformed_date_as_missing(monkeypatch, caplog):
+    from yan.ingest import congress_gov
+
+    terms = [
+        {"bioguide_id": "A000001", "term_start": "2025-01-03", "term_end": "Jan 3, 2027"},  # read as ongoing
+        {"bioguide_id": "B000002", "term_start": "2025-13-01", "term_end": "2027-01-03"},
+        {"bioguide_id": "C000003", "term_start": "2023-01-03", "term_end": "2025-1-3"},  # read as ongoing
+        {"bioguide_id": "D000004", "term_start": "not a date", "term_end": "2023-01-03"},  # still ended
+    ]
+    monkeypatch.setattr(congress_gov.legislators, "parse_dir", lambda _: ([], terms, []))
+    assert congress_gov.members_in_congress() == ["A000001", "B000002", "C000003"]
+    assert caplog.text.count("treating it as missing") == 4
+    assert "'A000001' has a malformed term_end 'Jan 3, 2027'" in caplog.text
 
 
 def test_fetch_sponsored_keeps_a_bill_type_or_congress_that_differs(monkeypatch):
