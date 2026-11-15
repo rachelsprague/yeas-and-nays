@@ -365,10 +365,22 @@ module Yan
   # their bars compare. Weeks with no roll calls are kept, as gaps. Each week
   # carries its stacked segments (y from the top, in chart units) and a
   # one-line summary for the hover caption and the table.
+  # A bar's counts by kind for the hover box (activity.js): "passage:4,procedural:5",
+  # in VOTE_KINDS order, kinds with none left out.
+  def self.kind_counts(counts)
+    VOTE_KINDS.filter_map { |k| "#{k["key"]}:#{counts[k["key"]]}" if counts[k["key"]].positive? }.join(",")
+  end
+
+  # The Monday that starts a vote's week.
+  def self.week_of(v)
+    d = Date.parse(v["vote_date"])
+    d - ((d.wday + 6) % 7)
+  end
+
   def self.vote_volume(votes)
     return nil if votes.empty?
 
-    week_of = ->(v) { d = Date.parse(v["vote_date"]); d - ((d.wday + 6) % 7) }
+    week_of = method(:week_of)
     counts = Hash.new { |h, k| h[k] = Hash.new(0) }
     votes.each { |v| counts[[v["chamber"], week_of.call(v)]][vote_kind(v.dig("procedure", "key"))] += 1 }
     first, last = votes.map(&week_of).minmax
@@ -397,6 +409,7 @@ module Yan
         parts = VOTE_KINDS.filter_map { |k| "#{k["label"]} #{c[k["key"]]}" if c[k["key"]].positive? }
         { "start" => start.iso8601, "x" => i * VOLUME_SLOT, "total" => total, "segments" => segments,
           "counts" => VOTE_KINDS.to_h { |k| [k["key"], c.fetch(k["key"], 0)] },
+          "head" => "#{name} · week of #{Filters.ap_date(start)}", "kind_counts" => kind_counts(c),
           "summary" => "Week of #{Filters.ap_date(start)}: " +
             (total.zero? ? "no roll calls" : "#{total} roll call#{"s" unless total == 1} · #{parts.join(" · ")}") }
       end
@@ -421,6 +434,22 @@ module Yan
         { "pct" => (100.0 * i / weeks.size).round(2), "label" => label }
       end
     }
+  end
+
+  # Every roll call, newest first, in the short form the floor activity page
+  # fetches (/activity/rollcalls.json) to list a clicked bar's roll calls:
+  # week ("w", a Monday), chamber, policy area row ("a", nil before the export
+  # carries policy_area) and kind to filter by, plus what each line shows.
+  # activity.js writes these as text, never HTML.
+  def self.activity_votes(votes)
+    with_areas = votes.any? { |v| v.key?("policy_area") }
+    votes.map do |v|
+      { "u" => v["url"], "c" => v["chamber"], "w" => week_of(v).iso8601,
+        "a" => with_areas ? policy_row(v) : nil, "k" => vote_kind(v.dig("procedure", "key")),
+        "d" => Filters.ap_date(v["vote_date"]), "r" => v["roll_number"],
+        "q" => [v["question"], (v["measure_label"] unless v["question"].to_s.include?(v["measure_label"].to_s))].compact.join(" · "),
+        "t" => v["measure_title"] || v["vote_title"] || v["question"], "s" => v["result_label"] }
+    end
   end
 
   # Rows on the policy area chart for votes that can't have a policy area,
@@ -471,6 +500,7 @@ module Yan
           n = c.values.sum
           parts = VOTE_KINDS.filter_map { |k| "#{k["label"]} #{c[k["key"]]}" if c[k["key"]].positive? }
           { "area" => row, "total" => n, "pct" => (100.0 * n / max).round(2),
+            "head" => "#{row} · #{name}", "kind_counts" => kind_counts(c),
             "segments" => VOTE_KINDS.filter_map do |k|
               { "kind" => k["key"], "pct" => (100.0 * c[k["key"]] / n).round(2) } if c[k["key"]].positive?
             end,
@@ -560,6 +590,18 @@ module Yan
       data["nav"] = "members"
       data["member"] = member
       data["recent"] = recent
+    end
+  end
+
+  # /activity/rollcalls.json (Yan.activity_votes), as plain JSON with no layout.
+  class ActivityVotesFile < Jekyll::PageWithoutAFile
+    def initialize(site, rows)
+      super(site, site.source, "activity", "rollcalls.json")
+      self.content = JSON.generate({ "votes" => rows })
+      data["layout"] = nil
+      data["sitemap"] = false
+      # Titles are data: a "{{" in one must not run as Liquid.
+      data["render_with_liquid"] = false
     end
   end
 
@@ -661,6 +703,7 @@ module Yan
       site.data["votes"] = votes
       site.data["vote_volume"] = Yan.vote_volume(votes)
       site.data["policy_volume"] = Yan.policy_volume(votes)
+      site.pages << ActivityVotesFile.new(site, Yan.activity_votes(votes))
       site.data["leads"] = {
         "all" => views[votes.first["vote_id"]],
         "house" => (v = votes.find { |x| x["chamber"] == "house" }) && views[v["vote_id"]],

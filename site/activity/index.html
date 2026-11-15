@@ -5,7 +5,7 @@ nav: activity
 description: Roll call votes taken each week in the House and Senate, by kind of vote.
 ---
 {%- assign vol = site.data.vote_volume -%}
-<main id="main" class="wrap">
+<main id="main" class="wrap" data-activity>
   <section class="vote-head">
     <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
     <h1 class="vote-h">Floor activity</h1>
@@ -55,6 +55,7 @@ description: Roll call votes taken each week in the House and Senate, by kind of
     <ul class="vol-key small" aria-label="Kinds of vote">
       {%- for k in pv.kinds %}<li><span class="swatch k-{{ k.key }}" aria-hidden="true"></span>{{ k.label }}</li>{% endfor %}
     </ul>
+    <div data-list-scope>
     <ol class="areas" aria-hidden="true">
       {%- for t in pv.table limit: pv.area_count %}
       {%- assign i = forloop.index0 %}
@@ -62,7 +63,7 @@ description: Roll call votes taken each week in the House and Senate, by kind of
         <span class="area-name">{{ t.area | escape }}</span>
         <span class="area-lines">
           {%- for c in pv.chambers %}{% assign r = c.rows[i] %}
-          <span class="area-line" title="{{ r.summary | escape }}"><span class="area-ch small muted">{{ c.name }}</span><span class="area-track"><span class="area-bar vol" style="width: calc((100% - 40px) * {{ r.pct }} / 100)">
+          <span class="area-line" title="{{ r.summary | escape }}" data-chamber="{{ c.chamber }}" data-area="{{ t.area | escape }}" data-head="{{ r.head | escape }}" data-total="{{ r.total }}" data-kinds="{{ r.kind_counts }}"><span class="area-ch small muted">{{ c.name }}</span><span class="area-track"><span class="area-bar vol" style="width: calc((100% - 40px) * {{ r.pct }} / 100)">
             {%- for s in r.segments %}<span class="k-{{ s.kind }}" style="width: {{ s.pct }}%"></span>{% endfor -%}
           </span><span class="area-n small nums">{{ r.total }}</span></span></span>
           {%- endfor %}
@@ -70,6 +71,8 @@ description: Roll call votes taken each week in the House and Senate, by kind of
       </li>
       {%- endfor %}
     </ol>
+    <div class="vol-list" data-list aria-live="polite"><span class="small muted js-only">Hover over a bar for its counts; click it to list its roll calls.</span></div>
+    </div>
     {%- if pv.other.size > 0 %}
     <p class="small">Not drawn above, as no policy area is recorded for them:
       {%- for o in pv.other %} {{ o.area | escape }} ({{ o.counts | escape }}){% if forloop.last %}.{% else %};{% endif %}{% endfor %}</p>

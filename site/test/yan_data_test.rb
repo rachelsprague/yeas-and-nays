@@ -80,7 +80,7 @@ module SiteBuild
 
   # Returns { "/path/index.html" => html } for every page built from these
   # members and [vote, vote file] pairs.
-  def build_site(members, votes)
+  def build_site(members, votes, files: "*.html")
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
@@ -97,7 +97,7 @@ module SiteBuild
         "quiet" => true
       ))
       site.process
-      Dir[File.join(tmp, "_site", "**", "*.html")].to_h { |f| [f.delete_prefix("#{tmp}/_site"), File.read(f)] }
+      Dir[File.join(tmp, "_site", "**", files)].to_h { |f| [f.delete_prefix("#{tmp}/_site"), File.read(f)] }
     end
   end
 end
@@ -846,5 +846,39 @@ class PolicyVolumeTest < Minitest::Test
     assert_includes html, "By policy area"
     assert_includes html, "Arts &amp; &quot;Culture&quot; &lt;x&gt;"
     refute_includes html, "<x>"
+  end
+end
+
+class ActivityListTest < Minitest::Test
+  include SiteBuild
+
+  def test_kind_counts_in_kind_order_skipping_none
+    assert_equal "passage:4,procedural:5", Yan.kind_counts(Hash.new(0).merge("procedural" => 5, "passage" => 4))
+    assert_equal "", Yan.kind_counts(Hash.new(0))
+  end
+
+  def test_each_vote_carries_its_filters_and_display_text
+    v = { "url" => "/votes/119/senate/2/262/", "chamber" => "senate", "vote_date" => "2026-11-15", "roll_number" => 262,
+          "question" => "On the Cloture Motion PN1181-7", "measure_label" => "PN1181-7", "bill_type" => nil,
+          "measure_number" => "PN1181-7", "vote_title" => "Anna St. John, to be Judge", "result_label" => "Cloture Motion Agreed to",
+          "policy_area" => nil, "procedure" => { "key" => "cloture" } }
+    assert_equal [{ "u" => "/votes/119/senate/2/262/", "c" => "senate", "w" => "2026-11-09", "a" => "Nominations",
+                    "k" => "procedural", "d" => "Nov. 15, 2026", "r" => 262, "q" => "On the Cloture Motion PN1181-7",
+                    "t" => "Anna St. John, to be Judge", "s" => "Cloture Motion Agreed to" }], Yan.activity_votes([v])
+    # The measure is added to the question when the question doesn't name it; no area before the export has one.
+    h = v.merge("question" => "On Passage", "measure_label" => "H.R. 1", "bill_type" => "hr", "measure_title" => "A bill")
+    h.delete("policy_area")
+    row = Yan.activity_votes([h]).first
+    assert_equal ["On Passage · H.R. 1", "A bill", nil], row.values_at("q", "t", "a")
+  end
+
+  def test_rollcalls_json_is_built_without_running_liquid_in_titles
+    v = EscapingTest::VOTE.merge("measure_title" => "A bill {{ site.title }} {% raw %} <b>")
+    pages = build_site([EscapingTest::MEMBER], [[v, EscapingTest::DOC]], files: "*.{html,json}")
+    rows = JSON.parse(pages.fetch("/activity/rollcalls.json"))["votes"]
+    assert_equal ["A bill {{ site.title }} {% raw %} <b>"], rows.map { |r| r["t"] }
+    html = pages["/activity/index.html"]
+    assert_includes html, 'data-week="2024-12-30"'
+    assert_includes html, 'data-kinds="passage:1"'
   end
 end
