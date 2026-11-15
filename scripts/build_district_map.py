@@ -15,7 +15,8 @@ current member.
     uv run scripts/build_district_map.py 120
 
 Run it again only when district lines change (a new Congress or a court-ordered
-map). Downloads are cached in data/raw/maps/.
+map), then run scripts/build_vote_map.py for the vote pages' smaller map.
+Downloads are cached in data/raw/maps/.
 
 Sources:
   119th Congress: cartographic boundary file cb_2024_us_cd119_500k (already

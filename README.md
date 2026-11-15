@@ -80,6 +80,8 @@ State (`data/bot/state.json`, committed) records the last vote handled per chamb
 
 `/find/` is a map of every House district, each paired with its current representative. The shapes, city labels and each district's largest cities and towns are prebuilt into `site/_maps/{congress}.json` by `uv run scripts/build_district_map.py`, run again only when district lines change; the site draws the map for the Congress in `data/out/meta.json`, so the 120th Congress lines take over when its members do. The script keeps a state's 119th lines for the 120th where the Census Bureau's 2026 file doesn't match the plan used in the 2026 election (Missouri; see `KEEP_119`).
 
+Each vote page's By state map (each House district, or each senator's half of a state, filled with their vote) draws from a lighter copy of those shapes: `uv run scripts/build_vote_map.py` simplifies `site/_maps/{congress}.json` into `site/assets/maps/{congress}.json`, which the browser fetches once and caches. Run it after `build_district_map.py`. Only votes in the Congress of `data/out/meta.json` get the map, since members' districts are as of that Congress; every vote keeps the by-state table.
+
 ```
 make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bundler)
 ```
