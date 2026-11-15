@@ -151,16 +151,14 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
     raise PostTooLong(f"{vote['vote_id']}: cannot fit post in {max_length} characters")
 
 
-def ends_word(short: str, rest: str) -> bool:
-    """Whether a cut between short and rest falls at the end of a word: before
-    a space, or before punctuation that ends one ("Act.", "(H.R. 1)", "?", ”)."""
-    if not re.match(r"[.,;:)?!”’\"']*(\s|$)", rest):
-        return False
-    # A period can also end an abbreviation: "H.R. 1", "S. 5", "U.S. Code".
-    # Cut there, the number or the rest of the name would be lost.
-    if rest.startswith(".") and (re.match(r"\.\s+\d", rest) or "." in short.rsplit(" ", 1)[-1]):
-        return False
-    return True
+def ends_word(rest: str) -> bool:
+    """Whether a cut before rest falls at the end of a word: before a space, or
+    before punctuation that ends one ("(the Housing Act)", "?", ”).
+
+    A period doesn't count: a cut never falls just before one that ends the
+    title (the ellipsis needs that space), and mid-title most periods end an
+    abbreviation ("H.R. 1", "St. Louis"), so the whole word is dropped instead."""
+    return bool(re.match(r"[,;:)?!”’\"']*(\s|$)", rest))
 
 
 def cut_title(title: str, keep: int) -> str:
@@ -168,7 +166,7 @@ def cut_title(title: str, keep: int) -> str:
     no word or bill number is left half-written, unless that leaves too
     little of the title. No trailing punctuation; the caller adds the ellipsis."""
     short = title[:keep]
-    at_boundary = ends_word(short, title[keep:])
+    at_boundary = ends_word(title[keep:])
     if not at_boundary and " " in short:
         by_word = short.rsplit(" ", 1)[0].rstrip(" ,;:")
         if len(by_word) >= MIN_TITLE:

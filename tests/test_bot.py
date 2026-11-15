@@ -278,13 +278,13 @@ def cut_at(vote, prefix, tail):
 
 
 @pytest.mark.parametrize("prefix, tail, ending", [
-    ("An Act to amend the Internal Revenue Act", ". It also has a long tail ", ' Revenue Act…"'),
     ("Should the Senate concur in the amendment", "? And a long tail ", ' the amendment…"'),
     ("An Act to amend title 5 (the Housing Act", ") and a long tail ", ' Housing Act…"'),
     ("An Act relating to benefits for veterans", "’ survivors and a long tail ", ' for veterans…"'),
-    # A period that ends an abbreviation isn't the end of the word.
+    # A period mostly ends an abbreviation, so the abbreviated word goes too.
     ("An Act to amend the provisions of H.R", ". 5371 and a long tail ", ' provisions…"'),
     ("An Act relating to Section 5 of the U.S", ". Code and a long tail ", ' Section 5…"'),
+    ("To name the post office in Saint Louis and St", ". Louis County and a long tail ", ' Saint Louis…"'),
 ])
 def test_cut_just_before_closing_punctuation_keeps_the_whole_word(prefix, tail, ending):
     tail += "y" * 300
@@ -435,6 +435,16 @@ def test_publish_skips_a_vote_too_long_to_post_and_keeps_going(out_dir, tmp_path
     assert [url for _, url in publisher.posts] == ["https://clerk.house.gov/Votes/2026317"]
     assert bot_state.load(state_path)["house"] == "h119-2-0317"
     assert "too long to post in 300 characters" in capsys.readouterr().out
+
+
+def test_dry_run_shows_a_vote_too_long_to_post_as_skipped(out_dir, tmp_path, capsys):
+    long_names = [f"Member{i} " + "x" * 60 for i in range(5)]
+    (out_dir / "votes" / "h119-2-0317.json").write_text(json.dumps(doc(house_vote(), against=long_names)))
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    bot.run(state_path, out_dir)
+    out = capsys.readouterr().out
+    assert "[too long to post in 300 characters]\n(skipped)" in out
 
 
 def test_publish_refuses_a_stale_backlog(out_dir, tmp_path):
