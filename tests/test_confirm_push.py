@@ -179,6 +179,8 @@ def test_gh_commands_that_only_read_workflows_and_repos_are_left_alone(repo, com
     "cat < <(gh pr merge 1)",
     "echo x > >(gh pr merge 1)",
     "make 2> >(gh pr merge 1)",
+    "cat <\t<(gh pr merge 1)",
+    "echo x > <(gh pr merge 1)",
     "$'\\x67h' pr merge 1",
     "$'\\x67'\"h\" pr merge 1",
     "$'\\x67'\\h pr merge 1",
@@ -209,6 +211,7 @@ def test_git_aliases_defined_on_the_command_line_are_denied(repo, command):
 
 @pytest.mark.parametrize("command", [
     "printf $'a\\tb\\n'",
+    "printf $'%s\\n' \"a\" 'b'",
     "cat <(echo hi)",
     "diff <(sort a) <(sort b)",
     "while read l; do echo $l; done < <(ls)",
@@ -603,12 +606,20 @@ def test_push_denied_with_hooks_path_elsewhere(repo, tmp_path_factory):
 
 
 # Paths that collapse to .githooks as text but that git resolves elsewhere
-# (a missing directory before `..`; `~` expanded to $HOME).
-@pytest.mark.parametrize("value", ["nope/../.githooks", "~/../.githooks", "./.githooks", ".githooks/"])
+# (a missing directory before `..`; `~` expanded to $HOME; whitespace git keeps).
+@pytest.mark.parametrize("value", ["nope/../.githooks", "~/../.githooks", "./.githooks", ".githooks/",
+                                   ".githooks ", " .githooks", ".githooks\t"])
 def test_push_denied_for_any_other_spelling_of_hooks_path(repo, value):
     path, head = repo
     record(path, head)
     git(path, "config", "core.hooksPath", value)
+    assert confirm_push.decide("git push", str(path))[0] == "deny"
+
+
+def test_push_denied_with_absolute_hooks_path_and_trailing_space(repo):
+    path, head = repo
+    record(path, head)
+    git(path, "config", "core.hooksPath", f"{path / '.githooks'} ")
     assert confirm_push.decide("git push", str(path))[0] == "deny"
 
 

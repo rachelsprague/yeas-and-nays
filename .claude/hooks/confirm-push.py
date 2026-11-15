@@ -613,9 +613,13 @@ def strip_redirects(command: str) -> str:
     return re.sub(r"(?:(?<!\d)\d+)?(>>?|<<<|<)(?!\()(&\d+|\s*(?![<>]\()[^\s;&|]+)", " ", command).strip()
 
 
-def git(repo: str, *args: str) -> str:
+def git(repo: str, *args: str, strip: bool = True) -> str:
+    """Output of a git command, or "" if it fails. With strip=False only git's own trailing
+    newline is removed, for values whose whitespace matters (`.githooks ` isn't `.githooks`)."""
     out = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
-    return out.stdout.strip() if out.returncode == 0 else ""
+    if out.returncode != 0:
+        return ""
+    return out.stdout.strip() if strip else out.stdout.removesuffix("\n")
 
 
 def hooks_dir(repo: str) -> str | None:
@@ -630,7 +634,7 @@ def hooks_dir(repo: str) -> str | None:
     common = git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir")
     if not top or not common:
         return None
-    configured = git(repo, "config", "core.hooksPath")
+    configured = git(repo, "config", "core.hooksPath", strip=False)
     if configured == HOOKS_PATH:
         return os.path.join(top, HOOKS_PATH)
     # The main checkout is the parent of the common .git directory (in it, that's `top` too).
