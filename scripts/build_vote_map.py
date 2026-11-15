@@ -14,6 +14,9 @@ caches it) and fill each district (House) or state (Senate).
     uv run scripts/build_vote_map.py 120
 
 Run it again whenever build_district_map.py rewrites a district map.
+Library versions are pinned in build_vote_map.py.lock (`uv lock --script
+--upgrade scripts/build_vote_map.py` to update), so a rebuild of unchanged
+input gives the same file.
 """
 
 import json

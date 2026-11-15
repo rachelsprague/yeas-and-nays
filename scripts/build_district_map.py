@@ -16,7 +16,10 @@ current member.
 
 Run it again only when district lines change (a new Congress or a court-ordered
 map), then run scripts/build_vote_map.py for the vote pages' smaller map.
-Downloads are cached in data/raw/maps/.
+Downloads are cached in data/raw/maps/. Library versions are pinned in
+build_district_map.py.lock (`uv lock --script --upgrade
+scripts/build_district_map.py` to update), so a rebuild of unchanged
+downloads gives the same file.
 
 Sources:
   119th Congress: cartographic boundary file cb_2024_us_cd119_500k (already
@@ -68,11 +71,10 @@ DISTRICT_FILES = {
 }
 
 # States whose 120th Congress districts are their 119th ones, although the
-# 2026 TIGER/Line file shows a newer plan. Missouri: courts required the 2022
-# map for the November 2026 election, and the Census user note above says
-# its files were regenerated after Oct. 20, 2026, but the file served on
-# 2026-11-14 is dated Sept. 24 and still has the 2025 plan.
-KEEP_119 = {120: {"MO"}}
+# 2026 TIGER/Line file shows a newer plan (e.g. a court-ordered map the file
+# doesn't have yet). None now: Missouri was here until its file had the 2022
+# plan that courts required for the November 2026 election (checked 2026-11-15).
+KEEP_119 = {120: set()}
 
 # Equal-area Albers projections (NAD83, meters): lower 48, Alaska, Hawaii.
 CONUS = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +datum=NAD83 +units=m"
