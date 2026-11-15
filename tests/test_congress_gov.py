@@ -208,9 +208,10 @@ def test_members_in_congress_keeps_terms_that_reach_into_this_congress(monkeypat
         {"bioguide_id": "A000001", "term_end": "2025-01-03"},  # earlier term, same member
         {"bioguide_id": "C000003", "term_end": "2025-01-03"},  # ended as this Congress began
         {"bioguide_id": "D000004", "term_end": "2023-01-03"},
+        {"bioguide_id": "E000005", "term_end": None},  # no end date: ongoing
     ]
     monkeypatch.setattr(congress_gov.legislators, "parse_dir", lambda _: ([], terms, []))
-    assert congress_gov.members_in_congress() == ["A000001", "B000002"]
+    assert congress_gov.members_in_congress() == ["A000001", "B000002", "E000005"]
 
 
 def test_parse_sponsored_flattens_each_item():
