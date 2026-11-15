@@ -23,7 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
+      # No token in .git/config: ingest, dbt and the bot run third-party code.
+      # Only "Commit data" gets the write token, for its own pull and push.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
@@ -80,14 +84,24 @@ jobs:
       # already posted is saved and not posted again.
       - name: Commit data
         if: success() || steps.bot.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The token goes in a one-off auth header (as checkout sets it), never
+        # in a URL or saved git config. Hooks and fsmonitor are off, the
+        # simplest way for an earlier step to run code here; other git config
+        # and env routes remain until this step moves to a job of its own.
         run: |
-          git add data/out data/bot/state.json
-          if git diff --cached --quiet; then
+          safe_git() { git -c core.hooksPath=/dev/null -c core.fsmonitor=false "$@"; }
+          safe_git add data/out data/bot/state.json
+          if safe_git diff --cached --quiet; then
             echo "No data changes."
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Update vote data"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          safe_git config user.name "github-actions[bot]"
+          safe_git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          safe_git commit -m "Update vote data"
+          b64="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$b64"
+          auth="http.https://github.com/.extraheader=AUTHORIZATION: basic $b64"
+          safe_git -c "$auth" pull --rebase origin main
+          safe_git -c "$auth" push origin HEAD:main

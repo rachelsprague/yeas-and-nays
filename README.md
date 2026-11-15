@@ -17,7 +17,7 @@ make all      # ingest -> stage -> model -> export
 | Model | `make model` | `dbt build` in `transform/`: builds DuckDB models and runs unit and data tests. |
 | Export | `make export` | Writes JSON from the marts into `data/out/` (committed). |
 
-Requires [uv](https://docs.astral.sh/uv/). Parser tests: `make test`. `make hooks` installs a git pre-push hook that refuses commits without a recorded pre-push review (`.claude/skills/pre-push/`).
+Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make test` (CI runs them on every PR and push to `main`). `make hooks` installs a git pre-push hook that refuses commits without a recorded pre-push review (`.claude/skills/pre-push/`).
 
 ## Sources
 
@@ -95,3 +95,5 @@ make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bun
 | `CONGRESS_API_KEY` | secret | Congress.gov API key for bill details and summaries; passed to the ingest step only. |
 
 `.github/workflows/site.yml` builds the site and deploys it to GitHub Pages after each successful data run, and on pushes that change `site/`. Pages must be set to deploy from GitHub Actions.
+
+`.github/workflows/test.yml` runs `pytest` and the site plugin tests on every pull request and push to `main`. dbt tests run in the hourly data job.
