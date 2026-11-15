@@ -102,13 +102,14 @@ module SiteBuild
   end
 end
 
-# Builds the site from a one-member, one-vote export whose member name holds
-# double quotes, then checks every page escapes them (attributes included).
+# Builds the site from a one-member, one-vote export whose member name and
+# measure title hold HTML's special characters (" < > & '), then checks every
+# page escapes them (attributes included).
 class EscapingTest < Minitest::Test
   include SiteBuild
 
   MEMBER = {
-    "bioguide_id" => "Z000001", "official_full_name" => 'Jane "JJ" Doe', "first_name" => "Jane",
+    "bioguide_id" => "Z000001", "official_full_name" => %q(Jane "JJ" <jj> O'Jay & Doe), "first_name" => "Jane",
     "last_name" => "Doe", "party" => "R", "caucus_party" => "R", "chamber" => "house", "state" => "AL",
     "district" => 4, "is_current" => true, "is_voting_member" => true,
     # Links holding the quoted name too, so the escaping check covers their attributes.
@@ -119,7 +120,9 @@ class EscapingTest < Minitest::Test
   VOTE = {
     "vote_id" => "h119-1-0001", "congress" => 119, "chamber" => "house", "session" => 1, "roll_number" => 1,
     "vote_date" => "2025-01-03", "question" => "On Passage", "result" => "Passed", "bill_type" => "hr",
-    "measure_title" => "A bill", "sponsor_bioguide_id" => "Z000001"
+    "measure_title" => %q(A bill to name the "KK" <kk> O'Kay & Co Post Office), "sponsor_bioguide_id" => "Z000001",
+    # Shows the summary section and its "Introduced by" sponsor line.
+    "congress_gov_url" => "https://www.congress.gov/bill/119th-congress/house-bill/1"
   }.freeze
 
   DOC = {
@@ -133,8 +136,13 @@ class EscapingTest < Minitest::Test
     build_site([member], [[VOTE, DOC]])
   end
 
-  def test_member_name_quotes_are_escaped
-    pages = build.select { |_, html| html.match?(/jj/i) }
+  def test_member_name_and_measure_title_are_escaped
+    built = build
+    vote_page = built["/votes/119/house/1/1/index.html"]
+    assert_includes vote_page, "Introduced by"
+    assert_includes vote_page, "&quot;KK&quot; &lt;kk&gt; O&#39;Kay &amp; Co"
+    assert_includes built["/members/Z000001/index.html"], "&quot;JJ&quot; &lt;jj&gt; O&#39;Jay &amp; Doe"
+    pages = built.select { |_, html| html.match?(/jj|kk/i) }
     assert_includes pages.keys, "/members/Z000001/index.html"
     assert_includes pages.keys, "/members/index.html"
     assert_includes pages.keys, "/votes/119/house/1/1/index.html"
@@ -145,17 +153,21 @@ class EscapingTest < Minitest::Test
     # JSON-escaped rather than HTML-escaped (and "</" can't appear).
     people = %r{<script type="application/json" data-people>(.*?)</script>}m
     find = pages.fetch("/find/index.html")
-    assert_equal 'Jane "JJ" Doe', JSON.parse(find[people, 1])["AL-4"]["rep"]["name"]
+    assert_equal %q(Jane "JJ" <jj> O'Jay & Doe), JSON.parse(find[people, 1])["AL-4"]["rep"]["name"]
     pages["/find/index.html"] = find.sub(people, "")
     # Likewise the vote page's state map seats.
     seats = %r{<script type="application/json" data-seats>(.*?)</script>}m
     vote = pages.fetch("/votes/119/house/1/1/index.html")
-    assert_includes JSON.parse(vote[seats, 1])["AL-4"]["title"], 'Jane "JJ" Doe (R)'
+    assert_includes JSON.parse(vote[seats, 1])["AL-4"]["title"], %q(Jane "JJ" <jj> O'Jay & Doe (R))
     pages["/votes/119/house/1/1/index.html"] = vote.sub(seats, "")
 
     pages.each do |path, html|
-      html.scan(/.?jj.?/i).each do |hit|
-        assert_match(/\A;jj&\z/i, hit, "#{path}: member name quotes not escaped")
+      # Escaped, "JJ" and <jj> both read ;jj& (from &quot;JJ&quot; and &lt;jj&gt;).
+      html.scan(/.?(?:jj|kk).?/i).each do |hit|
+        assert_match(/\A;(jj|kk)&\z/i, hit, "#{path}: quote or angle bracket not escaped")
+      end
+      ["O'Jay", "O'Kay", "& Doe", "& Co"].each do |raw|
+        refute_includes html, raw, "#{path}: apostrophe or ampersand not escaped"
       end
     end
   end
@@ -165,7 +177,7 @@ class EscapingTest < Minitest::Test
     pages = build
     html = pages.fetch("/find/index.html")
     assert_equal 435, html.scan(" data-seat=").size
-    assert_match(%r{<a href="/members/Z000001/" tabindex="-1" data-seat="AL-4"><path d="M[^"]+"/><title>Alabama, 4th District: Jane &quot;JJ&quot; Doe \(R\)</title></a>}, html)
+    assert_match(%r{<a href="/members/Z000001/" tabindex="-1" data-seat="AL-4"><path d="M[^"]+"/><title>Alabama, 4th District: Jane &quot;JJ&quot; &lt;jj&gt; O&#39;Jay &amp; Doe \(R\)</title></a>}, html)
     assert_includes html, '<a href="/members/?state=AL" tabindex="-1" data-seat="AL-1">'
     assert_includes html, "<title>Alabama, 1st District: vacant</title>"
     assert_match(%r{<g class="city t2" transform="translate\([\d.]+ [\d.]+\)"><circle/><text>Long Beach</text></g>}, html)
@@ -204,6 +216,59 @@ class EscapingTest < Minitest::Test
     html = build(MEMBER.merge("phone" => "202-225-0000 ext. 5", "phone_tel" => nil)).fetch("/members/Z000001/index.html")
     assert_includes html, '<dd class="nums">202-225-0000 ext. 5</dd>'
     refute_includes html, "tel:"
+  end
+end
+
+# The masthead, footer and analytics tag that every page shares.
+class LayoutTest < Minitest::Test
+  include SiteBuild
+
+  def build
+    build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
+  end
+
+  # The main nav item each page marks as current (nil: none).
+  CURRENT = {
+    "/index.html" => "/votes/", "/votes/index.html" => "/votes/", "/votes/119/house/1/1/index.html" => "/votes/",
+    "/members/index.html" => "/members/", "/members/Z000001/index.html" => "/members/", "/find/index.html" => "/members/",
+    "/schedule/index.html" => "/schedule/", "/about/index.html" => "/about/", "/privacy/index.html" => nil
+  }.freeze
+
+  def test_masthead_and_footer_link_to_the_schedule_and_mark_the_current_page
+    pages = build
+    assert_empty CURRENT.keys - pages.keys
+    pages.each do |path, html|
+      nav = html[%r{<nav class="mainnav" aria-label="Main">(.*?)</nav>}m, 1]
+      refute_nil nav, "#{path}: no main nav"
+      assert_equal %w[/votes/ /members/ /schedule/ /about/], nav.scan(/<a href="([^"]+)"/).flatten, path
+      assert_equal [CURRENT[path]].compact, nav.scan(/<a href="([^"]+)" aria-current="page">/).flatten, path
+      assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/schedule/">Floor schedule</a>', path
+    end
+  end
+
+  def test_umami_and_its_opt_out_only_in_a_production_build
+    production = with_env("production") { build }
+    development = with_env(nil) { build }
+    [production, development].each { |pages| assert_includes pages.keys, "/index.html" }
+    # The Privacy page names Umami in its text, so look for the tags themselves.
+    tag = '<script defer src="https://cloud.umami.is/script.js"'
+    opt_out = 'localStorage.setItem("umami.disabled", "1")'
+    production.each do |path, html|
+      assert_includes html, tag, path
+      assert_includes html, opt_out, path
+    end
+    development.each do |path, html|
+      refute_includes html, tag, path
+      refute_includes html, opt_out, path
+    end
+  end
+
+  def with_env(value)
+    saved = ENV["JEKYLL_ENV"]
+    ENV["JEKYLL_ENV"] = value
+    yield
+  ensure
+    ENV["JEKYLL_ENV"] = saved
   end
 end
 
