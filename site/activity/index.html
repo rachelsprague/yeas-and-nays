@@ -51,7 +51,7 @@ description: Roll call votes taken each week in the House and Senate, by kind of
   {%- if pv %}
   <section class="section" aria-labelledby="area-h">
     <h2 id="area-h" class="section-h sm">By policy area</h2>
-    <p class="soft">The Congressional Research Service assigns each bill and resolution one of {{ pv.area_count }} policy areas shown here, listed on Congress.gov. Every roll call on a measure counts under its area, whatever the question.</p>
+    <p class="soft">The Congressional Research Service assigns each bill and resolution one policy area, listed on Congress.gov; the {{ pv.area_count }} with roll calls this Congress are shown here. Every roll call on a measure counts under its area, whatever the question.</p>
     <ul class="vol-key small" aria-label="Kinds of vote">
       {%- for k in pv.kinds %}<li><span class="swatch k-{{ k.key }}" aria-hidden="true"></span>{{ k.label }}</li>{% endfor %}
     </ul>
@@ -71,8 +71,8 @@ description: Roll call votes taken each week in the House and Senate, by kind of
       {%- endfor %}
     </ol>
     {%- if pv.other.size > 0 %}
-    <p class="small">Not drawn above, as they have no policy area:
-      {%- for o in pv.other %} {{ o.area }} ({{ o.counts }}){% if forloop.last %}.{% else %};{% endif %}{% endfor %}</p>
+    <p class="small">Not drawn above, as no policy area is recorded for them:
+      {%- for o in pv.other %} {{ o.area | escape }} ({{ o.counts | escape }}){% if forloop.last %}.{% else %};{% endif %}{% endfor %}</p>
     {%- endif %}
     <p class="small muted">CRS assigns the House's rules (resolutions setting how a measure is debated) to the policy area Congress, so votes on a rule and on ordering the previous question on it count there, not under the measure the rule brings up.</p>
     <details>

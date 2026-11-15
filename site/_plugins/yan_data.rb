@@ -442,7 +442,7 @@ module Yan
   # chamber's area). The NO_AREA rows have no subject to compare, so they're
   # counted ("other") rather than drawn, where a long Nominations row would
   # flatten every area; the table lists all rows. Nil until the export
-  # carries policy_area.
+  # carries policy_area, or when no vote has an area to draw.
   def self.policy_volume(votes)
     return nil unless votes.any? { |v| v.key?("policy_area") }
 
@@ -451,6 +451,8 @@ module Yan
     rows = counts.keys.map(&:first).uniq
     total = ->(row, chamber = nil) { counts.sum { |(r, c), k| r == row && (chamber.nil? || c == chamber) ? k.values.sum : 0 } }
     areas = (rows - NO_AREA).sort_by { |r| [-total.call(r), r] }
+    return nil if areas.empty?
+
     other = NO_AREA & rows
     max = counts.reject { |(r, _), _| NO_AREA.include?(r) }.values.map { |k| k.values.sum }.max || 1
     present = CHAMBER_NAMES.select { |chamber, _| counts.keys.any? { |(_, c)| c == chamber } }

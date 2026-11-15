@@ -74,7 +74,7 @@ h1, h2, h3, p, ul, ol { margin: 0; }
 .topstrip { border-bottom: 1px solid var(--line); }
 .topstrip .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; }
 .dateline { font-family: var(--font-display); font-style: italic; font-size: 15px; color: var(--ink-soft); padding: 12px 0; }
-.mainnav { display: flex; gap: 20px; font-size: 14px; font-weight: 500; }
+.mainnav { display: flex; flex-wrap: wrap; gap: 0 20px; font-size: 14px; font-weight: 500; }
 .mainnav a {
   display: inline-flex; align-items: center; min-height: 44px;
   text-decoration: none; border-bottom: 2px solid transparent;

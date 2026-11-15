@@ -812,6 +812,10 @@ class PolicyVolumeTest < Minitest::Test
     assert_nil Yan.policy_volume([{ "chamber" => "house", "vote_date" => "2026-11-10", "bill_type" => "hr" }])
   end
 
+  def test_no_section_when_no_vote_has_an_area_to_draw
+    assert_nil Yan.policy_volume([vote("senate", nil, "nomination", bill_type: nil, measure: "PN5"), vote("house", nil)])
+  end
+
   def test_areas_by_total_on_a_shared_scale_with_unassigned_rows_counted_not_drawn
     votes = Array.new(2) { vote("house", "Taxation") } + [vote("senate", "Taxation", "cloture")] +
             Array.new(4) { vote("house", "Health", "amendment") } + [vote("senate", "Armed Forces", "rule")] +
