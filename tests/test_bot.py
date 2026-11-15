@@ -267,6 +267,44 @@ def test_small_word_stays_when_dropping_it_leaves_too_little_title():
     assert cut_after(vote, prefix, tail).endswith(' Act Of…"')
 
 
+def cut_at(vote, prefix, tail):
+    """Headline of `vote` when the post is just long enough to keep exactly
+    `prefix` of a title `prefix + tail` before the ellipsis."""
+    full = format_post(doc(vote), decide(vote), max_length=1000)
+    max_length = len(full) - len(tail) + len("…")
+    text = format_post(doc(vote), decide(vote), max_length=max_length)
+    assert len(text) <= max_length
+    return text.splitlines()[0]
+
+
+@pytest.mark.parametrize("prefix, tail, ending", [
+    ("Should the Senate concur in the amendment", "? And a long tail ", ' the amendment…"'),
+    ("An Act to amend title 5 (the Housing Act", ") and a long tail ", ' Housing Act…"'),
+    ("An Act relating to benefits for veterans", "’ survivors and a long tail ", ' for veterans…"'),
+    # A period mostly ends an abbreviation, so the abbreviated word goes too.
+    ("An Act to amend the provisions of H.R", ". 5371 and a long tail ", ' provisions…"'),
+    ("An Act relating to Section 5 of the U.S", ". Code and a long tail ", ' Section 5…"'),
+    ("To name the post office in Saint Louis and St", ". Louis County and a long tail ", ' Saint Louis…"'),
+])
+def test_cut_just_before_closing_punctuation_keeps_the_whole_word(prefix, tail, ending):
+    tail += "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(ending)
+
+
+def test_cut_inside_a_curly_quoted_name_closes_the_quote():
+    prefix, tail = "Disapproving the rule relating to “California State Non", "road Standards” " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H J RES 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(' “California State…”"')
+
+
+def test_closing_quote_that_does_not_fit_takes_a_shorter_cut():
+    # The cut falls exactly at a word end, with no room left for the quote.
+    prefix, tail = "Disapproving the rule relating to “California State", " Nonroad Standards” " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H J RES 1", measure_title=prefix + tail)
+    assert cut_at(vote, prefix, tail).endswith(' “California…”"')
+
+
 def test_reconsideration_is_dropped_before_the_title_is_cut():
     vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Rejected",
                        vote_title="Upon Reconsideration, Motion to Invoke Cloture on the Motion to Proceed to H.R. 5371",
@@ -384,6 +422,31 @@ def test_publish_stops_at_post_limit_and_leaves_rest_for_next_run(out_dir, tmp_p
     assert bot_state.load(state_path) == {"house": "h119-2-0300", "senate": "s119-2-0257"}
 
 
+def test_publish_skips_a_vote_too_long_to_post_and_keeps_going(out_dir, tmp_path, capsys):
+    # Five long names fill the post, leaving no room for the title.
+    long_names = [f"Member{i} " + "x" * 60 for i in range(5)]
+    (out_dir / "votes" / "h119-2-0316.json").write_text(json.dumps(doc(
+        house_vote(vote_id="h119-2-0316", roll_number=316), against=long_names)))
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0300", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher()
+    publish_run(out_dir, state_path, publisher)
+
+    assert [url for _, url in publisher.posts] == ["https://clerk.house.gov/Votes/2026317"]
+    assert bot_state.load(state_path)["house"] == "h119-2-0317"
+    assert "too long to post in 300 characters" in capsys.readouterr().out
+
+
+def test_dry_run_shows_a_vote_too_long_to_post_as_skipped(out_dir, tmp_path, capsys):
+    long_names = [f"Member{i} " + "x" * 60 for i in range(5)]
+    (out_dir / "votes" / "h119-2-0317.json").write_text(json.dumps(doc(house_vote(), against=long_names)))
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    bot.run(state_path, out_dir)
+    out = capsys.readouterr().out
+    assert "[too long to post in 300 characters]\n(skipped)" in out
+
+
 def test_publish_refuses_a_stale_backlog(out_dir, tmp_path):
     state_path = tmp_path / "state.json"
     bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
@@ -410,6 +473,36 @@ def test_publisher_requires_credentials_and_never_logs_them(monkeypatch):
     with pytest.raises(RuntimeError) as err:
         BlueskyPublisher(client=FailingClient())
     assert "secret-value" not in str(err.value) and err.value.__cause__ is None
+
+
+def test_publisher_feed_and_post_errors_give_only_type_and_status(monkeypatch):
+    from yan.bot.publish import BlueskyPublisher
+
+    class Response:
+        status_code = 502
+
+    class SDKError(Exception):
+        response = Response()
+
+    class FailingClient:
+        def login(self, handle, password):
+            pass
+
+        def get_author_feed(self, actor, limit):
+            raise SDKError(f"feed for {actor}: response body")
+
+        def send_post(self, builder, langs):
+            raise SDKError(f"rejected {builder.build_text()}: response body")
+
+    monkeypatch.setenv("BLUESKY_HANDLE", "example.test")
+    monkeypatch.setenv("BLUESKY_APP_PASSWORD", "x")
+    publisher = BlueskyPublisher(client=FailingClient())
+    with pytest.raises(RuntimeError) as err:
+        publisher.recent_links()
+    assert str(err.value) == "Bluesky feed read failed (SDKError, HTTP 502)" and err.value.__cause__ is None
+    with pytest.raises(RuntimeError) as err:
+        publisher.post("House passes H.R. 1\nclerk.house.gov/Votes/1", "https://clerk.house.gov/Votes/1")
+    assert str(err.value) == "Bluesky post failed (SDKError, HTTP 502)" and err.value.__cause__ is None
 
 
 def test_publisher_links_the_last_line_to_the_full_url(monkeypatch):
