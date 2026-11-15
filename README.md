@@ -86,13 +86,15 @@ make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bun
 
 ## Automation
 
-`.github/workflows/pipeline.yml` runs hourly, started by an external scheduler (cron-job.org) through the workflow_dispatch API, and on demand: ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot.
+`.github/workflows/pipeline.yml` runs hourly, started by an external scheduler (cron-job.org) through the workflow_dispatch API, and on demand: ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot. The steps that run third-party code get a read-only token; a separate `commit` job, which runs none, takes their output as an artifact and is the only one that can push. The raw-data cache is saved even when a later step fails, so a retry picks up where ingest left off.
 
 | Setting | Type | Purpose |
 | --- | --- | --- |
 | `BOT_PUBLISH` | repository variable | `true` to publish to Bluesky. Unset or anything else: dry run, posts printed to the log. |
-| `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` | secrets | Bluesky account; passed to the bot step only when publishing. |
-| `CONGRESS_API_KEY` | secret | Congress.gov API key for bill details and summaries; passed to the ingest step only. |
+| `BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD` | `pipeline` environment secrets | Bluesky account; passed to the bot step only when publishing. |
+| `CONGRESS_API_KEY` | `pipeline` environment secret | Congress.gov API key for bill details and summaries; passed to the ingest step only. |
+
+The `pipeline` environment's deployment branches are limited to `main`, so a run from any other branch can't read its secrets.
 
 `.github/workflows/site.yml` builds the site and deploys it to GitHub Pages after each successful data run, and on pushes that change `site/`. Pages must be set to deploy from GitHub Actions.
 

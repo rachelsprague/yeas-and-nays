@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 # One run at a time: a run that's still posting must finish (and commit its
 # bot state) before the next one starts.
@@ -16,15 +16,20 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Runs third-party code (ingest, dbt, the bot's dependencies), so it gets a
+  # read-only token. Its output reaches main only through the commit job.
   update:
     # Only main: a dispatch on a PR branch would run unmerged code with the
-    # secrets (and post, if publishing is on), then push the branch onto main.
+    # secrets (and post, if publishing is on).
     if: github.ref == 'refs/heads/main'
+    # Secrets live in this environment, whose deployment branches are limited
+    # to main, so they stay out of reach even of a branch without the `if`.
+    environment: pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
     steps:
-      # No token in .git/config: ingest, dbt and the bot run third-party code.
-      # Only "Commit data" gets the write token, for its own pull and push.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -37,7 +42,7 @@ jobs:
       # Raw downloads aren't committed. Caching them between runs keeps ingest
       # incremental, so each run fetches only new and recent votes.
       - name: Restore raw data cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: data/raw
           key: raw-${{ github.run_id }}
@@ -46,9 +51,20 @@ jobs:
       # The Congress.gov key (CRS bill summaries) is passed to this step only,
       # and sent only as a request header.
       - name: Ingest
+        id: ingest
         env:
           CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
         run: uv run yan ingest
+
+      # Saved even if ingest or a later step fails, so a retry doesn't fetch
+      # everything again. Raw files are written atomically, so a run cut off
+      # partway never caches a partial file.
+      - name: Save raw data cache
+        if: always() && steps.ingest.outcome != 'skipped'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
 
       - name: Stage
         run: uv run yan stage
@@ -82,26 +98,57 @@ jobs:
 
       # Also runs if the bot step failed partway, so state for anything
       # already posted is saved and not posted again.
-      - name: Commit data
+      - name: Upload data
+        id: upload
         if: success() || steps.bot.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: data
+          path: |
+            data/out
+            data/bot/state.json
+          if-no-files-found: error
+          # Dotfiles stay out, so the commit job never gets a .gitattributes
+          # or similar to check in. Overwrite lets a re-run upload again.
+          include-hidden-files: false
+          overwrite: true
+          retention-days: 1
+
+  # The only job with a write token. It runs no third-party code: a fresh
+  # checkout, the data from the update job, and git.
+  commit:
+    needs: update
+    # always() so a failed bot step still commits; the artifact check skips
+    # this when the update job stopped before uploading.
+    if: always() && github.ref == 'refs/heads/main' && needs.update.outputs.artifact-id != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: data
+          path: ${{ runner.temp }}/data
+
+      # Replace data/out wholesale: export deletes files for votes and members
+      # that are gone, and copying over the old tree would keep them.
+      - name: Commit data
         env:
-          GH_TOKEN: ${{ github.token }}
-        # The token goes in a one-off auth header (as checkout sets it), never
-        # in a URL or saved git config. Hooks and fsmonitor are off, the
-        # simplest way for an earlier step to run code here; other git config
-        # and env routes remain until this step moves to a job of its own.
+          DATA: ${{ runner.temp }}/data
         run: |
-          safe_git() { git -c core.hooksPath=/dev/null -c core.fsmonitor=false "$@"; }
-          safe_git add data/out data/bot/state.json
-          if safe_git diff --cached --quiet; then
+          rm -rf data/out
+          cp -R "$DATA/out" data/out
+          cp "$DATA/bot/state.json" data/bot/state.json
+          git add data/out data/bot/state.json
+          if git diff --cached --quiet; then
             echo "No data changes."
             exit 0
           fi
-          safe_git config user.name "github-actions[bot]"
-          safe_git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          safe_git commit -m "Update vote data"
-          b64="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
-          echo "::add-mask::$b64"
-          auth="http.https://github.com/.extraheader=AUTHORIZATION: basic $b64"
-          safe_git -c "$auth" pull --rebase origin main
-          safe_git -c "$auth" push origin HEAD:main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update vote data"
+          git pull --rebase origin main
+          git push origin HEAD:main

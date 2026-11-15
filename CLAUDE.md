@@ -18,7 +18,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 
 ## Secrets (GitHub Actions)
 
-`BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `CONGRESS_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` (PR review only; a Claude subscription token from `claude setup-token`). Never commit credentials or `.env` files. Send the Congress.gov key as an `X-Api-Key` header, not in URLs.
+`BLUESKY_HANDLE`, `BLUESKY_APP_PASSWORD`, `CONGRESS_API_KEY` (in the `pipeline` environment, limited to `main`), `CLAUDE_CODE_OAUTH_TOKEN` (repository secret; PR review only; a Claude subscription token from `claude setup-token`). Never commit credentials or `.env` files. Send the Congress.gov key as an `X-Api-Key` header, not in URLs.
 
 ## Conventions
 
