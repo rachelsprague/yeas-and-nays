@@ -7,7 +7,10 @@
 //   button[data-tab=key][data-value=v]   tab group; "all" matches every row.
 //                              A row matches if any of its space-separated
 //                              data-{key} values equals v.
-//   [data-row]                 a filterable row, carrying data-{key} attributes
+//   [data-row]                 a filterable row, carrying data-{key} attributes.
+//                              Without a tab's data-{key}, a row ignores that
+//                              tab; without a select's or search box's, it
+//                              counts as "" and hides once that one is set.
 //   [data-limit=n]             on a list: show at most n matching rows
 //   [data-skip-when=key:v ...] on a row: hide while that tab is selected
 //   [data-show-when=key:v]     shown only while that tab is selected
