@@ -108,6 +108,10 @@ jobs:
             data/out
             data/bot/state.json
           if-no-files-found: error
+          # Dotfiles stay out, so the commit job never gets a .gitattributes
+          # or similar to check in. Overwrite lets a re-run upload again.
+          include-hidden-files: false
+          overwrite: true
           retention-days: 1
 
   # The only job with a write token. It runs no third-party code: a fresh
