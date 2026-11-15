@@ -25,6 +25,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 - Bot must support a dry-run mode that prints posts without publishing; default to dry run locally.
 - Persist bot state (last posted vote ID per chamber) in the repo so runs are idempotent.
 - Brand assets live in `brand/` (svg, social, favicon). Palette: aubergine #5A3463, paper #F2EFE6, ink #1C1C1C, dark-mode accent #A887B5. Type: Newsreader (display), IBM Plex Sans (UI/body).
+- When Rachel asks how something in Congress works (a procedure, a rule, how a kind of vote is decided), answer it, then offer to turn the answer into a page on the site so other readers learn it too. Pages explain how procedures work, not why a particular vote turned out as it did. A definition of a kind of vote (the question voted on) goes in `site/_data/procedures.yml`, with a `match` pattern for that question; anything else becomes its own page. Either way, follow STYLE.md: neutral wording, cite official sources.
 
 ## Backlog
 
