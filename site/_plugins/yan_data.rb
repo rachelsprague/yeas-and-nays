@@ -323,11 +323,19 @@ module Yan
   # Present, Not voting (the legend marks), widths in proportion. A state
   # with no member recorded (a vacant delegation) gets an empty tile; DC and
   # the territories appear only when their delegates are on the roll call.
+  # Members with no known state are counted in "unplaced", for a note.
   def self.state_grid(positions, members_by_id, words)
+    return nil if positions.empty?
+
     counts = Hash.new { |h, k| h[k] = Hash.new(0) }
+    unplaced = 0
     positions.each do |id, raw|
-      state = members_by_id.dig(id, "state") or next
-      counts[state][position_kind(raw)] += 1
+      state = members_by_id.dig(id, "state")
+      if STATE_TILES.key?(state)
+        counts[state][position_kind(raw)] += 1
+      else
+        unplaced += 1
+      end
     end
     tiles = STATE_TILES.filter_map do |state, (row, col)|
       next if TERRITORIES.include?(state) && !counts.key?(state)
@@ -348,7 +356,7 @@ module Yan
         "runs" => runs, "summary" => runs.map { |r| "#{r["count"]} #{r["label"]}" }.join(", ") }
     end
     rows = tiles.map { |t| t["y"] / TILE_PITCH + 1 }.max
-    { "tiles" => tiles, "width" => 11 * TILE_PITCH - 2, "height" => rows * TILE_PITCH - 2,
+    { "tiles" => tiles, "width" => 11 * TILE_PITCH - 2, "height" => rows * TILE_PITCH - 2, "unplaced" => unplaced,
       # The text version: one row per state, by name.
       "table" => tiles.reject { |t| t["runs"].empty? }.sort_by { |t| t["name"] }.map do |t|
         c = counts[t["state"]]

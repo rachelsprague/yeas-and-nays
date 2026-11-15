@@ -74,7 +74,7 @@ layout: default
         </table>
       </div>
     </details>
-    <p class="small muted">Each tile is one state's members on this vote, in proportion. The District of Columbia and the territories appear when their delegates are recorded.</p>
+    <p class="small muted">{% if page.state_grid.unplaced > 0 %}Not shown: {{ page.state_grid.unplaced }} member{% if page.state_grid.unplaced != 1 %}s{% endif %} with no state tile. {% endif %}Each tile is one state's members on this vote, in proportion. The District of Columbia and the territories appear when their delegates are recorded.</p>
   </section>
   {%- endif %}
 

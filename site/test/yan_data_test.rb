@@ -333,6 +333,16 @@ class StateGridTest < Minitest::Test
                  with_pr["table"].last)
   end
 
+  def test_members_without_a_known_state_are_counted_apart
+    grid = Yan.state_grid({ "A1" => "Yea", "Z9" => "Nay", "C1" => "Yea" }, MEMBERS.merge("C1" => { "state" => "ZZ" }), WORDS)
+    assert_equal 2, grid["unplaced"]
+    assert_equal ["California"], grid["table"].map { |r| r["name"] }
+  end
+
+  def test_no_state_grid_without_positions
+    assert_nil Yan.state_grid({}, MEMBERS, WORDS)
+  end
+
   def test_tiles_do_not_overlap
     assert_equal Yan::STATE_TILES.size, Yan::STATE_TILES.values.uniq.size
     assert_equal Yan::STATE_NAMES.keys.sort, Yan::STATE_TILES.keys.sort
@@ -367,9 +377,10 @@ class VotePageTest < Minitest::Test
 
   def pages
     @pages ||= build_site(
-      [member("A000001", "AL", 1), member("A000002", "AL", 2), member("A000003", "AL", 3)],
-      [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "A000002" => "Present", "A000003" => "Not Voting" },
-                                   { "yes" => 1, "present" => 1, "not_voting" => 1 })],
+      [member("A000001", "AL", 1), member("A000002", "AL", 2), member("A000003", "AL", 3), member("A000004", "AL", 4), member("A000005", "ZZ", 1)],
+      [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "A000002" => "Present", "A000003" => "Not Voting",
+                                     "A000004" => "Nay", "A000005" => "Yea" },
+                                   { "yes" => 2, "no" => 1, "present" => 1, "not_voting" => 1 })],
        [vote(2, "Election of the Speaker"), doc({ "A000001" => "Johnson", "A000002" => "Johnson", "A000003" => "Not Voting" },
                                                 { "other" => 2, "not_voting" => 1 })]]
     )
@@ -378,9 +389,13 @@ class VotePageTest < Minitest::Test
   def test_every_position_is_drawn_on_both_grids
     html = pages.fetch("/votes/119/house/1/1/index.html")
     %w[yea present nv].each { |mark| assert_equal 2, html.scan(%(<g class="dot #{mark}")).size, mark }
-    assert_includes html, "<title>Alabama: 1 Yea, 1 Present, 1 Not Voting</title>"
+    assert_includes html, '<g class="dot nay" fill="url(#hatch-R)">'
+    assert_includes html, '<g class="dot nay" fill="url(#hatch-state)">'
+    assert_includes html, "<title>Alabama: 1 Yea, 1 Nay, 1 Present, 1 Not Voting</title>"
     assert_includes html, "<title>Texas: no members recorded</title>"
-    assert_includes html, %(<th scope="row">Alabama</th><td class="r">1</td><td class="r">0</td><td class="r">1</td><td class="r">1</td>)
+    assert_includes html, %(<th scope="row">Alabama</th><td class="r">1</td><td class="r">1</td><td class="r">1</td><td class="r">1</td>)
+    # A000005's state code has no tile.
+    assert_includes html, "Not shown: 1 member with no state tile."
   end
 
   def test_no_grids_for_a_speaker_election
