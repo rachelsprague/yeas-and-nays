@@ -8,7 +8,9 @@ caucus as of each vote's date.
 An entry whose bioguide ID isn't a capital letter and six digits is logged
 and skipped: the ID goes into Congress.gov request URLs, cache file names
 and page URLs. An entry with no ID block, or no bioguide ID, is logged and
-skipped too, as is a list item that isn't an object. If the member has
+skipped too, as is a list item that isn't an object (an entry, term or
+party affiliation). A null or non-object name or social block reads as
+empty, and null or non-list terms or affiliations as none. If the member has
 votes in the data, a skipped entry shows up downstream as a dbt test
 failure (its vote positions fail the positions mart's relationships or
 not_null test on bioguide_id), so check this log when one appears;
@@ -35,8 +37,7 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
         if not _is_entry(p):
             continue
         ids = p.get("id")
-        name = p.get("name")
-        name = name if isinstance(name, dict) else {}
+        name = _object(p.get("name"))
         bioguide = _bioguide(ids, name.get("official_full") or name.get("last"))
         if not bioguide:
             continue
@@ -48,7 +49,9 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
             "official_full_name": name.get("official_full"),
             "is_current": is_current,
         })
-        for t in p.get("terms", []):
+        for t in _list(p.get("terms")):
+            if not _is_entry(t):
+                continue
             term_rows.append({
                 "bioguide_id": bioguide,
                 "term_type": t.get("type"),
@@ -63,7 +66,9 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
                 "phone": t.get("phone"),
                 "office": t.get("office"),
             })
-            for a in t.get("party_affiliations", []):
+            for a in _list(t.get("party_affiliations")):
+                if not _is_entry(a):
+                    continue
                 affiliation_rows.append({
                     "bioguide_id": bioguide,
                     "term_start": t.get("start"),
@@ -95,7 +100,7 @@ def parse_social(entries: list[dict]) -> list[dict]:
         bioguide = _bioguide(e.get("id"), e.get("id"))
         if not bioguide:
             continue
-        social = e.get("social", {})
+        social = _object(e.get("social"))
         rows.append({"bioguide_id": bioguide} | {f: _text(social.get(f)) for f in SOCIAL_FIELDS})
     return rows
 
@@ -132,6 +137,14 @@ def _bioguide(ids, label) -> str | None:
     log.warning("legislators: skipping an entry with malformed bioguide ID %s (%s)",
                 _label(value), _label(label))
     return None
+
+
+def _object(value) -> dict:
+    return value if isinstance(value, dict) else {}
+
+
+def _list(value) -> list:
+    return value if isinstance(value, list) else []
 
 
 def _label(value) -> str:

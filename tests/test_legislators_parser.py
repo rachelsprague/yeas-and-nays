@@ -125,6 +125,33 @@ def test_a_name_that_is_not_an_object_reads_as_empty(name, caplog):
     assert "no bioguide ID (None)" in caplog.text
 
 
+@pytest.mark.parametrize("value", [None, "x", 1], ids=["null", "string", "int"])
+def test_null_or_wrong_type_nested_fields_read_as_empty(value):
+    people, terms, affiliations = parse([
+        {"id": {"bioguide": "X000003"}, "name": {"last": "No Terms"}, "terms": value},
+        {"id": {"bioguide": "X000004"}, "name": {"last": "No Affiliations"},
+         "terms": [{"type": "rep", "start": "2025-01-03", "party_affiliations": value}]},
+    ], is_current=True)
+    assert [p["bioguide_id"] for p in people] == ["X000003", "X000004"]
+    assert [t["bioguide_id"] for t in terms] == ["X000004"]
+    assert affiliations == []
+
+    rows = parse_social([{"id": {"bioguide": "X000003"}, "social": value}])
+    assert rows == [{"bioguide_id": "X000003"} | {f: None for f in
+                    ("twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon")}]
+
+
+def test_skips_a_term_or_affiliation_that_is_not_an_object(caplog):
+    _, terms, affiliations = parse([
+        {"id": {"bioguide": "X000003"}, "name": {"last": "Odd Terms"},
+         "terms": [None, {"type": "rep", "start": "2025-01-03",
+                          "party_affiliations": ["Republican", {"start": "2025-01-03", "party": "Independent"}]}]},
+    ], is_current=True)
+    assert [t["term_type"] for t in terms] == ["rep"]
+    assert [a["party"] for a in affiliations] == ["Independent"]
+    assert caplog.text.count("isn't an object") == 2
+
+
 def test_malformed_id_warning_names_the_member(caplog):
     parse([{"id": {"bioguide": "x000001"}, "name": {"last": "Malformed", "official_full": "Pat Malformed"}}],
           is_current=True)
