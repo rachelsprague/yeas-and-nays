@@ -102,3 +102,66 @@ def test_social_dir_without_the_file_stages_no_accounts(tmp_path):
         [{"id": {"bioguide": "X000001"}, "social": {"facebook": "example"}}]
     ))
     assert [r["facebook"] for r in parse_social_dir(tmp_path)] == ["example"]
+
+
+@pytest.mark.parametrize("item", [None, "X000002", ["X000002"]], ids=["null", "string", "list"])
+def test_skips_a_list_item_that_is_not_an_object(item, caplog):
+    people, terms, _ = parse([PEOPLE[0], item], is_current=True)
+    assert [p["bioguide_id"] for p in people] == ["X000001"]
+    assert [t["bioguide_id"] for t in terms] == ["X000001"]
+    rows = parse_social([item, {"id": {"bioguide": "X000001"}, "social": {}}])
+    assert [r["bioguide_id"] for r in rows] == ["X000001"]
+    assert caplog.text.count(f"isn't an object ({item!r})") == 2
+
+
+@pytest.mark.parametrize("name", [None, "Pat Example", ["Pat"]], ids=["null", "string", "list"])
+def test_a_name_that_is_not_an_object_reads_as_empty(name, caplog):
+    entries = [{"id": {"bioguide": "X000003"}, "name": name, "terms": []},
+               {"id": {"govtrack": 3}, "name": name, "terms": []}]
+
+    people, _, _ = parse(entries, is_current=True)
+    assert [(p["bioguide_id"], p["last_name"], p["official_full_name"]) for p in people] == [
+        ("X000003", None, None)]
+    assert "no bioguide ID (None)" in caplog.text
+
+
+@pytest.mark.parametrize("value", [None, "x", 1], ids=["null", "string", "int"])
+def test_null_or_wrong_type_nested_fields_read_as_empty(value):
+    people, terms, affiliations = parse([
+        {"id": {"bioguide": "X000003"}, "name": {"last": "No Terms"}, "terms": value},
+        {"id": {"bioguide": "X000004"}, "name": {"last": "No Affiliations"},
+         "terms": [{"type": "rep", "start": "2025-01-03", "party_affiliations": value}]},
+    ], is_current=True)
+    assert [p["bioguide_id"] for p in people] == ["X000003", "X000004"]
+    assert [t["bioguide_id"] for t in terms] == ["X000004"]
+    assert affiliations == []
+
+    rows = parse_social([{"id": {"bioguide": "X000003"}, "social": value}])
+    assert rows == [{"bioguide_id": "X000003"} | {f: None for f in
+                    ("twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon")}]
+
+
+def test_skips_a_term_or_affiliation_that_is_not_an_object(caplog):
+    _, terms, affiliations = parse([
+        {"id": {"bioguide": "X000003"}, "name": {"last": "Odd Terms"},
+         "terms": [None, {"type": "rep", "start": "2025-01-03",
+                          "party_affiliations": ["Republican", {"start": "2025-01-03", "party": "Independent"}]}]},
+    ], is_current=True)
+    assert [t["term_type"] for t in terms] == ["rep"]
+    assert [a["party"] for a in affiliations] == ["Independent"]
+    assert caplog.text.count("isn't an object") == 2
+
+
+def test_malformed_id_warning_names_the_member(caplog):
+    parse([{"id": {"bioguide": "x000001"}, "name": {"last": "Malformed", "official_full": "Pat Malformed"}}],
+          is_current=True)
+    assert "malformed bioguide ID 'x000001' ('Pat Malformed')" in caplog.text
+
+
+def test_logged_labels_are_capped(caplog):
+    parse_social([{"id": {"bioguide": "X" * 500, "govtrack": 1}, "social": {}}])
+    parse([{"id": {}, "name": {"last": "L" * 500}}, ["Y" * 500]], is_current=True)
+
+    assert len(caplog.records) == 3
+    assert caplog.text.count("…") == 4
+    assert not any(c * 80 in caplog.text for c in "XLY")
