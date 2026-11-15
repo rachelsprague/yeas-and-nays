@@ -444,11 +444,14 @@ module Yan
   def self.activity_votes(votes)
     with_areas = votes.any? { |v| v.key?("policy_area") }
     votes.map do |v|
+      question = [v["question"], (v["measure_label"] unless v["question"].to_s.include?(v["measure_label"].to_s))].compact.join(" · ")
+      # The title line, as vote pages show it; with no title (a Speaker election),
+      # the question is the title and isn't repeated above it ("q" nil).
+      title = [v["measure_title"], v["vote_title"]].find { |t| !t.to_s.strip.empty? }
       { "u" => v["url"], "c" => v["chamber"], "w" => week_of(v).iso8601,
         "a" => with_areas ? policy_row(v) : nil, "k" => vote_kind(v.dig("procedure", "key")),
         "d" => Filters.ap_date(v["vote_date"]), "r" => v["roll_number"],
-        "q" => [v["question"], (v["measure_label"] unless v["question"].to_s.include?(v["measure_label"].to_s))].compact.join(" · "),
-        "t" => v["measure_title"] || v["vote_title"] || v["question"], "s" => v["result_label"] }
+        "q" => title && question, "t" => title || question, "s" => v["result_label"] }
     end
   end
 

@@ -74,40 +74,59 @@
   }
 
   page.addEventListener("mouseover", function (e) { hover(barAt(e.target), e); });
-  page.addEventListener("mousemove", function (e) { if (current) moveTip(e); });
+  // A click hides the box; moving on within the same bar brings it back.
+  page.addEventListener("mousemove", function (e) {
+    var bar = barAt(e.target);
+    if (bar && (bar !== current || tip.hidden)) hover(bar, e);
+    else if (current) moveTip(e);
+  });
   page.addEventListener("mouseleave", function () { hover(null); });
+  window.addEventListener("scroll", function () { hover(null); }, { passive: true });
 
   var votes = null;
   function loadVotes() {
     if (!votes) {
       votes = fetch("/activity/rollcalls.json")
         .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function (d) { return d.votes; });
+        .then(function (d) {
+          if (!Array.isArray(d && d.votes)) throw new Error("no votes");
+          return d.votes;
+        });
       votes.catch(function () { votes = null; }); // let a later click try again
     }
     return votes;
   }
 
-  var selected = null;
+  // One list open at a time. Each click (and Close) starts a new request
+  // number, so a list that finishes loading after another click is dropped.
+  var open = null; // { bar, panel }
+  var request = 0;
+
+  function closeList() {
+    request++;
+    if (!open) return;
+    open.panel.textContent = "";
+    open.bar.classList.remove("on");
+    open = null;
+  }
+
   function list(bar) {
     var panel = bar.closest("[data-list-scope]").querySelector("[data-list]");
-    if (selected) selected.classList.remove("on");
-    selected = bar;
+    closeList();
+    var mine = request;
+    open = { bar: bar, panel: panel };
     bar.classList.add("on");
 
     var total = +bar.getAttribute("data-total");
-    panel.textContent = "";
     var head = el("div", "vol-list-head");
     head.appendChild(el("strong", "small", bar.getAttribute("data-head") + " · " + rollCalls(total)));
     var close = el("button", "linkish small", "Close");
     close.type = "button";
-    close.addEventListener("click", function () {
-      panel.textContent = "";
-      bar.classList.remove("on");
-      selected = null;
-    });
+    close.addEventListener("click", closeList);
     head.appendChild(close);
     panel.appendChild(head);
+    // The area list sits under every area's row: bring it into view.
+    panel.scrollIntoView({ block: "nearest" });
     if (!total) return;
 
     var status = el("p", "small muted", "Loading…");
@@ -116,7 +135,7 @@
     var week = bar.getAttribute("data-week");
     var area = bar.getAttribute("data-area");
     loadVotes().then(function (all) {
-      if (selected !== bar) return; // another bar was clicked meanwhile
+      if (mine !== request) return; // another click or Close since
       var rows = all.filter(function (v) {
         return v.c === chamber && (week ? v.w === week : v.a === area);
       });
@@ -130,15 +149,16 @@
         kicker.appendChild(el("span", "swatch k-" + v.k));
         kicker.appendChild(document.createTextNode(" Roll " + v.r + " · " + v.d + " · " + (labels[v.k] || "")));
         a.appendChild(kicker);
-        a.appendChild(el("span", "small soft", v.q));
+        if (v.q) a.appendChild(el("span", "small soft", v.q));
         a.appendChild(el("span", "t", v.t));
         a.appendChild(el("span", "small soft nums", v.s));
         li.appendChild(a);
         ul.appendChild(li);
       });
       panel.appendChild(ul);
-    }, function () {
-      if (selected === bar) status.textContent = "The list couldn't be loaded. The tables below have every count.";
+      panel.scrollIntoView({ block: "nearest" });
+    }).catch(function () {
+      if (mine === request) status.textContent = "The list couldn't be loaded. The tables below have every count.";
     });
   }
 

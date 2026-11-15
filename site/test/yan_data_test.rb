@@ -870,6 +870,9 @@ class ActivityListTest < Minitest::Test
     h.delete("policy_area")
     row = Yan.activity_votes([h]).first
     assert_equal ["On Passage · H.R. 1", "A bill", nil], row.values_at("q", "t", "a")
+    # No title (a Speaker election, or a blank one): the question is the title, shown once.
+    s = v.merge("question" => "Election of the Speaker", "measure_label" => nil, "measure_number" => nil, "vote_title" => " ")
+    assert_equal [nil, "Election of the Speaker"], Yan.activity_votes([s]).first.values_at("q", "t")
   end
 
   def test_rollcalls_json_is_built_without_running_liquid_in_titles
