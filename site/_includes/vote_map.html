@@ -1,0 +1,22 @@
+{%- comment -%} US map of one vote (Yan.state_map), drawn by vote-map.js from the shapes at include.map.src:
+each House district or each senator's half of a state filled with a mark. Yea solid, Nay striped,
+Present dotted, Not voting open. Without JS it stays hidden; the By state table is its text version. {%- endcomment -%}
+{%- assign map = include.map -%}
+<div class="vmap js-only" data-vmap data-src="{{ map.src }}" data-chamber="{{ map.chamber }}" aria-hidden="true">
+  <svg focusable="false">
+    <defs>
+      <pattern id="vmap-nay" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect class="bg" width="6" height="6"/><rect width="2.5" height="6"/></pattern>
+      <pattern id="vmap-present" width="6" height="6" patternUnits="userSpaceOnUse"><rect class="bg" width="6" height="6"/><circle cx="3" cy="3" r="1.3"/></pattern>
+    </defs>
+  </svg>
+  <p class="small vmap-caption" data-caption>&nbsp;</p>
+  <ul class="vmap-key small">
+    <li><span class="mark yea"></span>{{ page.words.yes }}</li>
+    <li><span class="mark nay"></span>{{ page.words.no }}</li>
+    <li><span class="mark dots"></span>Present</li>
+    <li><span class="mark"></span>Not voting</li>
+    <li><span class="mark none"></span>{% if map.chamber == "house" %}Vacant or no vote recorded{% else %}No senator recorded{% endif %}</li>
+  </ul>
+  <script type="application/json" data-seats>{{ map.seats_json }}</script>
+</div>
+<script src="/assets/js/vote-map.js" defer></script>

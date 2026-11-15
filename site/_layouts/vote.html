@@ -51,10 +51,13 @@ layout: default
     </section>
   </div>
 
-  {%- if page.state_grid %}
+  {%- assign smap = page.state_map -%}
+  {%- if smap %}
   <section class="section" aria-labelledby="state-h">
     <h2 id="state-h" class="section-h sm">By state</h2>
-    {%- include state_grid.html view=page %}
+    {%- if smap.src %}
+    {%- include vote_map.html map=smap %}
+    {%- endif %}
     <details>
       <summary class="small">Show the table by state</summary>
       <div class="scroll">
@@ -67,14 +70,16 @@ layout: default
             <th scope="col" class="r">Not voting</th>
           </tr></thead>
           <tbody>
-            {%- for s in page.state_grid.table %}
+            {%- for s in smap.table %}
             <tr><th scope="row">{{ s.name }}</th><td class="r">{{ s.yes }}</td><td class="r">{{ s.no }}</td><td class="r">{{ s.present }}</td><td class="r">{{ s.not_voting }}</td></tr>
             {%- endfor %}
           </tbody>
         </table>
       </div>
     </details>
-    <p class="small muted">{% if page.state_grid.unplaced > 0 %}Not shown: {{ page.state_grid.unplaced }} member{% if page.state_grid.unplaced != 1 %}s{% endif %} with no state tile. {% endif %}Each tile is one state's members on this vote, in proportion. The District of Columbia and the territories appear when their delegates are recorded.</p>
+    {%- if smap.src %}
+    <p class="small muted js-only">{% if smap.chamber == "house" %}Each district shows its representative's vote.{% else %}Each state is split in two, one side per senator, in alphabetical order from left to right.{% endif %} Hover over or tap a {% if smap.chamber == "house" %}district{% else %}state{% endif %} for names.{% if smap.unmapped > 0 %} Not on the map: {{ smap.unmapped }} member{% if smap.unmapped != 1 %}s{% endif %} from outside the 50 states (the District of Columbia and the territories are in the table).{% endif %} District and state lines from the U.S. Census Bureau.</p>
+    {%- endif %}
   </section>
   {%- endif %}
 

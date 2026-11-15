@@ -140,6 +140,11 @@ class EscapingTest < Minitest::Test
     find = pages.fetch("/find/index.html")
     assert_equal 'Jane "JJ" Doe', JSON.parse(find[people, 1])["AL-4"]["rep"]["name"]
     pages["/find/index.html"] = find.sub(people, "")
+    # Likewise the vote page's state map seats.
+    seats = %r{<script type="application/json" data-seats>(.*?)</script>}m
+    vote = pages.fetch("/votes/119/house/1/1/index.html")
+    assert_includes JSON.parse(vote[seats, 1])["AL-4"]["title"], 'Jane "JJ" Doe (R)'
+    pages["/votes/119/house/1/1/index.html"] = vote.sub(seats, "")
 
     pages.each do |path, html|
       html.scan(/.?jj.?/i).each do |hit|
@@ -287,6 +292,19 @@ class DistrictMapTest < Minitest::Test
       assert(doc["districts"].all? { |d| d["d"].start_with?("M") }, congress)
     end
   end
+
+  # The vote pages' maps (scripts/build_vote_map.py) cover the same seats, keyed
+  # by the seat codes Yan.state_map uses, and every state.
+  def test_committed_vote_maps_match_the_district_maps
+    %w[119 120].each do |congress|
+      src = JSON.parse(File.read(File.expand_path("../_maps/#{congress}.json", __dir__)))
+      doc = JSON.parse(File.read(File.expand_path("../assets/maps/#{congress}.json", __dir__)))
+      seats = src["districts"].map { |d| Yan.seat("chamber" => "house", "state" => d["state"], "district" => d["district"]) }
+      assert_equal seats.sort, doc["districts"].keys.sort, congress
+      assert_equal (Yan::STATE_NAMES.keys - Yan::TERRITORIES).sort, doc["states"].keys.sort, congress
+      assert([*doc["districts"].values, *doc["states"].values].all? { |d| d.start_with?("M") }, congress)
+    end
+  end
 end
 
 class PartyGridTest < Minitest::Test
@@ -324,53 +342,53 @@ class PartyGridTest < Minitest::Test
   end
 end
 
-class StateGridTest < Minitest::Test
-  WORDS = { "yes" => "Yea", "no" => "Nay" }.freeze
-  MEMBERS = { "A1" => { "state" => "CA" }, "A2" => { "state" => "CA" }, "A3" => { "state" => "CA" },
-              "A4" => { "state" => "CA" }, "B1" => { "state" => "PR" } }.freeze
+class StateMapTest < Minitest::Test
+  WORDS = { "yes" => "Aye", "no" => "No" }.freeze
+  MEMBERS = {
+    "A1" => { "official_full_name" => "Ann Able", "last_name" => "Able", "party" => "D", "chamber" => "house", "state" => "CA", "district" => 12 },
+    "A2" => { "official_full_name" => "Bo Bell", "last_name" => "Bell", "party" => "R", "chamber" => "house", "state" => "WY", "district" => 0 },
+    "A3" => { "official_full_name" => "Cy <Cole>", "last_name" => "Cole", "party" => "R", "chamber" => "house", "state" => "CA", "district" => 3 },
+    "B1" => { "official_full_name" => "Di Dee", "last_name" => "Dee", "party" => "D", "chamber" => "house", "state" => "PR", "district" => 0 },
+    "S1" => { "official_full_name" => "Ed Zee", "last_name" => "Zee", "party" => "R", "chamber" => "senate", "state" => "KY" },
+    "S2" => { "official_full_name" => "Flo Ash", "last_name" => "Ash", "party" => "D", "chamber" => "senate", "state" => "KY" }
+  }.freeze
 
-  def test_a_tile_splits_its_bar_in_proportion_yea_nay_present_not_voting
-    grid = Yan.state_grid({ "A1" => "Not Voting", "A2" => "Yea", "A3" => "Nay", "A4" => "Yea" }, MEMBERS, WORDS)
-    ca = grid["tiles"].find { |t| t["state"] == "CA" }
-    assert_equal [["yea", 2, 0.0, 11.0], ["nay", 1, 11.0, 5.5], ["nv", 1, 16.5, 5.5]],
-                 ca["runs"].map { |r| r.values_at("mark", "count", "x", "width") }
-    assert_equal "2 Yea, 1 Nay, 1 Not Voting", ca["summary"]
-    assert_equal [0, 4 * 30], ca.values_at("x", "y") # row 5, column 1
+  def seats(map)
+    JSON.parse(map["seats_json"])
   end
 
-  def test_every_state_gets_a_tile_and_territories_only_when_recorded
-    states = Yan.state_grid({ "A1" => "Yea" }, MEMBERS, WORDS)
-    assert_equal 50, states["tiles"].size
-    assert_equal [], states["tiles"].find { |t| t["state"] == "TX" }["runs"]
-    assert_equal ["California"], states["table"].map { |r| r["name"] }
-    assert_equal 8 * 30 - 2, states["height"]
-
-    with_pr = Yan.state_grid({ "A1" => "Yea", "B1" => "Present" }, MEMBERS, WORDS)
-    assert_equal 51, with_pr["tiles"].size
-    assert_equal 9 * 30 - 2, with_pr["height"]
-    assert_equal({ "name" => "Puerto Rico", "yes" => 0, "no" => 0, "present" => 1, "not_voting" => 0 },
-                 with_pr["table"].last)
+  def test_house_seats_by_district_with_names_in_the_title
+    map = Yan.state_map("house", { "A1" => "Aye", "A2" => "Not Voting", "A3" => "No" }, MEMBERS, WORDS)
+    assert_equal({ "marks" => ["yea"], "title" => "California, 12th District: Ann Able (D), Aye" }, seats(map)["CA-12"])
+    assert_equal({ "marks" => ["nv"], "title" => "Wyoming, At Large: Bo Bell (R), Not Voting" }, seats(map)["WY"])
+    assert_equal "house", map["chamber"]
   end
 
-  def test_members_without_a_known_state_are_counted_apart
-    grid = Yan.state_grid({ "A1" => "Yea", "Z9" => "Nay", "C1" => "Yea" }, MEMBERS.merge("C1" => { "state" => "ZZ" }), WORDS)
-    assert_equal 2, grid["unplaced"]
-    assert_equal ["California"], grid["table"].map { |r| r["name"] }
+  def test_senate_seats_by_state_in_last_name_order
+    map = Yan.state_map("senate", { "S1" => "Guilty", "S2" => "Present" }, MEMBERS, { "yes" => "Guilty", "no" => "Not Guilty" })
+    assert_equal({ "marks" => %w[present yea], "title" => "Kentucky: Flo Ash (D), Present; Ed Zee (R), Guilty" },
+                 seats(map)["KY"])
+    assert_equal [{ "name" => "Kentucky", "yes" => 1, "no" => 0, "present" => 1, "not_voting" => 0 }], map["table"]
   end
 
-  def test_no_state_grid_without_positions
-    assert_nil Yan.state_grid({}, MEMBERS, WORDS)
+  def test_territories_and_unknown_states_are_off_the_map_but_territories_are_in_the_table
+    map = Yan.state_map("house", { "A1" => "Aye", "B1" => "Aye", "Z9" => "No" }, MEMBERS, WORDS)
+    assert_equal ["CA-12"], seats(map).keys
+    assert_equal 2, map["unmapped"]
+    assert_equal ["California", "Puerto Rico"], map["table"].map { |r| r["name"] }
   end
 
-  def test_tiles_do_not_overlap
-    assert_equal Yan::STATE_TILES.size, Yan::STATE_TILES.values.uniq.size
-    assert_equal Yan::STATE_NAMES.keys.sort, Yan::STATE_TILES.keys.sort
+  def test_names_cannot_close_the_script_tag
+    map = Yan.state_map("house", { "A3" => "No" }, MEMBERS, WORDS)
+    refute_includes map["seats_json"], "<"
+    assert_equal "California, 3rd District: Cy <Cole> (R), No", seats(map)["CA-3"]["title"]
   end
 
-  def test_no_state_grid_for_a_vote_by_candidate
+  def test_no_map_without_positions_or_for_a_vote_by_candidate
+    assert_nil Yan.state_map("house", {}, MEMBERS, WORDS)
     doc = { "positions" => { "A1" => "Jeffries" }, "party_totals" => { "D" => { "other" => 1 } },
             "against_party_majority" => [], "caucus_majority_position" => {}, "summary" => nil }
-    assert_nil Yan.vote_view({}, doc, MEMBERS)["state_grid"]
+    assert_nil Yan.vote_view({ "chamber" => "house" }, doc, MEMBERS)["state_map"]
   end
 end
 
@@ -405,16 +423,25 @@ class VotePageTest < Minitest::Test
     )
   end
 
-  def test_every_position_is_drawn_on_both_grids
+  def test_every_position_is_on_the_party_grid_and_the_state_map
     html = pages.fetch("/votes/119/house/1/1/index.html")
-    %w[yea present nv].each { |mark| assert_equal 2, html.scan(%(<g class="dot #{mark}")).size, mark }
+    %w[yea present nv].each { |mark| assert_equal 1, html.scan(%(<g class="dot #{mark}")).size, mark }
     assert_includes html, '<g class="dot nay" fill="url(#hatch-R)">'
-    assert_includes html, '<g class="dot nay" fill="url(#hatch-state)">'
-    assert_includes html, "<title>Alabama: 1 Yea, 1 Nay, 1 Present, 1 Not Voting</title>"
-    assert_includes html, "<title>Texas: no members recorded</title>"
+    assert_includes html, 'data-vmap data-src="/assets/maps/119.json" data-chamber="house"'
+    seats = JSON.parse(html[%r{<script type="application/json" data-seats>(.*?)</script>}m, 1])
+    assert_equal({ "AL-1" => ["yea"], "AL-2" => ["present"], "AL-3" => ["nv"], "AL-4" => ["nay"] },
+                 seats.transform_values { |s| s["marks"] })
     assert_includes html, %(<th scope="row">Alabama</th><td class="r">1</td><td class="r">1</td><td class="r">1</td><td class="r">1</td>)
-    # A000005's state code has no tile.
-    assert_includes html, "Not shown: 1 member with no state tile."
+    # A000005's state code isn't on the map.
+    assert_includes html, "Not on the map: 1 member from outside the 50 states"
+  end
+
+  def test_no_map_without_shapes_for_the_votes_congress
+    html = build_site([member("A000001", "AL", 1)],
+                      [[vote(1, "On Passage").merge("congress" => 99), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
+           .fetch("/votes/99/house/1/1/index.html")
+    assert_includes html, "By state"
+    refute_includes html, "data-vmap"
   end
 
   def test_no_grids_for_a_speaker_election

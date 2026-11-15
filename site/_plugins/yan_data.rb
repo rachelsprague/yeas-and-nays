@@ -298,71 +298,44 @@ module Yan
     end.reject { |g| g["runs"].empty? }
   end
 
-  # Tile map of the states: [row, column], 1-based, each state one equal tile
-  # in rough geographic position. DC sits under Maryland; the territories get
-  # a row of their own (Pacific left, Caribbean right).
-  STATE_TILES = {
-    "AK" => [1, 1], "ME" => [1, 11],
-    "WI" => [2, 6], "VT" => [2, 10], "NH" => [2, 11],
-    "WA" => [3, 1], "ID" => [3, 2], "MT" => [3, 3], "ND" => [3, 4], "MN" => [3, 5], "IL" => [3, 6], "MI" => [3, 7],
-    "NY" => [3, 9], "MA" => [3, 10],
-    "OR" => [4, 1], "NV" => [4, 2], "WY" => [4, 3], "SD" => [4, 4], "IA" => [4, 5], "IN" => [4, 6], "OH" => [4, 7],
-    "PA" => [4, 8], "NJ" => [4, 9], "CT" => [4, 10], "RI" => [4, 11],
-    "CA" => [5, 1], "UT" => [5, 2], "CO" => [5, 3], "NE" => [5, 4], "MO" => [5, 5], "KY" => [5, 6], "WV" => [5, 7],
-    "VA" => [5, 8], "MD" => [5, 9], "DE" => [5, 10],
-    "AZ" => [6, 2], "NM" => [6, 3], "KS" => [6, 4], "AR" => [6, 5], "TN" => [6, 6], "NC" => [6, 7], "SC" => [6, 8],
-    "DC" => [6, 9],
-    "OK" => [7, 4], "LA" => [7, 5], "MS" => [7, 6], "AL" => [7, 7], "GA" => [7, 8],
-    "HI" => [8, 1], "TX" => [8, 4], "FL" => [8, 9],
-    "GU" => [9, 1], "MP" => [9, 2], "AS" => [9, 3], "PR" => [9, 10], "VI" => [9, 11]
-  }.freeze
   TERRITORIES = %w[AS DC GU MP PR VI].freeze
-  TILE_PITCH = 30 # px from one tile to the next: a 28px tile and a 2px gap
-  TILE_BAR = 22   # width of the bar inside a tile
 
-  # One tile per state, its delegation's positions as a bar split Yea, Nay,
-  # Present, Not voting (the legend marks), widths in proportion. A state
-  # with no member recorded (a vacant delegation) gets an empty tile; DC and
-  # the territories appear only when their delegates are on the roll call.
-  # Members with no known state are counted in "unplaced", for a note.
-  def self.state_grid(positions, members_by_id, words)
+  # The By state map and table for one vote. "seats" is what the map draws
+  # (site/assets/js/vote-map.js): for each House seat ("KY-4", "WY") or Senate
+  # state ("KY"), its members' marks in last-name order and a hover title. DC
+  # and the territories aren't on the map (their delegates can't vote on the
+  # House floor) but are in the table; "unmapped" counts them, with members of
+  # no known state, for a note.
+  def self.state_map(chamber, positions, members_by_id, words)
     return nil if positions.empty?
 
+    labels = { "yes" => words["yes"], "no" => words["no"], "present" => "Present", "not_voting" => "Not Voting" }
     counts = Hash.new { |h, k| h[k] = Hash.new(0) }
-    unplaced = 0
-    positions.each do |id, raw|
-      state = members_by_id.dig(id, "state")
-      if STATE_TILES.key?(state)
-        counts[state][position_kind(raw)] += 1
-      else
-        unplaced += 1
+    seats = {}
+    unmapped = 0
+    positions.sort_by { |id, _| [members_by_id.dig(id, "last_name").to_s, id] }.each do |id, raw|
+      m = members_by_id[id] || {}
+      kind = position_kind(raw)
+      counts[m["state"]][kind] += 1 if STATE_NAMES.key?(m["state"])
+      if !STATE_NAMES.key?(m["state"]) || TERRITORIES.include?(m["state"])
+        unmapped += 1
+        next
       end
+      house = chamber == "house"
+      s = seats[house ? seat(m) : m["state"]] ||= { "where" => house ? where(m) : STATE_NAMES[m["state"]], "marks" => [], "who" => [] }
+      s["marks"] << MARKS[kind]
+      s["who"] << "#{member_name(m)} (#{m["party"]}), #{labels[kind]}"
     end
-    tiles = STATE_TILES.filter_map do |state, (row, col)|
-      next if TERRITORIES.include?(state) && !counts.key?(state)
-
-      c = counts[state]
-      total = c.values.sum
-      x = 0.0
-      runs = [["yea", words["yes"], c["yes"]], ["nay", words["no"], c["no"]],
-              ["present", "Present", c["present"]], ["nv", "Not Voting", c["not_voting"]]].filter_map do |mark, label, n|
-        next if n.zero?
-
-        w = TILE_BAR * n.fdiv(total)
-        run = { "mark" => mark, "label" => label, "count" => n, "x" => x.round(2), "width" => w.round(2) }
-        x += w
-        run
-      end
-      { "state" => state, "name" => STATE_NAMES[state], "x" => (col - 1) * TILE_PITCH, "y" => (row - 1) * TILE_PITCH,
-        "runs" => runs, "summary" => runs.map { |r| "#{r["count"]} #{r["label"]}" }.join(", ") }
-    end
-    rows = tiles.map { |t| t["y"] / TILE_PITCH + 1 }.max
-    { "tiles" => tiles, "width" => 11 * TILE_PITCH - 2, "height" => rows * TILE_PITCH - 2, "unplaced" => unplaced,
+    seats = seats.transform_values { |s| { "marks" => s["marks"], "title" => "#{s["where"]}: #{s["who"].join("; ")}" } }
+    {
+      "chamber" => chamber, "unmapped" => unmapped,
+      # Every "<" escaped, so nothing in a name can end or confuse the script tag.
+      "seats_json" => JSON.generate(seats).gsub("<", "\\u003c"),
       # The text version: one row per state, by name.
-      "table" => tiles.reject { |t| t["runs"].empty? }.sort_by { |t| t["name"] }.map do |t|
-        c = counts[t["state"]]
-        { "name" => t["name"], "yes" => c["yes"], "no" => c["no"], "present" => c["present"], "not_voting" => c["not_voting"] }
-      end }
+      "table" => counts.sort_by { |state, _| STATE_NAMES[state] }.map do |state, c|
+        { "name" => STATE_NAMES[state], "yes" => c["yes"], "no" => c["no"], "present" => c["present"], "not_voting" => c["not_voting"] }
+      end
+    }
   end
 
   # Everything the tally, by-party and against-majority blocks need for one vote.
@@ -412,7 +385,7 @@ module Yan
       "vote" => vote, "words" => words, "sponsor" => sponsor, "tally" => tally, "has_other" => !other.empty?,
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
       "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
-      "state_grid" => other.empty? ? state_grid(doc["positions"], members_by_id, words) : nil,
+      "state_map" => other.empty? ? state_map(vote["chamber"], doc["positions"], members_by_id, words) : nil,
       "against" => against, "summary" => doc["summary"]
     }
   end
@@ -484,6 +457,9 @@ module Yan
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
         doc = read.call("votes/#{v["vote_id"]}.json")
         view = Yan.vote_view(v, doc, by_id)
+        # The By state map's shapes (scripts/build_vote_map.py); the table shows either way.
+        map_src = "/assets/maps/#{v["congress"].to_i}.json"
+        view["state_map"]["src"] = map_src if view["state_map"] && File.exist?(File.join(site.source, map_src))
         views[v["vote_id"]] = view
 
         against_ids = doc["against_party_majority"].to_h { |a| [a["bioguide_id"], true] }
