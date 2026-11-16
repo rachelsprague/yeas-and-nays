@@ -88,7 +88,7 @@ make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bun
 
 ## Automation
 
-`.github/workflows/pipeline.yml` runs hourly, started by an external scheduler (cron-job.org) through the workflow_dispatch API, and on demand: ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot. The steps that run third-party code get a read-only token; a separate `commit` job, which runs none, takes their output as an artifact and is the only one that can push. The raw-data cache is saved even when a later step fails, so a retry picks up where ingest left off.
+`.github/workflows/pipeline.yml` runs hourly, started by an external scheduler (cron-job.org) through the workflow_dispatch API, and on demand: ingest → stage → `dbt build` → export → bot, then commits changes to `data/out/` and the bot state back to `main`. A failing dbt test stops the run before export and the bot. The steps that run third-party code get a read-only token; a separate `commit` job, which runs none, takes their output as an artifact and is the only one that can push. Before committing, it checks the artifact with `scripts/check_data_artifact.py` (standard library only): only the files export writes, size caps, valid JSON, and bot state that never moves back to an earlier vote. The raw-data cache is saved even when a later step fails, so a retry picks up where ingest left off.
 
 | Setting | Type | Purpose |
 | --- | --- | --- |
