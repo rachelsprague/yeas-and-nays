@@ -382,6 +382,7 @@ class _ShapeClient:
     {"pagination": {"count": True}, "cosponsoredLegislation": []},
     {"cosponsoredLegislation": [{"congress": 119, "type": "S", "number": "2"}]},
     {"cosponsoredLegislation": []},  # an empty later page could hide a list cut short
+    {"pagination": {"count": 2}, "cosponsoredLegislation": []},  # empty short of its count
     {"pagination": {"count": 2}},
     {"pagination": {"count": 2}, "cosponsoredLegislation": None},
     {"pagination": {"count": 2}, "cosponsoredLegislation": ["S 2"]},
@@ -407,6 +408,68 @@ def test_a_request_that_raises_before_a_response_still_counts(monkeypatch):
     with pytest.raises(httpx.ConnectError) as caught:
         congress_gov.fetch_cosponsored(_Unreachable(), "k", "A000001")
     assert caught.value.requests == 1
+
+
+def test_an_empty_later_page_ends_a_list_that_shrank_between_requests(monkeypatch):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    client = _ShapeClient({"pagination": {"count": 1}, "cosponsoredLegislation": []})
+    doc, requests = congress_gov.fetch_cosponsored(client, "k", "A000001")
+    assert [i["number"] for i in doc["cosponsoredLegislation"]] == ["1"]
+    assert requests == 2
+
+
+def test_an_empty_first_page_short_of_its_count_raises():
+    from yan.ingest import congress_gov
+
+    class _EmptyFirst:
+        def get(self, url, headers=None):
+            return _StubResponse({"pagination": {"count": 3}, "cosponsoredLegislation": []})
+
+    with pytest.raises(ValueError, match="empty page") as caught:
+        congress_gov.fetch_cosponsored(_EmptyFirst(), "k", "A000001")
+    assert caught.value.requests == 1
+
+
+class _FailingLaterPage(_ShapeClient):
+    """Serves a good first page of a two-page list, then an HTTP `status` for page two."""
+
+    def __init__(self, status):
+        super().__init__(None)
+        self.status = status
+
+    def get(self, url, headers=None):
+        import httpx
+
+        if self.calls == 0:
+            return super().get(url, headers)
+        self.calls += 1
+        return httpx.Response(self.status, request=httpx.Request("GET", url))
+
+
+@pytest.mark.parametrize("status", [429, 503])
+def test_a_failed_later_page_raises_with_every_request_counted(monkeypatch, status):
+    import httpx
+
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    with pytest.raises(httpx.HTTPStatusError) as caught:
+        congress_gov.fetch_cosponsored(_FailingLaterPage(status), "k", "A000001")
+    assert caught.value.response.status_code == status
+    assert caught.value.requests == 2
+
+
+def test_a_rate_limit_on_a_later_page_saves_nothing_and_stops_the_lists(monkeypatch, tmp_path):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / f"{m}.json")
+    client = _FailingLaterPage(429)
+    congress_gov.ingest_cosponsored(client, "k", ["A1", "B2"], TODAY, started=congress_gov.time.monotonic())
+    assert client.calls == 2  # B2 never started
+    assert not (tmp_path / "A1.json").exists()
 
 
 @pytest.mark.parametrize("doc", [{"cosponsoredLegislation": []},

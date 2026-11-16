@@ -139,7 +139,8 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     number of requests it took.
 
     Pages are by offset, so a bill introduced mid-fetch shifts the list and can
-    repeat one item across a page boundary; repeats are dropped.
+    repeat one item across a page boundary; repeats are dropped. An empty page ends the
+    list only if that page's count says the list ends there.
 
     A response that isn't the expected shape raises ValueError. Any error carries the
     number of requests made, the failed one included, as `requests`."""
@@ -159,6 +160,11 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
                     seen.add(bill)
                     items.append(item)
             if not page:
+                # Each page's count is current, so a list that shrank between requests
+                # ends here; an empty page short of its own count would cut the list short.
+                if total > offset:
+                    raise ValueError(f"congress.gov member {bioguide_id}: empty page at offset "
+                                     f"{offset} of {total}")
                 break
             offset += PAGE_SIZE
     except Exception as e:
