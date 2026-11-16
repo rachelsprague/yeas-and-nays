@@ -29,6 +29,11 @@ jobs:
     environment: pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    # Keeps the dev group (pytest, shapely) out of the job that holds the
+    # secrets. Set for the whole job, not just the sync: each `uv run` syncs
+    # again and would install the default groups, dev included.
+    env:
+      UV_NO_DEV: "1"
     outputs:
       artifact-id: ${{ steps.upload.outputs.artifact-id }}
     steps:
