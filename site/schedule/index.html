@@ -71,7 +71,7 @@ nav: schedule
     {%- if schedule.senate_next_convene %}
     <p class="small soft nums">The Senate is scheduled to convene {{ schedule.senate_next_convene }}.</p>
     {%- endif %}
-    <p class="small soft"><strong>Senate.</strong> {{ cloture.term }}: {{ cloture.definition }} Under Senate Rule XXII, a filed cloture motion is voted on one hour after the Senate meets on the second day after it was filed (or the next day it meets after that), unless the Senate agrees to another time. Source: the Senate&rsquo;s daily floor activity, <a class="link" href="https://www.senate.gov/legislative/LIS/floor_activity/floor_activity.htm">senate.gov</a>.</p>
+    <p class="small soft"><strong>Senate.</strong> {{ cloture.term }}: {{ cloture.definition }} {{ cloture.timing }} Source: the Senate&rsquo;s daily floor activity, <a class="link" href="https://www.senate.gov/legislative/LIS/floor_activity/floor_activity.htm">senate.gov</a>.</p>
     <p class="small soft"><strong>House.</strong> The measures the Majority Leader lists as possible for floor consideration each week, under the headings used on the schedule. {{ suspend.term }}: {{ suspend.definition }} Source: <a class="link" href="https://docs.house.gov/floor/">docs.house.gov</a>.</p>
     <p class="small soft"><strong>Roll calls.</strong> From the House Clerk and the Senate&rsquo;s roll call votes, as on every vote page.</p>
   </section>

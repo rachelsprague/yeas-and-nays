@@ -293,11 +293,11 @@ unit_tests:
         - {item_id: h-2026-11-09-3, vote_id: null, question: null}
         - {item_id: h-2026-11-09-4, vote_id: h119-2-0004, question: null}
         - {item_id: h-2026-11-09-5, vote_id: h119-2-0005, question: null}
-        - {item_id: s-PN2, vote_id: s119-2-0010, question: On the Cloture Motion}
-        - {item_id: s-H.R. 9-measure, vote_id: null, question: On the Cloture Motion}
-        - {item_id: s-S.Amdt. 9, vote_id: s119-2-0012, question: On the Cloture Motion}
-        - {item_id: s-H.R. 4-measure, vote_id: s119-2-0013, question: On the Cloture Motion}
-        - {item_id: s-H.R. 4-the-committee-reported-substitute, vote_id: null, question: On the Cloture Motion}
+        - {item_id: s-pn2, vote_id: s119-2-0010, question: On the Cloture Motion}
+        - {item_id: s-h-r-9-measure, vote_id: null, question: On the Cloture Motion}
+        - {item_id: s-s-amdt-9, vote_id: s119-2-0012, question: On the Cloture Motion}
+        - {item_id: s-h-r-4-measure, vote_id: s119-2-0013, question: On the Cloture Motion}
+        - {item_id: s-h-r-4-the-committee-reported-substitute, vote_id: null, question: On the Cloture Motion}
 
   - name: members_links_from_latest_term_for_current_members_only
     description: >

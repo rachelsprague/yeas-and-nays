@@ -46,7 +46,7 @@ house_decisions as (
 house as (
     select
         'house' as chamber,
-        'h-' || strftime(items.week_date, '%Y-%m-%d') || '-' || items.item_id as item_id,
+        'h-' || strftime(items.week_date, '%Y-%m-%d') || '-' || {{ id_part('items.item_id') }} as item_id,
         items.week_date,
         null::date as filed_date,
         items.category,
@@ -70,9 +70,11 @@ house as (
     qualify row_number() over (partition by items.week_date, items.item_id order by votes.vote_time_et, votes.vote_id) = 1
 ),
 
+-- An event with no docnum can't be told apart from another such event, so it's
+-- dropped rather than grouped with them.
 events as (
     select * from {{ ref('int_senate_cloture_events') }}
-    where activity_date is not null and status_order is not null
+    where activity_date is not null and status_order is not null and docnum is not null
 ),
 
 -- The latest filing for each document and target.
@@ -114,11 +116,11 @@ filed as (
 senate as (
     select
         'senate' as chamber,
-        's-' || filed.docnum || case
+        's-' || {{ id_part('filed.docnum') }} || case
             when filed.target = 'the motion to proceed to the measure' then '-proceed'
             when filed.target = 'the measure' then '-measure'
             when filed.target = '' or filed.document_prefix = 'SA' then ''
-            else '-' || regexp_replace(lower(filed.target), '[^a-z0-9]+', '-', 'g')
+            else '-' || {{ id_part('filed.target') }}
         end as item_id,
         null::date as week_date,
         filed.activity_date as filed_date,

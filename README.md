@@ -41,7 +41,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 | `cosponsored_lists` | one row per member whose cosponsored list has been fetched (lists fill in over several runs) | `bioguide_id` |
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
 | `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
-| `floor_schedule` | one row per item that may come up for a vote: House weekly schedule items (removed items dropped) and Senate cloture motions filed but not yet voted on, each with the roll call that followed, if any | `item_id`, e.g. `h-2026-11-16-409831`, `s-PN1272-3` |
+| `floor_schedule` | one row per item that may come up for a vote: House weekly schedule items (removed items dropped) and Senate cloture motions filed but not yet voted on, each with the roll call that followed, if any | `item_id`, e.g. `h-2026-11-16-409831`, `s-pn1272-3`, `s-h-r-2347-measure` |
 | `senate_sessions` | one row per time the Senate convened this session, with when it's set to convene next | `convene_time_et` |
 
 **Joining members across chambers.** House records carry the Bioguide ID. Senate records carry an LIS member ID, which is mapped to the Bioguide ID through congress-legislators. Party and caucus are taken from the term (or, for a mid-term party change, the affiliation period) in effect on the vote date.

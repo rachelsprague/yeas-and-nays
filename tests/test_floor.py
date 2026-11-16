@@ -80,6 +80,17 @@ def test_senate_day_has_a_row_per_status_line_including_amendments():
     assert nomination["document_title"].startswith("Daniel Lewis Ballou, of Kentucky")
 
 
+def test_senate_title_joins_only_marks_that_end_a_word():
+    senate = b"""<daily_senate_floor_activity><date_iso_8601>2026-11-12</date_iso_8601>
+      <document><docnum>S. 1</docnum><document_title>A bill on .NET use , to cut costs by
+        .5 percent , and for other purposes
+        .</document_title>
+        <document_status_text>Read twice.</document_status_text></document>
+    </daily_senate_floor_activity>"""
+    [row] = parse_senate_day(senate, "senate/2026-11-12.xml")
+    assert row["document_title"] == "A bill on .NET use, to cut costs by .5 percent, and for other purposes."
+
+
 SESSION_DAYS = b"""<?xml version="1.0" encoding="UTF-8"?><CongressSessionDayConvenings Congress="119" SessionNumber="2">
   <LegislativeDay LegislativeDayDate="2026-11-11T00:00:00-05:00"><SessionDay>
     <ConveneDate>2026-11-11T12:00:00-05:00</ConveneDate><AdjournDate>2026-11-11T16:05:00-05:00</AdjournDate>

@@ -883,6 +883,12 @@ class SchedulePageTest < Minitest::Test
     assert_includes next_week, "On the Cloture Motion · Amendment to H.R. 2347"
     assert_includes page, "The Senate is scheduled to convene Monday, Nov. 16, 2026, at 3 p.m. ET."
   end
+
+  def test_the_senate_note_gives_cloture_timing_from_procedures_yml
+    cloture = ProcedureTest::PROCEDURES["questions"].find { |q| q["key"] == "cloture" }
+    refute_empty cloture["timing"].to_s
+    assert_includes page, "#{cloture["definition"]} #{cloture["timing"]} Source:"
+  end
 end
 
 class ScheduleCalendarTest < Minitest::Test

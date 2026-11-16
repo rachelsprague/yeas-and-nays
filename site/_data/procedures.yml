@@ -150,6 +150,14 @@ questions:
       legislation it requires three-fifths of all senators (60 when no seats
       are vacant); on nominations it requires a majority of those voting.
       Invoking cloture does not decide the measure or nomination itself.
+    # When a filed motion comes to a vote; shown on /schedule/. Rule XXII,
+    # paragraph 2: "one hour after the Senate meets on the following calendar
+    # day but one" (Standing Rules of the Senate, rules.senate.gov).
+    timing: >-
+      Under Senate Rule XXII, a filed cloture motion is voted on one hour after
+      the Senate meets on the second calendar day after it was filed (or the
+      next day it meets after that), unless the Senate agrees by unanimous
+      consent to another time.
 
   - key: proceed
     term: Motion to proceed (Senate)
