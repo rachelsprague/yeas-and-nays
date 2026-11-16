@@ -5,6 +5,7 @@ import io
 import json
 import os
 import pathlib
+import shlex
 import subprocess
 import sys
 import time
@@ -445,6 +446,11 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "gh pr close 12 --comment='closing'",
     "gh issue close 3 -c done",
     "gh issue reopen 3 --comment again",
+    # inside quotes, where a double-quoted string runs `...` and $(...)
+    'echo "$(gh pr comment 3 --body hi)"',
+    'echo "`gh pr comment 3 --body hi`"',
+    'git commit -m "$(gh pr comment 3 --body hi)"',
+    'git commit -m "x `gh issue comment 3 --body hi`"',
 ])
 def test_posting_inline_or_unseen_text_is_denied(repo, command):
     path, _ = repo
@@ -586,6 +592,29 @@ def test_a_fifo_body_file_is_denied_without_blocking(repo):
 def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):
     path, _ = repo
     assert confirm_push.decide(command, str(path)) is None
+
+
+def nested(command, levels):
+    """The command handed to `sh -c` this many times, each level quoting the one inside."""
+    for _ in range(levels):
+        command = "sh -c " + shlex.quote(command)
+    return command
+
+
+@pytest.mark.parametrize("inner", ["git push", "gh pr merge 1", "gh pr comment 1 --body hi", "gh repo sync"])
+def test_commands_nested_past_the_scan_depth_are_denied(repo, inner):
+    path, _ = repo
+    for levels in (confirm_push.MAX_DEPTH + 1, confirm_push.MAX_DEPTH + 2):
+        decision, reason = confirm_push.decide(nested(inner, levels), str(path))
+        assert decision == "deny" and "levels deep" in reason
+    # At the limit itself the command is still read and gets its usual reason.
+    decision, reason = confirm_push.decide(nested(inner, confirm_push.MAX_DEPTH), str(path))
+    assert decision == "deny" and "levels deep" not in reason
+
+
+def test_deep_nesting_without_git_or_gh_is_left_alone(repo):
+    path, _ = repo
+    assert confirm_push.decide(nested("make test lint", confirm_push.MAX_DEPTH + 2), str(path)) is None
 
 
 def test_the_hook_fails_closed_for_gh_commands(monkeypatch, capsys):
