@@ -937,6 +937,16 @@ class SchedulePageTest < Minitest::Test
     refute_empty cloture["timing"].to_s
     assert_includes page, "#{cloture["definition"]} #{cloture["timing"]} Source:"
   end
+
+  # The footer's "Watch live" link lands on this section.
+  def test_the_live_section_links_each_chambers_official_feeds
+    live = page[%r{<section id="live".*?</section>}m]
+    %w[https://www.senate.gov/floor/ https://www.senate.gov/legislative/floor_activity_pail.htm
+       https://live.house.gov/ https://clerk.house.gov/FloorSummary].each do |url|
+      assert_includes live, %(href="#{url}"), url
+    end
+    assert_includes page, '<a href="/schedule/#live">Watch live</a>'
+  end
 end
 
 class ScheduleCalendarTest < Minitest::Test
