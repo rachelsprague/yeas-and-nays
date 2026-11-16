@@ -343,6 +343,7 @@ class LayoutTest < Minitest::Test
     opt_out = 'localStorage.setItem("umami.disabled", "1")'
     production.each do |path, html|
       assert_includes html, tag, path
+      assert_match(/#{Regexp.escape(tag)}[^>]* data-exclude-search="true"/, html, path)
       assert_includes html, opt_out, path
     end
     development.each do |path, html|

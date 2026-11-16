@@ -20,7 +20,8 @@ description: What Yeas & Nays and the services it uses record about visits, and 
   <div class="prose">
     <section id="analytics">
       <h2>Analytics</h2>
-      <p>Visits are counted with <a href="https://umami.is">Umami Cloud</a>, which does not use cookies. For each page view, Umami records the page address and title, the referring site, browser, operating system, device type, screen size, language and approximate location (country, region and city), which it derives from the IP address.</p>
+      <p>Visits are counted with <a href="https://umami.is">Umami Cloud</a>, which does not use cookies. For each page view, Umami records the page address and title, the address of the page the visitor came from, browser, operating system, device type, screen size, language and approximate location (country, region and city), which it derives from the IP address.</p>
+      <p>Both addresses are recorded without their query string (the part after a <code>?</code>), so search terms typed on this site are not recorded. For a link from another site, browsers usually send only that site's name, not the page.</p>
       <p>Umami does not store the IP address in its analytics records. To count repeat visits without cookies, it combines the IP address and browser details with a value that changes every month into an anonymous identifier. Umami and its infrastructure providers may keep IP addresses in operational and security logs. See <a href="https://umami.is/privacy">Umami's privacy policy</a>.</p>
       <p>Page views are sent only from yeasandnaysdata.com, and not from a browser with Do Not Track turned on. In both cases the Umami script still loads.</p>
     </section>
@@ -35,6 +36,7 @@ description: What Yeas & Nays and the services it uses record about visits, and 
     <section id="hosting">
       <h2>Hosting and fonts</h2>
       <p>The site is hosted on GitHub Pages. GitHub logs and stores each visitor's IP address for security purposes. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p>
+      <p>Member portraits load from the <a href="https://github.com/unitedstates/images">unitedstates/images</a> project at unitedstates.github.io, which is also hosted on GitHub Pages, so GitHub receives the visitor's IP address with each portrait request.</p>
       <p>The site's fonts load from Google Fonts, so a browser requests them from Google's servers, which receive the visitor's IP address with each request. See <a href="https://policies.google.com/privacy">Google's privacy policy</a>.</p>
       <p>Questions? <a href="{{ site.github }}/issues">Open an issue on GitHub</a>.</p>
     </section>
