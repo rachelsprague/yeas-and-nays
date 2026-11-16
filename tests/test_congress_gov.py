@@ -382,6 +382,7 @@ class _ShapeClient:
     {"pagination": {"count": True}, "cosponsoredLegislation": []},
     {"cosponsoredLegislation": [{"congress": 119, "type": "S", "number": "2"}]},
     {"cosponsoredLegislation": []},  # an empty later page could hide a list cut short
+    {"pagination": {"count": 2}, "cosponsoredLegislation": []},  # empty short of its count
     {"pagination": {"count": 2}},
     {"pagination": {"count": 2}, "cosponsoredLegislation": None},
     {"pagination": {"count": 2}, "cosponsoredLegislation": ["S 2"]},
@@ -407,6 +408,143 @@ def test_a_request_that_raises_before_a_response_still_counts(monkeypatch):
     with pytest.raises(httpx.ConnectError) as caught:
         congress_gov.fetch_cosponsored(_Unreachable(), "k", "A000001")
     assert caught.value.requests == 1
+
+
+def test_an_empty_later_page_ends_a_list_that_shrank_between_requests(monkeypatch):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    client = _ShapeClient({"pagination": {"count": 1}, "cosponsoredLegislation": []})
+    doc, requests = congress_gov.fetch_cosponsored(client, "k", "A000001")
+    assert [i["number"] for i in doc["cosponsoredLegislation"]] == ["1"]
+    assert requests == 2
+
+
+def test_an_empty_first_page_short_of_its_count_raises():
+    from yan.ingest import congress_gov
+
+    class _EmptyFirst:
+        def get(self, url, headers=None):
+            return _StubResponse({"pagination": {"count": 3}, "cosponsoredLegislation": []})
+
+    with pytest.raises(ValueError, match="empty page") as caught:
+        congress_gov.fetch_cosponsored(_EmptyFirst(), "k", "A000001")
+    assert caught.value.requests == 1
+
+
+class _FailingLaterPage(_ShapeClient):
+    """Serves a good first page of a two-page list, then an HTTP `status` for page two."""
+
+    def __init__(self, status):
+        super().__init__(None)
+        self.status = status
+
+    def get(self, url, headers=None):
+        import httpx
+
+        if self.calls == 0:
+            return super().get(url, headers)
+        self.calls += 1
+        return httpx.Response(self.status, request=httpx.Request("GET", url))
+
+
+@pytest.mark.parametrize("status", [429, 503])
+def test_a_failed_later_page_raises_with_every_request_counted(monkeypatch, status):
+    import httpx
+
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    with pytest.raises(httpx.HTTPStatusError) as caught:
+        congress_gov.fetch_cosponsored(_FailingLaterPage(status), "k", "A000001")
+    assert caught.value.response.status_code == status
+    assert caught.value.requests == 2
+
+
+def test_a_rate_limit_on_a_later_page_saves_nothing_and_stops_the_lists(monkeypatch, tmp_path):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / f"{m}.json")
+    client = _FailingLaterPage(429)
+    congress_gov.ingest_cosponsored(client, "k", ["A1", "B2"], TODAY, started=congress_gov.time.monotonic())
+    assert client.calls == 2  # B2 never started
+    assert not (tmp_path / "A1.json").exists()
+
+
+def _sponsored_setup(monkeypatch, tmp_path, errors, fetched):
+    """Point sponsored paths at tmp_path and stub the fetch to raise errors[member]."""
+    from yan.ingest import congress_gov
+
+    def fetch(client, key, bioguide_id):
+        fetched.append(bioguide_id)
+        if bioguide_id in errors:
+            raise errors[bioguide_id]
+        return {"bioguideId": bioguide_id, "sponsoredLegislation": []}
+
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", fetch)
+    return congress_gov
+
+
+@pytest.mark.parametrize("error", [ValueError("empty page at offset 250 of 600"), _http_error(503)])
+def test_a_failing_sponsored_list_keeps_its_old_file_and_the_rest_are_fetched(monkeypatch, tmp_path, error):
+    fetched = []
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, {"A1": error}, fetched)
+    (tmp_path / "A1.json").write_text("old")
+    congress_gov.ingest_sponsored(None, "k", ["A1", "B2"], ["A1", "B2"])
+    assert fetched == ["A1", "B2"]
+    assert (tmp_path / "A1.json").read_text() == "old"
+    assert (tmp_path / "B2.json").exists()
+
+
+def test_a_rate_limit_stops_the_sponsored_lists_without_failing_the_run(monkeypatch, tmp_path):
+    fetched = []
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, {"A1": _http_error(429)}, fetched)
+    congress_gov.ingest_sponsored(None, "k", ["A1", "B2"], ["A1", "B2"])
+    assert fetched == ["A1"]
+
+
+def test_the_run_fails_when_every_sponsored_list_tried_fails(monkeypatch, tmp_path):
+    fetched = []
+    errors = {m: _http_error(503) for m in ["A1", "B2", "C3", "D4"]}
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    with pytest.raises(RuntimeError, match="3 sponsored-legislation lists failed"):
+        congress_gov.ingest_sponsored(None, "k", list(errors), list(errors))
+    assert fetched == ["A1", "B2", "C3"]
+
+
+def test_one_or_two_failed_sponsored_lists_with_none_fetched_dont_fail_the_run(monkeypatch, tmp_path):
+    fetched = []
+    errors = {m: _http_error(503) for m in ["A1", "B2"]}
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", list(errors), list(errors))
+    assert fetched == ["A1", "B2"]
+
+
+def test_a_rate_limit_after_two_sponsored_failures_doesnt_fail_the_run(monkeypatch, tmp_path):
+    fetched = []
+    errors = {"A1": _http_error(503), "B2": _http_error(503), "C3": _http_error(429)}
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", [*errors, "D4"], [*errors, "D4"])
+    assert fetched == ["A1", "B2", "C3"]
+
+
+def test_a_fetched_sponsored_list_resets_the_failures_in_a_row(monkeypatch, tmp_path):
+    fetched = []
+    errors = {m: _http_error(503) for m in ["A1", "B2", "D4", "E5"]}
+    members = ["A1", "B2", "C3", "D4", "E5", "F6"]
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", members, members)
+    assert fetched == members
+
+
+def test_a_sponsored_failure_after_a_fetched_list_doesnt_fail_the_run(monkeypatch, tmp_path):
+    fetched = []
+    errors = {m: _http_error(503) for m in ["B2", "C3", "D4"]}
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", ["A1", *errors], ["A1", *errors])
+    assert fetched == ["A1", "B2", "C3", "D4"]
 
 
 @pytest.mark.parametrize("doc", [{"cosponsoredLegislation": []},
