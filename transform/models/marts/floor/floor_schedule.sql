@@ -43,10 +43,14 @@ house_decisions as (
         )
 ),
 
+{%- set house_item_id -%}
+    concat_ws('-', 'h', strftime(items.week_date, '%Y-%m-%d'), {{ id_part('items.item_id') }})
+{%- endset %}
+
 house as (
     select
         'house' as chamber,
-        'h-' || strftime(items.week_date, '%Y-%m-%d') || '-' || {{ id_part('items.item_id') }} as item_id,
+        {{ house_item_id }} as item_id,
         items.week_date,
         null::date as filed_date,
         items.category,
@@ -67,7 +71,9 @@ house as (
         and votes.bill_type = items.bill_type
         and votes.bill_number = items.bill_number
         and votes.vote_date between items.week_date and items.week_date + 6
-    qualify row_number() over (partition by items.week_date, items.item_id order by votes.vote_time_et, votes.vote_id) = 1
+    -- One row per item ID: item IDs the source writes two ways ("4098.1", "4098-1")
+    -- share one, so the first in raw order is kept, with its first deciding vote.
+    qualify row_number() over (partition by {{ house_item_id }} order by items.item_id, votes.vote_time_et, votes.vote_id) = 1
 ),
 
 -- An event with no docnum can't be told apart from another such event, so it's
@@ -113,15 +119,19 @@ filed as (
     )
 ),
 
+{%- set senate_item_id -%}
+    concat_ws('-', 's', {{ id_part('filed.docnum') }}, case
+        when filed.target = 'the motion to proceed to the measure' then 'proceed'
+        when filed.target = 'the measure' then 'measure'
+        when filed.target = '' or filed.document_prefix = 'SA' then null
+        else {{ id_part('filed.target') }}
+    end)
+{%- endset %}
+
 senate as (
     select
         'senate' as chamber,
-        's-' || {{ id_part('filed.docnum') }} || case
-            when filed.target = 'the motion to proceed to the measure' then '-proceed'
-            when filed.target = 'the measure' then '-measure'
-            when filed.target = '' or filed.document_prefix = 'SA' then ''
-            else '-' || {{ id_part('filed.target') }}
-        end as item_id,
+        {{ senate_item_id }} as item_id,
         null::date as week_date,
         filed.activity_date as filed_date,
         null::varchar as category,
@@ -154,7 +164,12 @@ senate as (
                     and votes.question not ilike '%motion to proceed%'
             else false
         end
-    qualify row_number() over (partition by filed.docnum, filed.target order by votes.vote_time_et, votes.vote_id) = 1
+    -- One row per item ID: a docnum the source writes two ways ("H.R. 4", "H.R.4")
+    -- gives one, so the latest filing is kept, with its first cloture vote.
+    qualify row_number() over (
+        partition by {{ senate_item_id }}
+        order by filed.activity_date desc, filed.status_order desc, filed.docnum, filed.target, votes.vote_time_et, votes.vote_id
+    ) = 1
 )
 
 select * from house

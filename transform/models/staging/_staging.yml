@@ -16,6 +16,19 @@ models:
               config:
                 severity: warn
 
+  - name: stg_floor__senate_actions
+    description: >
+      One row per status line in the Senate's daily floor activity. Every document there has
+      a docnum; `floor_schedule` drops a cloture event without one (it can't be told apart
+      from another), so this test is where it shows; it warns because the floor schedule is
+      secondary to votes.
+    columns:
+      - name: docnum
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
   - name: stg_floor__senate_session_days
     description: >
       One row per time the Senate convened, from its session days file. `senate_sessions`
