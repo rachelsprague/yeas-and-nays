@@ -185,6 +185,26 @@ class EscapingTest < Minitest::Test
     end
   end
 
+  # The pipeline sanitizes CRS summaries, but in a job that runs third-party
+  # code; the site build re-checks them and escapes the version label.
+  def test_summary_keeps_only_bare_allowed_tags_and_escapes_the_version
+    hostile = { "version" => %q(Introduced "<vv>"), "version_date" => "2025-01-03",
+                "html" => %q(<p>Keeps <strong>bold</strong> &amp; lists</p><ul><li>one</li></ul>) +
+                          %q(<script>alert(1)</script><p onclick="x">a</p><img src=x onerror=y><a href="/">b</a>) }
+    built = build_site([MEMBER], [[VOTE, DOC.merge("summary" => hostile)]])
+    page = built["/votes/119/house/1/1/index.html"]
+    assert_equal "<p>Keeps <strong>bold</strong> &amp; lists</p><ul><li>one</li></ul>" \
+                 "&lt;script&gt;alert(1)&lt;/script&gt;&lt;p onclick=\"x\"&gt;a</p>" \
+                 "&lt;img src=x onerror=y&gt;&lt;a href=\"/\"&gt;b&lt;/a&gt;",
+                 page[%r{<div class="crs-text">(.*?)</div>}m, 1]
+    assert_includes page, "Version: Introduced &quot;&lt;vv&gt;&quot;,"
+  end
+
+  def test_summary_tags_match_the_pipeline_allowlist
+    py = File.read(File.expand_path("../../src/yan/export/summary_html.py", __dir__))
+    assert_equal py[/^ALLOWED = \{(.*)\}$/, 1].scan(/"(\w+)"/).flatten.sort, Yan::SUMMARY_TAGS.sort
+  end
+
   # The map's size, party codes and city label positions come from our own
   # build, but are escaped anyway; this feeds them HTML's special characters.
   def test_find_page_escapes_map_size_party_and_city_fields
