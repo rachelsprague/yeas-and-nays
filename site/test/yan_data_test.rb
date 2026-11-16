@@ -263,32 +263,45 @@ class MemberCosponsoredTest < Minitest::Test
     "latest_vote_id" => "h119-1-0001"
   }.freeze
 
-  def page(cosponsored)
+  # The member page's cosponsored section, or nil when there is none.
+  def section(cosponsored)
     files = { "Z000001" => { "sponsored" => [], "cosponsored" => cosponsored } }
-    build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
-      .fetch("/members/Z000001/index.html")
+    html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
+           .fetch("/members/Z000001/index.html")
+    html[%r{<section aria-labelledby="cosponsored-h".*?</section>}m]
   end
 
   def test_no_section_until_the_list_is_fetched
-    refute_includes page(nil), "Bills cosponsored"
+    assert_nil section(nil)
   end
 
   def test_an_empty_list_says_none
-    html = page([])
-    assert_includes html, "Bills cosponsored"
-    assert_includes html, "0 this Congress"
-    assert_includes html, "No bills or resolutions cosponsored this Congress."
+    s = section([])
+    assert_includes s, "Bills cosponsored"
+    assert_includes s, "0 this Congress"
+    assert_includes s, "No bills or resolutions cosponsored this Congress."
   end
 
   def test_bills_are_listed_with_their_latest_action_and_vote
-    html = page([BILL])
-    section = html[%r{<section aria-labelledby="cosponsored-h".*?</section>}m]
-    assert_includes section, "1 this Congress"
-    assert_includes section, %(<a class="t headline-link" href="#{BILL["congress_gov_url"]}">A bill to rename a post office</a>)
-    assert_includes section, "Read twice and referred to committee."
-    assert_includes section, 'href="/votes/119/house/1/1/">Recorded vote →</a>'
-    refute_includes section, "No bills or resolutions cosponsored"
-    refute_includes section, "Show all"
+    s = section([BILL])
+    assert_includes s, "1 this Congress"
+    assert_includes s, "S. 7 · Introduced Feb. 1, 2025"
+    assert_includes s, %(<a class="t headline-link" href="#{BILL["congress_gov_url"]}">A bill to rename a post office</a>)
+    assert_includes s, "Latest action, March 4, 2025: Read twice and referred to committee."
+    assert_includes s, 'href="/votes/119/house/1/1/">Recorded vote →</a>'
+    refute_includes s, "No bills or resolutions cosponsored"
+    refute_includes s, "Show all"
+  end
+
+  # The first five show; the rest go under "Show all".
+  def test_more_than_five_bills_fold_the_rest_under_show_all
+    bills = (1..6).map { |n| BILL.merge("measure_label" => "S. #{n}", "title" => "Bill #{n}") }
+    s = section(bills)
+    assert_includes s, "6 this Congress"
+    shown, folded = s.split("<summary")
+    assert_equal (1..5).map { |n| "Bill #{n}" }, shown.scan(/>(Bill \d)</).flatten
+    assert_includes folded, "Show all 6</summary>"
+    assert_equal ["Bill 6"], folded.scan(/>(Bill \d)</).flatten
   end
 end
 
