@@ -865,6 +865,13 @@ class SchedulePageTest < Minitest::Test
     assert_includes tuesday, %(<a class="headline-link" href="/votes/119/house/2/316/">)
   end
 
+  # The home page passes each item's place to start rows past its third
+  # hidden; this page doesn't, so every item shows.
+  def test_no_item_starts_hidden
+    assert_operator page.scan('<li class="vote-item"').size, :>, 3
+    refute_match(/<li class="vote-item"[^>]* hidden>/, page)
+  end
+
   def test_an_item_with_no_bill_type_or_link_is_unlinked
     item = li(week("2026-11-09"), "Unnumbered resolution")
     assert_includes item, %(<div class="unlinked">)
@@ -1338,17 +1345,28 @@ class HomeModulesTest < Minitest::Test
             "against_party_majority" => [{ "bioguide_id" => "Z000001", "position" => "Nay" }], "summary" => nil }
     v = vote("h119-2-0001", "house", "2026-11-12", 0, 1, 1, against: 1)
         .merge("congress" => 119, "session" => 2, "roll_number" => 1, "question" => "On Passage", "result" => "Failed")
+    # A Senate vote with no member against their party: in Closest votes only.
+    s = vote("s119-2-0001", "senate", "2026-11-11", 50, 49, 50)
+        .merge("congress" => 119, "session" => 2, "roll_number" => 1, "question" => "On Passage", "result" => "Passed")
     senate = (1..4).map do |i|
       { "chamber" => "senate", "item_id" => "s#{i}", "filed_date" => "2026-11-12", "question" => "On the Cloture Motion",
         "measure_label" => "PN#{i}", "title" => "Nomination #{i}", "vote_id" => nil }
     end
-    html = build_site([member], [[v, doc]], time: "2026-11-13 12:00:00 -0500",
-                      schedule: { "items" => senate, "senate_next_convene_et" => "2026-11-16T15:00:00" }).fetch("/index.html")
-    assert_includes html, '<section aria-labelledby="soon-h" data-row data-chamber="senate ">'
-    assert_includes html, '<section aria-labelledby="close-h" data-row data-chamber="house">'
-    assert_includes html, '<section aria-labelledby="against-h" data-row data-chamber="house">'
+    house = SchedulePageTest.allocate.house("h1", "H.R. 1", "A House bill")
+    built = ->(items) do
+      build_site([member], [[v, doc], [s, doc.merge("against_party_majority" => [])]], time: "2026-11-13 12:00:00 -0500",
+                 schedule: { "items" => items, "senate_next_convene_et" => "2026-11-16T15:00:00" }).fetch("/index.html")
+    end
+    chambers = ->(page, id) { page[/<section aria-labelledby="#{id}" data-row data-chamber="([^"]*)">/, 1] }
+    html = built.call(senate + [house])
+    # The tabs split the value on spaces: exactly one between chambers.
+    assert_equal "senate house", chambers.call(html, "soon-h")
+    assert_equal "senate", chambers.call(built.call(senate), "soon-h")
+    assert_equal "house", chambers.call(built.call([house]), "soon-h")
+    assert_equal %w[house senate], chambers.call(html, "close-h").split(" ").sort
+    assert_equal "house", chambers.call(html, "against-h")
     soon = html[%r{<section aria-labelledby="soon-h".*?</section>}m]
-    assert_equal 4, soon.scan('<li class="vote-item"').size
+    assert_equal 5, soon.scan('<li class="vote-item"').size
     assert_equal ["Nomination 4"], soon.scan(%r{<li class="vote-item"[^>]* hidden>.*?<span class="t">(.*?)</span>}m).flatten
     # The lead takes two-thirds only beside the week's column.
     assert_includes html, '<div class="front has-side">'

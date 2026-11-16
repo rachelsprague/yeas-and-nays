@@ -75,7 +75,7 @@ nav: votes
   <div class="modules three">
     {%- assign schedule = site.data.schedule %}
     {%- if schedule.upcoming_senate.size > 0 or schedule.upcoming_house.size > 0 %}
-    <section aria-labelledby="soon-h" data-row data-chamber="{% if schedule.upcoming_senate.size > 0 %}senate {% endif %}{% if schedule.upcoming_house.size > 0 %}house{% endif %}">
+    <section aria-labelledby="soon-h" data-row data-chamber="{% if schedule.upcoming_senate.size > 0 %}senate{% if schedule.upcoming_house.size > 0 %} house{% endif %}{% else %}house{% endif %}">
       <h2 id="soon-h" class="kicker soft">Coming up</h2>
       {%- comment -%} Each chamber's block is a data-row too, so the chamber tabs hide its heading with its list. {%- endcomment %}
       {%- if schedule.upcoming_senate.size > 0 %}
