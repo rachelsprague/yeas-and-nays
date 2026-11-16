@@ -24,8 +24,11 @@ with house_items as (
     select * from {{ ref('stg_floor__house_items') }}
     -- Removal is checked on the recorded value: an unparseable remove date
     -- (null after try_cast) still means removed. A malformed week is dropped
-    -- rather than shown undated.
-    where removed_at_recorded is null and week_date is not null
+    -- rather than shown undated, and an item ID with no letters or digits
+    -- rather than collapsed into a bare week ID.
+    where removed_at_recorded is null
+        and week_date is not null
+        and {{ id_part('item_id') }} is not null
 ),
 
 votes as (
@@ -71,23 +74,30 @@ house as (
         and votes.bill_type = items.bill_type
         and votes.bill_number = items.bill_number
         and votes.vote_date between items.week_date and items.week_date + 6
-    -- One row per item ID: item IDs the source writes two ways ("4098.1", "4098-1")
-    -- share one, so the first in raw order is kept, with its first deciding vote.
-    qualify row_number() over (partition by {{ house_item_id }} order by items.item_id, votes.vote_time_et, votes.vote_id) = 1
+    -- One row per item ID, with its first deciding vote. Item IDs the source writes
+    -- two ways ("4098.1", "4098-1") share one, and the first in raw order is kept;
+    -- the same raw ID listed twice keeps the row listed first on the schedule.
+    qualify row_number() over (
+        partition by {{ house_item_id }}
+        order by items.item_id, items.category_order, items.item_order, items.measure_number, items.title,
+            votes.vote_time_et, votes.vote_id
+    ) = 1
 ),
 
--- An event with no docnum can't be told apart from another such event, so it's
--- dropped rather than grouped with them.
+-- docnum_key compares docnums the source writes two ways ("H.R. 4", "H.R.4") as one.
+-- An event with no docnum (or one with no letters or digits) can't be told apart
+-- from another such event, so it's dropped rather than grouped with them.
 events as (
-    select * from {{ ref('int_senate_cloture_events') }}
-    where activity_date is not null and status_order is not null and docnum is not null
+    select *, {{ id_part('docnum') }} as docnum_key
+    from {{ ref('int_senate_cloture_events') }}
+    where activity_date is not null and status_order is not null and {{ id_part('docnum') }} is not null
 ),
 
 -- The latest filing for each document and target.
 latest_filing as (
     select * from events
     where event = 'filed'
-    qualify row_number() over (partition by docnum, target order by activity_date desc, status_order desc) = 1
+    qualify row_number() over (partition by docnum_key, target order by activity_date desc, status_order desc, docnum) = 1
 ),
 
 filed as (
@@ -101,7 +111,7 @@ filed as (
         -- Re-filed the same day an earlier cloture vote on it was taken: that day's roll call is the earlier one.
         exists (
             select 1 from events as voted
-            where voted.docnum = filing.docnum
+            where voted.docnum_key = filing.docnum_key
                 and voted.target = filing.target
                 and voted.event = 'voted'
                 and voted.activity_date = filing.activity_date
@@ -110,7 +120,7 @@ filed as (
     from latest_filing as filing
     where not exists (
         select 1 from events as later
-        where later.docnum = filing.docnum
+        where later.docnum_key = filing.docnum_key
             and (later.activity_date, later.status_order) > (filing.activity_date, filing.status_order)
             and (
                 later.event = 'disposed'
@@ -120,7 +130,7 @@ filed as (
 ),
 
 {%- set senate_item_id -%}
-    concat_ws('-', 's', {{ id_part('filed.docnum') }}, case
+    concat_ws('-', 's', filed.docnum_key, case
         when filed.target = 'the motion to proceed to the measure' then 'proceed'
         when filed.target = 'the measure' then 'measure'
         when filed.target = '' or filed.document_prefix = 'SA' then null
@@ -153,19 +163,19 @@ senate as (
         and (votes.vote_date > filed.activity_date
             or (votes.vote_date = filed.activity_date and not filed.voted_earlier_that_day))
         and case
-            when filed.document_prefix = 'SA' then votes.amendment_number = filed.docnum
+            when filed.document_prefix = 'SA' then {{ id_part('votes.amendment_number') }} = filed.docnum_key
             when filed.target = 'the motion to proceed to the measure'
-                then votes.measure_number = filed.docnum and votes.question ilike '%motion to proceed%'
+                then {{ id_part('votes.measure_number') }} = filed.docnum_key and votes.question ilike '%motion to proceed%'
             -- Cloture on the measure or nomination itself. A motion on anything else
             -- (e.g. a committee substitute) isn't matched rather than guessed at.
             when filed.target in ('the measure', '')
-                then votes.measure_number = filed.docnum
+                then {{ id_part('votes.measure_number') }} = filed.docnum_key
                     and votes.amendment_number is null
                     and votes.question not ilike '%motion to proceed%'
             else false
         end
-    -- One row per item ID: a docnum the source writes two ways ("H.R. 4", "H.R.4")
-    -- gives one, so the latest filing is kept, with its first cloture vote.
+    -- One row per item ID: a target the source writes two ways gives one, so the
+    -- latest filing is kept, with its first cloture vote.
     qualify row_number() over (
         partition by {{ senate_item_id }}
         order by filed.activity_date desc, filed.status_order desc, filed.docnum, filed.target, votes.vote_time_et, votes.vote_id
