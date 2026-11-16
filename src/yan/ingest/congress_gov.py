@@ -24,8 +24,8 @@ over by one list), and fetches none when the process has already run
 SKIP_COSPONSORED_AFTER (the weekly sponsored refresh). A list that fails is
 logged and skipped, and retried next run. A rate limit (HTTP 429) or
 MAX_FAILURES_IN_A_ROW failures stop the run's cosponsored lists early, and if
-every list tried fails, the run fails, so a change in the API can't go
-unnoticed.
+that many fail with none fetched, the run fails, so a change in the API can't
+go unnoticed.
 
 The API key is read from CONGRESS_API_KEY and sent only in the X-Api-Key
 header, never in a URL. Without a key this step is skipped.
@@ -169,16 +169,18 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
 
 def _member_list_page(doc, list_key: str, bioguide_id: str) -> tuple[int, list[dict]]:
     """A member-list response's total item count and its page of items, or ValueError if
-    it isn't shaped like one."""
+    it isn't shaped like one. An empty page with no pagination counts as 0 items."""
     where = f"congress.gov member {bioguide_id}"
     if not isinstance(doc, dict) or list_key not in doc:
         raise ValueError(f"{where}: response has no {list_key}")
     pagination, page = doc.get("pagination"), doc[list_key]
+    if not isinstance(page, list) or not all(isinstance(item, dict) for item in page):
+        raise ValueError(f"{where}: {list_key} isn't a list of objects")
+    if pagination is None and not page:
+        return 0, page
     count = pagination.get("count") if isinstance(pagination, dict) else None
     if not isinstance(count, int) or isinstance(count, bool):
         raise ValueError(f"{where}: response has no pagination count")
-    if not isinstance(page, list) or not all(isinstance(item, dict) for item in page):
-        raise ValueError(f"{where}: {list_key} isn't a list of objects")
     return count, page
 
 
@@ -263,5 +265,7 @@ def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.d
         in_a_row = 0
     log.info("congress.gov: %d of %d stale cosponsored-legislation lists fetched, %d failed (%d requests)",
              fetched, len(stale), failed, used)
-    if failed and not fetched:
+    # A failure or two can be a passing outage, and failing the run would hold back the
+    # vote posts too; MAX_FAILURES_IN_A_ROW with nothing fetched looks like the API changed.
+    if failed >= MAX_FAILURES_IN_A_ROW and not fetched:
         raise RuntimeError(f"congress.gov: every cosponsored-legislation list tried failed ({failed})")
