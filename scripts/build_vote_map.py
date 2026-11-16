@@ -41,7 +41,8 @@ RING = re.compile(r"M(-?[\d.]+) (-?[\d.]+)l([^Mz]*)z")
 
 def parse_path(d):
     """A district's path data (absolute move, relative lines, one ring per
-    subpath) as one geometry, filled even-odd: a ring inside another is a hole."""
+    subpath) as one geometry, filled even-odd: a ring inside another is a hole.
+    Empty if no subpath has three points."""
     geom = None
     for m in RING.finditer(d):
         x, y = float(m[1]), float(m[2])
@@ -54,7 +55,7 @@ def parse_path(d):
             continue
         ring = Polygon(pts).buffer(0)
         geom = ring if geom is None else geom.symmetric_difference(ring)
-    return shapely.make_valid(geom)
+    return Polygon() if geom is None else shapely.make_valid(geom)
 
 
 def path_data(geom):
@@ -66,6 +67,8 @@ def path_data(geom):
         for ring in [poly.exterior, *poly.interiors]:
             pts = [(round(x / SCALE), round(y / SCALE)) for x, y in ring.coords[:-1]]
             pts = [p for i, p in enumerate(pts) if i == 0 or p != pts[i - 1]]
+            if len(pts) > 1 and pts[-1] == pts[0]:
+                pts.pop()  # "z" closes the ring; a last point on the first would repeat it
             if len(pts) < 3:
                 continue
             steps = " ".join(f"{x1 - x0} {y1 - y0}" for (x0, y0), (x1, y1) in zip(pts, pts[1:]))
