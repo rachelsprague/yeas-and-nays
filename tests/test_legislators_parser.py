@@ -200,3 +200,15 @@ def test_field_values_of_the_wrong_type_stage_as_null(caplog):
 
     rows = parse_social([{"id": {"bioguide": "X000005"}, "social": {"twitter": {"x": 1}, "youtube_id": 42}}])
     assert (rows[0]["twitter"], rows[0]["youtube_id"]) == (None, "42")
+
+
+def test_a_wrong_type_term_start_is_logged_once(caplog):
+    _, terms, affiliations = parse([
+        {"id": {"bioguide": "X000007"}, "name": {"last": "Example"},
+         "terms": [{"type": "rep", "start": {"x": 1}, "district": 1, "party_affiliations": [
+             {"start": "2025-01-03", "party": "Republican"}, {"start": "2026-03-09", "party": "Independent"},
+         ]}]},
+    ], is_current=True)
+    assert terms[0]["term_start"] is None
+    assert [a["term_start"] for a in affiliations] == [None, None]
+    assert caplog.text.count("of the wrong type") == 1

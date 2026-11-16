@@ -12,13 +12,13 @@ skipped too, as is a list item that isn't an object (an entry, term or
 party affiliation). A null or non-object name or social block reads as
 empty, and null or non-list terms or affiliations as none. A field value of
 the wrong type (an object or list where text is expected, or a district that
-isn't a whole number) is logged and staged as null. A file whose top level
-isn't a list fails the run: read key by key, it would stage no one. If the
-member has
-votes in the data, a skipped entry shows up downstream as a dbt test
-failure (its vote positions fail the positions mart's relationships or
-not_null test on bioguide_id), so check this log when one appears;
-otherwise the log is the only trace.
+isn't a whole number) is logged and staged as null; a House term left with
+no district fails the dbt test `house_terms_have_a_district`. A file whose
+top level isn't a list fails the run: read key by key, it would stage no
+one. If the member has votes in the data, a skipped entry shows up
+downstream as a dbt test failure (its vote positions fail the positions
+mart's relationships or not_null test on bioguide_id), so check this log
+when one appears; otherwise the log is the only trace.
 """
 
 import json
@@ -60,10 +60,11 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
         for t in _list(p.get("terms")):
             if not _is_entry(t):
                 continue
+            term_start = text(t, "start")
             term_rows.append({
                 "bioguide_id": bioguide,
                 "term_type": text(t, "type"),
-                "term_start": text(t, "start"),
+                "term_start": term_start,
                 "term_end": text(t, "end"),
                 "state": text(t, "state"),
                 "district": _int(t.get("district"), "district", bioguide),
@@ -79,7 +80,7 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
                     continue
                 affiliation_rows.append({
                     "bioguide_id": bioguide,
-                    "term_start": text(t, "start"),
+                    "term_start": term_start,
                     "affiliation_start": text(a, "start"),
                     "affiliation_end": text(a, "end"),
                     "party": text(a, "party"),
