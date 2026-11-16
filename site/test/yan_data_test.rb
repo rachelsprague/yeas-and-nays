@@ -79,8 +79,9 @@ module SiteBuild
   SOURCE = File.expand_path("..", __dir__)
 
   # Returns { "/path/index.html" => html } for every page built from these
-  # members and [vote, vote file] pairs.
-  def build_site(members, votes, files: "*.html")
+  # members and [vote, vote file] pairs, plus a floor schedule export and a
+  # build time (Eastern) when given.
+  def build_site(members, votes, files: "*.html", schedule: nil, time: nil)
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
@@ -90,12 +91,15 @@ module SiteBuild
       write.call("votes.json", { "votes" => votes.map(&:first) })
       votes.each { |v, doc| write.call("votes/#{v["vote_id"]}.json", doc) }
       members.each { |m| write.call("members/#{m["bioguide_id"]}.json", { "sponsored" => [], "cosponsored" => [] }) }
+      write.call("floor_schedule.json", schedule) if schedule
 
-      site = Jekyll::Site.new(Jekyll.configuration(
+      config = {
         "source" => SOURCE, "destination" => File.join(tmp, "_site"), "yan_data" => data,
         "plugins_dir" => File.join(tmp, "none"), # yan_data.rb is already loaded above
         "quiet" => true
-      ))
+      }
+      config["time"] = time if time
+      site = Jekyll::Site.new(Jekyll.configuration(config))
       site.process
       Dir[File.join(tmp, "_site", "**", files)].to_h { |f| [f.delete_prefix("#{tmp}/_site"), File.read(f)] }
     end
@@ -612,6 +616,80 @@ class ScheduleTest < Minitest::Test
     view = Yan.schedule_view({ "items" => [] }, {})
     assert_equal [[], [], nil, nil], view.values_at("upcoming_house", "upcoming_senate", "upcoming_week",
                                                    "senate_next_convene")
+  end
+end
+
+# Builds /schedule/ on Friday, Nov. 13, 2026, from a small floor schedule export.
+class SchedulePageTest < Minitest::Test
+  include SiteBuild
+
+  MEMBER = {
+    "bioguide_id" => "Z000001", "official_full_name" => "Jane Doe", "first_name" => "Jane", "last_name" => "Doe",
+    "party" => "R", "caucus_party" => "R", "chamber" => "house", "state" => "AL", "district" => 4,
+    "is_current" => true, "is_voting_member" => true
+  }.freeze
+
+  VOTE = {
+    "vote_id" => "h119-2-0316", "congress" => 119, "chamber" => "house", "session" => 2, "roll_number" => 316,
+    "vote_date" => "2026-11-10", "question" => "On Passage", "result" => "Passed", "bill_type" => "hr",
+    "bill_number" => "5549", "measure_number" => "H R 5549", "measure_title" => "Voted Act"
+  }.freeze
+
+  DOC = { "positions" => { "Z000001" => "Yea" }, "party_totals" => { "R" => { "yes" => 1 } },
+          "caucus_majority_position" => {}, "against_party_majority" => [], "summary" => nil }.freeze
+
+  def house(id, label, title, bill_type: nil, url: nil, vote_id: nil)
+    { "chamber" => "house", "item_id" => id, "week_date" => "2026-11-09",
+      "category" => "Items that may be considered under suspension of the rules", "question" => nil,
+      "measure_number" => label, "bill_type" => bill_type, "measure_label" => label, "title" => title,
+      "amends" => nil, "congress_gov_url" => url, "vote_id" => vote_id }
+  end
+
+  def senate(id, label, title, amends: nil)
+    { "chamber" => "senate", "item_id" => id, "filed_date" => "2026-11-12", "question" => "On the Cloture Motion",
+      "measure_number" => nil, "bill_type" => nil, "measure_label" => label, "title" => title,
+      "amends" => amends, "congress_gov_url" => nil, "vote_id" => nil }
+  end
+
+  def page
+    @page ||= build_site([MEMBER], [[VOTE, DOC]], files: "schedule/index.html", time: "2026-11-13 12:00:00 -0500",
+                         schedule: { "items" => [
+                           house("a", "H.R. 3978", "Linked Act", bill_type: "hr",
+                                 url: "https://www.congress.gov/bill/119th-congress/house-bill/3978"),
+                           house("b", "H.R. 5549", "Voted Act", bill_type: "hr", vote_id: "h119-2-0316"),
+                           house("c", "H. Res. ___", "Unnumbered resolution"),
+                           senate("d", "PN1272-3", "A nomination"),
+                           senate("e", "Amendment to H.R. 2347", "An amendment", amends: "H.R. 2347")
+                         ], "senate_next_convene_et" => "2026-11-16T15:00:00" })["/schedule/index.html"]
+  end
+
+  def week(date) = page[/<section class="cal-week" data-row data-week="#{date}".*?<\/section>/m]
+
+  def test_house_items_are_pending_in_their_week_and_the_voted_one_is_on_its_day
+    this_week = week("2026-11-09")
+    pending = this_week[/House: on this week.*/m]
+    assert_includes pending, %(href="https://www.congress.gov/bill/119th-congress/house-bill/3978")
+    assert_includes pending, "Items that may be considered under suspension of the rules"
+    refute_includes pending, "Voted Act"
+    # The roll call is in Tuesday's cell, the day it was taken.
+    tuesday = this_week[/<span class="kicker soft">Tue<\/span>.*?<span class="kicker soft">Wed<\/span>/m]
+    assert_includes tuesday, %(<a class="headline-link" href="/votes/119/house/2/316/">)
+  end
+
+  def test_an_item_with_no_bill_type_or_link_is_unlinked
+    item = week("2026-11-09")[/<li class="vote-item"[^>]*>(?:(?!<\/li>).)*Unnumbered resolution.*?<\/li>/m]
+    assert_includes item, %(<div class="unlinked">)
+    assert_includes item, "H. Res. ___"
+    refute_includes item, "<a "
+  end
+
+  def test_cloture_motions_sit_in_the_week_the_senate_next_convenes
+    refute_includes week("2026-11-09"), "Senate: cloture motions filed"
+    next_week = week("2026-11-16")
+    assert_includes next_week, "Cloture filed Nov. 12, 2026"
+    assert_includes next_week, "On the Cloture Motion · PN1272-3"
+    assert_includes next_week, "On the Cloture Motion · Amendment to H.R. 2347"
+    assert_includes page, "The Senate is scheduled to convene Monday, Nov. 16, 2026, at 3 p.m. ET."
   end
 end
 

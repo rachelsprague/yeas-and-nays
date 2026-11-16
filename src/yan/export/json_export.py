@@ -233,11 +233,12 @@ def floor_schedule_document(items: list[dict], senate_sessions: list[dict]) -> d
     """Floor schedule items with a display label, and when the Senate is next set to convene.
 
     The label is the citation form for bills and resolutions ("H.Res. 1650"), else
-    the number as listed ("PN1272-3", "H. Res. ___"); amendments name what they amend.
+    the number as listed ("PN1272-3", "H. Res. ___"); amendments name what they amend
+    ("Amendment to H.R. 2347" when the amendment's own number is missing).
     """
     for item in items:
         label = bill_label(item["bill_type"], item["bill_number"]) if item["bill_type"] else item["measure_number"]
-        item["measure_label"] = f"{label} to {item['amends']}" if item["amends"] else label
+        item["measure_label"] = f"{label or 'Amendment'} to {item['amends']}" if item["amends"] else label
     latest = senate_sessions[-1] if senate_sessions else {}
     return {
         "items": items,
