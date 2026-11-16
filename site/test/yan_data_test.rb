@@ -202,15 +202,28 @@ class EscapingTest < Minitest::Test
 
   # A summary with no usable text reads as none, without the CRS credit line.
   def test_a_summary_without_text_reads_as_no_summary
-    votes = [{ "version" => "Introduced", "version_date" => "2025-01-03", "html" => 1 }, "<p>a</p>"]
+    base = { "version" => "Introduced", "version_date" => "2025-01-03" }
+    votes = [base.merge("html" => 1), "<p>a</p>", base.merge("html" => ""), base.merge("html" => " <p> </p><br>\n")]
             .each_with_index.map do |summary, i|
       [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
     end
     built = build_site([MEMBER], votes)
-    [1, 2].each do |roll|
+    (1..4).each do |roll|
       page = built.fetch("/votes/119/house/1/#{roll}/index.html")
       assert_includes page, "No Congressional Research Service summary of", roll
       refute_includes page, "By the Congressional Research Service", roll
+    end
+  end
+
+  # A missing or unreadable version date is left out of the credit line.
+  def test_a_summary_without_a_valid_version_date_still_builds
+    votes = [nil, "Jan. 3", 20_250_103].each_with_index.map do |date, i|
+      summary = { "version" => "Introduced", "version_date" => date, "html" => "<p>a</p>" }
+      [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
+    end
+    built = build_site([MEMBER], votes)
+    (1..3).each do |roll|
+      assert_includes built.fetch("/votes/119/house/1/#{roll}/index.html"), "Version: Introduced.", roll
     end
   end
 
