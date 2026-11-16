@@ -141,8 +141,25 @@ models:
         description: Vote question as officially recorded.
         data_tests: [not_null]
       - name: result
-        description: Result as officially recorded (for a Speaker election, the winning candidate).
+        description: >
+          Result as officially recorded. For a Speaker election, the candidate with the most
+          votes, as the Clerk lists that member ("Johnson (LA)"), including on a ballot that
+          elects no one.
         data_tests: [not_null]
+      - name: result_bioguide_id
+        description: >
+          Speaker elections only: the member named in `result`, matched by the Clerk's display
+          name among that roll call's voters. Null on other votes, and when the name matches no
+          voter or more than one.
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+                where: question = 'Election of the Speaker'
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
       - name: yea_count
         description: Official tally. Null for votes tallied by candidate (Election of the Speaker).
       - name: tie_breaker_by

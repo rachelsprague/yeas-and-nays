@@ -332,3 +332,34 @@ unit_tests:
         - {bioguide_id: C1, website_url: "https://new.example.gov", phone: "202-224-3441", phone_tel: "+12022243441", x_url: "https://x.com/one"}
         - {bioguide_id: C2, website_url: "https://two.example.gov", phone: "202-225-0000 ext. 5", phone_tel: null, x_url: null}
         - {bioguide_id: F1, website_url: null, phone: null, phone_tel: null, x_url: null}
+
+  - name: votes_match_the_speaker_result_to_the_voter_with_that_name
+    description: >
+      A Speaker election's result ("Johnson (LA)") is matched to the voter the
+      Clerk lists by that name. No match, more than one, or a vote other than a
+      Speaker election leaves result_bioguide_id null.
+    model: votes
+    given:
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: h1, chamber: house, question: Election of the Speaker, result: "Johnson (LA)"}
+          - {vote_id: h2, chamber: house, question: Election of the Speaker, result: Smith}
+          - {vote_id: h3, chamber: house, question: Election of the Speaker, result: Nobody}
+          - {vote_id: h4, chamber: house, question: On Passage, result: "Johnson (LA)"}
+      - input: ref('bills')
+        rows: []
+      - input: ref('positions')
+        rows: []
+      - input: ref('int_positions_resolved')
+        rows:
+          - {vote_id: h1, bioguide_id: J1, name_as_recorded: "Johnson (LA)"}
+          - {vote_id: h1, bioguide_id: J2, name_as_recorded: "Johnson (GA)"}
+          - {vote_id: h2, bioguide_id: S1, name_as_recorded: Smith}
+          - {vote_id: h2, bioguide_id: S2, name_as_recorded: Smith}
+          - {vote_id: h4, bioguide_id: J1, name_as_recorded: "Johnson (LA)"}
+    expect:
+      rows:
+        - {vote_id: h1, result_bioguide_id: J1}
+        - {vote_id: h2, result_bioguide_id: null}
+        - {vote_id: h3, result_bioguide_id: null}
+        - {vote_id: h4, result_bioguide_id: null}
