@@ -172,13 +172,18 @@ def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
         con.execute("""insert into floor_schedule (chamber, item_id, filed_date, question, measure_number, title)
                        values ('senate', 's-' || ?, date '2026-11-11', 'On the Cloture Motion', ?, 'T')""",
                     [measure, measure])
+    con.execute("""insert into floor_schedule (chamber, item_id, filed_date, question, measure_number, title, amends)
+                   values ('senate', 's-none', date '2026-11-11', 'On the Cloture Motion', null, 'T', 'H.R. 2347')""")
     con.execute("insert into senate_sessions values ('2026-11-12 12:00', '2026-11-12 16:52', '2026-11-16 15:00')")
     con.close()
 
     run(warehouse, tmp_path / "out")
 
     doc = json.loads((tmp_path / "out" / "floor_schedule.json").read_text())
-    assert [i["measure_label"] for i in doc["items"]] == ["H.R. 2347", "PN1272-3", "PN1272-13"]
+    # An item with no number sorts last.
+    assert [i["measure_label"] for i in doc["items"]] == [
+        "H.R. 2347", "PN1272-3", "PN1272-13", "Amendment to H.R. 2347",
+    ]
     assert doc["senate_next_convene_et"] == "2026-11-16T15:00:00"
 
 
@@ -199,3 +204,16 @@ def test_floor_schedule_labels_items_and_takes_the_latest_next_convene():
     ]
     assert doc["senate_next_convene_et"] == dt.datetime(2026, 11, 16, 15)
     assert floor_schedule_document([], [])["senate_next_convene_et"] is None
+
+
+def test_floor_schedule_item_with_no_measure_number():
+    items = [
+        {"measure_number": None, "bill_type": None, "bill_number": None, "amends": None},
+        {"measure_number": None, "bill_type": None, "bill_number": None, "amends": "H.R. 2347"},
+        {"measure_number": "", "bill_type": None, "bill_number": None, "amends": None},
+        {"measure_number": "", "bill_type": None, "bill_number": None, "amends": "H.R. 2347"},
+    ]
+    doc = floor_schedule_document(items, [])
+    assert [i["measure_label"] for i in doc["items"]] == [
+        None, "Amendment to H.R. 2347", None, "Amendment to H.R. 2347",
+    ]

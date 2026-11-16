@@ -31,6 +31,33 @@ def test_house_week_keeps_the_remove_date():
     assert (row["category_order"], row["remove_date"]) == ("2", "2026-11-17T10:00:00.000")
 
 
+def test_malformed_values_stage_as_text_for_dbt_to_cast():
+    # Bad or missing values are passed on as they are (or null); try_cast in
+    # staging nulls them and the floor tests warn, so nothing here raises.
+    house = b"""<floorschedule congress-num="next" week-date="Nov. 16">
+      <category sort-order="second"><floor-items>
+        <floor-item sort-order="" add-date="soon"><legis-num> </legis-num></floor-item>
+      </floor-items></category></floorschedule>"""
+    [row] = parse_house_week(house, "house/2026-11-16.xml")
+    assert (row["congress"], row["week_date"], row["category_order"], row["add_date"]) == (
+        "next", "Nov. 16", "second", "soon",
+    )
+    assert (row["category"], row["item_id"], row["legis_num"], row["floor_text"]) == (None,) * 4
+    assert row["item_order"] == ""  # try_cast('' as integer) is null
+
+    senate = b"""<daily_senate_floor_activity><date_iso_8601>11/12</date_iso_8601>
+      <document><amendment_docnum>Amendment to H.R. 2347</amendment_docnum>
+        <amendment_status_text>Cloture motion presented in Senate.</amendment_status_text></document>
+    </daily_senate_floor_activity>"""
+    [row] = parse_senate_day(senate, "senate/2026-11-12.xml")
+    assert (row["activity_date"], row["docnum"], row["document_title"]) == ("11/12", None, None)
+
+    days = b"""<CongressSessionDayConvenings><LegislativeDay><SessionDay>
+      <ConveneDate>noon</ConveneDate></SessionDay></LegislativeDay></CongressSessionDayConvenings>"""
+    [row] = parse_session_days(days, "senate/session_days.xml")
+    assert (row["legislative_day"], row["convene_time"], row["next_convene_time"]) == (None, "noon", None)
+
+
 def test_senate_day_has_a_row_per_status_line_including_amendments():
     rows = parse_senate_day((FIXTURES / "senate_floor_2026-11-11.xml").read_bytes(), "senate/2026-11-11.xml")
 
@@ -151,6 +178,34 @@ def test_ingest_senate_fetches_recent_days_skips_unpublished_and_prunes(monkeypa
 
     # Nov. 12 isn't posted yet (senate.gov answers with an HTML page).
     assert sorted(p.name for p in tmp_path.iterdir()) == ["2026-11-11.xml", "session_days.xml"]
+
+
+def test_ingest_senate_refetches_only_the_two_newest_days(monkeypatch, tmp_path):
+    monkeypatch.setattr(ingest, "senate_dir", lambda: tmp_path)
+    days = [dt.date(2026, 11, d) for d in (9, 10, 11, 12, 13)]
+    session_days = b'<CongressSessionDayConvenings Congress="119">' + b"".join(
+        f"<LegislativeDay><SessionDay><ConveneDate>{d}T12:00:00-05:00</ConveneDate></SessionDay>"
+        "</LegislativeDay>".encode()
+        for d in days
+    ) + b"</CongressSessionDayConvenings>"
+    # Nov. 9 and 11 were saved by an earlier run; Nov. 10 is missing.
+    for day in ("2026-11-09", "2026-11-11"):
+        (tmp_path / f"{day}.xml").write_text("earlier copy")
+    fetched = []
+
+    def handler(request):
+        fetched.append(str(request.url))
+        if str(request.url) == ingest.SENATE_DAYS_URL:
+            return httpx.Response(200, content=session_days)
+        return httpx.Response(200, content=b"<daily_senate_floor_activity><congress>119</congress>"
+                                           b"</daily_senate_floor_activity>")
+
+    ingest.ingest_senate(Client(delay=0, transport=httpx.MockTransport(handler)), dt.date(2026, 11, 12))
+
+    # Nov. 13 is after today; Nov. 11 and 12 are the two newest, refetched even if saved.
+    assert fetched[1:] == [ingest.SENATE_DAY_URL.format(day=dt.date(2026, 11, d)) for d in (10, 11, 12)]
+    assert (tmp_path / "2026-11-09.xml").read_text() == "earlier copy"
+    assert (tmp_path / "2026-11-11.xml").read_text() != "earlier copy"
 
 
 def test_a_malformed_or_wrong_congress_file_is_not_saved(monkeypatch, tmp_path, caplog):
