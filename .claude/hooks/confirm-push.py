@@ -35,7 +35,9 @@ expand after this check (backticks, $, globs, braces, line breaks), titles
 and body files with control or invisible characters, body files in dot
 directories, and a post chained with or redirected from anything else.
 Commands over 20,000 characters are denied outright, so every check stays
-fast (a hook that times out doesn't block the command).
+fast (a hook that times out doesn't block the command), and so are commands
+with git or gh nested in quoted strings more than three levels deep (`sh -c`
+inside `sh -c` ...), past what the checks read.
 
 This is a guard against pushing or posting by accident, not against a
 determined attempt to get around it: it only sees command text, which can
@@ -217,28 +219,53 @@ def ansi_c_decoded(command: str) -> str:
     return ANSI_C_QUOTED.sub(lambda m: ANSI_C_ESCAPE.sub(char, m.group(1)), command)
 
 
+def _substitutes(command: str) -> bool:
+    """Whether the command runs `...` or $(...), which a double-quoted string runs too, and
+    tokens() can't tell double quotes from single. Decided once, on the whole command as bash
+    joins it (`$\\<newline>(` is `$(`), since tokens() turns backticks into separators before
+    the strings inside are scanned."""
+    joined = command.replace("\\\n", "")
+    return "`" in joined or "$(" in joined
+
+
+# How many levels of quoted strings inside quoted strings are scanned (`sh -c "sh -c '...'"`).
+MAX_DEPTH = 3
+GIT_OR_GH = re.compile(r"(?<![\w.-])(git|gh)(?![\w.-])")
+
+
+class TooDeep(Exception):
+    """A quoted string nested past MAX_DEPTH mentions git or gh, so a push, merge or post in it
+    can't be ruled out. Not a ValueError, so the scans' unparseable-string handling passes it on."""
+
+
+def _past_depth(word: str, depth: int) -> bool:
+    """Whether a quoted word at this depth is past MAX_DEPTH and so not scanned. Raises TooDeep
+    if it mentions git or gh, rather than letting what it runs go unchecked."""
+    if depth < MAX_DEPTH:
+        return False
+    if GIT_OR_GH.search(re.sub(r"[\"'\\]", "", word)):
+        raise TooDeep
+    return True
+
+
 def _scan(command: str, in_segment, depth: int = 0, skip_messages: bool | None = None) -> list:
     found, segment = [], []
-    # A message in double quotes runs `...` and $(...), and tokens() can't tell the quotes apart,
-    # so messages are skipped only when the command has neither. Decided once, on the whole
-    # command as bash joins it (`$\<newline>(` is `$(`), since tokens() turns backticks into
-    # separators before the strings inside are scanned.
+    # A message in double quotes runs `...` and $(...), so messages are skipped only when the
+    # command has neither.
     if skip_messages is None:
-        joined = command.replace("\\\n", "")
-        skip_messages = "`" not in joined and "$(" not in joined
+        skip_messages = not _substitutes(command)
     for tok in tokens(strip_redirects(command)) + [";"]:
         if tok not in SEPARATORS:
             segment.append(tok)
             continue
         found += in_segment(segment)
-        if depth < 3:
-            messages = _git_messages(segment) if skip_messages else set()
-            for k, t in enumerate(segment):
-                if k not in messages and any(c.isspace() for c in t):
-                    try:
-                        found += _scan(t, in_segment, depth + 1, skip_messages)
-                    except ValueError:
-                        pass  # not valid shell on its own (e.g. a message with "can't"), so not run as a command
+        messages = _git_messages(segment) if skip_messages else set()
+        for k, t in enumerate(segment):
+            if k not in messages and any(c.isspace() for c in t) and not _past_depth(t, depth):
+                try:
+                    found += _scan(t, in_segment, depth + 1, skip_messages)
+                except ValueError:
+                    pass  # not valid shell on its own (e.g. a message with "can't"), so not run as a command
         segment = []
     return found
 
@@ -317,25 +344,31 @@ def _config_alias_in_segment(seg: list[str]) -> list[bool]:
     return []
 
 
-def find_posts(command: str, depth: int = 0) -> list[dict]:
+def find_posts(command: str, depth: int = 0, substitutes: bool | None = None) -> list[dict]:
     """Every gh command that posts PR or issue text (or sets an alias), as {"kind", "args"}.
 
-    Looks at the command's own words, and inside the strings it hands to a shell (`sh -c`,
-    `eval`), but not inside other quoted text, so `git commit -m "... gh pr comment ..."`
-    isn't a post."""
+    Looks at the command's own words, inside the strings it hands to a shell (`sh -c`, `eval`),
+    and, when the command runs `...` or $(...), inside each quoted word that holds one, since a
+    double-quoted string runs them too (`echo "$(gh pr comment ...)"`). Other quoted text is left
+    alone, so `git commit -m "... gh pr comment ..."` and `grep "gh pr comment" $(ls)` aren't
+    posts."""
+    if substitutes is None:
+        substitutes = _substitutes(command)
     found, segment = [], []
     for tok in tokens(strip_redirects(command)) + [";"]:
         if tok not in SEPARATORS:
             segment.append(tok)
             continue
         found += _post_in_segment(segment)
-        if depth < 3 and any(os.path.basename(t) in SHELLS | {"eval"} for t in segment):
-            for t in segment:
-                if any(c.isspace() for c in t):
-                    try:
-                        found += find_posts(t, depth + 1)
-                    except ValueError:
-                        pass  # not valid shell on its own, so not run as a command
+        to_shell = any(os.path.basename(t) in SHELLS | {"eval"} for t in segment)
+        for t in segment:
+            # tokens() has turned a backtick into ` ; `, so a `;` marks one (or a literal `;`).
+            runs_substitution = substitutes and ("$(" in t or ";" in t)
+            if (to_shell or runs_substitution) and any(c.isspace() for c in t) and not _past_depth(t, depth):
+                try:
+                    found += find_posts(t, depth + 1, substitutes)
+                except ValueError:
+                    pass  # not valid shell on its own, so not run as a command
         segment = []
     return found
 
@@ -755,6 +788,10 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
         if finds_config_alias(command):
             return "deny", "git -c alias.* can hide a push from this hook; run the git command itself."
         posts = find_posts(command)
+    except TooDeep:
+        return "deny", (f"This command nests quoted commands more than {MAX_DEPTH} levels deep (sh -c inside sh -c ...) "
+                        "with git or gh at the deepest level, past what the push hook checks. Run it with less "
+                        "nesting.")
     except ValueError:
         if LOOSE_PUSH.search(flat) or LOOSE_MERGE.search(flat) or LOOSE_POST.search(unquote(command)):
             return "deny", ("Couldn't parse this command to check for a git push, PR merge or text posted to "
