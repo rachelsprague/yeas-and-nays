@@ -1180,6 +1180,7 @@ class VoteVolumeTest < Minitest::Test
   def test_kinds_group_procedure_keys_and_default_to_procedural
     assert_equal "passage", Yan.vote_kind("suspend")
     assert_equal "passage", Yan.vote_kind("veto_override")
+    assert_equal "passage", Yan.vote_kind("expel")
     assert_equal "amendment", Yan.vote_kind("amendment")
     assert_equal "nomination", Yan.vote_kind("nomination")
     assert_equal "procedural", Yan.vote_kind("cloture")
