@@ -73,6 +73,9 @@ def check_files(root: Path) -> tuple[list[str], list[Path]]:
             size = path.lstat().st_size
             count += 1
             total += size
+            # cp -R keeps the mode, so git would commit an executable bit.
+            if mode & 0o111:
+                problems.append(f"{rel!r}: executable")
             if size > MAX_FILE_BYTES:
                 problems.append(f"{rel!r}: {size} bytes, over the {MAX_FILE_BYTES} limit")
             else:

@@ -120,6 +120,16 @@ def test_symlinks_fail_even_with_an_allowed_name(artifact, committed, tmp_path):
     ]
 
 
+@pytest.mark.parametrize("mode", [0o755, 0o744, 0o654, 0o645])
+def test_executable_files_fail(artifact, committed, mode):
+    (artifact / "out" / "meta.json").chmod(mode)
+    (artifact / "bot" / "state.json").chmod(mode)
+    assert cda.check(artifact, committed) == [
+        "'bot/state.json': executable",
+        "'out/meta.json': executable",
+    ]
+
+
 def test_a_name_with_a_line_break_is_printed_escaped(artifact, committed):
     (artifact / "out" / "x\n::error::y.json").write_text("{}")
     [problem] = cda.check(artifact, committed)
