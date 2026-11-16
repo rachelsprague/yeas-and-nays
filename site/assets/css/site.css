@@ -354,7 +354,10 @@ table.roll { border-collapse: collapse; width: 100%; }
    columns divided by thin rules from 760px. */
 .modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; border-top: 1.5px solid var(--ink); padding-top: 12px; }
 .modules > section, .week { display: flex; flex-direction: column; gap: 10px; }
-.modules > section + section { border-top: 1.5px solid var(--ink); padding-top: 12px; }
+/* Rules go between the modules shown: a chamber tab can hide any of them, or
+   all of a row's. */
+.modules:not(:has(> section:not([hidden]))) { display: none; }
+.modules > section:not([hidden]) ~ section { border-top: 1.5px solid var(--ink); padding-top: 12px; }
 .fig-sm { font-family: var(--font-display); font-size: 36px; line-height: 36px; font-weight: 600; }
 
 .week-figs { display: flex; gap: 28px; }
@@ -531,16 +534,16 @@ footer.wrap { padding-bottom: 28px; }
   .findrow { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
   .findctl { flex: 0 1 420px; }
 
-  .front { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
-  .lead { padding-right: 36px; border-right: 1px solid var(--ink); }
+  .front.has-side { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .has-side .lead { padding-right: 36px; border-right: 1px solid var(--ink); }
   .side { border-top: 0; margin-top: 0; padding-top: 0; padding-left: 28px; }
   .modules { gap: 0; }
   .modules.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .modules.two { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .modules > section { padding: 0 24px; }
-  .modules > section:first-child { padding-left: 0; }
-  .modules > section:last-child { padding-right: 0; }
-  .modules > section + section { border-top: 0; padding-top: 0; border-left: 1px solid var(--line); }
+  .modules > section:not(:not([hidden]) ~ section) { padding-left: 0; }
+  .modules > section:not(:has(~ section:not([hidden]))) { padding-right: 0; }
+  .modules > section:not([hidden]) ~ section { border-top: 0; padding-top: 0; border-left: 1px solid var(--line); }
   .new-here { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
 
   .who { gap: 28px; }

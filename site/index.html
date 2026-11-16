@@ -26,7 +26,8 @@ nav: votes
   The chamber tabs filter every module: each row carries data-chamber, and a
   list's data-limit shows its first rows for the chosen chamber. Lists hold
   rows from both chambers so either tab still fills them; without JS, rows
-  past the limit start hidden.
+  past the limit start hidden. Each module is a row too, listing the chambers
+  it has rows for, so a tab with none hides the module, heading and all.
 {%- endcomment %}
 <main id="main" class="wrap home" data-filter-scope>
   <div class="head-row">
@@ -38,7 +39,7 @@ nav: votes
     </div>
   </div>
 
-  <div class="front">
+  <div class="front{% if home.week %} has-side{% endif %}">
     <article class="lead">
       {% include lead.html view=leads.all key="all" %}
       {%- if leads.house %}{% include lead.html view=leads.house key="house" %}{% endif %}
@@ -74,7 +75,7 @@ nav: votes
   <div class="modules three">
     {%- assign schedule = site.data.schedule %}
     {%- if schedule.upcoming_senate.size > 0 or schedule.upcoming_house.size > 0 %}
-    <section aria-labelledby="soon-h">
+    <section aria-labelledby="soon-h" data-row data-chamber="{% if schedule.upcoming_senate.size > 0 %}senate{% if schedule.upcoming_house.size > 0 %} house{% endif %}{% else %}house{% endif %}">
       <h2 id="soon-h" class="kicker soft">Coming up</h2>
       {%- comment -%} Each chamber's block is a data-row too, so the chamber tabs hide its heading with its list. {%- endcomment %}
       {%- if schedule.upcoming_senate.size > 0 %}
@@ -82,7 +83,7 @@ nav: votes
         <h3 class="small soft nums">Senate{% if schedule.senate_next_convene %} · Convenes {{ schedule.senate_next_convene }}{% endif %}</h3>
         <ul class="ruled" data-limit="3">
           {%- for item in schedule.upcoming_senate %}
-            {%- include schedule_item.html item=item %}
+            {%- include schedule_item.html item=item place=forloop.index %}
           {%- endfor %}
         </ul>
       </div>
@@ -92,7 +93,7 @@ nav: votes
         <h3 class="small soft nums">House · Week of {{ schedule.upcoming_week | ap_date }}</h3>
         <ul class="ruled" data-limit="3">
           {%- for item in schedule.upcoming_house %}
-            {%- include schedule_item.html item=item show_category=true %}
+            {%- include schedule_item.html item=item show_category=true place=forloop.index %}
           {%- endfor %}
         </ul>
       </div>
@@ -104,20 +105,20 @@ nav: votes
 
     {%- assign closest = home.closest %}
     {%- if closest and closest.rows.size > 0 %}
-    <section aria-labelledby="close-h">
+    <section aria-labelledby="close-h" data-row data-chamber="{{ closest.rows | map: "vote" | map: "chamber" | uniq | join: " " | escape }}">
       <h2 id="close-h" class="kicker soft">Closest votes</h2>
       <p class="small muted nums">Roll calls from {{ closest.range }}</p>
       <ul class="ruled" data-limit="3">
         {%- for r in closest.rows %}
         {%- assign v = r.vote %}
-        <li class="close-item" data-row data-chamber="{{ v.chamber }}"{% if forloop.index > 3 %} hidden{% endif %}>
-          <a class="headline-link" href="{{ v.url }}">
-            <span class="kicker muted nums">{{ v.chamber_name }} · Roll {{ v.roll_number }} · {{ v.vote_date | ap_date }}</span>
+        <li class="close-item" data-row data-chamber="{{ v.chamber | escape }}"{% if forloop.index > 3 %} hidden{% endif %}>
+          <a class="headline-link" href="{{ v.url | escape }}">
+            <span class="kicker muted nums">{{ v.chamber_name | escape }} · Roll {{ v.roll_number }} · {{ v.vote_date | ap_date }}</span>
             <span class="small soft">{{ v.question | escape }}</span>
             <span class="t">{% include vote_title.html vote=v %}</span>
           </a>
           <div class="close-bar" aria-hidden="true"><span class="yea" style="width: {{ r.yea_pct }}%"></span>{% unless v.tie_breaker_by %}<span class="tick" style="left: {{ r.tick_pct }}%"></span>{% endunless %}</div>
-          <p class="small nums">{{ v.yea_count }} {{ r.words.yes }}, {{ v.nay_count }} {{ r.words.no }} · {% if v.tie_breaker_by %}Tie broken by the {{ v.tie_breaker_by | escape }}{% else %}{{ r.needed }} needed, {{ r.share }}{% endif %}</p>
+          <p class="small nums">{{ v.yea_count }} {{ r.words.yes | escape }}, {{ v.nay_count }} {{ r.words.no | escape }} · {% if v.tie_breaker_by %}Tie broken by the {{ v.tie_breaker_by | escape }}{% else %}{{ r.needed }} needed, {{ r.share }}{% endif %}</p>
           <p class="small soft">{{ v.result_label | escape }}</p>
         </li>
         {%- endfor %}
@@ -128,21 +129,21 @@ nav: votes
 
     {%- assign against = home.against %}
     {%- if against and against.size > 0 %}
-    <section aria-labelledby="against-h">
+    <section aria-labelledby="against-h" data-row data-chamber="{{ against | map: "vote" | map: "chamber" | uniq | join: " " | escape }}">
       <h2 id="against-h" class="kicker soft">Voted against their party's majority</h2>
       <ul class="ruled" data-limit="5">
         {%- for r in against %}
         {%- assign v = r.vote %}
-        <li class="against-item" data-row data-chamber="{{ v.chamber }}"{% if forloop.index > 5 %} hidden{% endif %}>
+        <li class="against-item" data-row data-chamber="{{ v.chamber | escape }}"{% if forloop.index > 5 %} hidden{% endif %}>
           <span class="against-n nums"><span class="fig-sm">{{ r.count }}</span><span class="small soft">member{% if r.count != 1 %}s{% endif %}</span></span>
           <span class="against-v">
-            <a class="headline-link" href="{{ v.url }}">
-              <span class="kicker muted nums">{{ v.chamber_name }} · {{ v.vote_date | ap_date }}</span>
+            <a class="headline-link" href="{{ v.url | escape }}">
+              <span class="kicker muted nums">{{ v.chamber_name | escape }} · {{ v.vote_date | ap_date }}</span>
               <span class="t">{% include vote_title.html vote=v %}</span>
             </a>
             <span class="small soft nums">{{ v.result_label | escape }} · {{ v.yea_count }}–{{ v.nay_count }}</span>
             {%- if r.names.size > 0 %}
-            <span class="small">{% for a in r.names %}<a class="link" href="{{ a.url }}">{{ a.name | escape }} ({{ a.code }})</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
+            <span class="small">{% for a in r.names %}<a class="link" href="{{ a.url | escape }}">{{ a.name | escape }} ({{ a.code | escape }})</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
             {%- endif %}
           </span>
         </li>
