@@ -125,10 +125,9 @@ def projector(state):
     """Returns a function mapping a lon/lat geometry to output coordinates for that state."""
     proj = {"AK": ALASKA, "HI": HAWAII}.get(state, CONUS)
     to_m = Transformer.from_crs("EPSG:4269", proj, always_xy=True).transform
-    # The western Aleutians lie past 180°; give them west longitudes so they stay
-    # beside the rest of Alaska instead of wrapping to the far right.
-    lon = (lambda x: np.where(x > 0, x - 360, x)) if state == "AK" else (lambda x: x)
-    return lambda geom: shapely.transform(geom, lambda c: np.column_stack(to_m(lon(c[:, 0]), c[:, 1])))
+    # The western Aleutians lie past 180° but stay beside the rest of Alaska: PROJ
+    # measures longitude from the projection's central meridian, wrapped to ±180°.
+    return lambda geom: shapely.transform(geom, lambda c: np.column_stack(to_m(c[:, 0], c[:, 1])))
 
 
 def place(geom, scale, left, top, bounds):
@@ -161,6 +160,8 @@ def path_data(parts):
 def line_data(coords, closed=False):
     pts = [(round(x, 1), round(y, 1)) for x, y in coords]
     pts = [p for i, p in enumerate(pts) if i == 0 or p != pts[i - 1]]
+    if closed and len(pts) > 1 and pts[-1] == pts[0]:
+        pts.pop()  # "z" closes the ring; a last point on the first would repeat it
     if len(pts) < (3 if closed else 2):
         return ""
     seg = [f"M{fmt(pts[0][0])} {fmt(pts[0][1])}l"]
