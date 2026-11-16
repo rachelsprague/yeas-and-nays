@@ -10,11 +10,15 @@ and skipped: the ID goes into Congress.gov request URLs, cache file names
 and page URLs. An entry with no ID block, or no bioguide ID, is logged and
 skipped too, as is a list item that isn't an object (an entry, term or
 party affiliation). A null or non-object name or social block reads as
-empty, and null or non-list terms or affiliations as none. If the member has
-votes in the data, a skipped entry shows up downstream as a dbt test
-failure (its vote positions fail the positions mart's relationships or
-not_null test on bioguide_id), so check this log when one appears;
-otherwise the log is the only trace.
+empty, and null or non-list terms or affiliations as none. A field value of
+the wrong type (an object or list where text is expected, or a district that
+isn't a whole number) is logged and staged as null; a House term left with
+no district fails the dbt test `house_terms_have_a_district`. A file whose
+top level isn't a list fails the run: read key by key, it would stage no
+one. If the member has votes in the data, a skipped entry shows up
+downstream as a dbt test failure (its vote positions fail the positions
+mart's relationships or not_null test on bioguide_id), so check this log
+when one appears; otherwise the log is the only trace.
 """
 
 import json
@@ -41,41 +45,46 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
         bioguide = _bioguide(ids, name.get("official_full") or name.get("last"))
         if not bioguide:
             continue
+
+        def text(entry: dict, field: str) -> str | None:
+            return _text(entry.get(field), field, bioguide)
+
         person_rows.append({
             "bioguide_id": bioguide,
-            "lis_id": ids.get("lis"),
-            "first_name": name.get("first"),
-            "last_name": name.get("last"),
-            "official_full_name": name.get("official_full"),
+            "lis_id": text(ids, "lis"),
+            "first_name": text(name, "first"),
+            "last_name": text(name, "last"),
+            "official_full_name": text(name, "official_full"),
             "is_current": is_current,
         })
         for t in _list(p.get("terms")):
             if not _is_entry(t):
                 continue
+            term_start = text(t, "start")
             term_rows.append({
                 "bioguide_id": bioguide,
-                "term_type": t.get("type"),
-                "term_start": t.get("start"),
-                "term_end": t.get("end"),
-                "state": t.get("state"),
-                "district": t.get("district"),
-                "party": t.get("party"),
-                "caucus": t.get("caucus"),
-                "url": t.get("url"),
-                "contact_form": t.get("contact_form"),
-                "phone": t.get("phone"),
-                "office": t.get("office"),
+                "term_type": text(t, "type"),
+                "term_start": term_start,
+                "term_end": text(t, "end"),
+                "state": text(t, "state"),
+                "district": _int(t.get("district"), "district", bioguide),
+                "party": text(t, "party"),
+                "caucus": text(t, "caucus"),
+                "url": text(t, "url"),
+                "contact_form": text(t, "contact_form"),
+                "phone": text(t, "phone"),
+                "office": text(t, "office"),
             })
             for a in _list(t.get("party_affiliations")):
                 if not _is_entry(a):
                     continue
                 affiliation_rows.append({
                     "bioguide_id": bioguide,
-                    "term_start": t.get("start"),
-                    "affiliation_start": a.get("start"),
-                    "affiliation_end": a.get("end"),
-                    "party": a.get("party"),
-                    "caucus": a.get("caucus"),
+                    "term_start": term_start,
+                    "affiliation_start": text(a, "start"),
+                    "affiliation_end": text(a, "end"),
+                    "party": text(a, "party"),
+                    "caucus": text(a, "caucus"),
                 })
     return person_rows, term_rows, affiliation_rows
 
@@ -83,8 +92,7 @@ def parse(people: list[dict], is_current: bool) -> tuple[list[dict], list[dict],
 def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict]]:
     people, terms, affiliations = [], [], []
     for filename, is_current in SOURCES.items():
-        data = json.loads((raw_root / filename).read_text())
-        p, t, a = parse(data, is_current)
+        p, t, a = parse(_load(raw_root / filename), is_current)
         people += p
         terms += t
         affiliations += a
@@ -101,7 +109,7 @@ def parse_social(entries: list[dict]) -> list[dict]:
         if not bioguide:
             continue
         social = _object(e.get("social"))
-        rows.append({"bioguide_id": bioguide} | {f: _text(social.get(f)) for f in SOCIAL_FIELDS})
+        rows.append({"bioguide_id": bioguide} | {f: _text(social.get(f), f, bioguide) for f in SOCIAL_FIELDS})
     return rows
 
 
@@ -112,7 +120,15 @@ def parse_social_dir(raw_root: Path) -> list[dict]:
     if not path.exists():
         log.warning("legislators: %s not found; no social media accounts staged", SOCIAL_FILE)
         return []
-    return parse_social(json.loads(path.read_text()))
+    return parse_social(_load(path))
+
+
+def _load(path: Path) -> list:
+    """A file's entries; raises when its top level isn't a list."""
+    data = json.loads(path.read_text())
+    if not isinstance(data, list):
+        raise ValueError(f"legislators: {path.name} top level is {type(data).__name__}, not a list")
+    return data
 
 
 def _is_entry(entry) -> bool:
@@ -153,5 +169,24 @@ def _label(value) -> str:
     return text if len(text) <= LABEL_MAX else text[:LABEL_MAX - 1] + "…"
 
 
-def _text(value) -> str | None:
-    return None if value is None else str(value)
+def _text(value, field: str, bioguide: str) -> str | None:
+    """A text field as text (numbers too); an object, list or boolean is logged and read as null."""
+    if value is None or isinstance(value, str):
+        return value
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    _wrong_type(value, field, bioguide)
+    return None
+
+
+def _int(value, field: str, bioguide: str) -> int | None:
+    """A whole-number field; any other value is logged and read as null."""
+    if value is None or (isinstance(value, int) and not isinstance(value, bool)):
+        return value
+    _wrong_type(value, field, bioguide)
+    return None
+
+
+def _wrong_type(value, field: str, bioguide: str) -> None:
+    log.warning("legislators: %s has a %s of the wrong type, staged as null (%s)",
+                bioguide, field, _label(value))

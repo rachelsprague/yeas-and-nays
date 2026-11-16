@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from yan.stage.legislators import parse, parse_social, parse_social_dir
+from yan.stage.legislators import parse, parse_dir, parse_social, parse_social_dir
 
 PEOPLE = [
     {
@@ -165,3 +165,50 @@ def test_logged_labels_are_capped(caplog):
     assert len(caplog.records) == 3
     assert caplog.text.count("…") == 4
     assert not any(c * 80 in caplog.text for c in "XLY")
+
+
+@pytest.mark.parametrize("filename, parse_file", [
+    ("legislators-current.json", parse_dir),
+    ("legislators-historical.json", parse_dir),
+    ("legislators-social-media.json", parse_social_dir),
+])
+def test_a_file_whose_top_level_is_not_a_list_fails(filename, parse_file, tmp_path):
+    for name in ("legislators-current.json", "legislators-historical.json", "legislators-social-media.json"):
+        (tmp_path / name).write_text("[]")
+    (tmp_path / filename).write_text(json.dumps({"X000001": {"id": {"bioguide": "X000001"}}}))
+    with pytest.raises(ValueError, match=f"{filename} top level is dict, not a list"):
+        parse_file(tmp_path)
+
+
+def test_field_values_of_the_wrong_type_stage_as_null(caplog):
+    people, terms, affiliations = parse([
+        {"id": {"bioguide": "X000005", "lis": 999},
+         "name": {"first": ["Pat"], "last": "Example", "official_full": {"x": 1}},
+         "terms": [{"type": "rep", "start": "2025-01-03", "state": 6, "district": "3", "party": True,
+                    "party_affiliations": [{"start": "2025-01-03", "party": ["Independent"]}]}]},
+        {"id": {"bioguide": "X000006"}, "name": {"last": "Sample"},
+         "terms": [{"type": "rep", "start": "2025-01-03", "district": True}]},
+    ], is_current=True)
+    assert people[0] == {
+        "bioguide_id": "X000005", "lis_id": "999", "first_name": None, "last_name": "Example",
+        "official_full_name": None, "is_current": True,
+    }
+    assert [(t["state"], t["district"], t["party"]) for t in terms] == [("6", None, None), (None, None, None)]
+    assert affiliations[0]["party"] is None
+    assert caplog.text.count("of the wrong type") == 6
+    assert "X000005 has a district of the wrong type, staged as null ('3')" in caplog.text
+
+    rows = parse_social([{"id": {"bioguide": "X000005"}, "social": {"twitter": {"x": 1}, "youtube_id": 42}}])
+    assert (rows[0]["twitter"], rows[0]["youtube_id"]) == (None, "42")
+
+
+def test_a_wrong_type_term_start_is_logged_once(caplog):
+    _, terms, affiliations = parse([
+        {"id": {"bioguide": "X000007"}, "name": {"last": "Example"},
+         "terms": [{"type": "rep", "start": {"x": 1}, "district": 1, "party_affiliations": [
+             {"start": "2025-01-03", "party": "Republican"}, {"start": "2026-03-09", "party": "Independent"},
+         ]}]},
+    ], is_current=True)
+    assert terms[0]["term_start"] is None
+    assert [a["term_start"] for a in affiliations] == [None, None]
+    assert caplog.text.count("of the wrong type") == 1
