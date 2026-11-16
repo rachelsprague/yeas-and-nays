@@ -617,6 +617,13 @@ class ScheduleTest < Minitest::Test
     assert_equal [[], [], nil, nil], view.values_at("upcoming_house", "upcoming_senate", "upcoming_week",
                                                    "senate_next_convene")
   end
+
+  def test_a_convene_time_already_past_is_left_out_of_the_text
+    schedule = { "items" => [], "senate_next_convene_et" => "2026-11-16T15:00:00" }
+    assert_equal "Monday, Nov. 16, 2026, at 3 p.m. ET",
+                 Yan.schedule_view(schedule, {}, Time.new(2026, 11, 16, 14, 59))["senate_next_convene"]
+    assert_nil Yan.schedule_view(schedule, {}, Time.new(2026, 11, 16, 15, 1))["senate_next_convene"]
+  end
 end
 
 # Builds /schedule/ on Friday, Nov. 13, 2026, from a small floor schedule export.
@@ -718,9 +725,9 @@ class ScheduleCalendarTest < Minitest::Test
       "category" => "Items that may be considered under suspension of the rules" }
   end
 
-  def calendar(items, votes, today = FRIDAY, convene = "2026-11-16T15:00:00")
-    view = Yan.schedule_view({ "items" => items, "senate_next_convene_et" => convene }, {})
-    Yan.schedule_calendar(view, votes, today, convene)
+  def calendar(items, votes, now = FRIDAY, convene = "2026-11-16T15:00:00")
+    view = Yan.schedule_view({ "items" => items, "senate_next_convene_et" => convene }, {}, now)
+    Yan.schedule_calendar(view, votes, now, convene)
   end
 
   def week(cal, date) = cal["weeks"].find { |w| w["week_date"] == date }
@@ -803,6 +810,12 @@ class ScheduleCalendarTest < Minitest::Test
     assert_equal ["Sun", "1 p.m. ET"], this_week["days"].last.values_at("weekday", "convene")
     assert_equal ["d"], this_week["senate_pending"].map { |i| i["item_id"] }
     assert_equal ["a"], week(cal, "2026-11-16")["house_pending"].flat_map { |g| g["items"].map { |i| i["item_id"] } }
+    # Once that session has convened, open on next week with the motions.
+    later = calendar([item("house", "a", week: "2026-11-16"), item("senate", "d")], [],
+                     Time.new(2026, 11, 15, 13, 30), "2026-11-15T13:00:00")
+    assert_equal "2026-11-16", later["default_week"]
+    assert_equal ["d"], week(later, "2026-11-16")["senate_pending"].map { |i| i["item_id"] }
+    assert_nil week(later, "2026-11-09")["days"].last["convene"]
   end
 
   def test_without_a_convene_time_cloture_motions_go_in_the_opening_week
