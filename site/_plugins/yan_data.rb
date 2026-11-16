@@ -109,9 +109,9 @@ module Yan
   # there is one (else to Congress.gov, when it's a bill or resolution).
   # "Coming up" lists items without a roll call yet, and for the House only
   # the newest published week: by the time the next week's schedule is out,
-  # the current week's floor business is mostly done. With `now`, a convene
-  # time already past is left out.
-  def self.schedule_view(schedule, votes_by_id, now = nil)
+  # the current week's floor business is mostly done. A convene time already
+  # past `now` (the build time in ET) is left out.
+  def self.schedule_view(schedule, votes_by_id, now)
     items = schedule["items"].map do |item|
       vote = item["vote_id"] && votes_by_id[item["vote_id"]]
       item.merge("chamber_name" => CHAMBER_NAMES[item["chamber"]],
@@ -125,8 +125,7 @@ module Yan
       groups = rows.group_by { |i| i["category"] }.map { |category, r| { "category" => category, "items" => r } }
       { "week_date" => week, "groups" => groups }
     end
-    next_convene = schedule["senate_next_convene_et"]
-    next_convene = upcoming_convene(next_convene, now) if now
+    next_convene = upcoming_convene(schedule["senate_next_convene_et"], now)
     latest_week = house_weeks.last
     {
       "upcoming_senate" => senate.reject { |i| i["vote_id"] },

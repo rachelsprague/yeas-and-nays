@@ -594,7 +594,7 @@ class ScheduleTest < Minitest::Test
       item("house", "c", week: "2026-11-16"),
       item("senate", "d"),
       item("senate", "e", vote_id: "s9")
-    ], "senate_next_convene_et" => "2026-11-16T15:00:00" }, votes)
+    ], "senate_next_convene_et" => "2026-11-16T15:00:00" }, votes, Date.new(2026, 11, 13))
 
     assert_equal ["c"], view["upcoming_house"].map { |i| i["item_id"] }
     assert_equal "2026-11-16", view["upcoming_week"]
@@ -606,14 +606,14 @@ class ScheduleTest < Minitest::Test
   end
 
   def test_senate_items_without_a_house_schedule
-    view = Yan.schedule_view({ "items" => [item("senate", "d")] }, {})
+    view = Yan.schedule_view({ "items" => [item("senate", "d")] }, {}, Date.new(2026, 11, 13))
     assert_equal [["d"], [], nil, []],
                  [view["upcoming_senate"].map { |i| i["item_id"] }, view["upcoming_house"], view["upcoming_week"],
                   view["house_weeks"]]
   end
 
   def test_empty_schedule
-    view = Yan.schedule_view({ "items" => [] }, {})
+    view = Yan.schedule_view({ "items" => [] }, {}, Date.new(2026, 11, 13))
     assert_equal [[], [], nil, nil], view.values_at("upcoming_house", "upcoming_senate", "upcoming_week",
                                                    "senate_next_convene")
   end
@@ -673,6 +673,15 @@ class SchedulePageTest < Minitest::Test
   end
 
   def week(date) = page[/<section class="cal-week" data-row data-week="#{date}".*?<\/section>/m]
+
+  def test_the_convene_time_shows_until_it_has_passed
+    assert_includes page, "The Senate is scheduled to convene Monday, Nov. 16, 2026, at 3 p.m. ET."
+    assert_includes week("2026-11-16"), "3 p.m. ET"
+    after = build_site([MEMBER], [[VOTE, DOC]], files: "schedule/index.html", time: "2026-11-16 15:30:00 -0500",
+                       schedule: { "items" => [], "senate_next_convene_et" => "2026-11-16T15:00:00" })
+    refute_includes after["/schedule/index.html"], "scheduled to convene"
+    refute_includes after["/schedule/index.html"], "3 p.m. ET"
+  end
 
   def test_house_items_are_pending_in_their_week_and_the_voted_one_is_on_its_day
     this_week = week("2026-11-09")
