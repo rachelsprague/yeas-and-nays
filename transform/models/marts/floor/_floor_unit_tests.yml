@@ -1,0 +1,25 @@
+version: 2
+
+unit_tests:
+  - name: floor_schedule_drops_cloture_events_with_no_docnum
+    description: >
+      Cloture events with no docnum (a malformed floor record) can't be told apart, so
+      they're left out rather than grouped into one item with a null ID. Item IDs are
+      lower case with hyphens.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.1 a", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          - {docnum: null, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-09, status_order: 0, document_title: N1}
+          - {docnum: null, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N2}
+          - {docnum: PN7, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: N7}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09-4098-1-a, title: A}
+        - {item_id: s-pn7, title: N7}

@@ -15,3 +15,15 @@ models:
           - not_null:
               config:
                 severity: warn
+
+  - name: stg_floor__senate_session_days
+    description: >
+      One row per time the Senate convened, from its session days file. `senate_sessions`
+      drops a row whose convene time didn't parse, so this test is where it shows; it
+      warns because the floor schedule is secondary to votes.
+    columns:
+      - name: convene_time_et
+        data_tests:
+          - not_null:
+              config:
+                severity: warn

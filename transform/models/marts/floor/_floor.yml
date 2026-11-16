@@ -64,4 +64,5 @@ models:
     description: Each time the Senate convened this session, and when it was set to convene next.
     columns:
       - name: convene_time_et
-        data_tests: [unique, not_null]
+        description: Never null (malformed rows are dropped); stg_floor__senate_session_days tests for them.
+        data_tests: [unique]

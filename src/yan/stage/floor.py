@@ -65,7 +65,8 @@ def parse_senate_day(content: bytes, source_file: str) -> list[dict]:
                 "amends": _text(document, "amendment_docnum"),
                 "sponsor_name": _text(document, "sponsor_name"),
                 # Titles wrap mid-sentence in the source, leaving "contact\n." -> "contact .".
-                "document_title": re.sub(r" ([.,;:])", r"\1", _text(document, "document_title") or "") or None,
+                # Only a mark that ends a word is joined back, so " .NET" or " .5" keeps its space.
+                "document_title": re.sub(r" ([.,;:])(?=\s|$)", r"\1", _text(document, "document_title") or "") or None,
                 "status_order": str(order),
                 "status_text": status,
             })

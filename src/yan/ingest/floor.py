@@ -139,7 +139,9 @@ def ingest_senate_day(client: Client, day: dt.date, path) -> bool:
 def ingest(client: Client, today: dt.date | None = None) -> None:
     """Fetch both schedules. A failure is logged, not raised: the schedule is
     secondary, and the hourly run must still publish new votes. The files from
-    the last good fetch stay on disk."""
+    the last good fetch stay on disk while their week or day is still in the
+    window; one that has left it is deleted even if its replacement failed, so
+    a past week's House schedule isn't shown as current."""
     today = today or today_et()
     for chamber, step in (("house", ingest_house), ("senate", ingest_senate)):
         try:
