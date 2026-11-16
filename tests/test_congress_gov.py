@@ -81,7 +81,7 @@ def test_fetch_sponsored_pages_through_and_keeps_this_congress_bills(monkeypatch
         {"congress": 117, "type": "S", "number": "3"},
     ]
     client = _StubClient(items, page_size=2)
-    doc = congress_gov.fetch_sponsored(client, "k", "M001184")
+    doc, _ = congress_gov.fetch_sponsored(client, "k", "M001184")
     assert [offset for _, offset in client.calls] == [0, 2, 4]
     assert [i["number"] for i in doc["sponsoredLegislation"]] == ["1", "2"]
 
@@ -113,7 +113,7 @@ def test_ingest_fetches_stalest_cosponsored_lists_within_the_budget(monkeypatch,
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
     monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1", "B2", "C3", "D4"])
     monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
-    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: {})
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: ({}, 1))
     monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / "cosponsored" / f"{m}.json")
     monkeypatch.setattr(congress_gov, "COSPONSORED_REQUEST_BUDGET", 3)
 
@@ -353,10 +353,37 @@ def test_ingest_skips_cosponsored_lists_by_the_process_start(monkeypatch, tmp_pa
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
     monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1"])
     monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
-    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: {})
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: ({}, 1))
     monkeypatch.setattr(yan, "STARTED", clock["now"] - 31 * 60)  # earlier ingest steps took 31 minutes
     congress_gov.ingest(client=None)
     assert fetched == []
+
+
+def test_ingest_fetches_sponsored_lists_then_cosponsored(monkeypatch, tmp_path):
+    import yan
+    from yan.ingest import congress_gov
+
+    calls = []
+
+    def fetch(kind):
+        def stub(client, key, bioguide_id):
+            calls.append((kind, bioguide_id))
+            return {"bioguideId": bioguide_id, f"{kind}Legislation": []}, 1
+        return stub
+
+    monkeypatch.setenv("CONGRESS_API_KEY", "k")
+    monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1", "B2"])
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / "cosponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", fetch("sponsored"))
+    monkeypatch.setattr(congress_gov, "fetch_cosponsored", fetch("cosponsored"))
+    monkeypatch.setattr(yan, "STARTED", congress_gov.time.monotonic())
+    congress_gov.ingest(client=None)
+    assert calls == [("sponsored", "A1"), ("sponsored", "B2"), ("cosponsored", "A1"), ("cosponsored", "B2")]
+    for kind in ["sponsored", "cosponsored"]:
+        assert json.loads((tmp_path / kind / "B2.json").read_text()) == {
+            "bioguideId": "B2", f"{kind}Legislation": []}
 
 
 class _ShapeClient:
@@ -480,7 +507,7 @@ def _sponsored_setup(monkeypatch, tmp_path, errors, fetched):
         fetched.append(bioguide_id)
         if bioguide_id in errors:
             raise errors[bioguide_id]
-        return {"bioguideId": bioguide_id, "sponsoredLegislation": []}
+        return {"bioguideId": bioguide_id, "sponsoredLegislation": []}, 1
 
     monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / f"{m}.json")
     monkeypatch.setattr(congress_gov, "fetch_sponsored", fetch)
@@ -571,7 +598,7 @@ def test_fetch_sponsored_drops_an_item_repeated_across_pages(monkeypatch):
         {"congress": 119, "type": "HR", "number": "2"},
         {"congress": 119, "type": "HR", "number": "1"},
     ]
-    doc = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
+    doc, _ = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
     assert [i["number"] for i in doc["sponsoredLegislation"]] == ["3", "2", "1"]
 
 
@@ -651,7 +678,7 @@ def test_fetch_sponsored_keeps_a_bill_type_or_congress_that_differs(monkeypatch)
         {"congress": 118, "type": "S", "number": "5"},  # an earlier Congress's S 5 doesn't hide this one's
         {"congress": 119, "type": "S", "number": "5"},
     ]
-    doc = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
+    doc, _ = congress_gov.fetch_sponsored(_StubClient(items, page_size=2), "k", "M001184")
     assert [(i["type"], i["number"]) for i in doc["sponsoredLegislation"]] == [
         ("HR", "2"), ("HRES", "2"), ("S", "5")]
 

@@ -65,7 +65,7 @@ COSPONSORED_TIME_BUDGET = dt.timedelta(minutes=10)
 # The weekly sponsored refresh alone takes about 45 minutes; skip cosponsored lists on that
 # run so the job stays inside its 75-minute timeout.
 SKIP_COSPONSORED_AFTER = dt.timedelta(minutes=30)
-# This many cosponsored lists failing one after another means the API is down or has
+# This many member lists failing one after another means the API is down or has
 # changed; the rest wait for the next run.
 MAX_FAILURES_IN_A_ROW = 3
 
@@ -126,8 +126,8 @@ def cosponsored_path(bioguide_id: str):
     return RAW_DIR / "congress_gov" / str(CONGRESS) / "cosponsored" / f"{bioguide_id}.json"
 
 
-def fetch_sponsored(client: Client, key: str, bioguide_id: str) -> dict:
-    return fetch_member_list(client, key, bioguide_id, "sponsored")[0]
+def fetch_sponsored(client: Client, key: str, bioguide_id: str) -> tuple[dict, int]:
+    return fetch_member_list(client, key, bioguide_id, "sponsored")
 
 
 def fetch_cosponsored(client: Client, key: str, bioguide_id: str) -> tuple[dict, int]:
@@ -231,34 +231,9 @@ def ingest(client: Client) -> None:
 
 
 def ingest_sponsored(client: Client, key: str, members: list[str], stale: list[str]) -> None:
-    """Fetch stale sponsored lists. A list that fails is skipped (its old file kept, retried
-    next run), with the same stop and fail rules as the cosponsored lists."""
-    fetched = failed = in_a_row = 0
-    rate_limited = False
-    for bioguide_id in stale:
-        try:
-            doc = fetch_sponsored(client, key, bioguide_id)
-        except (httpx.HTTPError, ValueError) as e:
-            # Log the error type and status only.
-            status = getattr(getattr(e, "response", None), "status_code", None)
-            log.warning("congress.gov: sponsored list for %s failed (%s, HTTP %s); skipping",
-                        bioguide_id, type(e).__name__, status)
-            failed += 1
-            in_a_row += 1
-            rate_limited = status == 429
-            if rate_limited or in_a_row >= MAX_FAILURES_IN_A_ROW:
-                log.warning("congress.gov: %s; stopping sponsored lists for this run",
-                            "rate limited" if rate_limited else f"{in_a_row} lists failed in a row")
-                break
-            continue
-        write_atomic(sponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
-        fetched += 1
-        in_a_row = 0
-    log.info("congress.gov: %d members, %d of %d stale sponsored-legislation lists fetched, %d failed",
-             len(members), fetched, len(stale), failed)
-    if failed >= MAX_FAILURES_IN_A_ROW and not fetched and not rate_limited:
-        raise RuntimeError(f"congress.gov: {failed} sponsored-legislation lists failed and none "
-                           "were fetched")
+    """Fetch stale sponsored lists, with no budget."""
+    log.info("congress.gov: %d members, %d stale sponsored-legislation lists", len(members), len(stale))
+    _fetch_lists(client, key, "sponsored", stale, fetch_sponsored, sponsored_path)
 
 
 def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.date, started: float) -> None:
@@ -274,37 +249,49 @@ def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.d
                  "already ran %d min)", len(stale), (time.monotonic() - started) // 60)
         return
     deadline = time.monotonic() + COSPONSORED_TIME_BUDGET.total_seconds()
+    _fetch_lists(client, key, "cosponsored", stale, fetch_cosponsored, cosponsored_path,
+                 within_budget=lambda used: used < COSPONSORED_REQUEST_BUDGET and time.monotonic() < deadline)
+
+
+def _fetch_lists(client: Client, key: str, kind: str, stale: list[str], fetch, path,
+                 within_budget=lambda used: True) -> None:
+    """Fetch and save each stale member list in order. `within_budget(requests used so far)`
+    is checked before each list starts. A list that fails is logged and skipped (its old
+    file kept, retried next run); a rate limit (HTTP 429) or MAX_FAILURES_IN_A_ROW failures
+    in a row stop the rest, and stopping that way with none fetched (not on a rate limit)
+    raises RuntimeError."""
     used = fetched = failed = in_a_row = 0
     rate_limited = False
     for bioguide_id in stale:
-        if used >= COSPONSORED_REQUEST_BUDGET or time.monotonic() >= deadline:
+        if not within_budget(used):
             break
         try:
-            result = fetch_cosponsored(client, key, bioguide_id)
+            result = fetch(client, key, bioguide_id)
         except (httpx.HTTPError, ValueError) as e:
-            # Log the error type and status only; the list stays stale and is retried next run.
+            # Log the error type and status only.
             status = getattr(getattr(e, "response", None), "status_code", None)
-            log.warning("congress.gov: cosponsored list for %s failed (%s, HTTP %s); skipping",
-                        bioguide_id, type(e).__name__, status)
+            log.warning("congress.gov: %s list for %s failed (%s, HTTP %s); skipping",
+                        kind, bioguide_id, type(e).__name__, status)
             used += getattr(e, "requests", 1)
             failed += 1
             in_a_row += 1
             rate_limited = status == 429
             if rate_limited or in_a_row >= MAX_FAILURES_IN_A_ROW:
-                log.warning("congress.gov: %s; stopping cosponsored lists for this run",
-                            "rate limited" if rate_limited else f"{in_a_row} lists failed in a row")
+                log.warning("congress.gov: %s; stopping %s lists for this run", "rate limited"
+                            if rate_limited else f"{in_a_row} lists failed in a row", kind)
                 break
             continue
+        # Unpacked outside the try, so a bug here raises instead of reading as an API error.
         doc, requests = result
-        write_atomic(cosponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
+        write_atomic(path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
         used += requests
         fetched += 1
         in_a_row = 0
-    log.info("congress.gov: %d of %d stale cosponsored-legislation lists fetched, %d failed (%d requests)",
-             fetched, len(stale), failed, used)
+    log.info("congress.gov: %d of %d stale %s-legislation lists fetched, %d failed (%d requests)",
+             fetched, len(stale), kind, failed, used)
     # A failure or two, or a rate limit, can be a passing outage, and failing the run would
     # hold back the vote posts too; MAX_FAILURES_IN_A_ROW with nothing fetched looks like
     # the API changed.
     if failed >= MAX_FAILURES_IN_A_ROW and not fetched and not rate_limited:
-        raise RuntimeError(f"congress.gov: {failed} cosponsored-legislation lists failed and none "
+        raise RuntimeError(f"congress.gov: {failed} {kind}-legislation lists failed and none "
                            "were fetched")
