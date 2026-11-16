@@ -79,9 +79,9 @@ module SiteBuild
   SOURCE = File.expand_path("..", __dir__)
 
   # Returns { "/path/index.html" => html } for every page built from these
-  # members and [vote, vote file] pairs, plus a floor schedule export and a
-  # build time (Eastern) when given.
-  def build_site(members, votes, files: "*.html", schedule: nil, time: nil)
+  # members and [vote, vote file] pairs, plus a floor schedule export, a build
+  # time (Eastern) and members' bill files ({ bioguide_id => file }) when given.
+  def build_site(members, votes, files: "*.html", schedule: nil, time: nil, member_files: {})
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
@@ -90,7 +90,10 @@ module SiteBuild
       write.call("members.json", { "members" => members })
       write.call("votes.json", { "votes" => votes.map(&:first) })
       votes.each { |v, doc| write.call("votes/#{v["vote_id"]}.json", doc) }
-      members.each { |m| write.call("members/#{m["bioguide_id"]}.json", { "sponsored" => [], "cosponsored" => [] }) }
+      members.each do |m|
+        file = member_files.fetch(m["bioguide_id"], { "sponsored" => [], "cosponsored" => [] })
+        write.call("members/#{m["bioguide_id"]}.json", file)
+      end
       write.call("floor_schedule.json", schedule) if schedule
 
       config = {
@@ -245,6 +248,60 @@ class EscapingTest < Minitest::Test
     html = build(MEMBER.merge("phone" => "202-225-0000 ext. 5", "phone_tel" => nil)).fetch("/members/Z000001/index.html")
     assert_includes html, '<dd class="nums">202-225-0000 ext. 5</dd>'
     refute_includes html, "tel:"
+  end
+end
+
+# A member's cosponsored list is null until first fetched (no section), then
+# [] (an empty section) or the bills cosponsored this Congress.
+class MemberCosponsoredTest < Minitest::Test
+  include SiteBuild
+
+  BILL = {
+    "measure_label" => "S. 7", "title" => "A bill to rename a post office", "introduced_date" => "2025-02-01",
+    "congress_gov_url" => "https://www.congress.gov/bill/119th-congress/senate-bill/7",
+    "latest_action_date" => "2025-03-04", "latest_action_text" => "Read twice and referred to committee.",
+    "latest_vote_id" => "h119-1-0001"
+  }.freeze
+
+  # The member page's cosponsored section, or nil when there is none.
+  def section(cosponsored)
+    files = { "Z000001" => { "sponsored" => [], "cosponsored" => cosponsored } }
+    html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
+           .fetch("/members/Z000001/index.html")
+    html[%r{<section aria-labelledby="cosponsored-h".*?</section>}m]
+  end
+
+  def test_no_section_until_the_list_is_fetched
+    assert_nil section(nil)
+  end
+
+  def test_an_empty_list_says_none
+    s = section([])
+    assert_includes s, "Bills cosponsored"
+    assert_includes s, "0 this Congress"
+    assert_includes s, "No bills or resolutions cosponsored this Congress."
+  end
+
+  def test_bills_are_listed_with_their_latest_action_and_vote
+    s = section([BILL])
+    assert_includes s, "1 this Congress"
+    assert_includes s, "S. 7 · Introduced Feb. 1, 2025"
+    assert_includes s, %(<a class="t headline-link" href="#{BILL["congress_gov_url"]}">A bill to rename a post office</a>)
+    assert_includes s, "Latest action, March 4, 2025: Read twice and referred to committee."
+    assert_includes s, 'href="/votes/119/house/1/1/">Recorded vote →</a>'
+    refute_includes s, "No bills or resolutions cosponsored"
+    refute_includes s, "Show all"
+  end
+
+  # The first five show; the rest go under "Show all".
+  def test_more_than_five_bills_fold_the_rest_under_show_all
+    bills = (1..6).map { |n| BILL.merge("measure_label" => "S. #{n}", "title" => "Bill #{n}") }
+    s = section(bills)
+    assert_includes s, "6 this Congress"
+    shown, folded = s.split("<summary")
+    assert_equal (1..5).map { |n| "Bill #{n}" }, shown.scan(/>(Bill \d)</).flatten
+    assert_includes folded, "Show all 6</summary>"
+    assert_equal ["Bill 6"], folded.scan(/>(Bill \d)</).flatten
   end
 end
 

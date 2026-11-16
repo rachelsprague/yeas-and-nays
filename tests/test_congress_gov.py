@@ -160,6 +160,22 @@ def test_cosponsored_lists_stop_starting_after_the_time_budget(monkeypatch, tmp_
     assert fetched == ["A1", "B2"]
 
 
+def test_a_list_bigger_than_the_request_budget_is_still_fetched(monkeypatch, tmp_path):
+    fetched = []
+
+    def big_fetch(client, key, bioguide_id):
+        fetched.append(bioguide_id)
+        return {"bioguideId": bioguide_id, "cosponsoredLegislation": []}, 5
+
+    congress_gov, clock = _cosponsored_setup(monkeypatch, tmp_path, big_fetch)
+    monkeypatch.setattr(congress_gov, "COSPONSORED_REQUEST_BUDGET", 3)
+    congress_gov.ingest_cosponsored(None, "k", ["A1", "B2"], TODAY, started=clock["now"])
+    # The budget only stops new lists from starting: A1 takes 5 requests against a budget
+    # of 3 and is saved whole; B2 waits for the next run.
+    assert fetched == ["A1"]
+    assert (tmp_path / "A1.json").exists()
+
+
 def test_cosponsored_lists_are_skipped_after_a_long_sponsored_refresh(monkeypatch, tmp_path):
     fetched = []
     congress_gov, clock = _cosponsored_setup(
