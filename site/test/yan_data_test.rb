@@ -194,7 +194,7 @@ class EscapingTest < Minitest::Test
     built = build_site([MEMBER], [[VOTE, DOC.merge("summary" => hostile)]])
     page = built["/votes/119/house/1/1/index.html"]
     assert_equal "<p>Keeps <strong>bold</strong> &amp; lists</p><ul><li>one</li></ul>" \
-                 "&lt;script&gt;alert(1)&lt;/script&gt;&lt;p onclick=\"x\"&gt;a</p>" \
+                 "&lt;script&gt;alert(1)&lt;/script&gt;&lt;p onclick=\"x\"&gt;a&lt;/p&gt;" \
                  "&lt;img src=x onerror=y&gt;&lt;a href=\"/\"&gt;b&lt;/a&gt;",
                  page[%r{<div class="crs-text">(.*?)</div>}m, 1]
     assert_includes page, "Version: Introduced &quot;&lt;vv&gt;&quot;,"
@@ -646,6 +646,53 @@ class ResultLabelTest < Minitest::Test
   def test_a_bare_house_result_is_tied_to_its_question
     assert_equal "Motion to Refer: Passed", Yan.result_label({ "question" => "On Motion to Refer", "result" => "Passed" })
     assert_equal "Nomination Confirmed", Yan.result_label({ "question" => "On the Nomination", "result" => "Nomination Confirmed" })
+  end
+
+  def test_an_at_large_or_senate_seat_is_the_state_alone
+    wy = JOHNSON.merge("bioguide_id" => "W000001", "official_full_name" => "Wy Member", "state" => "WY", "district" => 0)
+    ky = JOHNSON.merge("bioguide_id" => "K000001", "official_full_name" => "Ky Member", "chamber" => "senate", "state" => "KY",
+                       "district" => nil)
+    assert_equal "Most votes: Wy Member (R-WY)", Yan.result_label(speaker("W000001"), { "W000001" => wy })
+    assert_equal "Most votes: Ky Member (R-KY)", Yan.result_label(speaker("K000001"), { "K000001" => ky })
+  end
+
+  # Senate results already name their subject, so they read as recorded.
+  def test_a_senate_result_stays_as_recorded
+    v = { "chamber" => "senate", "question" => "On the Cloture Motion", "result" => "Cloture Motion Agreed to" }
+    assert_equal "Cloture Motion Agreed to", Yan.result_label(v, { "J000299" => JOHNSON })
+  end
+end
+
+# The site build's re-check of CRS summary HTML (the build test above covers
+# hostile tags and attributes end to end).
+class SummaryHtmlTest < Minitest::Test
+  def test_balanced_allowed_tags_pass_unchanged
+    html = "<p>One <em>two</em><br>three</p><ol><li><b>a</b><sub>2</sub></li></ol>"
+    assert_equal html, Yan.summary_html(html)
+  end
+
+  def test_tags_left_open_are_closed_at_the_end
+    assert_equal "<ul><li>one</li></ul>", Yan.summary_html("<ul><li>one")
+    assert_equal "<p>a <strong>b</strong></p>", Yan.summary_html("<p>a <strong>b")
+  end
+
+  def test_a_closing_tag_closes_the_tags_opened_inside_it
+    assert_equal "<ul><li><em>one</em></li></ul><p>x</p>", Yan.summary_html("<ul><li><em>one</ul><p>x</p>")
+  end
+
+  def test_a_closing_tag_with_nothing_to_close_is_escaped
+    assert_equal "a&lt;/p&gt;<ul>b</ul>&lt;/ul&gt;&lt;/br&gt;", Yan.summary_html("a</p><ul>b</ul></ul></br>")
+  end
+
+  # The pipeline writes tags in lower case, with nothing inside the brackets.
+  def test_uppercase_or_spaced_tags_are_escaped
+    assert_equal "&lt;P&gt;a&lt;/P&gt;", Yan.summary_html("<P>a</P>")
+    assert_equal "&lt;p\n&gt;a&lt;/p &gt;", Yan.summary_html("<p\n>a</p >")
+    assert_equal "&lt;\np&gt;", Yan.summary_html("<\np>")
+  end
+
+  def test_no_text_unless_a_string
+    [nil, 1, ["<p>a</p>"], { "html" => "<p>a</p>" }].each { |html| assert_nil Yan.summary_html(html), html.inspect }
   end
 end
 

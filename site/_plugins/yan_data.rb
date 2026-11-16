@@ -639,9 +639,27 @@ module Yan
   # The vote page inserts a CRS summary as HTML. The pipeline's update job
   # already reduced it to SUMMARY_TAGS, but that job runs third-party code, so
   # the site build checks again: those bare tags pass, and any other < or >
-  # is escaped, so nothing else in the data can become markup.
+  # is escaped, so nothing else in the data can become markup. Tags are also
+  # balanced, so none reaches past the summary: a closing tag closes the tags
+  # opened since its own (as a browser does), one with nothing to close is
+  # escaped, and tags left open are closed at the end. Not a string: no text.
   def self.summary_html(html)
-    html&.gsub(SUMMARY_TOKEN) { |t| { "<" => "&lt;", ">" => "&gt;" }.fetch(t, t) }
+    return nil unless html.is_a?(String)
+
+    open = []
+    out = html.gsub(SUMMARY_TOKEN) do |t|
+      if (tag = t[%r{\A</(\w+)>\z}, 1])
+        next "&lt;/#{tag}&gt;" unless (i = open.rindex(tag))
+
+        open.slice!(i..).reverse.map { |o| "</#{o}>" }.join
+      elsif (tag = t[/\A<(\w+)>\z/, 1])
+        open << tag unless tag == "br"
+        t
+      else
+        { "<" => "&lt;", ">" => "&gt;" }.fetch(t)
+      end
+    end
+    out + open.reverse.map { |o| "</#{o}>" }.join
   end
 
   # Everything the tally, by-party and against-majority blocks need for one vote.
