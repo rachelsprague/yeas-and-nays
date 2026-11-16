@@ -79,9 +79,9 @@ module SiteBuild
   SOURCE = File.expand_path("..", __dir__)
 
   # Returns { "/path/index.html" => html } for every page built from these
-  # members and [vote, vote file] pairs, plus a floor schedule export and a
-  # build time (Eastern) when given.
-  def build_site(members, votes, files: "*.html", schedule: nil, time: nil)
+  # members and [vote, vote file] pairs, plus a floor schedule export, a build
+  # time (Eastern) and members' bill files ({ bioguide_id => file }) when given.
+  def build_site(members, votes, files: "*.html", schedule: nil, time: nil, member_files: {})
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
@@ -90,7 +90,10 @@ module SiteBuild
       write.call("members.json", { "members" => members })
       write.call("votes.json", { "votes" => votes.map(&:first) })
       votes.each { |v, doc| write.call("votes/#{v["vote_id"]}.json", doc) }
-      members.each { |m| write.call("members/#{m["bioguide_id"]}.json", { "sponsored" => [], "cosponsored" => [] }) }
+      members.each do |m|
+        file = member_files.fetch(m["bioguide_id"], { "sponsored" => [], "cosponsored" => [] })
+        write.call("members/#{m["bioguide_id"]}.json", file)
+      end
       write.call("floor_schedule.json", schedule) if schedule
 
       config = {
@@ -245,6 +248,47 @@ class EscapingTest < Minitest::Test
     html = build(MEMBER.merge("phone" => "202-225-0000 ext. 5", "phone_tel" => nil)).fetch("/members/Z000001/index.html")
     assert_includes html, '<dd class="nums">202-225-0000 ext. 5</dd>'
     refute_includes html, "tel:"
+  end
+end
+
+# A member's cosponsored list is null until first fetched (no section), then
+# [] (an empty section) or the bills cosponsored this Congress.
+class MemberCosponsoredTest < Minitest::Test
+  include SiteBuild
+
+  BILL = {
+    "measure_label" => "S. 7", "title" => "A bill to rename a post office", "introduced_date" => "2025-02-01",
+    "congress_gov_url" => "https://www.congress.gov/bill/119th-congress/senate-bill/7",
+    "latest_action_date" => "2025-03-04", "latest_action_text" => "Read twice and referred to committee.",
+    "latest_vote_id" => "h119-1-0001"
+  }.freeze
+
+  def page(cosponsored)
+    files = { "Z000001" => { "sponsored" => [], "cosponsored" => cosponsored } }
+    build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
+      .fetch("/members/Z000001/index.html")
+  end
+
+  def test_no_section_until_the_list_is_fetched
+    refute_includes page(nil), "Bills cosponsored"
+  end
+
+  def test_an_empty_list_says_none
+    html = page([])
+    assert_includes html, "Bills cosponsored"
+    assert_includes html, "0 this Congress"
+    assert_includes html, "No bills or resolutions cosponsored this Congress."
+  end
+
+  def test_bills_are_listed_with_their_latest_action_and_vote
+    html = page([BILL])
+    section = html[%r{<section aria-labelledby="cosponsored-h".*?</section>}m]
+    assert_includes section, "1 this Congress"
+    assert_includes section, %(<a class="t headline-link" href="#{BILL["congress_gov_url"]}">A bill to rename a post office</a>)
+    assert_includes section, "Read twice and referred to committee."
+    assert_includes section, 'href="/votes/119/house/1/1/">Recorded vote →</a>'
+    refute_includes section, "No bills or resolutions cosponsored"
+    refute_includes section, "Show all"
   end
 end
 
