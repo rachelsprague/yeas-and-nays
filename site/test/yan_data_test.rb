@@ -520,7 +520,7 @@ class StateMapTest < Minitest::Test
   def test_house_seats_by_district_with_names_in_the_title
     map = Yan.state_map("house", { "A1" => "Aye", "A2" => "Not Voting", "A3" => "No" }, MEMBERS, WORDS)
     assert_equal({ "marks" => ["yea"], "title" => "California, 12th District: Ann Able (D), Aye" }, seats(map)["CA-12"])
-    assert_equal({ "marks" => ["nv"], "title" => "Wyoming, At Large: Bo Bell (R), Not voting" }, seats(map)["WY"])
+    assert_equal({ "marks" => ["nv"], "title" => "Wyoming, At Large: Bo Bell (R), Not Voting" }, seats(map)["WY"])
     assert_equal "house", map["chamber"]
   end
 
@@ -529,6 +529,7 @@ class StateMapTest < Minitest::Test
     map = Yan.state_map("house", { "A1" => "Aye", "S1" => "No" }, MEMBERS, WORDS)
     assert_equal ["CA-12"], seats(map).keys
     assert_equal 1, map["unmapped"]
+    assert_equal 1, map["moved"]
     assert_equal ["California", "Kentucky"], map["table"].map { |r| r["name"] }
   end
 
@@ -543,6 +544,7 @@ class StateMapTest < Minitest::Test
     map = Yan.state_map("house", { "A1" => "Aye", "B1" => "Aye", "Z9" => "No" }, MEMBERS, WORDS)
     assert_equal ["CA-12"], seats(map).keys
     assert_equal 2, map["unmapped"]
+    assert_equal 0, map["moved"]
     assert_equal ["California", "Puerto Rico"], map["table"].map { |r| r["name"] }
   end
 
@@ -601,7 +603,24 @@ class VotePageTest < Minitest::Test
                  seats.transform_values { |s| s["marks"] })
     assert_includes html, %(<th scope="row">Alabama</th><td class="r">1</td><td class="r">1</td><td class="r">1</td><td class="r">1</td>)
     # A000005's state code isn't on the map.
-    assert_includes html, "Not on the map: 1 member with no seat drawn on it"
+    assert_includes html, "Not on the map: 1 member with no seat drawn on it, such as a delegate from the District of Columbia " \
+                          "or a territory. See the table by state."
+  end
+
+  # A member whose latest seat is in the Senate has no district for a House vote.
+  def test_the_note_names_members_who_have_since_moved_to_the_senate
+    senator = member("S000001", "AL", nil).merge("chamber" => "senate")
+    built = build_site([member("A000001", "AL", 1), member("A000005", "ZZ", 1), senator],
+                       [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "S000001" => "Yea" }, { "yes" => 2 })],
+                        [vote(2, "On Passage"), doc({ "A000001" => "Yea", "A000005" => "Yea", "S000001" => "Nay" },
+                                                    { "yes" => 2, "no" => 1 })]])
+    assert_includes built.fetch("/votes/119/house/1/1/index.html"),
+                    "Not on the map: 1 member who has since moved to the Senate (the map places members by their " \
+                    "current seat). See the table by state."
+    assert_includes built.fetch("/votes/119/house/1/2/index.html"),
+                    "Not on the map: 2 members with no seat drawn on it, such as a delegate from the District of Columbia " \
+                    "or a territory, or a member who has since moved to the Senate (the map places members by their " \
+                    "current seat). See the table by state."
   end
 
   # The built site's meta is the 119th Congress. A 120th vote has shapes but its
