@@ -72,7 +72,9 @@ SEPARATORS = {";", "&", "&&", "|", "||", "(", ")", "{", "}", "!"}
 
 def tokens(command: str) -> list[str]:
     """Shell-like tokens, with separators as their own tokens. Raises ValueError on bad quoting."""
-    command = command.replace("\\\n", "").replace("`", " ; ").replace("\n", " ; ")
+    # A backtick's backslashes go with it: `sh -c "echo \`git push\`"` runs the push, and a
+    # backslash left before the inserted space would glue it onto the word (`push `).
+    command = re.sub(r"\\*`", " ; ", command.replace("\\\n", "")).replace("\n", " ; ")
     lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|()")
     lexer.whitespace_split = True
     # No comment handling: shlex would treat `#` mid-word (a URL's `/#x`) as a
