@@ -46,7 +46,7 @@ module Yan
     end
   end
 
-  # Legend mark for a position: Yea solid, Nay striped, Not voting open box.
+  # Legend mark for a position: Yea solid, Nay striped, Not Voting open box.
   MARKS = { "yes" => "yea", "no" => "nay", "present" => "present", "not_voting" => "nv" }.freeze
 
   # The House records a bare "Passed", "Failed" or "Agreed to", which on its
