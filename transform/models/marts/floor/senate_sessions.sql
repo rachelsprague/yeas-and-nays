@@ -4,6 +4,6 @@
   become the "latest" session and hide the next convene time.
 -#}
 
-select legislative_day, convene_time_et, adjourn_time_et, next_convene_time_et
+select legislative_day, convene_time_et, adjourn_time_et, next_convene_time_et, next_convene_pro_forma
 from {{ ref('stg_floor__senate_session_days') }}
 where convene_time_et is not null

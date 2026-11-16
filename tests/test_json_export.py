@@ -2,6 +2,7 @@ import datetime as dt
 import json
 
 from yan.export.json_export import (
+    EASTERN,
     dumps,
     floor_schedule_document,
     meta_document,
@@ -108,7 +109,9 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=()):
                    measure_number varchar, bill_type varchar, bill_number varchar, title varchar,
                    amends varchar, congress_gov_url varchar, vote_id varchar)""")
     con.execute("""create table senate_sessions (convene_time_et timestamp, adjourn_time_et timestamp,
-                   next_convene_time_et timestamp)""")
+                   next_convene_time_et timestamp, next_convene_pro_forma boolean)""")
+    con.execute("""create table house_floor_days (legislative_day date, convene_time_et timestamp,
+                   adjourned boolean, next_convene_time_et timestamp)""")
     con.close()
 
 
@@ -185,7 +188,8 @@ def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
                     [measure, measure])
     con.execute("""insert into floor_schedule (chamber, item_id, filed_date, question, measure_number, title, amends)
                    values ('senate', 's-none', date '2026-11-11', 'On the Cloture Motion', null, 'T', 'H.R. 2347')""")
-    con.execute("insert into senate_sessions values ('2026-11-12 12:00', '2026-11-12 16:52', '2026-11-16 15:00')")
+    con.execute("insert into senate_sessions values ('2026-11-12 12:00', '2026-11-12 16:52', '2026-11-16 15:00', false)")
+    con.execute("insert into house_floor_days values ('2026-11-17', '2026-11-17 12:00:04', false, null)")
     con.close()
 
     run(warehouse, tmp_path / "out")
@@ -196,6 +200,10 @@ def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
         "H.R. 2347", "PN1272-3", "PN1272-13", "Amendment to H.R. 2347",
     ]
     assert doc["senate_next_convene_et"] == "2026-11-16T15:00:00"
+    assert doc["floor_status"] == {
+        "house": {"convened_at": "2026-11-17T12:00:04-05:00", "next_convene_at": None, "next_convene_pro_forma": None},
+        "senate": {"convened_at": None, "next_convene_at": "2026-11-16T15:00:00-05:00", "next_convene_pro_forma": False},
+    }
 
 
 def test_floor_schedule_labels_items_and_takes_the_latest_next_convene():
@@ -209,12 +217,12 @@ def test_floor_schedule_labels_items_and_takes_the_latest_next_convene():
         {"next_convene_time_et": dt.datetime(2026, 11, 12, 12)},
         {"next_convene_time_et": dt.datetime(2026, 11, 16, 15)},
     ]
-    doc = floor_schedule_document(items, sessions)
+    doc = floor_schedule_document(items, sessions, [])
     assert [i["measure_label"] for i in doc["items"]] == [
         "H.Res. 1650", "PN1272-3", "S.Amdt. 6883 to H.R. 2347", "H. Res. ___",
     ]
     assert doc["senate_next_convene_et"] == dt.datetime(2026, 11, 16, 15)
-    assert floor_schedule_document([], [])["senate_next_convene_et"] is None
+    assert floor_schedule_document([], [], [])["senate_next_convene_et"] is None
 
 
 def test_floor_schedule_item_with_no_measure_number():
@@ -224,7 +232,41 @@ def test_floor_schedule_item_with_no_measure_number():
         {"measure_number": "", "bill_type": None, "bill_number": None, "amends": None},
         {"measure_number": "", "bill_type": None, "bill_number": None, "amends": "H.R. 2347"},
     ]
-    doc = floor_schedule_document(items, [])
+    doc = floor_schedule_document(items, [], [])
     assert [i["measure_label"] for i in doc["items"]] == [
         None, "Amendment to H.R. 2347", None, "Amendment to H.R. 2347",
     ]
+
+
+def test_floor_status_is_in_session_until_adjourned_then_the_next_convening():
+    convened = {"convene_time_et": dt.datetime(2026, 11, 16, 15), "adjourn_time_et": None,
+                "next_convene_time_et": None, "next_convene_pro_forma": None}
+    adjourned = {"convene_time_et": dt.datetime(2026, 11, 16, 15), "adjourn_time_et": dt.datetime(2026, 11, 16, 19, 2),
+                 "next_convene_time_et": dt.datetime(2026, 11, 17, 10), "next_convene_pro_forma": True}
+    house_in = {"convene_time_et": dt.datetime(2026, 11, 17, 12), "adjourned": False,
+                "next_convene_time_et": None}
+    house_out = {"convene_time_et": dt.datetime(2026, 11, 13, 10), "adjourned": True,
+                 "next_convene_time_et": dt.datetime(2026, 11, 17, 12)}
+
+    status = floor_schedule_document([], [convened], [house_in])["floor_status"]
+    assert status["senate"]["convened_at"] == dt.datetime(2026, 11, 16, 15, tzinfo=EASTERN)
+    assert status["senate"]["next_convene_at"] is None
+    assert status["house"]["convened_at"] == dt.datetime(2026, 11, 17, 12, tzinfo=EASTERN)
+    assert status["house"]["next_convene_at"] is None
+
+    status = floor_schedule_document([], [adjourned], [house_out])["floor_status"]
+    assert status["senate"] == {"convened_at": None, "next_convene_at": dt.datetime(2026, 11, 17, 10, tzinfo=EASTERN),
+                                "next_convene_pro_forma": True}
+    assert status["house"] == {"convened_at": None, "next_convene_at": dt.datetime(2026, 11, 17, 12, tzinfo=EASTERN),
+                               "next_convene_pro_forma": None}
+
+    # Before any data.
+    empty = {"convened_at": None, "next_convene_at": None, "next_convene_pro_forma": None}
+    assert floor_schedule_document([], [], [])["floor_status"] == {"house": empty, "senate": empty}
+
+
+def test_floor_status_times_carry_the_eastern_offset_in_summer_too():
+    sessions = [{"convene_time_et": dt.datetime(2026, 7, 1, 10), "adjourn_time_et": dt.datetime(2026, 7, 1, 18),
+                 "next_convene_time_et": dt.datetime(2026, 7, 2, 10), "next_convene_pro_forma": False}]
+    doc = json.loads(dumps(floor_schedule_document([], sessions, [])))
+    assert doc["floor_status"]["senate"]["next_convene_at"] == "2026-07-02T10:00:00-04:00"

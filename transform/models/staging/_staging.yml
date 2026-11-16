@@ -40,3 +40,26 @@ models:
           - not_null:
               config:
                 severity: warn
+
+  - name: stg_floor__house_floor_days
+    description: >
+      One row per House legislative day in the Clerk's floor proceedings (only the newest is
+      kept). `house_floor_days` drops a row whose day didn't parse, so these tests are where
+      malformed values show; they warn because the floor status is secondary to votes.
+    columns:
+      - name: legislative_day
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: convene_time_et
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: next_convene_time_et
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+                where: adjourned

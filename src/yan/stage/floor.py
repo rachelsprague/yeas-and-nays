@@ -7,6 +7,7 @@ their remove date; dbt drops them.
 Senate daily floor activity: one row per status line on each bill, amendment
 or nomination ("Cloture motion presented in Senate."), in the order recorded.
 Senate session days: one row per time the Senate convened.
+House floor days: one row per legislative day's floor proceedings file.
 """
 
 import re
@@ -82,14 +83,39 @@ def parse_session_days(content: bytes, source_file: str) -> list[dict]:
             "convene_time": _text(session, "ConveneDate"),
             "adjourn_time": _text(session, "AdjournDate"),
             "next_convene_time": _text(session, "NextConveneDate"),
+            # "Y" or "N"; empty on many older entries.
+            "next_convene_pro_forma": _text(session, "IsNextConveneProforma"),
         }
         for day in root.iter("LegislativeDay")
         for session in day.iterfind("SessionDay")
     ]
 
 
-def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict]]:
-    house, senate, days = [], [], []
+# The Clerk's action code for "The House convened, starting a new legislative day."
+HOUSE_CONVENED = "H20100"
+
+
+def parse_house_day(content: bytes, source_file: str) -> dict:
+    """When the House convened on a legislative day and, once it has adjourned,
+    when it next convenes. Times are Eastern ("20261113T10:00:00", "20261117T12:00")."""
+    root = ET.fromstring(content)
+    day = root.find("legislative_day")
+    finished = root.find("floor_actions/legislative_day_finished")
+    convened = next(
+        (a.find("action_time") for a in root.iterfind("floor_actions/floor_action") if a.get("act-id") == HOUSE_CONVENED),
+        None,
+    )
+    return {
+        "source_file": source_file,
+        "legislative_day": day.get("date") if day is not None else None,
+        "convene_time": convened.get("for-search") if convened is not None else None,
+        "finished": _text(root, "floor_actions/legislative_day_finished"),
+        "next_convene_time": finished.get("next-legislative-day-convenes") if finished is not None else None,
+    }
+
+
+def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
+    house, senate, days, house_days = [], [], [], []
     for path in sorted(raw_root.glob("house/????-??-??.xml")):
         house.extend(parse_house_week(path.read_bytes(), path.relative_to(raw_root).as_posix()))
     for path in sorted(raw_root.glob("senate/????-??-??.xml")):
@@ -97,4 +123,6 @@ def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict]]:
     days_file = raw_root / "senate" / "session_days.xml"
     if days_file.exists():
         days = parse_session_days(days_file.read_bytes(), days_file.relative_to(raw_root).as_posix())
-    return house, senate, days
+    for path in sorted(raw_root.glob("house_days/????-??-??.xml")):
+        house_days.append(parse_house_day(path.read_bytes(), path.relative_to(raw_root).as_posix()))
+    return house, senate, days, house_days
