@@ -45,6 +45,7 @@ spec.loader.exec_module(confirm_push)
     'sh -c "git commit -m \\"x \\`git push\\`\\""',
     'sh -c "echo \\`git push\\`"',
     'sh -c "sh -c \\"echo \\\\\\`git push\\\\\\`\\""',
+    'eval "echo \\`git push\\`"',
 ])
 def test_finds_push(command):
     assert confirm_push.find_pushes(command)
@@ -154,6 +155,11 @@ def test_push_from_detached_head_is_denied(repo):
     "gh -X x pr merge 1",
     # A double-quoted commit message runs $(...).
     "git commit -m \"$(gh pr merge 3)\"",
+    # Backticks escaped inside a double-quoted string handed to a shell still run there.
+    # Each ends on `merge`, so a backslash left before the backtick would glue onto it.
+    'sh -c "echo \\`gh pr merge\\`"',
+    'eval "echo \\`gh pr merge\\`"',
+    'sh -c "sh -c \\"echo \\\\\\`gh pr merge\\\\\\`\\""',
 ])
 def test_gh_pr_merge_is_denied(repo, command):
     path, _ = repo
@@ -352,6 +358,9 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     "cd sub && gh pr comment 12 --body-file body.md",
     "gh pr comment 12 --body-file body.md && gh pr comment 13 --body-file body.md",
     "sh -c \"gh pr comment 12 --body hi\"",
+    # inside escaped backticks, ending on `comment` so a backslash left before the backtick would glue onto it
+    'sh -c "echo \\`gh pr comment\\`"',
+    'eval "echo \\`gh pr comment\\`"',
     "env X=1 gh pr comment 12 --body-file body.md",
     # gh api writes other than the allowed comment shapes
     "gh api repos/o/r/issues/12/comments -f body='looks good'",
