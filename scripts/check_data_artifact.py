@@ -2,8 +2,9 @@
 
 The update job runs third-party code (ingest, dbt, the bot's dependencies);
 the commit job holds the only write token. This check stands between them, so
-a compromised or broken update job can't push arbitrary files to main or move
-the bot's state backwards (which would repost old votes). It uses only the
+a compromised or broken update job can't push arbitrary files to main, empty
+the site, or move the bot's state backwards (which would repost old votes) or
+past every vote still to come (which would stop posts). It uses only the
 standard library and runs from the commit job's fresh checkout of main:
 
     python3 -I scripts/check_data_artifact.py <artifact dir>
@@ -15,6 +16,7 @@ repr(), so a file name can't start a log line with a workflow command.
 """
 
 import json
+import os
 import re
 import stat
 import sys
@@ -25,13 +27,17 @@ COMMITTED_STATE = ROOT / "data" / "bot" / "state.json"
 
 # What export writes (src/yan/export/json_export.py): a few top-level files, a
 # file per vote and a file per member. A new kind of file needs a pattern here.
+# ASCII only: \d alone would also match other scripts' digits.
 ALLOWED = [
-    re.compile(r"out/[a-z0-9_]+\.json"),
-    re.compile(r"out/votes/[hs]\d+-\d+-\d+\.json"),
-    re.compile(r"out/members/[A-Z]\d{6}\.json"),
-    re.compile(r"bot/state\.json"),
+    re.compile(r"out/[a-z0-9_]+\.json", re.ASCII),
+    re.compile(r"out/votes/[hs]\d+-\d+-\d+\.json", re.ASCII),
+    re.compile(r"out/members/[A-Z]\d{6}\.json", re.ASCII),
+    re.compile(r"bot/state\.json", re.ASCII),
 ]
 ALLOWED_DIRS = {"out", "out/votes", "out/members", "bot"}
+# Export writes these on every run; without them, replacing data/out would
+# empty the site.
+REQUIRED = ["out/floor_schedule.json", "out/members.json", "out/meta.json", "out/votes.json", "bot/state.json"]
 
 # Today: largest file about 2 MB, about 120 MB and 2,200 files in all. The caps
 # leave room for growth and stay under GitHub's 50 MB per-file warning.
@@ -40,7 +46,7 @@ MAX_TOTAL_BYTES = 500 * 1024 * 1024
 MAX_FILES = 50_000
 
 CHAMBERS = ("house", "senate")
-VOTE_ID = re.compile(r"([hs])(\d+)-(\d+)-(\d+)")
+VOTE_ID = re.compile(r"([hs])(\d+)-(\d+)-(\d+)", re.ASCII)
 
 
 def vote_order(vote_id: str) -> tuple[int, int, int]:
@@ -50,8 +56,9 @@ def vote_order(vote_id: str) -> tuple[int, int, int]:
 
 
 def check_files(root: Path) -> tuple[list[str], list[Path]]:
-    """Problems with the artifact's layout and sizes, and its files."""
-    problems, files, total = [], [], 0
+    """Problems with the artifact's layout and sizes, and its files within the
+    size cap (the ones worth parsing)."""
+    problems, files, count, total = [], [], 0, 0
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root).as_posix()
         mode = path.lstat().st_mode
@@ -64,27 +71,41 @@ def check_files(root: Path) -> tuple[list[str], list[Path]]:
             problems.append(f"{rel!r}: unexpected file")
         else:
             size = path.lstat().st_size
+            count += 1
+            total += size
             if size > MAX_FILE_BYTES:
                 problems.append(f"{rel!r}: {size} bytes, over the {MAX_FILE_BYTES} limit")
-            total += size
-            files.append(path)
+            else:
+                files.append(path)
     if total > MAX_TOTAL_BYTES:
         problems.append(f"{total} bytes in all, over the {MAX_TOTAL_BYTES} limit")
-    if len(files) > MAX_FILES:
-        problems.append(f"{len(files)} files, over the {MAX_FILES} limit")
-    for required in ("out", "bot/state.json"):
-        if not (root / required).exists():
+    if count > MAX_FILES:
+        problems.append(f"{count} files, over the {MAX_FILES} limit")
+    for required in REQUIRED:
+        if not os.path.lexists(root / required):
             problems.append(f"{required}: missing")
     return problems, files
+
+
+def _reject_constant(name: str):
+    raise ValueError(f"{name} isn't JSON")
+
+
+def load_json(path: Path):
+    """Strict JSON: no NaN or Infinity, which Python accepts and the site's Ruby parser doesn't."""
+    return json.loads(path.read_bytes(), parse_constant=_reject_constant)
 
 
 def check_json(root: Path, files: list[Path]) -> list[str]:
     problems = []
     for path in files:
+        rel = path.relative_to(root).as_posix()
         try:
-            json.loads(path.read_bytes())
+            load_json(path)
         except (UnicodeDecodeError, ValueError) as e:
-            problems.append(f"{path.relative_to(root).as_posix()!r}: not valid JSON ({e})")
+            problems.append(f"{rel!r}: not valid JSON ({e})")
+        except RecursionError:
+            problems.append(f"{rel!r}: not valid JSON (nested too deeply)")
     return problems
 
 
@@ -92,9 +113,9 @@ def read_state(path: Path) -> tuple[dict[str, str | None] | None, list[str]]:
     """The last vote ID per chamber, or None and the problems if the file isn't
     exactly the shape yan.bot.state.save writes."""
     try:
-        doc = json.loads(path.read_bytes())
-    except (OSError, UnicodeDecodeError, ValueError) as e:
-        return None, [f"{path.name}: can't be read ({e})"]
+        doc = load_json(path)
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError) as e:
+        return None, [f"{path.name}: can't be read ({type(e).__name__})"]
     if not isinstance(doc, dict) or set(doc) != set(CHAMBERS):
         return None, [f"{path.name}: keys must be exactly {', '.join(CHAMBERS)}"]
     state, problems = {}, []
@@ -113,22 +134,24 @@ def read_state(path: Path) -> tuple[dict[str, str | None] | None, list[str]]:
     return (state if not problems else None), problems
 
 
-def check_state(new_path: Path, committed_path: Path) -> list[str]:
-    """The new state is well formed and no chamber's last vote moves backwards."""
+def check_state(new_path: Path, committed_path: Path, vote_ids: set[str]) -> list[str]:
+    """The new state is well formed, no chamber's last vote moves backwards, and
+    a last vote that moved is one of the exported votes (`vote_ids`), so it
+    can't jump past every vote still to come."""
     new, problems = read_state(new_path)
     if new is None:
         return problems
-    if not committed_path.exists():
-        return []
-    old, old_problems = read_state(committed_path)
-    if old is None:
-        return [f"committed {p}" for p in old_problems]
+    old = {chamber: None for chamber in CHAMBERS}
+    if committed_path.exists():
+        old, old_problems = read_state(committed_path)
+        if old is None:
+            return [f"committed {p}" for p in old_problems]
     for chamber in CHAMBERS:
         before, after = old[chamber], new[chamber]
-        if before is None:
-            continue
-        if after is None or vote_order(after) < vote_order(before):
+        if before is not None and (after is None or vote_order(after) < vote_order(before)):
             problems.append(f"state.json: {chamber} last_vote_id goes back from {before} to {after}")
+        elif after is not None and after != before and after not in vote_ids:
+            problems.append(f"state.json: {chamber} last_vote_id {after} has no out/votes/{after}.json")
     return problems
 
 
@@ -139,7 +162,8 @@ def check(root: Path, committed_state: Path | None = None) -> list[str]:
     # state.json is parsed (and its shape checked) by check_state.
     problems += check_json(root, [f for f in files if f != state])
     if state in files:
-        problems += check_state(state, committed_state)
+        vote_ids = {f.stem for f in files if f.parent == root / "out" / "votes"}
+        problems += check_state(state, committed_state, vote_ids)
     return problems
 
 
