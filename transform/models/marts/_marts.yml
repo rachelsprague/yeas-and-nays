@@ -165,8 +165,9 @@ models:
       - name: required_share
         description: >
           Share of the vote the question needed: 1/2, 3/5 or 2/3. Senate votes as recorded
-          (majority_requirement); House votes from the question (two-thirds to suspend the rules,
-          override a veto or propose a constitutional amendment, otherwise a majority). Null when
+          (majority_requirement); House votes two-thirds when the Clerk's vote type says so
+          (expulsions included) or the question is one that needs it (suspend the rules, override
+          a veto, propose a constitutional amendment), otherwise a majority. Null when
           no member voted yea or nay (quorum calls, Speaker elections).
         data_tests:
           - accepted_values:
