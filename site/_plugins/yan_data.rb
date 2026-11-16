@@ -140,12 +140,15 @@ module Yan
   # Saturdays and Sundays appear only when a vote was taken or the Senate
   # convenes on them.
   # `view` is schedule_view's result; `votes` need url and result_label.
-  def self.schedule_calendar(view, votes, today, next_convene_iso)
+  # `now` is the build time in ET (a Date reads as its midnight).
+  def self.schedule_calendar(view, votes, now, next_convene_iso)
+    today = now.to_date
     monday = ->(d) { d - ((d.wday - 1) % 7) }
     this_week = monday.call(today)
+    # A failed fetch can leave a convene time that has already passed. Both
+    # are ET wall-clock times, so their ISO strings compare in time order.
+    next_convene_iso = nil if next_convene_iso && next_convene_iso < now.strftime("%Y-%m-%dT%H:%M:%S")
     convene = next_convene_iso && DateTime.strptime(next_convene_iso, "%Y-%m-%dT%H:%M:%S")
-    # A failed fetch can leave a convene time that has already passed.
-    convene = nil if convene && convene.to_date < today
     house_weeks = (view["house_weeks"] || []).select { |w| w["week_date"] }
     listed_weeks = [convene && monday.call(convene.to_date),
                     *house_weeks.map { |w| Date.parse(w["week_date"]) }].compact
@@ -155,9 +158,12 @@ module Yan
     taken = votes.select { |v| span.cover?(v["vote_date"]) }
                  .sort_by { |v| [v["congress"], v["session"], v["roll_number"]] }
                  .group_by { |v| [v["vote_date"], v["chamber"]] }
-    # On a weekend, open on the coming week if anything is listed for it.
+    # On a weekend, open on the coming week if anything is listed for it,
+    # unless the Senate still convenes this weekend: its time and pending
+    # cloture motions are on this week.
     weekend = today.saturday? || today.sunday?
-    default = weekend && listed_weeks.include?(this_week + 7) ? this_week + 7 : this_week
+    convenes_this_week = convene && monday.call(convene.to_date) == this_week
+    default = weekend && !convenes_this_week && listed_weeks.include?(this_week + 7) ? this_week + 7 : this_week
     # Pending cloture motions go in the week the Senate next convenes.
     senate_week = convene ? monday.call(convene.to_date) : default
 
@@ -696,7 +702,7 @@ module Yan
       schedule = read_optional.call("floor_schedule.json") || { "items" => [] }
       site.data["schedule"] = Yan.schedule_view(schedule, votes_by_id)
       # site.time is Eastern (timezone in _config.yml), the floor's own clock.
-      site.data["schedule_calendar"] = Yan.schedule_calendar(site.data["schedule"], votes, site.time.to_date,
+      site.data["schedule_calendar"] = Yan.schedule_calendar(site.data["schedule"], votes, site.time,
                                                              schedule["senate_next_convene_et"])
 
       site.data["meta"] = meta

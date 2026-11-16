@@ -774,12 +774,35 @@ class ScheduleCalendarTest < Minitest::Test
     assert(cal["weeks"].flat_map { |w| w["days"] }.none? { |d| d["convene"] })
   end
 
+  def test_a_convene_time_earlier_today_is_dropped_once_passed
+    convenes = ->(cal) { cal["weeks"].flat_map { |w| w["days"] }.filter_map { |d| d["convene"] } }
+    assert_equal ["3 p.m. ET"], convenes.call(calendar([], [], Time.new(2026, 11, 16, 14, 59), "2026-11-16T15:00:00"))
+    assert_equal [], convenes.call(calendar([], [], Time.new(2026, 11, 16, 15, 1), "2026-11-16T15:00:00"))
+  end
+
+  def test_an_empty_schedule_still_lists_this_week_and_the_two_before
+    cal = calendar([], [], FRIDAY, nil)
+    assert_equal %w[2026-10-26 2026-11-02 2026-11-09], cal["weeks"].map { |w| w["week_date"] }
+    assert_equal "2026-11-09", cal["default_week"]
+    assert(cal["weeks"].all? { |w| w["house_pending"].empty? && w["senate_pending"].empty? && w["roll_calls"].zero? })
+  end
+
   def test_weekend_opens_on_the_coming_week_when_it_has_something_listed
     saturday = Date.new(2026, 11, 14)
     assert_equal "2026-11-16", calendar([], [], saturday)["default_week"]
     assert_equal "2026-11-09", calendar([], [], saturday, nil)["default_week"]
     # A recess: the Senate next convenes weeks out, so open on this week.
     assert_equal "2026-11-09", calendar([], [], saturday, "2026-12-07T15:00:00")["default_week"]
+  end
+
+  def test_a_weekend_senate_session_keeps_the_page_on_this_week
+    sunday = Date.new(2026, 11, 15)
+    cal = calendar([item("house", "a", week: "2026-11-16"), item("senate", "d")], [], sunday, "2026-11-15T13:00:00")
+    assert_equal "2026-11-09", cal["default_week"]
+    this_week = week(cal, "2026-11-09")
+    assert_equal ["Sun", "1 p.m. ET"], this_week["days"].last.values_at("weekday", "convene")
+    assert_equal ["d"], this_week["senate_pending"].map { |i| i["item_id"] }
+    assert_equal ["a"], week(cal, "2026-11-16")["house_pending"].flat_map { |g| g["items"].map { |i| i["item_id"] } }
   end
 
   def test_without_a_convene_time_cloture_motions_go_in_the_opening_week
@@ -791,7 +814,7 @@ class ScheduleCalendarTest < Minitest::Test
 
   def test_a_day_spanning_two_sessions_lists_the_earlier_session_first
     v1 = vote("a", "2027-01-03", "house", 700).merge("congress" => 119, "session" => 2)
-    v2 = vote("b", "2027-01-03", "house", 1).merge("congress" => 119, "session" => 3)
+    v2 = vote("b", "2027-01-03", "house", 1).merge("congress" => 120, "session" => 1)
     cal = calendar([], [v2, v1], Date.new(2027, 1, 4), nil)
     sunday = week(cal, "2026-12-28")["days"].last
     assert_equal ["/votes/a/", "/votes/b/"], sunday["house"].map { |v| v["url"] }
