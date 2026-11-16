@@ -23,3 +23,48 @@ unit_tests:
       rows:
         - {item_id: h-2026-11-09-4098-1-a, title: A}
         - {item_id: s-pn7, title: N7}
+
+  - name: floor_schedule_ids_written_two_ways_give_one_item
+    description: >
+      The source can write an ID two ways ("4098.1"/"4098-1", "H.R. 4"/"H.R.4"), which give the
+      same item ID, so they make one item rather than two rows with that ID: for the House the
+      first in raw order, for the Senate the latest filing.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: Dot, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098-1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: Hyphen, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          - {docnum: H.R. 4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-09, status_order: 0, document_title: Earlier}
+          - {docnum: H.R.4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: Later}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09-4098-1, title: Hyphen}
+        - {item_id: s-h-r-4-measure, title: Later}
+
+  - name: floor_schedule_ids_skip_an_all_punctuation_part
+    description: >
+      A part with no letters or digits is left out of the item ID rather than leaving a
+      hyphen at its end.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "--", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          - {docnum: PN8, document_prefix: PN, target: "..", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N8}
+          - {docnum: "..", document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: N9}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09, title: A}
+        - {item_id: s-pn8, title: N8}
+        - {item_id: s, title: N9}
