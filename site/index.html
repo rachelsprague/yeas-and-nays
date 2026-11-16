@@ -106,7 +106,7 @@ nav: votes
     {%- if closest and closest.rows.size > 0 %}
     <section aria-labelledby="close-h">
       <h2 id="close-h" class="kicker soft">Closest votes</h2>
-      <p class="small muted nums">Roll calls from {{ closest.since | ap_date }}, to {{ closest.through | ap_date }}</p>
+      <p class="small muted nums">Roll calls from {{ closest.range }}</p>
       <ul class="ruled" data-limit="3">
         {%- for r in closest.rows %}
         {%- assign v = r.vote %}
@@ -116,8 +116,8 @@ nav: votes
             <span class="small soft">{{ v.question | escape }}</span>
             <span class="t">{% include vote_title.html vote=v %}</span>
           </a>
-          <div class="close-bar" aria-hidden="true"><span class="yea" style="width: {{ r.yea_pct }}%"></span><span class="tick" style="left: {{ r.tick_pct }}%"></span></div>
-          <p class="small nums">{{ v.yea_count }} {{ r.words.yes }}, {{ v.nay_count }} {{ r.words.no }} · {{ r.needed }} needed, {{ r.share }}{% if v.tie_breaker_by %} · Tie broken by the {{ v.tie_breaker_by | escape }}{% endif %}</p>
+          <div class="close-bar" aria-hidden="true"><span class="yea" style="width: {{ r.yea_pct }}%"></span>{% unless v.tie_breaker_by %}<span class="tick" style="left: {{ r.tick_pct }}%"></span>{% endunless %}</div>
+          <p class="small nums">{{ v.yea_count }} {{ r.words.yes }}, {{ v.nay_count }} {{ r.words.no }} · {% if v.tie_breaker_by %}Tie broken by the {{ v.tie_breaker_by | escape }}{% else %}{{ r.needed }} needed, {{ r.share }}{% endif %}</p>
           <p class="small soft">{{ v.result_label | escape }}</p>
         </li>
         {%- endfor %}

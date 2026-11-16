@@ -61,11 +61,12 @@ select
     {#- The fewest Yeas that carry the question. A majority or two-thirds is
         of those voting yea or nay; three-fifths (Senate cloture and waivers)
         is of senators duly chosen and sworn, counted here as the senators on
-        the roll call. A Vice President's tie-breaking vote isn't counted. #}
+        the roll call (null with no roll). A Vice President's tie-breaking
+        vote isn't counted. #}
     case votes.required_share
         when '1/2' then (votes.yea_count + votes.nay_count) // 2 + 1
         when '2/3' then cast(ceil(2 * (votes.yea_count + votes.nay_count) / 3) as integer)
-        when '3/5' then cast(ceil(3 * votes.member_count / 5) as integer)
+        when '3/5' then cast(ceil(3 * nullif(votes.member_count, 0) / 5) as integer)
     end as yeas_needed,
     {{ congress_gov_url('votes.congress', 'votes.bill_type', 'votes.bill_number') }} as congress_gov_url,
     bills.sponsor_bioguide_id,

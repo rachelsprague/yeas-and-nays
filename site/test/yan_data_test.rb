@@ -1221,6 +1221,8 @@ end
 # The home page's modules: closest votes, votes with members against their
 # party's majority, this week's roll calls and the top policy areas.
 class HomeModulesTest < Minitest::Test
+  include SiteBuild
+
   def vote(id, chamber, date, yea, nay, needed, share: "1/2", posts: true, against: 0)
     { "vote_id" => id, "chamber" => chamber, "vote_date" => date, "yea_count" => yea, "nay_count" => nay,
       "yeas_needed" => needed, "required_share" => share, "bot_posts" => posts,
@@ -1238,6 +1240,7 @@ class HomeModulesTest < Minitest::Test
     ], { "h1" => { "words" => { "yes" => "Aye", "no" => "No" } } }, 2)
     assert_equal "2026-10-14", rows["since"]
     assert_equal "2026-11-12", rows["through"]
+    assert_equal "Oct. 14 through Nov. 12, 2026", rows["range"]
     # Two per chamber, nearest first; ties go to the newest.
     assert_equal %w[h1 h3 s2], rows["rows"].map { |r| r["vote"]["vote_id"] }
     # Each vote's own words; Yea and Nay when its page has none.
@@ -1247,6 +1250,16 @@ class HomeModulesTest < Minitest::Test
     assert_equal 59.2, s2["yea_pct"]
     assert_equal 61.2, s2["tick_pct"]
     refute s2.key?("gap")
+  end
+
+  def test_a_tie_the_vice_president_broke_sorts_first_and_the_range_keeps_both_years
+    rows = Yan.closest_votes([
+      vote("s2", "senate", "2026-01-05", 60, 39, 50),
+      vote("s1", "senate", "2026-01-02", 50, 50, 51).merge("tie_breaker_by" => "Vice President"),
+      vote("s0", "senate", "2025-12-10", 52, 47, 50)
+    ])
+    assert_equal %w[s1 s0 s2], rows["rows"].map { |r| r["vote"]["vote_id"] }
+    assert_equal "Dec. 7, 2025 through Jan. 5, 2026", rows["range"]
   end
 
   def test_tick_stays_on_the_bar_when_more_yeas_are_needed_than_were_cast
@@ -1273,6 +1286,7 @@ class HomeModulesTest < Minitest::Test
     assert_nil Yan.closest_votes([old])
     assert_nil Yan.against_votes([old], {})
     assert_nil Yan.home_week(nil)
+    assert_nil Yan.home_week({ "chambers" => [], "last_week" => "2026-11-09" })
     assert_nil Yan.home_areas(nil)
   end
 
@@ -1287,6 +1301,31 @@ class HomeModulesTest < Minitest::Test
     assert_equal [0.0, 100.0], house["bars"].map { |b| b["pct"] }
     assert_equal [0.0, 50.0], senate["bars"].map { |b| b["pct"] }
     assert_equal "Senate roll calls per week, week of Nov. 2, 2026 to week of Nov. 9, 2026: 0, 1", senate["label"]
+  end
+
+  def test_home_page_renders_the_closest_votes_lines_and_hides_rows_past_the_limit
+    member = EscapingTest::MEMBER.merge("official_full_name" => "Jane Doe")
+    doc = { "positions" => { "Z000001" => "Aye" }, "party_totals" => { "R" => { "yes" => 1 } },
+            "caucus_majority_position" => { "R" => "yes" }, "against_party_majority" => [], "summary" => nil }
+    base = { "congress" => 119, "session" => 2, "question" => "On Passage", "result" => "Passed",
+             "measure_title" => "A bill", "bot_posts" => false, "against_party_majority_count" => 0 }
+    votes = (1..4).map do |roll|
+      v = vote("h119-2-#{format("%04d", roll)}", "house", "2026-11-1#{roll}", 1, roll - 1, 1)
+      [base.merge(v).merge("roll_number" => roll), doc]
+    end
+    tie = vote("s119-2-0001", "senate", "2026-11-10", 50, 50, 51)
+          .merge(base).merge("roll_number" => 1, "tie_breaker_by" => "Vice President of the United States")
+    html = build_site([member], votes + [[tie, doc]]).fetch("/index.html")
+    closest = html[%r{<section aria-labelledby="close-h">.*?</section>}m]
+    assert_includes closest, "Roll calls from Oct. 16 through Nov. 14, 2026"
+    assert_includes closest, "1 Aye, 0 No · 1 needed, a majority of those voting"
+    assert_includes closest, "50 Aye, 50 No · Tie broken by the Vice President of the United States"
+    refute_includes closest, "51 needed"
+    # No tick on a tie-break: the needed count leaves out the tie-breaking vote.
+    assert_equal 3, closest.scan('class="tick"').size
+    # Three per chamber, three shown before the tabs run: the fourth row starts hidden.
+    assert_equal 4, closest.scan('<li class="close-item"').size
+    assert_equal 1, closest.scan(/<li class="close-item"[^>]* hidden>/).size
   end
 
   def test_areas_take_the_top_areas_and_leave_out_rows_with_no_area

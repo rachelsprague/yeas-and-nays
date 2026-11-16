@@ -369,8 +369,9 @@ unit_tests:
       Senate votes take the share they record; House votes take two-thirds to
       suspend the rules, override a veto or propose a constitutional amendment,
       and a majority otherwise. Yeas needed: more than half, or at least
-      two-thirds, of yea plus nay; three-fifths of the senators on the roll.
-      Nothing for a vote with no yea or nay votes (a quorum call, a Speaker election).
+      two-thirds, of yea plus nay; three-fifths of the senators on the roll,
+      none with no roll. Nothing for a vote with no yea or nay votes (a quorum
+      call, a Speaker election).
     model: votes
     given:
       - input: ref('int_votes_unioned')
@@ -385,9 +386,10 @@ unit_tests:
           - {vote_id: s1, chamber: senate, question: On the Cloture Motion, majority_requirement: "3/5", yea_count: 2, nay_count: 1}
           - {vote_id: s2, chamber: senate, question: On the Nomination, majority_requirement: "1/2", yea_count: 50, nay_count: 49}
           - {vote_id: s3, chamber: senate, question: On Overriding the Veto, majority_requirement: "2/3", yea_count: 66, nay_count: 34}
+          - {vote_id: s4, chamber: senate, question: On the Cloture Motion, majority_requirement: "3/5", yea_count: 2, nay_count: 1}
       - input: ref('bills')
         rows: []
-      # Four senators on the roll for s1: three-fifths is 2.4, so 3 Yeas.
+      # Four senators on the roll for s1: three-fifths is 2.4, so 3 Yeas. None for s4.
       - input: ref('positions')
         rows:
           - {vote_id: s1, bioguide_id: A}
@@ -408,3 +410,4 @@ unit_tests:
         - {vote_id: s1, required_share: "3/5", yeas_needed: 3}
         - {vote_id: s2, required_share: "1/2", yeas_needed: 50}
         - {vote_id: s3, required_share: "2/3", yeas_needed: 67}
+        - {vote_id: s4, required_share: "3/5", yeas_needed: null}

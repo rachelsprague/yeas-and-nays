@@ -179,11 +179,12 @@ models:
         description: >
           The fewest Yeas that carry the question: more than half, or at least two-thirds, of
           those voting yea or nay; three-fifths of the senators on the roll call (senators duly
-          chosen and sworn) for 3/5. Leaves out a Vice President's tie-breaking vote.
+          chosen and sworn) for 3/5, null when no senators are on the roll. Leaves out a Vice
+          President's tie-breaking vote.
         data_tests:
           - not_null:
               config:
-                where: required_share is not null
+                where: required_share is not null and member_count > 0
       - name: tie_breaker_by
         description: Senate only. Set when the Vice President cast a tie-breaking vote.
       - name: source_url

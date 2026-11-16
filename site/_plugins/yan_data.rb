@@ -558,7 +558,9 @@ module Yan
 
   # Votes whose Yeas came nearest the Yeas needed to carry them (yeas_needed),
   # nearest first, then newest, with the words each vote recorded (Yea or
-  # Aye). Nil until the export carries yeas_needed.
+  # Aye). A tie the Vice President broke counts as nearest: yeas_needed
+  # leaves the tie-breaking vote out, and the page names the tie-break
+  # instead. Nil until the export carries yeas_needed.
   def self.closest_votes(votes, views = {}, n = HOME_ROWS["closest"])
     return nil unless votes.any? { |v| v.key?("yeas_needed") }
 
@@ -568,14 +570,19 @@ module Yan
       next unless v["yeas_needed"] && Date.parse(v["vote_date"]) >= since
 
       cast = v["yea_count"] + v["nay_count"]
-      { "vote" => v, "gap" => (v["yea_count"] - v["yeas_needed"]).abs, "order" => i,
+      gap = v["tie_breaker_by"] ? 0 : (v["yea_count"] - v["yeas_needed"]).abs
+      { "vote" => v, "gap" => gap, "order" => i,
         "needed" => v["yeas_needed"], "share" => SHARE_WORDS[v["required_share"]],
         "words" => views.dig(v["vote_id"], "words") || { "yes" => "Yea", "no" => "Nay" },
         "yea_pct" => (100.0 * v["yea_count"] / cast).round(1),
         "tick_pct" => [100.0 * v["yeas_needed"] / cast, 100].min.round(1) }
     end
     rows.sort_by! { |r| [r["gap"], r["order"]] }
+    # "Oct. 14 through Nov. 12, 2026"; the first year too when they differ.
+    from = Filters.ap_date(since)
+    from = from.delete_suffix(", #{since.year}") if since.year == through.year
     { "since" => since.iso8601, "through" => through.iso8601,
+      "range" => "#{from} through #{Filters.ap_date(through)}",
       "rows" => per_chamber(rows, n).map { |r| r.except("gap", "order") } }
   end
 
@@ -601,6 +608,8 @@ module Yan
     return nil unless vol
 
     shown = vol["chambers"].map { |c| [c, c["weeks"].last(weeks)] }
+    return nil if shown.empty?
+
     top = [shown.flat_map { |_, w| w.map { |x| x["total"] } }.max.to_i, 1].max
     first = shown.first[1].first["start"]
     {
@@ -609,7 +618,7 @@ module Yan
         { "chamber" => c["chamber"], "name" => c["name"], "total" => w.last["total"],
           "label" => "#{c["name"]} roll calls per week, week of #{Filters.ap_date(first)} " \
                      "to week of #{Filters.ap_date(vol["last_week"])}: #{w.map { |x| x["total"] }.join(", ")}",
-          "bars" => w.map { |x| { "pct" => (100.0 * x["total"] / top).round(1), "summary" => x["summary"] } } }
+          "bars" => w.map { |x| { "pct" => (100.0 * x["total"] / top).round(1) } } }
       end
     }
   end
