@@ -255,6 +255,10 @@ def floor_schedule_document(items: list[dict], senate_sessions: list[dict], hous
         label = bill_label(item["bill_type"], item["bill_number"]) if item["bill_type"] else item["measure_number"]
         item["measure_label"] = f"{label or 'Amendment'} to {item['amends']}" if item["amends"] else label or None
     latest = senate_sessions[-1] if senate_sessions else {}
+    # senate.gov flags a pro forma session on the session before it, so one
+    # under way (no adjournment yet) is pro forma if the previous row says so.
+    previous = senate_sessions[-2] if len(senate_sessions) > 1 else {}
+    senate_open = latest and not latest.get("adjourn_time_et") and previous.get("next_convene_pro_forma") is not True
     house = house_days[-1] if house_days else {}
     return {
         "items": items,
@@ -262,7 +266,7 @@ def floor_schedule_document(items: list[dict], senate_sessions: list[dict], hous
         "senate_next_convene_et": latest.get("next_convene_time_et"),
         "floor_status": {
             "senate": floor_status(
-                convened=latest.get("convene_time_et") if latest and not latest.get("adjourn_time_et") else None,
+                convened=latest.get("convene_time_et") if senate_open else None,
                 next_convene=latest.get("next_convene_time_et"),
                 pro_forma=latest.get("next_convene_pro_forma"),
             ),

@@ -127,7 +127,7 @@ module Yan
       at, verb = if s["convened_at"]
                    [s["convened_at"], "Convened"]
                  elsif s["next_convene_at"] && s["next_convene_pro_forma"] != true
-                   [s["next_convene_at"], "Set to convene"]
+                   [s["next_convene_at"], "Scheduled to convene"]
                  end
       next unless at
 

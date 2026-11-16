@@ -1348,7 +1348,7 @@ class LiveFloorTest < Minitest::Test
     lines = Yan.live_floor("senate" => status(next_at: "2026-11-16T15:00:00-05:00", pro_forma: false),
                            "house" => status(convened: "2026-11-17T12:00:04-05:00"))
     assert_equal %w[senate house], lines.map { |l| l["chamber"] }
-    assert_equal ["Set to convene at 3 p.m. ET", "Convened at noon ET"], lines.map { |l| l["label"] }
+    assert_equal ["Scheduled to convene at 3 p.m. ET", "Convened at noon ET"], lines.map { |l| l["label"] }
     assert_equal ["2026-11-16T15:00:00-05:00", "2026-11-17T12:00:04-05:00"], lines.map { |l| l["from"] }
     assert_equal ["https://www.senate.gov/floor/", "https://live.house.gov/"], lines.map { |l| l["watch_url"] }
   end
@@ -1356,7 +1356,7 @@ class LiveFloorTest < Minitest::Test
   # Summer time: the label stays in Eastern wall-clock time.
   def test_the_label_reads_in_eastern_time
     lines = Yan.live_floor("senate" => status(next_at: "2026-07-02T10:30:00-04:00"))
-    assert_equal ["Set to convene at 10:30 a.m. ET"], lines.map { |l| l["label"] }
+    assert_equal ["Scheduled to convene at 10:30 a.m. ET"], lines.map { |l| l["label"] }
   end
 
   def test_no_line_for_a_pro_forma_session_no_time_or_no_status
@@ -1379,7 +1379,7 @@ class LiveFloorTest < Minitest::Test
     band = html[%r{<section class="live-band".*?</section>}m]
     assert_includes band, '<p class="live-line small" data-row data-chamber="senate" data-live-from="2026-11-16T15:00:00-05:00">'
     assert_includes band, '<p class="live-line small" data-row data-chamber="house" data-live-from="2026-11-17T12:00:04-05:00">'
-    assert_includes band, "Set to convene at 3 p.m. ET"
+    assert_includes band, "Scheduled to convene at 3 p.m. ET"
     assert_includes band, '<a class="link" href="https://clerk.house.gov/FloorSummary">Floor summary</a>'
     refute_includes band, "is-live"
     assert_includes html, '<script src="/assets/js/live-floor.js" defer></script>'

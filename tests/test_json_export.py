@@ -260,6 +260,13 @@ def test_floor_status_is_in_session_until_adjourned_then_the_next_convening():
     assert status["house"] == {"convened_at": None, "next_convene_at": dt.datetime(2026, 11, 17, 12, tzinfo=EASTERN),
                                "next_convene_pro_forma": None}
 
+    # A session under way that the row before flagged as pro forma isn't listed as convened.
+    status = floor_schedule_document([], [adjourned, convened], [])["floor_status"]
+    assert status["senate"]["convened_at"] is None
+    not_pro_forma = {**adjourned, "next_convene_pro_forma": False}
+    status = floor_schedule_document([], [not_pro_forma, convened], [])["floor_status"]
+    assert status["senate"]["convened_at"] == dt.datetime(2026, 11, 16, 15, tzinfo=EASTERN)
+
     # Before any data.
     empty = {"convened_at": None, "next_convene_at": None, "next_convene_pro_forma": None}
     assert floor_schedule_document([], [], [])["floor_status"] == {"house": empty, "senate": empty}

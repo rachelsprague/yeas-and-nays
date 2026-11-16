@@ -41,8 +41,8 @@ nav: votes
     <p class="live-line small" data-row data-chamber="{{ l.chamber | escape }}" data-live-from="{{ l.from | escape }}">
       <span class="kicker">{{ l.name | escape }} floor</span>
       <span class="nums">{{ l.label | escape }}</span>
-      <a class="link" href="{{ l.watch_url }}">{{ l.watch_label }}</a>
-      <a class="link" href="{{ l.floor_url }}">{{ l.floor_label }}</a>
+      <a class="link" href="{{ l.watch_url | escape }}">{{ l.watch_label | escape }}</a>
+      <a class="link" href="{{ l.floor_url | escape }}">{{ l.floor_label | escape }}</a>
     </p>
     {%- endfor %}
   </section>
