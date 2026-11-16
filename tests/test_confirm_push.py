@@ -41,6 +41,10 @@ spec.loader.exec_module(confirm_push)
     # ...also inside a string run by a shell, and with $ and ( split by a backslash-newline.
     "sh -c 'git commit -m \"x `git push`\"'",
     "git commit -m \"$\\\n(git push)\"",
+    # Backticks escaped inside a double-quoted string handed to a shell still run there.
+    'sh -c "git commit -m \\"x \\`git push\\`\\""',
+    'sh -c "echo \\`git push\\`"',
+    'sh -c "sh -c \\"echo \\\\\\`git push\\\\\\`\\""',
 ])
 def test_finds_push(command):
     assert confirm_push.find_pushes(command)
