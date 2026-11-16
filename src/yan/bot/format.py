@@ -15,7 +15,7 @@ MAX_GRAPHEMES = 300
 MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
-CLOSERS = {"(": ")", "“": "”"}
+CLOSERS = {"(": ")", "“": "”", "‘": "’"}
 RECONSIDERED = ", Upon Reconsideration"
 SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for)$", flags=re.IGNORECASE)
 
@@ -151,20 +151,30 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
 
 def closing_marks(text: str) -> str:
     """The marks that close each parenthesis or quote text opens and leaves
-    open, innermost first. A straight double quote opens or closes by turn;
-    a stray closing mark is ignored."""
+    open, innermost first. A straight double quote opens or closes by turn.
+    A closing mark closes the latest open mark it matches, even past marks
+    opened inside it and left open (“a (b ” c leaves only the parenthesis
+    open); a stray closing mark is ignored. A ’ between two letters or
+    digits is an apostrophe ("Children’s", "1990’s"), not a closing quote."""
     open_marks = []
-    for char in text:
+    for i, char in enumerate(text):
         if char == '"':
-            if open_marks and open_marks[-1] == '"':
-                open_marks.pop()
+            if '"' in open_marks:
+                close(open_marks, char)
             else:
-                open_marks.append('"')
+                open_marks.append(char)
         elif char in CLOSERS:
             open_marks.append(CLOSERS[char])
-        elif open_marks and char == open_marks[-1]:
-            open_marks.pop()
+        elif char == "’" and text[i - 1:i].isalnum() and text[i + 1:i + 2].isalnum():
+            continue
+        elif char in open_marks:
+            close(open_marks, char)
     return "".join(reversed(open_marks))
+
+
+def close(open_marks: list[str], mark: str) -> None:
+    """Remove the latest occurrence of mark from open_marks."""
+    del open_marks[len(open_marks) - 1 - open_marks[::-1].index(mark)]
 
 
 def ends_word(rest: str) -> bool:
