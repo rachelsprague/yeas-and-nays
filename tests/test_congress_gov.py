@@ -514,6 +514,31 @@ def test_the_run_fails_when_every_sponsored_list_tried_fails(monkeypatch, tmp_pa
     assert fetched == ["A1", "B2", "C3"]
 
 
+def test_one_or_two_failed_sponsored_lists_with_none_fetched_dont_fail_the_run(monkeypatch, tmp_path):
+    fetched = []
+    errors = {m: _http_error(503) for m in ["A1", "B2"]}
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", list(errors), list(errors))
+    assert fetched == ["A1", "B2"]
+
+
+def test_a_rate_limit_after_two_sponsored_failures_doesnt_fail_the_run(monkeypatch, tmp_path):
+    fetched = []
+    errors = {"A1": _http_error(503), "B2": _http_error(503), "C3": _http_error(429)}
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", [*errors, "D4"], [*errors, "D4"])
+    assert fetched == ["A1", "B2", "C3"]
+
+
+def test_a_fetched_sponsored_list_resets_the_failures_in_a_row(monkeypatch, tmp_path):
+    fetched = []
+    errors = {m: _http_error(503) for m in ["A1", "B2", "D4", "E5"]}
+    members = ["A1", "B2", "C3", "D4", "E5", "F6"]
+    congress_gov = _sponsored_setup(monkeypatch, tmp_path, errors, fetched)
+    congress_gov.ingest_sponsored(None, "k", members, members)
+    assert fetched == members
+
+
 def test_a_sponsored_failure_after_a_fetched_list_doesnt_fail_the_run(monkeypatch, tmp_path):
     fetched = []
     errors = {m: _http_error(503) for m in ["B2", "C3", "D4"]}

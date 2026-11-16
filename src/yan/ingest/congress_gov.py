@@ -26,6 +26,7 @@ logged and skipped, and retried next run. A rate limit (HTTP 429) or
 MAX_FAILURES_IN_A_ROW failures in a row stop the run's cosponsored lists early.
 If the lists stop after MAX_FAILURES_IN_A_ROW failures with none fetched (not
 on a rate limit), the run fails, so a change in the API can't go unnoticed.
+Sponsored lists follow the same skip, stop and fail rules, with no budget.
 
 The API key is read from CONGRESS_API_KEY and sent only in the X-Api-Key
 header, never in a URL. Without a key this step is skipped.
