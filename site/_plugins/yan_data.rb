@@ -632,6 +632,18 @@ module Yan
     rows.map { |r| r.merge("pct" => (100.0 * r["total"] / top).round(1)) }
   end
 
+  # The tags src/yan/export/summary_html.py keeps, always bare (no attributes).
+  SUMMARY_TAGS = %w[p ul ol li strong em b i br sub sup].freeze
+  SUMMARY_TOKEN = %r{</?(?:#{SUMMARY_TAGS.join("|")})>|[<>]}
+
+  # The vote page inserts a CRS summary as HTML. The pipeline's update job
+  # already reduced it to SUMMARY_TAGS, but that job runs third-party code, so
+  # the site build checks again: those bare tags pass, and any other < or >
+  # is escaped, so nothing else in the data can become markup.
+  def self.summary_html(html)
+    html&.gsub(SUMMARY_TOKEN) { |t| { "<" => "&lt;", ">" => "&gt;" }.fetch(t, t) }
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
   def self.vote_view(vote, doc, members_by_id)
     words = words(doc["positions"])
@@ -680,7 +692,8 @@ module Yan
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
       "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
       "state_map" => other.empty? ? state_map(vote["chamber"], doc["positions"], members_by_id, words) : nil,
-      "against" => against, "summary" => doc["summary"]
+      "against" => against,
+      "summary" => (s = doc["summary"]) && s.merge("html" => summary_html(s["html"]))
     }
   end
 

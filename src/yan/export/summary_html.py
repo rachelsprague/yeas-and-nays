@@ -2,7 +2,8 @@
 
 Congress.gov summaries are plain formatted text (paragraphs, lists, bold and
 italic). Any other tag is dropped but its text kept; all attributes are
-dropped; text is re-escaped. The site inserts the result as HTML.
+dropped; text is re-escaped. The site inserts the result as HTML, after
+re-checking it against the same tags (Yan.summary_html in site/_plugins/yan_data.rb).
 """
 
 from html import escape
