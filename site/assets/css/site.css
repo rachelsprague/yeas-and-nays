@@ -354,6 +354,8 @@ table.roll { border-collapse: collapse; width: 100%; }
    columns divided by thin rules from 760px. */
 .modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; border-top: 1.5px solid var(--ink); padding-top: 12px; }
 .modules > section, .week { display: flex; flex-direction: column; gap: 10px; }
+/* Module headings in display type, a step above the 18px item titles. */
+.module-h { font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
 /* Rules go between the modules shown: a chamber tab can hide any of them, or
    all of a row's. */
 .modules:not(:has(> section:not([hidden]))) { display: none; }
