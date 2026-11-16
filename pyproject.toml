@@ -20,6 +20,7 @@ yan = "yan.cli:main"
 [dependency-groups]
 dev = [
     "pytest>=8",
+    "shapely>=2.1",
 ]
 
 [build-system]
