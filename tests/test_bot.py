@@ -4,7 +4,7 @@ import pytest
 
 from yan.bot import run as bot
 from yan.bot import state as bot_state
-from yan.bot.format import PostTooLong, format_post, party_break_line, party_line, tally_line
+from yan.bot.format import PostTooLong, closing_marks, format_post, party_break_line, party_line, tally_line
 from yan.bot.rules import decide, measure_label
 
 
@@ -310,11 +310,35 @@ def test_closing_quote_that_does_not_fit_takes_a_shorter_cut():
     ("An Act to amend title 5 (the Housing Supp", "ly Act) and ", ' (the Housing…)"'),
     ('Disapproving the rule relating to "California State Non', 'road Standards" ', ' "California State…""'),
     ("An Act to amend title 5 (the “Fair Housing Non", "road Act”) and ", ' (the “Fair Housing…”)"'),
+    ("Disapproving the rule relating to ‘California State Non", "road Standards’ ", ' ‘California State…’"'),
 ])
 def test_cut_inside_parentheses_or_quotes_closes_them(prefix, tail, ending):
     tail += "y" * 300
     vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
     assert cut_at(vote, prefix, tail).endswith(ending)
+
+
+@pytest.mark.parametrize("text, marks", [
+    ("no marks at all", ""),
+    ("closed (marks) and “quotes” and ‘single’ and \"straight\"", ""),
+    # Nested marks close innermost first.
+    ("(the “Fair ‘Housing", "’”)"),
+    ('(a "b', '")'),
+    # A closing mark closes the open mark it matches, even past an inner one.
+    ("“a (b ” c", ")"),
+    ('"a (b " c', ")"),
+    ("(a “b ) c", "”"),
+    # A stray closing mark is ignored.
+    ("1) foo", ""),
+    ("“a ’ b) c", "”"),
+    # An apostrophe between letters doesn't close a single quote.
+    ("the ‘Children’s Act", "’"),
+    ("the ‘Children’s Act’ and", ""),
+    # One after a plural closes it, as a closing quote would.
+    ("the ‘Veterans’ benefits", ""),
+])
+def test_closing_marks(text, marks):
+    assert closing_marks(text) == marks
 
 
 @pytest.mark.parametrize("prefix, tail, ending", [
