@@ -37,15 +37,17 @@ votes_counted as (
         votes.*,
         coalesce(position_summary.member_count, 0) as member_count,
         coalesce(position_summary.against_party_majority_count, 0) as against_party_majority_count,
-        {#- The Senate records the share each vote needs. The House doesn't, so
-            it comes from the question: suspending the rules, overriding a veto
-            and proposing a constitutional amendment take two-thirds of those
-            voting; everything else a majority. Null when nothing was tallied
-            as yea or nay (quorum calls, Speaker elections). #}
+        {#- The Senate records the share each vote needs. The House Clerk marks
+            two-thirds votes in the vote type ("2/3 YEA-AND-NAY", expulsions
+            included); the question is a fallback: suspending the rules,
+            overriding a veto and proposing a constitutional amendment take
+            two-thirds of those voting; everything else a majority. Null when
+            nothing was tallied as yea or nay (quorum calls, Speaker elections). #}
         case
             when coalesce(votes.yea_count, 0) + coalesce(votes.nay_count, 0) = 0 then null
             when votes.chamber = 'senate' then votes.majority_requirement
-            when votes.question like 'On Motion to Suspend the Rules%'
+            when votes.vote_type like '2/3%'
+                or votes.question like 'On Motion to Suspend the Rules%'
                 or votes.question like 'Passage, Objections of the President%'
                 or (votes.question = 'On Passage'
                     and votes.measure_title ilike 'Proposing an amendment to the Constitution%')
