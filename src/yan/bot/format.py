@@ -154,8 +154,8 @@ def closing_marks(text: str) -> str:
     open, innermost first. A straight double quote opens or closes by turn.
     A closing mark closes the latest open mark it matches, even past marks
     opened inside it and left open (“a (b ” c leaves only the parenthesis
-    open); a stray closing mark is ignored. A ’ between two letters is an
-    apostrophe ("Children’s"), not a closing quote."""
+    open); a stray closing mark is ignored. A ’ between two letters or
+    digits is an apostrophe ("Children’s", "1990’s"), not a closing quote."""
     open_marks = []
     for i, char in enumerate(text):
         if char == '"':
@@ -165,7 +165,7 @@ def closing_marks(text: str) -> str:
                 open_marks.append(char)
         elif char in CLOSERS:
             open_marks.append(CLOSERS[char])
-        elif char == "’" and text[i - 1:i].isalpha() and text[i + 1:i + 2].isalpha():
+        elif char == "’" and text[i - 1:i].isalnum() and text[i + 1:i + 2].isalnum():
             continue
         elif char in open_marks:
             close(open_marks, char)

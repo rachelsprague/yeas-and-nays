@@ -331,9 +331,13 @@ def test_cut_inside_parentheses_or_quotes_closes_them(prefix, tail, ending):
     # A stray closing mark is ignored.
     ("1) foo", ""),
     ("“a ’ b) c", "”"),
-    # An apostrophe between letters doesn't close a single quote.
+    # An apostrophe between letters or digits doesn't close a single quote.
     ("the ‘Children’s Act", "’"),
     ("the ‘Children’s Act’ and", ""),
+    ("the ‘1990’s Act", "’"),
+    # Senate titles quote a short title with doubled marks.
+    ("to ‘‘THE ONE, BIG", "’’"),
+    ("to ‘‘THE ONE’’ and", ""),
     # One after a plural closes it, as a closing quote would.
     ("the ‘Veterans’ benefits", ""),
 ])
