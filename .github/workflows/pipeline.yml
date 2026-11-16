@@ -122,7 +122,8 @@ jobs:
           retention-days: 1
 
   # The only job with a write token. It runs no third-party code: a fresh
-  # checkout, the data from the update job, and git.
+  # checkout, the data from the update job, a standard-library check of that
+  # data, and git.
   commit:
     needs: update
     # always() so a failed bot step still commits; the artifact check skips
@@ -139,6 +140,14 @@ jobs:
         with:
           name: data
           path: ${{ runner.temp }}/data
+
+      # The artifact comes from the job that runs third-party code, so check it
+      # before committing: only export's files, size caps, valid JSON, and bot
+      # state that never moves backwards. Standard library only, from main.
+      - name: Check data
+        env:
+          DATA: ${{ runner.temp }}/data
+        run: python3 -I scripts/check_data_artifact.py "$DATA"
 
       # Replace data/out wholesale: export deletes files for votes and members
       # that are gone, and copying over the old tree would keep them.
