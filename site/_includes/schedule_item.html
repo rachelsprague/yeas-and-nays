@@ -1,7 +1,9 @@
 {%- comment -%}
   One floor schedule item in a ruled list, under a heading that names the
   chamber (and House week). include.item; include.show_category adds the House
-  schedule's heading for lists that don't group by it.
+  schedule's heading for lists that don't group by it. include.place, the
+  item's place in a home page list, starts it hidden past the third, as the
+  list's data-limit does once JS runs.
   Links to the roll call once there is one, else to Congress.gov for bills and
   resolutions; nominations and amendments without a roll call aren't linked.
 {%- endcomment -%}
@@ -24,7 +26,7 @@
     {%- endif %}
 {%- endcapture -%}
 {%- assign href = s.vote_url | default: s.congress_gov_url -%}
-<li class="vote-item" data-row data-chamber="{{ s.chamber | escape }}">
+<li class="vote-item" data-row data-chamber="{{ s.chamber | escape }}"{% if include.place and include.place > 3 %} hidden{% endif %}>
   {%- if href %}
   <a class="headline-link" href="{{ href | escape }}">{{ body }}</a>
   {%- else %}

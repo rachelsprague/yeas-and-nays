@@ -1316,7 +1316,7 @@ class HomeModulesTest < Minitest::Test
     tie = vote("s119-2-0001", "senate", "2026-11-10", 50, 50, 51)
           .merge(base).merge("roll_number" => 1, "tie_breaker_by" => "Vice President of the United States")
     html = build_site([member], votes + [[tie, doc]]).fetch("/index.html")
-    closest = html[%r{<section aria-labelledby="close-h">.*?</section>}m]
+    closest = html[%r{<section aria-labelledby="close-h".*?</section>}m]
     assert_includes closest, "Roll calls from Oct. 16 through Nov. 14, 2026"
     assert_includes closest, "1 Aye, 0 No · 1 needed, a majority of those voting"
     assert_includes closest, "50 Aye, 50 No · Tie broken by the Vice President of the United States"
@@ -1326,6 +1326,43 @@ class HomeModulesTest < Minitest::Test
     # Three per chamber, three shown before the tabs run: the fourth row starts hidden.
     assert_equal 4, closest.scan('<li class="close-item"').size
     assert_equal 1, closest.scan(/<li class="close-item"[^>]* hidden>/).size
+  end
+
+  # A chamber tab hides a module with no rows for that chamber, so each module
+  # lists the chambers it has rows for; without JS, Coming up shows three per
+  # chamber, as the tabs do.
+  def test_modules_list_their_chambers_and_coming_up_starts_rows_past_three_hidden
+    member = EscapingTest::MEMBER.merge("official_full_name" => "Jane Doe")
+    doc = { "positions" => { "Z000001" => "Nay" }, "party_totals" => { "R" => { "no" => 1 } },
+            "caucus_majority_position" => { "R" => "yes" },
+            "against_party_majority" => [{ "bioguide_id" => "Z000001", "position" => "Nay" }], "summary" => nil }
+    v = vote("h119-2-0001", "house", "2026-11-12", 0, 1, 1, against: 1)
+        .merge("congress" => 119, "session" => 2, "roll_number" => 1, "question" => "On Passage", "result" => "Failed")
+    senate = (1..4).map do |i|
+      { "chamber" => "senate", "item_id" => "s#{i}", "filed_date" => "2026-11-12", "question" => "On the Cloture Motion",
+        "measure_label" => "PN#{i}", "title" => "Nomination #{i}", "vote_id" => nil }
+    end
+    html = build_site([member], [[v, doc]], time: "2026-11-13 12:00:00 -0500",
+                      schedule: { "items" => senate, "senate_next_convene_et" => "2026-11-16T15:00:00" }).fetch("/index.html")
+    assert_includes html, '<section aria-labelledby="soon-h" data-row data-chamber="senate ">'
+    assert_includes html, '<section aria-labelledby="close-h" data-row data-chamber="house">'
+    assert_includes html, '<section aria-labelledby="against-h" data-row data-chamber="house">'
+    soon = html[%r{<section aria-labelledby="soon-h".*?</section>}m]
+    assert_equal 4, soon.scan('<li class="vote-item"').size
+    assert_equal ["Nomination 4"], soon.scan(%r{<li class="vote-item"[^>]* hidden>.*?<span class="t">(.*?)</span>}m).flatten
+    # The lead takes two-thirds only beside the week's column.
+    assert_includes html, '<div class="front has-side">'
+    assert_includes html, '<aside class="side"'
+  end
+
+  # The member's seat code comes from member data: escaped in the
+  # against-majority list.
+  def test_against_names_escape_the_seat_code
+    member = EscapingTest::MEMBER.merge("official_full_name" => "Jane Doe", "state" => %q("<x>&'))
+    html = build_site([member], [[EscapingTest::VOTE, EscapingTest::DOC]]).fetch("/index.html")
+    against = html[%r{<section aria-labelledby="against-h".*?</section>}m]
+    assert_includes against, "(R-&quot;&lt;x&gt;&amp;&#39;-4)"
+    refute_includes against, "<x>"
   end
 
   def test_areas_take_the_top_areas_and_leave_out_rows_with_no_area
