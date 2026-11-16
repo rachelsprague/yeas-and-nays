@@ -599,6 +599,30 @@ class StateMapTest < Minitest::Test
   end
 end
 
+class ResultLabelTest < Minitest::Test
+  JOHNSON = { "bioguide_id" => "J000299", "official_full_name" => "Mike Johnson", "party" => "R",
+              "chamber" => "house", "state" => "LA", "district" => 4 }.freeze
+
+  def speaker(id)
+    { "question" => "Election of the Speaker", "result" => "Johnson (LA)", "result_bioguide_id" => id }
+  end
+
+  def test_a_speaker_election_names_the_member_with_the_most_votes
+    assert_equal "Most votes: Mike Johnson (R-LA-4)", Yan.result_label(speaker("J000299"), { "J000299" => JOHNSON })
+  end
+
+  # No match in dbt, or a member missing from members.json: the Clerk's text.
+  def test_an_unmatched_speaker_result_stays_as_recorded
+    assert_equal "Johnson (LA)", Yan.result_label(speaker(nil), { "J000299" => JOHNSON })
+    assert_equal "Johnson (LA)", Yan.result_label(speaker("J000299"))
+  end
+
+  def test_a_bare_house_result_is_tied_to_its_question
+    assert_equal "Motion to Refer: Passed", Yan.result_label({ "question" => "On Motion to Refer", "result" => "Passed" })
+    assert_equal "Nomination Confirmed", Yan.result_label({ "question" => "On the Nomination", "result" => "Nomination Confirmed" })
+  end
+end
+
 # Builds vote pages: one with every position, one Speaker election.
 class VotePageTest < Minitest::Test
   include SiteBuild
@@ -625,7 +649,8 @@ class VotePageTest < Minitest::Test
       [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "A000002" => "Present", "A000003" => "Not Voting",
                                      "A000004" => "Nay", "A000005" => "Yea" },
                                    { "yes" => 2, "no" => 1, "present" => 1, "not_voting" => 1 })],
-       [vote(2, "Election of the Speaker"), doc({ "A000001" => "Johnson", "A000002" => "Johnson", "A000003" => "Not Voting" },
+       [vote(2, "Election of the Speaker").merge("result" => "Johnson", "result_bioguide_id" => "A000001"),
+        doc({ "A000001" => "Johnson", "A000002" => "Johnson", "A000003" => "Not Voting" },
                                                 { "other" => 2, "not_voting" => 1 })]]
     )
   end
@@ -702,6 +727,7 @@ class VotePageTest < Minitest::Test
     html = pages.fetch("/votes/119/house/1/2/index.html")
     refute_includes html, "grid-chart"
     refute_includes html, "By state"
+    assert_includes html, '<span class="kicker result">Most votes: Member A000001 (R-AL-1)</span>'
   end
 end
 

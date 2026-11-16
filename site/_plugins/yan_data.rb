@@ -55,7 +55,13 @@ module Yan
   # ("Motion to Proceed Agreed to", "Nomination Confirmed").
   BARE_RESULTS = ["Passed", "Failed", "Agreed to"].freeze
 
-  def self.result_label(v)
+  # A Speaker election's result is the Clerk's short name for the top
+  # candidate ("Johnson (LA)"), recorded even on a ballot that elects no one,
+  # so it reads "Most votes: Mike Johnson (R-LA-4)" when the member is known.
+  def self.result_label(v, members_by_id = {})
+    if (m = members_by_id[v["result_bioguide_id"]])
+      return "Most votes: #{member_name(m)} (#{m["party"]}-#{seat(m)})"
+    end
     return v["result"] unless BARE_RESULTS.include?(v["result"])
 
     "#{v["question"].sub(/\AOn (the )?/, "")}: #{v["result"]}"
@@ -659,7 +665,7 @@ module Yan
       votes.each do |v|
         v["url"] = Yan.vote_url(v)
         v["chamber_name"] = CHAMBER_NAMES[v["chamber"]]
-        v["result_label"] = Yan.result_label(v)
+        v["result_label"] = Yan.result_label(v, by_id)
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
         doc = read.call("votes/#{v["vote_id"]}.json")
         view = Yan.vote_view(v, doc, by_id)
