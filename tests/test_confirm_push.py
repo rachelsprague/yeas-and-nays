@@ -451,6 +451,9 @@ def test_edits_and_reviews_without_text_still_ask(repo):
     'echo "`gh pr comment 3 --body hi`"',
     'git commit -m "$(gh pr comment 3 --body hi)"',
     'git commit -m "x `gh issue comment 3 --body hi`"',
+    'git commit -m "$\\\n(gh pr comment 3 --body hi)"',
+    "sh -c 'echo \"$(gh pr comment 3 --body hi)\"'",
+    'echo "$(echo "$(gh pr comment 3 --body hi)")"',
 ])
 def test_posting_inline_or_unseen_text_is_denied(repo, command):
     path, _ = repo
@@ -588,6 +591,10 @@ def test_a_fifo_body_file_is_denied_without_blocking(repo):
     "cat > s.sh <<'EOF'\ngh pr comment 1 -b hi\nEOF\ncat s.sh",
     "tee msg.txt <<'EOF' >/dev/null\nmention gh pr comment\nEOF\ngit commit -F msg.txt",
     "gh api repos/o/r/pulls/2/comments --paginate -q '.[].body'",
+    # a substitution elsewhere doesn't make other quoted words commands
+    "grep -rn \"gh pr comment\" docs $(ls)",
+    "echo '$(date)' \"see gh pr comment docs\"",
+    "echo `date` 'gh issue comment 3 --body hi'",
 ])
 def test_commands_that_dont_post_or_only_mention_posting_are_left_alone(repo, command):
     path, _ = repo
@@ -610,6 +617,12 @@ def test_commands_nested_past_the_scan_depth_are_denied(repo, inner):
     # At the limit itself the command is still read and gets its usual reason.
     decision, reason = confirm_push.decide(nested(inner, confirm_push.MAX_DEPTH), str(path))
     assert decision == "deny" and "levels deep" not in reason
+
+
+def test_the_post_scan_alone_stops_at_the_depth_limit():
+    with pytest.raises(confirm_push.TooDeep):
+        confirm_push.find_posts(nested("gh pr comment 1 --body hi", confirm_push.MAX_DEPTH + 1))
+    assert confirm_push.find_posts(nested("gh pr comment 1 --body hi", confirm_push.MAX_DEPTH))
 
 
 def test_deep_nesting_without_git_or_gh_is_left_alone(repo):

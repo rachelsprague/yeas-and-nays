@@ -348,9 +348,10 @@ def find_posts(command: str, depth: int = 0, substitutes: bool | None = None) ->
     """Every gh command that posts PR or issue text (or sets an alias), as {"kind", "args"}.
 
     Looks at the command's own words, inside the strings it hands to a shell (`sh -c`, `eval`),
-    and inside every quoted word when the command runs `...` or $(...), which a double-quoted
-    string runs too (`echo "$(gh pr comment ...)"`). Other quoted text is left alone, so
-    `git commit -m "... gh pr comment ..."` and `echo "run gh pr comment later"` aren't posts."""
+    and, when the command runs `...` or $(...), inside each quoted word that holds one, since a
+    double-quoted string runs them too (`echo "$(gh pr comment ...)"`). Other quoted text is left
+    alone, so `git commit -m "... gh pr comment ..."` and `grep "gh pr comment" $(ls)` aren't
+    posts."""
     if substitutes is None:
         substitutes = _substitutes(command)
     found, segment = [], []
@@ -359,13 +360,15 @@ def find_posts(command: str, depth: int = 0, substitutes: bool | None = None) ->
             segment.append(tok)
             continue
         found += _post_in_segment(segment)
-        if substitutes or any(os.path.basename(t) in SHELLS | {"eval"} for t in segment):
-            for t in segment:
-                if any(c.isspace() for c in t) and not _past_depth(t, depth):
-                    try:
-                        found += find_posts(t, depth + 1, substitutes)
-                    except ValueError:
-                        pass  # not valid shell on its own, so not run as a command
+        to_shell = any(os.path.basename(t) in SHELLS | {"eval"} for t in segment)
+        for t in segment:
+            # tokens() has turned a backtick into ` ; `, so a `;` marks one (or a literal `;`).
+            runs_substitution = substitutes and ("$(" in t or ";" in t)
+            if (to_shell or runs_substitution) and any(c.isspace() for c in t) and not _past_depth(t, depth):
+                try:
+                    found += find_posts(t, depth + 1, substitutes)
+                except ValueError:
+                    pass  # not valid shell on its own, so not run as a command
         segment = []
     return found
 
