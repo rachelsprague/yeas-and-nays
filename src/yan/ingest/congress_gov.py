@@ -225,12 +225,39 @@ def ingest(client: Client) -> None:
 
     members = members_in_congress()
     stale = [m for m in members if needs_fetch(sponsored_path(m), dt.date.min, today)]
-    for bioguide_id in stale:
-        doc = fetch_sponsored(client, key, bioguide_id)
-        write_atomic(sponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
-    log.info("congress.gov: %d members, %d sponsored-legislation lists fetched", len(members), len(stale))
-
+    ingest_sponsored(client, key, members, stale)
     ingest_cosponsored(client, key, members, today, yan.STARTED)
+
+
+def ingest_sponsored(client: Client, key: str, members: list[str], stale: list[str]) -> None:
+    """Fetch stale sponsored lists. A list that fails is skipped (its old file kept, retried
+    next run), with the same stop and fail rules as the cosponsored lists."""
+    fetched = failed = in_a_row = 0
+    rate_limited = False
+    for bioguide_id in stale:
+        try:
+            doc = fetch_sponsored(client, key, bioguide_id)
+        except (httpx.HTTPError, ValueError) as e:
+            # Log the error type and status only.
+            status = getattr(getattr(e, "response", None), "status_code", None)
+            log.warning("congress.gov: sponsored list for %s failed (%s, HTTP %s); skipping",
+                        bioguide_id, type(e).__name__, status)
+            failed += 1
+            in_a_row += 1
+            rate_limited = status == 429
+            if rate_limited or in_a_row >= MAX_FAILURES_IN_A_ROW:
+                log.warning("congress.gov: %s; stopping sponsored lists for this run",
+                            "rate limited" if rate_limited else f"{in_a_row} lists failed in a row")
+                break
+            continue
+        write_atomic(sponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
+        fetched += 1
+        in_a_row = 0
+    log.info("congress.gov: %d members, %d of %d stale sponsored-legislation lists fetched, %d failed",
+             len(members), fetched, len(stale), failed)
+    if failed >= MAX_FAILURES_IN_A_ROW and not fetched and not rate_limited:
+        raise RuntimeError(f"congress.gov: {failed} sponsored-legislation lists failed and none "
+                           "were fetched")
 
 
 def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.date, started: float) -> None:
