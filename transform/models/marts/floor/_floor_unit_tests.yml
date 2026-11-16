@@ -49,13 +49,16 @@ unit_tests:
 
   - name: floor_schedule_ids_skip_an_all_punctuation_part
     description: >
-      A part with no letters or digits is left out of the item ID rather than leaving a
-      hyphen at its end.
+      A target with no letters or digits is left out of the item ID rather than leaving a
+      hyphen at its end. A House item ID or Senate docnum with none is dropped, like a
+      missing docnum, rather than giving a bare "h-<week>" or "s" that two such items
+      would share.
     model: floor_schedule
     given:
       - input: ref('stg_floor__house_items')
         rows:
           - {congress: 119, week_date: 2026-11-09, item_id: "--", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.2", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: B, removed_at_recorded: null}
       - input: ref('int_senate_cloture_events')
         rows:
           - {docnum: PN8, document_prefix: PN, target: "..", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N8}
@@ -65,6 +68,57 @@ unit_tests:
           - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
     expect:
       rows:
-        - {item_id: h-2026-11-09, title: A}
+        - {item_id: h-2026-11-09-4098-2, title: B}
         - {item_id: s-pn8, title: N8}
-        - {item_id: s, title: N9}
+
+  - name: floor_schedule_senate_compares_docnums_written_two_ways
+    description: >
+      A Senate docnum written two ways ("H.R. 4"/"H.R.4") is one document throughout: a
+      cloture vote or disposal recorded under the other spelling ends the motion, and the
+      roll call matches whichever way it writes the measure or amendment.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          # Voted under the other spelling: no longer pending.
+          - {docnum: H.R. 4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-09, status_order: 0, document_title: Voted}
+          - {docnum: H.R.4, document_prefix: HR, target: the measure, event: voted, activity_date: 2026-11-10, status_order: 0}
+          # Disposed of under the other spelling: no longer pending.
+          - {docnum: S.Res. 7, document_prefix: SRES, target: the measure, event: filed, activity_date: 2026-11-09, status_order: 1, document_title: Agreed to}
+          - {docnum: S.Res.7, document_prefix: SRES, target: null, event: disposed, activity_date: 2026-11-10, status_order: 1}
+          # Pending, each matched to a roll call that writes it the other way.
+          - {docnum: S. 9, document_prefix: S, target: the motion to proceed to the measure, event: filed, activity_date: 2026-11-10, status_order: 2, document_title: Proceed}
+          - {docnum: S.Amdt. 6883, document_prefix: SA, target: amendment SA 6883, event: filed, activity_date: 2026-11-10, status_order: 3, document_title: Amendment}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s119-2-0002, chamber: senate, congress: 119, measure_number: S.9, amendment_number: null, question: On Cloture on the Motion to Proceed S.9, vote_date: 2026-11-12, vote_time_et: "2026-11-12 12:00:00"}
+          - {vote_id: s119-2-0003, chamber: senate, congress: 119, measure_number: null, amendment_number: S.Amdt.6883, question: On the Cloture Motion S.Amdt.6883, vote_date: 2026-11-12, vote_time_et: "2026-11-12 13:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09-4098-1, vote_id: null}
+        - {item_id: s-s-9-proceed, vote_id: s119-2-0002}
+        - {item_id: s-s-amdt-6883, vote_id: s119-2-0003}
+
+  - name: floor_schedule_house_raw_id_listed_twice_keeps_the_first_listed
+    description: >
+      Two House rows with the same raw item ID in a week give one item, the one listed
+      first on the schedule (by category, then position), whatever their raw order.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.1", category_order: 1, item_order: 3, measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: First, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.1", category_order: 2, item_order: 0, measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: Second, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          - {docnum: PN8, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N8}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09-4098-1, title: First}
+        - {item_id: s-pn8, title: N8}
