@@ -1,0 +1,253 @@
+import importlib.util
+import json
+import re
+from pathlib import Path
+
+from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Point, Polygon, box
+
+SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "build_district_map.py"
+spec = importlib.util.spec_from_file_location("build_district_map", SCRIPT)
+dm = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(dm)
+
+
+def path_bounds(d):
+    """(minx, miny, maxx, maxy) of every point in path data written by path_data."""
+    xs, ys = [], []
+    for ring in re.findall(r"M([^l]+)l([^z]*)z", d):
+        x, y = map(float, ring[0].split())
+        xs.append(x)
+        ys.append(y)
+        steps = list(map(float, ring[1].split()))
+        for dx, dy in zip(steps[::2], steps[1::2]):
+            x, y = x + dx, y + dy
+            xs.append(x)
+            ys.append(y)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+# fmt, line_data, path_data
+
+def test_fmt_drops_trailing_zeros_and_negative_zero():
+    assert dm.fmt(2.0) == "2"
+    assert dm.fmt(3.10) == "3.1"
+    assert dm.fmt(-0.04) == "0"
+    assert dm.fmt(-1.26) == "-1.3"
+
+
+def test_line_data_writes_an_absolute_move_then_relative_lines():
+    assert dm.line_data([(10, 20), (15, 20), (15, 30.5)]) == "M10 20l5 0 0 10.5"
+
+
+def test_line_data_rounds_to_one_decimal():
+    assert dm.line_data([(0.04, 0), (1.26, 0)]) == "M0 0l1.3 0"
+
+
+def test_line_data_drops_points_that_round_onto_the_one_before():
+    assert dm.line_data([(0, 0), (0.02, 0), (5, 0)]) == "M0 0l5 0"
+
+
+def test_line_data_needs_two_points_open_and_three_closed():
+    assert dm.line_data([(0, 0), (0.01, 0.01)]) == ""
+    assert dm.line_data([(0, 0), (5, 0)], closed=True) == ""
+    assert dm.line_data([(0, 0), (5, 0), (5, 5)], closed=True) == "M0 0l5 0 0 5z"
+
+
+def test_path_data_writes_each_ring_once_closed():
+    poly = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+    assert dm.path_data([poly]) == "M0 0l10 0 0 10 -10 0z"
+
+
+def test_path_data_writes_holes_and_parts_as_their_own_rings():
+    holed = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)], [[(2, 2), (4, 2), (4, 4)]])
+    island = Polygon([(20, 0), (22, 0), (22, 2)])
+    assert dm.path_data([holed, island]) == "M0 0l10 0 0 10 -10 0zM2 2l2 0 0 2zM20 0l2 0 0 2z"
+
+
+def test_path_data_skips_a_ring_that_rounds_to_fewer_than_three_points():
+    sliver = Polygon([(0, 0), (0.01, 0), (0.01, 0.01)])
+    poly = Polygon([(0, 0), (10, 0), (10, 10)])
+    assert dm.path_data([sliver, poly]) == "M0 0l10 0 0 10z"
+
+
+# polygons, tidy
+
+def test_polygons_keeps_only_polygon_parts():
+    a, b = box(0, 0, 1, 1), box(2, 2, 3, 3)
+    assert dm.polygons(a) == [a]
+    assert dm.polygons(MultiPolygon([a, b])) == [a, b]
+    assert dm.polygons(GeometryCollection([a, LineString([(0, 0), (1, 1)]), Point(5, 5)])) == [a]
+
+
+def test_tidy_drops_small_islands_and_puts_the_largest_part_first():
+    main, island, speck = box(0, 0, 100, 100), box(200, 0, 210, 10), box(300, 0, 302, 2)
+    parts = dm.tidy(MultiPolygon([speck, island, main]))
+    assert [p.area for p in parts] == [10000, 100]
+
+
+def test_tidy_keeps_a_district_whose_only_part_is_small():
+    parts = dm.tidy(box(0, 0, 2, 2))
+    assert [p.area for p in parts] == [4]
+
+
+# projector, place
+
+def test_projector_centers_the_lower_48_on_its_origin():
+    pt = dm.projector("TX")(Point(-96, 37.5))
+    assert abs(pt.x) < 1e-6 and abs(pt.y) < 1e-6
+
+
+def test_projector_keeps_the_western_aleutians_beside_alaska():
+    to_ak = dm.projector("AK")
+    east_of_180, west_of_180 = to_ak(Point(-179, 52)), to_ak(Point(179, 52))
+    # 179°E is 2° west of 179°W, so it lands just left of it, not across the map.
+    assert west_of_180.x < east_of_180.x
+    assert east_of_180.x - west_of_180.x < 200_000
+
+
+def test_place_scales_and_moves_the_top_left_corner_with_y_down():
+    geom = box(10, 20, 30, 60)
+    placed = dm.place(geom, 2, 100, 50, geom.bounds)
+    assert placed.bounds == (100, 50, 140, 130)
+    # The north edge (y = 60) is at the top.
+    north = dm.place(Point(10, 60), 2, 100, 50, geom.bounds)
+    assert (north.x, north.y) == (100, 50)
+
+
+# place_lists
+
+def test_place_lists_ranks_places_by_population_inside_the_district():
+    district = box(0, 0, 10, 10)
+    places = [
+        ("TX", "Half In", 1000, box(5, 0, 15, 10)),  # half its area inside: counts as 500
+        ("TX", "Small", 600, box(1, 1, 2, 2)),
+        ("TX", "Outside", 9000, box(20, 20, 30, 30)),
+    ]
+    assert dm.place_lists([("TX", 1, district)], places) == [(["Small", "Half In"], 0)]
+
+
+def test_place_lists_skips_places_in_another_state_or_barely_inside():
+    district = box(0, 0, 10, 10)
+    places = [
+        ("OK", "Across the Line", 5000, box(1, 1, 2, 2)),
+        ("TX", "Edge", 5000, box(9.9, 0, 19.9, 10)),  # 1% inside, under MIN_PLACE_SHARE
+        ("TX", "Line", 5000, LineString([(1, 1), (2, 2)])),  # no area
+        ("TX", "Town", 10, box(3, 3, 4, 4)),
+    ]
+    assert dm.place_lists([("TX", 1, district)], places) == [(["Town"], 0)]
+
+
+def test_place_lists_shows_the_largest_and_counts_the_rest(monkeypatch):
+    monkeypatch.setattr(dm, "PLACES_SHOWN", 2)
+    district = box(0, 0, 10, 10)
+    places = [("TX", name, pop, box(i, 0, i + 1, 1))
+              for i, (name, pop) in enumerate([("A", 10), ("B", 30), ("C", 20), ("D", 30)])]
+    # B and D tie and are ordered by name.
+    assert dm.place_lists([("TX", 1, district)], places) == [(["B", "D"], 2)]
+
+
+# city_labels
+
+def test_city_labels_tiers_by_population_and_stops_below_the_last_tier():
+    places = [
+        ("TX", "Mid", 300_000, box(0, 0, 2, 2)),
+        ("TX", "Big", 800_000, box(10, 10, 12, 12)),
+        ("TX", "Small", 150_000, box(20, 20, 22, 22)),
+        ("TX", "Tiny", 99_999, box(30, 30, 32, 32)),
+    ]
+    assert dm.city_labels(places) == [
+        {"name": "Big", "x": 11, "y": 11, "tier": 1},
+        {"name": "Mid", "x": 1, "y": 1, "tier": 2},
+        {"name": "Small", "x": 21, "y": 21, "tier": 3},
+    ]
+
+
+def test_city_labels_add_the_state_to_a_name_labeled_twice():
+    places = [
+        ("MO", "Kansas City", 510_000, box(0, 0, 2, 2)),
+        ("KS", "Kansas City", 155_000, box(4, 0, 6, 2)),
+        ("TX", "Austin", 990_000, box(10, 10, 12, 12)),
+    ]
+    assert [label["name"] for label in dm.city_labels(places)] == [
+        "Austin", "Kansas City, MO", "Kansas City, KS"]
+
+
+# load_districts
+
+def _shapes(files):
+    """A stub read_shapes serving files[url] as (record, geometry) pairs."""
+    return lambda url: iter(files[url])
+
+
+def test_load_districts_skips_water_and_non_states_and_joins_split_records(monkeypatch):
+    monkeypatch.setattr(dm, "DISTRICT_FILES", {119: ["cd119"]})
+    monkeypatch.setattr(dm, "read_shapes", _shapes({"cd119": [
+        ({"STATEFP": "48", "CD119FP": "02"}, box(0, 0, 1, 1)),
+        ({"STATEFP": "48", "CD119FP": "01"}, box(1, 0, 2, 1)),
+        ({"STATEFP": "48", "CD119FP": "02"}, box(0, 1, 1, 2)),  # a second record for TX-2
+        ({"STATEFP": "48", "CD119FP": "ZZ"}, box(5, 5, 6, 6)),  # water
+        ({"STATEFP": "11", "CD119FP": "98"}, box(7, 7, 8, 8)),  # DC: not drawn
+        ({"STATEFP": "02", "CD119FP": "00"}, box(9, 9, 10, 10)),  # at large
+    ]}))
+    rows = dm.load_districts(119, states={})
+    assert [(s, n) for s, n, _ in rows] == [("AK", 0), ("TX", 1), ("TX", 2)]
+    assert rows[2][2].area == 2
+
+
+def test_load_districts_clips_a_later_congress_to_the_shoreline(monkeypatch):
+    monkeypatch.setattr(dm, "DISTRICT_FILES", {119: ["cd119"], 120: ["tx120"]})
+    monkeypatch.setattr(dm, "read_shapes", _shapes({"tx120": [
+        ({"STATEFP": "48", "CD120FP": "01"}, box(0, 0, 10, 10)),
+    ]}))
+    rows = dm.load_districts(120, states={"TX": box(0, 0, 10, 6)})
+    assert rows[0][2].area == 60
+
+
+def test_load_districts_takes_a_kept_state_from_the_119th_file(monkeypatch):
+    monkeypatch.setattr(dm, "DISTRICT_FILES", {119: ["cd119"], 120: ["mo120", "tx120"]})
+    monkeypatch.setattr(dm, "KEEP_119", {120: {"MO"}})
+    monkeypatch.setattr(dm, "read_shapes", _shapes({
+        "cd119": [({"STATEFP": "29", "CD119FP": "01"}, box(0, 0, 1, 1)),
+                  ({"STATEFP": "48", "CD119FP": "01"}, box(5, 5, 6, 6))],
+        "mo120": [({"STATEFP": "29", "CD120FP": "01"}, box(0, 0, 3, 3))],
+        "tx120": [({"STATEFP": "48", "CD120FP": "01"}, box(5, 5, 7, 7))],
+    }))
+    states = {"MO": box(0, 0, 10, 10), "TX": box(0, 0, 10, 10)}
+    rows = dm.load_districts(120, states)
+    assert [(s, n, g.area) for s, n, g in rows] == [("MO", 1, 1), ("TX", 1, 4)]
+
+
+# build: insets
+
+def test_build_fits_the_lower_48_and_insets_alaska_and_hawaii(monkeypatch, tmp_path):
+    states = {
+        "TX": box(-106, 26, -94, 36),
+        "ME": box(-71, 43, -67, 47),
+        "AK": box(-168, 55, -141, 70),
+        # Hawaii's main islands, and a Northwestern Hawaiian island far to the west.
+        "HI": MultiPolygon([box(-160, 19, -155, 22), box(-176.01, 25, -176, 25.01)]),
+    }
+    monkeypatch.setattr(dm, "load_states", lambda: states)
+    monkeypatch.setattr(dm, "load_districts", lambda congress, s: [(st, 1, g) for st, g in sorted(s.items())])
+    monkeypatch.setattr(dm, "load_places", lambda: [])
+    monkeypatch.setattr(dm, "OUT", tmp_path)
+    monkeypatch.setattr(dm, "ROOT", tmp_path)
+    dm.build(119)
+
+    doc = json.loads((tmp_path / "119.json").read_text())
+    bounds = {d["state"]: path_bounds(d["d"]) for d in doc["districts"]}
+    margin, width, height = dm.MARGIN, dm.WIDTH, dm.HEIGHT
+    near = lambda a, b: abs(a - b) <= 1
+
+    # The lower 48 starts at the top-left margin and fills the frame in one direction.
+    conus = (min(bounds[s][0] for s in ("TX", "ME")), min(bounds[s][1] for s in ("TX", "ME")),
+             max(bounds[s][2] for s in ("TX", "ME")), max(bounds[s][3] for s in ("TX", "ME")))
+    assert near(conus[0], margin) and near(conus[1], margin)
+    assert conus[2] <= width - margin + 1 and conus[3] <= height - margin + 1
+    assert near(conus[2], width - margin) or near(conus[3], height - margin)
+
+    # Alaska sits in the lower-left corner; Hawaii's main islands 150 units to its right, on
+    # the bottom margin (placing by the western island too would push them further right).
+    ak, hi = bounds["AK"], bounds["HI"]
+    assert near(ak[0], margin) and near(ak[3], height - margin)
+    assert near(hi[0], ak[2] + 150) and near(hi[3], height - margin)
