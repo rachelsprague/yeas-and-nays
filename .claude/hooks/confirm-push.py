@@ -14,8 +14,9 @@ PR, and the maintainer squash-merges it on GitHub. So:
   not change what it sends (aliases, push refspecs, push URLs, an edited or
   missing git hook, or an alias defined with `git -c alias.*`). Pushing main
   and `gh pr merge` are denied: PRs are merged on GitHub by the maintainer.
-  So are `gh pr update-branch`, `gh repo sync` and `gh workflow run`, which
-  move branches on GitHub (the pipeline workflow commits to main).
+  So are `gh pr update-branch` and `gh repo sync`, which move branches on
+  GitHub, and `gh workflow run`, which can start the pipeline (it commits to
+  main).
 
 It also gates PR and issue text posted to GitHub, which is just as public.
 `gh pr create / edit / comment / review` and `gh issue create / edit /
@@ -704,8 +705,8 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
         if finds_pr_merge(command):
             return "deny", "PRs are merged by the maintainer on GitHub (squash merge). Open the PR and stop there."
         if finds_branch_move(command):
-            return "deny", ("gh pr update-branch, gh repo sync and gh workflow run move branches on GitHub (the "
-                            "pipeline commits to main); leave them to the maintainer.")
+            return "deny", ("gh pr update-branch and gh repo sync move branches on GitHub, and gh workflow run can "
+                            "start the pipeline (it commits to main); leave them to the maintainer.")
         if finds_config_alias(command):
             return "deny", "git -c alias.* can hide a push from this hook; run the git command itself."
         posts = find_posts(command)

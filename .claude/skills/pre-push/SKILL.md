@@ -9,7 +9,7 @@ This repo is public, and work lands through pull requests: a session pushes
 its own branch, opens a PR, and the maintainer squash-merges it on GitHub.
 Two hooks block a push until this review has been recorded for the exact
 commit being pushed: `.claude/hooks/confirm-push.py` (Claude Code, checks
-the command; it also denies pushing main, `gh pr merge`, and
+the command; it also denies pushing main, `gh pr merge`,
 `gh pr update-branch`, `gh repo sync` and `gh workflow run`) and
 `.githooks/pre-push` (git, checks the commits actually pushed; install once
 per clone with `make hooks`). A pushed branch is public as soon as it's
