@@ -363,3 +363,51 @@ unit_tests:
         - {vote_id: h2, result_bioguide_id: null}
         - {vote_id: h3, result_bioguide_id: null}
         - {vote_id: h4, result_bioguide_id: null}
+
+  - name: votes_set_the_share_and_yeas_each_question_needs
+    description: >
+      Senate votes take the share they record; House votes take two-thirds to
+      suspend the rules, override a veto or propose a constitutional amendment,
+      and a majority otherwise. Yeas needed: more than half, or at least
+      two-thirds, of yea plus nay; three-fifths of the senators on the roll,
+      none with no roll. Nothing for a vote with no yea or nay votes (a quorum
+      call, a Speaker election).
+    model: votes
+    given:
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: h1, chamber: house, question: On Passage, yea_count: 215, nay_count: 209}
+          - {vote_id: h2, chamber: house, question: On Passage, yea_count: 210, nay_count: 210}
+          - {vote_id: h3, chamber: house, question: "On Motion to Suspend the Rules and Pass, as Amended", yea_count: 280, nay_count: 140}
+          - {vote_id: h4, chamber: house, question: "Passage, Objections of the President To The Contrary Notwithstanding", yea_count: 281, nay_count: 140}
+          - {vote_id: h5, chamber: house, question: On Passage, measure_title: Proposing an amendment to the Constitution of the United States relative to X, yea_count: 300, nay_count: 100}
+          - {vote_id: h6, chamber: house, question: Election of the Speaker, result: Smith}
+          - {vote_id: h7, chamber: house, question: Call of the House, yea_count: 0, nay_count: 0}
+          - {vote_id: s1, chamber: senate, question: On the Cloture Motion, majority_requirement: "3/5", yea_count: 2, nay_count: 1}
+          - {vote_id: s2, chamber: senate, question: On the Nomination, majority_requirement: "1/2", yea_count: 50, nay_count: 49}
+          - {vote_id: s3, chamber: senate, question: On Overriding the Veto, majority_requirement: "2/3", yea_count: 66, nay_count: 34}
+          - {vote_id: s4, chamber: senate, question: On the Cloture Motion, majority_requirement: "3/5", yea_count: 2, nay_count: 1}
+      - input: ref('bills')
+        rows: []
+      # Four senators on the roll for s1: three-fifths is 2.4, so 3 Yeas. None for s4.
+      - input: ref('positions')
+        rows:
+          - {vote_id: s1, bioguide_id: A}
+          - {vote_id: s1, bioguide_id: B}
+          - {vote_id: s1, bioguide_id: C}
+          - {vote_id: s1, bioguide_id: D}
+      - input: ref('int_positions_resolved')
+        rows: []
+    expect:
+      rows:
+        - {vote_id: h1, required_share: "1/2", yeas_needed: 213}
+        - {vote_id: h2, required_share: "1/2", yeas_needed: 211}
+        - {vote_id: h3, required_share: "2/3", yeas_needed: 280}
+        - {vote_id: h4, required_share: "2/3", yeas_needed: 281}
+        - {vote_id: h5, required_share: "2/3", yeas_needed: 267}
+        - {vote_id: h6, required_share: null, yeas_needed: null}
+        - {vote_id: h7, required_share: null, yeas_needed: null}
+        - {vote_id: s1, required_share: "3/5", yeas_needed: 3}
+        - {vote_id: s2, required_share: "1/2", yeas_needed: 50}
+        - {vote_id: s3, required_share: "2/3", yeas_needed: 67}
+        - {vote_id: s4, required_share: "3/5", yeas_needed: null}

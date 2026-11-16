@@ -7,6 +7,7 @@ from yan.export.json_export import (
     meta_document,
     summary_document,
     vote_document,
+    with_bot_posts,
     with_measure_label,
 )
 
@@ -56,6 +57,15 @@ def test_votes_carry_measure_number_in_citation_form():
     assert with_measure_label({"chamber": "house", "measure_number": None})["measure_label"] is None
 
 
+def test_votes_carry_whether_the_bot_posts_them():
+    passage = {"chamber": "house", "question": "On Passage", "measure_number": "H R 2102",
+               "measure_title": "Major Richard Star Act", "result": "Passed", "yea_count": 392}
+    rule = {**passage, "question": "On Agreeing to the Resolution", "measure_number": "H RES 1247",
+            "measure_title": "Providing for consideration of the bill (H.R. 2102)"}
+    assert with_bot_posts(passage)["bot_posts"] is True
+    assert with_bot_posts(rule)["bot_posts"] is False
+
+
 def test_summary_carries_the_version_it_describes():
     summary = {"summary_html": "<p>This bill&nbsp;allows X.</p>", "action_desc": "Introduced in House",
                "action_date": dt.date(2025, 2, 5), "version_code": "00"}
@@ -75,7 +85,8 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=()):
     con.execute("create table member_stats as select 'A000001' as bioguide_id, 1 as votes_cast")
     con.execute("""create table votes as select 'h119-1-0001' as vote_id, 'house' as chamber, 1 as session,
                    1 as roll_number, date '2025-01-03' as vote_date, timestamp '2025-01-03 12:00' as vote_time_et,
-                   'H R 1' as measure_number""")
+                   'H R 1' as measure_number, 'On Passage' as question, 'Passed' as result,
+                   1 as yea_count""")
     con.execute("""create table positions as select 'h119-1-0001' as vote_id, 'A000001' as bioguide_id,
                    'A (R-TX-1)' as member_label, 'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
                    'yes' as position, 'yes' as caucus_majority_position, false as voted_against_party_majority""")

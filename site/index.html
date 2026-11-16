@@ -5,6 +5,7 @@ nav: votes
 ---
 {%- assign meta = site.data.meta -%}
 {%- assign leads = site.data.leads -%}
+{%- assign home = site.data.home -%}
 {%- assign newest = site.data.votes.first -%}
 <div class="wrap session-line nums">
   <span>{{ meta.congress | ordinal }} Congress, {{ newest.session | ordinal }} Session</span><span aria-hidden="true">·</span><span>House and Senate</span><span aria-hidden="true">·</span><span>From the official record</span>
@@ -21,6 +22,12 @@ nav: votes
 </form>
 <div class="wrap" aria-hidden="true"><div class="rule-line"></div></div>
 
+{%- comment -%}
+  The chamber tabs filter every module: each row carries data-chamber, and a
+  list's data-limit shows its first rows for the chosen chamber. Lists hold
+  rows from both chambers so either tab still fills them; without JS, rows
+  past the limit start hidden.
+{%- endcomment %}
 <main id="main" class="wrap home" data-filter-scope>
   <div class="head-row">
     <h1 class="kicker" style="font-size: 13px">Latest recorded votes</h1>
@@ -38,53 +45,160 @@ nav: votes
       {%- if leads.senate %}{% include lead.html view=leads.senate key="senate" %}{% endif %}
     </article>
 
-    <aside class="side" aria-label="Coming up and more recent votes">
-      {%- assign schedule = site.data.schedule %}
-      {%- if schedule.upcoming_senate.size > 0 or schedule.upcoming_house.size > 0 %}
-      <section aria-labelledby="soon-h">
-        <h2 id="soon-h" class="kicker soft" style="padding-bottom: 8px">Coming up</h2>
-        {%- comment -%} Each chamber's block is a data-row too, so the chamber tabs hide its heading with its list. {%- endcomment %}
-        {%- if schedule.upcoming_senate.size > 0 %}
-        <div data-row data-chamber="senate">
-          <h3 class="small soft nums">Senate{% if schedule.senate_next_convene %} · Convenes {{ schedule.senate_next_convene }}{% endif %}</h3>
-          <ul class="ruled" data-limit="3">
-            {%- for item in schedule.upcoming_senate %}
-              {%- include schedule_item.html item=item %}
-            {%- endfor %}
-          </ul>
-        </div>
-        {%- endif %}
-        {%- if schedule.upcoming_house.size > 0 %}
-        <div data-row data-chamber="house">
-          <h3 class="small soft nums">House · Week of {{ schedule.upcoming_week | ap_date }}</h3>
-          <ul class="ruled" data-limit="3">
-            {%- for item in schedule.upcoming_house %}
-              {%- include schedule_item.html item=item show_category=true %}
-            {%- endfor %}
-          </ul>
-        </div>
-        {%- endif %}
-        <p class="small muted">From the House floor schedule and Senate cloture motions on file. Listed items may or may not come up for a vote.</p>
-        <a class="more" href="/schedule/">Full floor schedule →</a>
-      </section>
-      {%- endif %}
-      <section aria-labelledby="more-h">
-        <h2 id="more-h" class="kicker soft" style="padding-bottom: 8px">More recent votes</h2>
-        <ul class="ruled" data-limit="6">
-          {%- for v in site.data.votes limit: 40 %}
-            {%- capture attrs -%}
-              {%- assign skip = "" -%}
-              {%- if v.vote_id == leads.all.vote.vote_id %}{% assign skip = skip | append: " chamber:all" %}{% endif -%}
-              {%- if v.vote_id == leads.house.vote.vote_id %}{% assign skip = skip | append: " chamber:house" %}{% endif -%}
-              {%- if v.vote_id == leads.senate.vote.vote_id %}{% assign skip = skip | append: " chamber:senate" %}{% endif -%}
-              {%- if skip != "" %} data-skip-when="{{ skip | strip }}"{% endif -%}
-              {%- if forloop.index > 7 or v.vote_id == leads.all.vote.vote_id %} hidden{% endif -%}
-            {%- endcapture -%}
-            {%- include vote_item.html vote=v attrs=attrs %}
+    {%- assign week = home.week %}
+    {%- if week %}
+    <aside class="side" aria-labelledby="week-h">
+      <section class="week">
+        <h2 id="week-h" class="kicker soft">On the floor · Week of {{ week.start | ap_date }}</h2>
+        <div class="week-figs nums">
+          {%- for c in week.chambers %}
+          <div data-row data-chamber="{{ c.chamber }}"><span class="fig-sm">{{ c.total }}</span><span class="small soft">{{ c.name }} roll call{% if c.total != 1 %}s{% endif %}</span></div>
           {%- endfor %}
-        </ul>
-        <a class="more" href="/votes/" style="padding: 14px 0; display: inline-block">All votes →</a>
+        </div>
+        {%- for c in week.chambers %}
+        <div class="spark" data-row data-chamber="{{ c.chamber }}">
+          <span class="small muted">{{ c.name }}, by week</span>
+          <div class="spark-bars" role="img" aria-label="{{ c.label | escape }}">
+            {%- for b in c.bars %}<span style="height: {{ b.pct }}%"{% if forloop.last %} class="now"{% endif %}></span>{% endfor -%}
+          </div>
+        </div>
+        {%- endfor %}
+        <div class="spark-axis small muted nums" aria-hidden="true"><span>{{ week.first | ap_date }}</span><span>{{ week.start | ap_date }}</span></div>
+        <p class="small muted">Weeks with no bar had no roll calls, such as during a recess.</p>
+        <a class="more" href="/activity/">Floor activity →</a>
       </section>
     </aside>
+    {%- endif %}
   </div>
+
+  <div class="modules three">
+    {%- assign schedule = site.data.schedule %}
+    {%- if schedule.upcoming_senate.size > 0 or schedule.upcoming_house.size > 0 %}
+    <section aria-labelledby="soon-h">
+      <h2 id="soon-h" class="kicker soft">Coming up</h2>
+      {%- comment -%} Each chamber's block is a data-row too, so the chamber tabs hide its heading with its list. {%- endcomment %}
+      {%- if schedule.upcoming_senate.size > 0 %}
+      <div data-row data-chamber="senate">
+        <h3 class="small soft nums">Senate{% if schedule.senate_next_convene %} · Convenes {{ schedule.senate_next_convene }}{% endif %}</h3>
+        <ul class="ruled" data-limit="3">
+          {%- for item in schedule.upcoming_senate %}
+            {%- include schedule_item.html item=item %}
+          {%- endfor %}
+        </ul>
+      </div>
+      {%- endif %}
+      {%- if schedule.upcoming_house.size > 0 %}
+      <div data-row data-chamber="house">
+        <h3 class="small soft nums">House · Week of {{ schedule.upcoming_week | ap_date }}</h3>
+        <ul class="ruled" data-limit="3">
+          {%- for item in schedule.upcoming_house %}
+            {%- include schedule_item.html item=item show_category=true %}
+          {%- endfor %}
+        </ul>
+      </div>
+      {%- endif %}
+      <p class="small muted">From the House floor schedule and Senate cloture motions on file. Listed items may or may not come up for a vote.</p>
+      <a class="more" href="/schedule/">Full floor schedule →</a>
+    </section>
+    {%- endif %}
+
+    {%- assign closest = home.closest %}
+    {%- if closest and closest.rows.size > 0 %}
+    <section aria-labelledby="close-h">
+      <h2 id="close-h" class="kicker soft">Closest votes</h2>
+      <p class="small muted nums">Roll calls from {{ closest.range }}</p>
+      <ul class="ruled" data-limit="3">
+        {%- for r in closest.rows %}
+        {%- assign v = r.vote %}
+        <li class="close-item" data-row data-chamber="{{ v.chamber }}"{% if forloop.index > 3 %} hidden{% endif %}>
+          <a class="headline-link" href="{{ v.url }}">
+            <span class="kicker muted nums">{{ v.chamber_name }} · Roll {{ v.roll_number }} · {{ v.vote_date | ap_date }}</span>
+            <span class="small soft">{{ v.question | escape }}</span>
+            <span class="t">{% include vote_title.html vote=v %}</span>
+          </a>
+          <div class="close-bar" aria-hidden="true"><span class="yea" style="width: {{ r.yea_pct }}%"></span>{% unless v.tie_breaker_by %}<span class="tick" style="left: {{ r.tick_pct }}%"></span>{% endunless %}</div>
+          <p class="small nums">{{ v.yea_count }} {{ r.words.yes }}, {{ v.nay_count }} {{ r.words.no }} · {% if v.tie_breaker_by %}Tie broken by the {{ v.tie_breaker_by | escape }}{% else %}{{ r.needed }} needed, {{ r.share }}{% endif %}</p>
+          <p class="small soft">{{ v.result_label | escape }}</p>
+        </li>
+        {%- endfor %}
+      </ul>
+      <p class="small muted">Sorted by how far the votes in favor fell from the number needed to carry the question, over or under. The mark on each bar shows that number. <a href="/about/#procedural-votes">How votes work</a></p>
+    </section>
+    {%- endif %}
+
+    {%- assign against = home.against %}
+    {%- if against and against.size > 0 %}
+    <section aria-labelledby="against-h">
+      <h2 id="against-h" class="kicker soft">Voted against their party's majority</h2>
+      <ul class="ruled" data-limit="5">
+        {%- for r in against %}
+        {%- assign v = r.vote %}
+        <li class="against-item" data-row data-chamber="{{ v.chamber }}"{% if forloop.index > 5 %} hidden{% endif %}>
+          <span class="against-n nums"><span class="fig-sm">{{ r.count }}</span><span class="small soft">member{% if r.count != 1 %}s{% endif %}</span></span>
+          <span class="against-v">
+            <a class="headline-link" href="{{ v.url }}">
+              <span class="kicker muted nums">{{ v.chamber_name }} · {{ v.vote_date | ap_date }}</span>
+              <span class="t">{% include vote_title.html vote=v %}</span>
+            </a>
+            <span class="small soft nums">{{ v.result_label | escape }} · {{ v.yea_count }}–{{ v.nay_count }}</span>
+            {%- if r.names.size > 0 %}
+            <span class="small">{% for a in r.names %}<a class="link" href="{{ a.url }}">{{ a.name | escape }} ({{ a.code }})</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
+            {%- endif %}
+          </span>
+        </li>
+        {%- endfor %}
+      </ul>
+      <p class="small muted">Recent passage, confirmation, cloture and other votes that decide a measure, not rules or other procedural motions. Independents count with the party they caucus with. <a href="/about/#party-majority">Party majority</a></p>
+    </section>
+    {%- endif %}
+  </div>
+
+  <div class="modules two">
+    <section aria-labelledby="more-h">
+      <h2 id="more-h" class="kicker soft">More recent votes</h2>
+      <ul class="ruled" data-limit="6">
+        {%- for v in site.data.votes limit: 40 %}
+          {%- capture attrs -%}
+            {%- assign skip = "" -%}
+            {%- if v.vote_id == leads.all.vote.vote_id %}{% assign skip = skip | append: " chamber:all" %}{% endif -%}
+            {%- if v.vote_id == leads.house.vote.vote_id %}{% assign skip = skip | append: " chamber:house" %}{% endif -%}
+            {%- if v.vote_id == leads.senate.vote.vote_id %}{% assign skip = skip | append: " chamber:senate" %}{% endif -%}
+            {%- if skip != "" %} data-skip-when="{{ skip | strip }}"{% endif -%}
+            {%- if forloop.index > 7 or v.vote_id == leads.all.vote.vote_id %} hidden{% endif -%}
+          {%- endcapture -%}
+          {%- include vote_item.html vote=v attrs=attrs %}
+        {%- endfor %}
+      </ul>
+      <a class="more" href="/votes/">All votes →</a>
+    </section>
+
+    {%- assign areas = home.areas %}
+    {%- if areas %}
+    <section aria-labelledby="area-h">
+      <h2 id="area-h" class="kicker soft">Roll calls by policy area</h2>
+      <p class="small muted">This Congress, most first. The Congressional Research Service assigns each bill one policy area.</p>
+      <ul class="area-top">
+        {%- for a in areas %}
+        <li>
+          <span class="small nums"><span>{{ a.area | escape }}</span><span>{{ a.total }}</span></span>
+          <span class="area-top-bar" aria-hidden="true"><span style="width: {{ a.pct }}%"></span></span>
+        </li>
+        {%- endfor %}
+      </ul>
+      <a class="more" href="/activity/#area-h">All policy areas →</a>
+    </section>
+    {%- endif %}
+  </div>
+
+  <section class="new-here" aria-labelledby="new-h">
+    <div>
+      <h2 id="new-h" class="section-h sm">New to roll calls?</h2>
+      <p class="soft">Many recorded votes are not on whether to pass a measure, but on how the chamber handles it: whether to take it up, end debate, change it or send it to a committee.</p>
+    </div>
+    <ul class="ruled thin">
+      <li><a href="/about/#procedural-votes">How votes work</a><span class="small muted">Passage, cloture, rules and other motions</span></li>
+      <li><a href="/schedule/">Floor schedule</a><span class="small muted">What may come up for a vote, and when the Senate next convenes</span></li>
+      <li><a href="/about/#party-majority">Party majority</a><span class="small muted">How votes against a party's majority are counted</span></li>
+    </ul>
+  </section>
 </main>

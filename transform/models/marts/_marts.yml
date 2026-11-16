@@ -162,6 +162,29 @@ models:
                 field: bioguide_id
       - name: yea_count
         description: Official tally. Null for votes tallied by candidate (Election of the Speaker).
+      - name: required_share
+        description: >
+          Share of the vote the question needed: 1/2, 3/5 or 2/3. Senate votes as recorded
+          (majority_requirement); House votes from the question (two-thirds to suspend the rules,
+          override a veto or propose a constitutional amendment, otherwise a majority). Null when
+          no member voted yea or nay (quorum calls, Speaker elections).
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["1/2", "3/5", "2/3"]
+          - not_null:
+              config:
+                where: yea_count + nay_count > 0
+      - name: yeas_needed
+        description: >
+          The fewest Yeas that carry the question: more than half, or at least two-thirds, of
+          those voting yea or nay; three-fifths of the senators on the roll call (senators duly
+          chosen and sworn) for 3/5, null when no senators are on the roll. Leaves out a Vice
+          President's tie-breaking vote.
+        data_tests:
+          - not_null:
+              config:
+                where: required_share is not null and member_count > 0
       - name: tie_breaker_by
         description: Senate only. Set when the Vice President cast a tie-breaking vote.
       - name: source_url

@@ -350,6 +350,43 @@ table.roll { border-collapse: collapse; width: 100%; }
 .side { display: flex; flex-direction: column; gap: 28px; border-top: 1.5px solid var(--ink); margin-top: 28px; padding-top: 4px; }
 .more { font-weight: 600; font-size: 15px; padding: 10px 0; align-self: flex-start; }
 
+/* Home modules: rows of columns under an ink rule; one column on phones,
+   columns divided by thin rules from 760px. */
+.modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; border-top: 1.5px solid var(--ink); padding-top: 12px; }
+.modules > section, .week { display: flex; flex-direction: column; gap: 10px; }
+.modules > section + section { border-top: 1.5px solid var(--ink); padding-top: 12px; }
+.fig-sm { font-family: var(--font-display); font-size: 36px; line-height: 36px; font-weight: 600; }
+
+.week-figs { display: flex; gap: 28px; }
+.week-figs > div, .spark { display: flex; flex-direction: column; gap: 2px; }
+.spark-bars { display: flex; align-items: flex-end; gap: 2px; height: 40px; border-bottom: 1px solid var(--ink); }
+.spark-bars > span { flex: 1; background: var(--ink-muted); }
+.spark-bars > .now { background: var(--accent); }
+.spark-axis { display: flex; justify-content: space-between; }
+
+.close-item, .against-item { padding: 12px 0; }
+.close-item { display: flex; flex-direction: column; gap: 6px; }
+:is(.close-item, .against-item) .headline-link { display: flex; flex-direction: column; gap: 4px; }
+:is(.close-item, .against-item) .t { font-family: var(--font-display); font-size: 18px; line-height: 24px; font-weight: 600; }
+/* Yeas filled from the left; the tick marks the Yeas needed. */
+.close-bar { position: relative; height: 10px; border: 1px solid var(--ink); margin: 4px 0; }
+.close-bar .yea { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink-muted); }
+.close-bar .tick { position: absolute; top: -5px; bottom: -5px; width: 3px; margin-left: -1.5px; background: var(--accent); }
+
+.against-item { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start; }
+.against-n, .against-v { display: flex; flex-direction: column; gap: 4px; }
+.against-n { align-items: flex-end; }
+
+.area-top { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.area-top li { display: flex; flex-direction: column; gap: 4px; }
+.area-top li > .small { display: flex; justify-content: space-between; gap: 12px; }
+.area-top-bar { display: block; height: 8px; background: var(--surface-alt); }
+.area-top-bar > span { display: block; height: 100%; background: var(--accent); }
+
+.new-here { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; border-top: 3px solid var(--ink); padding-top: 16px; }
+.new-here > div { display: flex; flex-direction: column; gap: 8px; }
+.new-here li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; }
+
 /* ---- Members ----------------------------------------------------------- */
 
 .portrait {
@@ -497,6 +534,14 @@ footer.wrap { padding-bottom: 28px; }
   .front { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .lead { padding-right: 36px; border-right: 1px solid var(--ink); }
   .side { border-top: 0; margin-top: 0; padding-top: 0; padding-left: 28px; }
+  .modules { gap: 0; }
+  .modules.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .modules.two { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .modules > section { padding: 0 24px; }
+  .modules > section:first-child { padding-left: 0; }
+  .modules > section:last-child { padding-right: 0; }
+  .modules > section + section { border-top: 0; padding-top: 0; border-left: 1px solid var(--line); }
+  .new-here { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
 
   .who { gap: 28px; }
   .portrait { width: 160px; height: 200px; }
