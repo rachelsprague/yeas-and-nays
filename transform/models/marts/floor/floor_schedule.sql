@@ -74,9 +74,9 @@ house as (
         and votes.bill_type = items.bill_type
         and votes.bill_number = items.bill_number
         and votes.vote_date between items.week_date and items.week_date + 6
-    -- One row per item ID: item IDs the source writes two ways ("4098.1", "4098-1")
-    -- share one, so the first in raw order is kept, with its first deciding vote.
-    -- A raw ID listed twice keeps the one listed first on the schedule.
+    -- One row per item ID, with its first deciding vote. Item IDs the source writes
+    -- two ways ("4098.1", "4098-1") share one, and the first in raw order is kept;
+    -- the same raw ID listed twice keeps the row listed first on the schedule.
     qualify row_number() over (
         partition by {{ house_item_id }}
         order by items.item_id, items.category_order, items.item_order, items.measure_number, items.title,
@@ -97,7 +97,7 @@ events as (
 latest_filing as (
     select * from events
     where event = 'filed'
-    qualify row_number() over (partition by docnum_key, target order by activity_date desc, status_order desc) = 1
+    qualify row_number() over (partition by docnum_key, target order by activity_date desc, status_order desc, docnum) = 1
 ),
 
 filed as (

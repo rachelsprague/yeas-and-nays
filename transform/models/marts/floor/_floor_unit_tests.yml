@@ -58,6 +58,7 @@ unit_tests:
       - input: ref('stg_floor__house_items')
         rows:
           - {congress: 119, week_date: 2026-11-09, item_id: "--", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-09, item_id: null, measure_number: H.R. 7, bill_type: hr, bill_number: "7", title: C, removed_at_recorded: null}
           - {congress: 119, week_date: 2026-11-09, item_id: "4098.2", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: B, removed_at_recorded: null}
       - input: ref('int_senate_cloture_events')
         rows:
@@ -74,8 +75,9 @@ unit_tests:
   - name: floor_schedule_senate_compares_docnums_written_two_ways
     description: >
       A Senate docnum written two ways ("H.R. 4"/"H.R.4") is one document throughout: a
-      cloture vote or disposal recorded under the other spelling ends the motion, and the
-      roll call matches whichever way it writes the measure or amendment.
+      cloture vote, withdrawal or disposal recorded under the other spelling ends the
+      motion, a same-day vote under it marks a re-filing, and the roll call matches
+      whichever way it writes the measure, nomination or amendment.
     model: floor_schedule
     given:
       - input: ref('stg_floor__house_items')
@@ -89,18 +91,29 @@ unit_tests:
           # Disposed of under the other spelling: no longer pending.
           - {docnum: S.Res. 7, document_prefix: SRES, target: the measure, event: filed, activity_date: 2026-11-09, status_order: 1, document_title: Agreed to}
           - {docnum: S.Res.7, document_prefix: SRES, target: null, event: disposed, activity_date: 2026-11-10, status_order: 1}
+          # Withdrawn under the other spelling: no longer pending.
+          - {docnum: S. 11, document_prefix: S, target: the measure, event: filed, activity_date: 2026-11-09, status_order: 2, document_title: Withdrawn}
+          - {docnum: S.11, document_prefix: S, target: the measure, event: withdrawn, activity_date: 2026-11-10, status_order: 2}
           # Pending, each matched to a roll call that writes it the other way.
-          - {docnum: S. 9, document_prefix: S, target: the motion to proceed to the measure, event: filed, activity_date: 2026-11-10, status_order: 2, document_title: Proceed}
-          - {docnum: S.Amdt. 6883, document_prefix: SA, target: amendment SA 6883, event: filed, activity_date: 2026-11-10, status_order: 3, document_title: Amendment}
+          - {docnum: S. 9, document_prefix: S, target: the motion to proceed to the measure, event: filed, activity_date: 2026-11-10, status_order: 3, document_title: Proceed}
+          - {docnum: S.Amdt. 6883, document_prefix: SA, target: amendment SA 6883, event: filed, activity_date: 2026-11-10, status_order: 4, document_title: Amendment}
+          - {docnum: PN12-3, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 5, document_title: Nomination}
+          # Re-filed after that day's vote under the other spelling: that day's roll call is the earlier one.
+          - {docnum: S.13, document_prefix: S, target: the measure, event: voted, activity_date: 2026-11-10, status_order: 6}
+          - {docnum: S. 13, document_prefix: S, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 7, document_title: Re-filed}
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0002, chamber: senate, congress: 119, measure_number: S.9, amendment_number: null, question: On Cloture on the Motion to Proceed S.9, vote_date: 2026-11-12, vote_time_et: "2026-11-12 12:00:00"}
           - {vote_id: s119-2-0003, chamber: senate, congress: 119, measure_number: null, amendment_number: S.Amdt.6883, question: On the Cloture Motion S.Amdt.6883, vote_date: 2026-11-12, vote_time_et: "2026-11-12 13:00:00"}
+          - {vote_id: s119-2-0004, chamber: senate, congress: 119, measure_number: PN12 3, amendment_number: null, question: On the Cloture Motion PN12 3, vote_date: 2026-11-12, vote_time_et: "2026-11-12 14:00:00"}
+          - {vote_id: s119-2-0005, chamber: senate, congress: 119, measure_number: S. 13, amendment_number: null, question: On the Cloture Motion S. 13, vote_date: 2026-11-10, vote_time_et: "2026-11-10 12:00:00"}
     expect:
       rows:
         - {item_id: h-2026-11-09-4098-1, vote_id: null}
         - {item_id: s-s-9-proceed, vote_id: s119-2-0002}
         - {item_id: s-s-amdt-6883, vote_id: s119-2-0003}
+        - {item_id: s-pn12-3, vote_id: s119-2-0004}
+        - {item_id: s-s-13-measure, vote_id: null}
 
   - name: floor_schedule_house_raw_id_listed_twice_keeps_the_first_listed
     description: >
