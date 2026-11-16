@@ -53,6 +53,12 @@ def test_parse_path_skips_a_subpath_with_fewer_than_three_points():
     assert geom.area == 100
 
 
+def test_parse_path_with_no_three_point_subpath_is_empty():
+    geom = vm.parse_path("M0 0l5 5z")
+    assert geom.is_empty
+    assert vm.path_data(geom) == ""
+
+
 # path_data
 
 def test_path_data_scales_and_writes_relative_lines():
@@ -68,6 +74,11 @@ def test_path_data_rounds_to_whole_output_units():
 
 def test_path_data_drops_points_that_round_onto_the_one_before():
     geom = Polygon([(0, 0), (1, 0), (50, 0), (50, 50), (0, 50)])
+    assert vm.path_data(geom) == "M0 0l10 0 0 10 -10 0z"
+
+
+def test_path_data_drops_a_last_point_that_rounds_onto_the_first():
+    geom = Polygon([(0, 0), (50, 0), (50, 50), (0, 50), (1, 1)])
     assert vm.path_data(geom) == "M0 0l10 0 0 10 -10 0z"
 
 
