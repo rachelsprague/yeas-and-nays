@@ -8,7 +8,8 @@
     data/out/floor_schedule.json  what may come up for a vote: the House's weekly
                                   floor schedule and pending Senate cloture motions,
                                   plus when the Senate next convenes
-    data/out/votes.json           one entry per vote (metadata + tallies), newest first
+    data/out/votes.json           one entry per vote (metadata + tallies, and whether
+                                  the bot posts it), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
                                   every member's position as recorded, and the CRS
@@ -27,7 +28,7 @@ from pathlib import Path
 
 import duckdb
 
-from yan.bot.rules import measure_label
+from yan.bot.rules import decide, measure_label
 from yan.config import CONGRESS, OUT_DIR, WAREHOUSE_PATH
 from yan.export import summary_html
 from yan.measures import bill_label
@@ -83,7 +84,7 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             left join member_stats as stats using (bioguide_id)
             order by bioguide_id
         """)
-        votes = [with_measure_label(v) for v in _rows(con, f"select * from votes order by {VOTE_ORDER}")]
+        votes = [with_bot_posts(with_measure_label(v)) for v in _rows(con, f"select * from votes order by {VOTE_ORDER}")]
         positions = _rows(con, """
             select vote_id, bioguide_id, member_label, party, caucus_party, position_raw,
                    position, caucus_majority_position, voted_against_party_majority
@@ -192,6 +193,11 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
 def with_measure_label(vote: dict) -> dict:
     """Add the measure number in citation form ("H RES 1655" -> "H.Res. 1655") for display."""
     return {**vote, "measure_label": measure_label(vote)}
+
+
+def with_bot_posts(vote: dict) -> dict:
+    """Add whether the bot posts the vote (yan.bot.rules), so the site can list the same votes."""
+    return {**vote, "bot_posts": decide(vote).post}
 
 
 def summary_document(summary: dict | None) -> dict | None:
