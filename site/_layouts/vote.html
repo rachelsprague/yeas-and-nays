@@ -18,7 +18,7 @@ layout: default
       {% include tally.html view=page %}
       <p class="small muted nums">
         {{ page.total }} members recorded.
-        {%- if v.majority_requirement %} Majority required: {{ v.majority_requirement }}.{% endif %}
+        {%- if page.share %} {% if v.yeas_needed %}{{ v.yeas_needed }} needed to carry, {{ page.share }}{% else %}Needed to carry: {{ page.share }}{% endif %}.{% endif %}
         {%- if v.tie_breaker_by %} The {{ v.tie_breaker_by }} voted {{ v.tie_breaker_vote }} to break the tie.{% endif %}
       </p>
     </section>

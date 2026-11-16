@@ -692,7 +692,7 @@ module Yan
       "total" => total, "yes_pct" => pct.call(counts["yes"]), "no_pct" => pct.call(counts["no"]),
       "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
       "state_map" => other.empty? ? state_map(vote["chamber"], doc["positions"], members_by_id, words) : nil,
-      "against" => against,
+      "against" => against, "share" => SHARE_WORDS[vote["required_share"]],
       "summary" => (s = doc["summary"]) && s.merge("html" => summary_html(s["html"]))
     }
   end
