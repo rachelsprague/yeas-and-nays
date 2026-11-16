@@ -20,7 +20,9 @@ position_summary as (
 {#- In an Election of the Speaker the Clerk records the result as the top
     candidate's name, in the same form it lists that member among the voters
     ("Johnson (LA)"). Match it to that voter; no match, or more than one,
-    leaves it null. #}
+    leaves it null. The Clerk gives candidates by name only, so a non-member
+    candidate recorded under a member's bare surname would match that
+    member; nothing in the data tells them apart, and no such case is known. #}
 result_candidate as (
     select votes.vote_id, any_value(positions.bioguide_id) as result_bioguide_id
     from votes
