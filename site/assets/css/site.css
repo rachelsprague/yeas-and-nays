@@ -221,6 +221,8 @@ main.home { gap: 20px; padding-top: 20px; }
 .vmap .states path { fill: none; stroke: var(--ink-muted); stroke-width: 1px; vector-effect: non-scaling-stroke; pointer-events: none; }
 .vmap pattern rect, .vmap pattern circle { fill: var(--ink); }
 .vmap pattern .bg { fill: var(--surface); }
+/* Until the shapes load, a faint box holds the map's place. */
+.vmap:not(.ready) svg { background: var(--surface-alt); }
 .vmap-caption { min-height: 1.5em; }
 .vmap-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; }
 .vmap-key li { display: inline-flex; align-items: center; gap: 6px; }

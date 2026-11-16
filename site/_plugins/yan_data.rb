@@ -307,15 +307,17 @@ module Yan
   # state ("KY"), its members' marks in last-name order and a hover title. DC
   # and the territories aren't on the map (their delegates can't vote on the
   # House floor) but are in the table; "unmapped" counts them, with members of
-  # no known state, for a note.
+  # no known state and those who have since moved to the Senate ("moved"), for
+  # a note.
   def self.state_map(chamber, positions, members_by_id, words)
     return nil if positions.empty?
 
-    labels = { "yes" => words["yes"], "no" => words["no"], "present" => "Present", "not_voting" => "Not voting" }
+    labels = { "yes" => words["yes"], "no" => words["no"], "present" => "Present", "not_voting" => "Not Voting" }
     house = chamber == "house"
     counts = Hash.new { |h, k| h[k] = Hash.new(0) }
     seats = {}
     unmapped = 0
+    moved = 0
     positions.sort_by { |id, _| [members_by_id.dig(id, "last_name").to_s, id] }.each do |id, raw|
       m = members_by_id[id] || {}
       kind = position_kind(raw)
@@ -324,6 +326,7 @@ module Yan
       # to the Senate has no district for a House vote, so they stay off the map.
       if !STATE_NAMES.key?(m["state"]) || TERRITORIES.include?(m["state"]) || (house && m["chamber"] != "house")
         unmapped += 1
+        moved += 1 if house && m["chamber"] == "senate"
         next
       end
       s = seats[house ? seat(m) : m["state"]] ||= { "where" => house ? where(m) : STATE_NAMES[m["state"]], "marks" => [], "who" => [] }
@@ -332,7 +335,7 @@ module Yan
     end
     seats = seats.transform_values { |s| { "marks" => s["marks"], "title" => "#{s["where"]}: #{s["who"].join("; ")}" } }
     {
-      "chamber" => chamber, "unmapped" => unmapped,
+      "chamber" => chamber, "unmapped" => unmapped, "moved" => moved,
       # Every "<" escaped, so nothing in a name can end or confuse the script tag.
       "seats_json" => JSON.generate(seats).gsub("<", "\\u003c"),
       # The text version: one row per state, by name.
