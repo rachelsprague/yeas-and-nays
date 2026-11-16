@@ -266,13 +266,21 @@ class MemberCosponsoredTest < Minitest::Test
   # The member page's cosponsored section, or nil when there is none.
   def section(cosponsored)
     files = { "Z000001" => { "sponsored" => [], "cosponsored" => cosponsored } }
-    html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
-           .fetch("/members/Z000001/index.html")
-    html[%r{<section aria-labelledby="cosponsored-h".*?</section>}m]
+    @page = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
+            .fetch("/members/Z000001/index.html")
+    @page[%r{<section aria-labelledby="cosponsored-h".*?</section>}m]
+  end
+
+  # The bill titles in a section, in order.
+  def titles(html)
+    html.scan(%r{<a class="t headline-link"[^>]*>([^<]*)</a>}).flatten
   end
 
   def test_no_section_until_the_list_is_fetched
     assert_nil section(nil)
+    # The page itself rendered, with the sections around the missing one.
+    assert_includes @page, '<section aria-labelledby="bills-h"'
+    assert_includes @page, '<section aria-labelledby="recent-h"'
   end
 
   def test_an_empty_list_says_none
@@ -298,10 +306,38 @@ class MemberCosponsoredTest < Minitest::Test
     bills = (1..6).map { |n| BILL.merge("measure_label" => "S. #{n}", "title" => "Bill #{n}") }
     s = section(bills)
     assert_includes s, "6 this Congress"
-    shown, folded = s.split("<summary")
-    assert_equal (1..5).map { |n| "Bill #{n}" }, shown.scan(/>(Bill \d)</).flatten
+    parts = s.split("<summary")
+    assert_equal 2, parts.size
+    shown, folded = parts
+    assert_equal (1..5).map { |n| "Bill #{n}" }, titles(shown)
     assert_includes folded, "Show all 6</summary>"
-    assert_equal ["Bill 6"], folded.scan(/>(Bill \d)</).flatten
+    assert_equal ["Bill 6"], titles(folded)
+  end
+
+  def test_exactly_five_bills_all_show_with_no_show_all
+    s = section((1..5).map { |n| BILL.merge("measure_label" => "S. #{n}", "title" => "Bill #{n}") })
+    assert_includes s, "5 this Congress"
+    assert_equal (1..5).map { |n| "Bill #{n}" }, titles(s)
+    refute_includes s, "<summary"
+    refute_includes s, "Show all"
+  end
+
+  def test_a_bill_with_no_dates_action_or_vote_shows_only_its_label_and_title
+    bare = BILL.merge("introduced_date" => nil, "latest_action_date" => nil, "latest_action_text" => nil,
+                      "latest_vote_id" => nil)
+    s = section([bare])
+    assert_includes s, %(<span class="kicker muted nums">S. 7</span>)
+    assert_equal ["A bill to rename a post office"], titles(s)
+    refute_includes s, "Introduced"
+    refute_includes s, "Latest action"
+    refute_includes s, "Recorded vote"
+  end
+
+  def test_titles_and_labels_are_escaped
+    s = section([BILL.merge("measure_label" => "S. <7>", "title" => %q(A "bill" <b>to</b> & 'rename'))])
+    assert_includes s, "S. &lt;7&gt;"
+    assert_equal ["A &quot;bill&quot; &lt;b&gt;to&lt;/b&gt; &amp; &#39;rename&#39;"], titles(s)
+    refute_includes s, "<b>to</b>"
   end
 end
 
@@ -621,6 +657,32 @@ class VotePageTest < Minitest::Test
                     "Not on the map: 2 members with no seat drawn on it, such as a delegate from the District of Columbia " \
                     "or a territory, or a member who has since moved to the Senate (the map places members by their " \
                     "current seat). See the table by state."
+  end
+
+  def test_the_note_counts_several_members_who_have_since_moved_to_the_senate
+    senators = %w[S000001 S000002].map { |id| member(id, "AL", nil).merge("chamber" => "senate") }
+    built = build_site([member("A000001", "AL", 1), *senators],
+                       [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "S000001" => "Yea", "S000002" => "Nay" },
+                                                    { "yes" => 2, "no" => 1 })]])
+    assert_includes built.fetch("/votes/119/house/1/1/index.html"),
+                    "Not on the map: 2 members who have since moved to the Senate (the map places members by their " \
+                    "current seat). See the table by state."
+  end
+
+  # Every senator has a state, so on a Senate vote only one with no state on
+  # record is off the map, and the table by state can't list them either.
+  def test_a_senate_vote_names_senators_with_no_state_on_record
+    senator = ->(id, state) { member(id, state, nil).merge("chamber" => "senate") }
+    senate_vote = ->(roll) { vote(roll, "On Passage").merge("vote_id" => "s119-1-000#{roll}", "chamber" => "senate") }
+    built = build_site([senator["S000001", "AL"], senator["S000002", "ZZ"], senator["S000003", "ZZ"]],
+                       [[senate_vote[1], doc({ "S000001" => "Yea", "S000002" => "Nay" }, { "yes" => 1, "no" => 1 })],
+                        [senate_vote[2], doc({ "S000001" => "Yea", "S000002" => "Nay", "S000003" => "Nay" },
+                                             { "yes" => 1, "no" => 2 })]])
+    one = built.fetch("/votes/119/senate/1/1/index.html")
+    assert_includes one, 'data-chamber="senate"'
+    assert_includes one, "Not on the map: 1 senator with no state on record. District and state lines"
+    refute_includes one, "such as a delegate"
+    assert_includes built.fetch("/votes/119/senate/1/2/index.html"), "Not on the map: 2 senators with no state on record."
   end
 
   # The built site's meta is the 119th Congress. A 120th vote has shapes but its

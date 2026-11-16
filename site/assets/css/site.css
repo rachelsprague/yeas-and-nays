@@ -188,7 +188,7 @@ main.home { gap: 20px; padding-top: 20px; }
 .fig { font-family: var(--font-display); font-weight: 500; font-size: 40px; line-height: 40px; }
 .fig-label { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
 
-/* Legend marks: Yea solid ink, Nay diagonal stripes, Not voting open box,
+/* Legend marks: Yea solid ink, Nay diagonal stripes, Not Voting open box,
    Present a dashed box. Same in grayscale; never party or position colors. */
 .mark { display: inline-block; flex: none; width: 11px; height: 11px; border: 1px solid var(--ink); background: var(--surface); }
 .mark.yea { background: var(--ink); }

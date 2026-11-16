@@ -1,6 +1,6 @@
 {%- comment -%} US map of one vote (Yan.state_map), drawn by vote-map.js from the shapes at include.map.src:
 each House district or each senator's half of a state filled with a mark. Yea solid, Nay striped,
-Present dotted, Not voting open. Without JS it stays hidden; the By state table is its text version. {%- endcomment -%}
+Present dotted, Not Voting open. Without JS it stays hidden; the By state table is its text version. {%- endcomment -%}
 {%- assign map = include.map -%}
 <div class="vmap js-only" data-vmap data-src="{{ map.src | escape }}" data-chamber="{{ map.chamber | escape }}" aria-hidden="true">
   <svg focusable="false">
