@@ -16,7 +16,9 @@ For every member who served in this Congress, also fetches
 introduced, all Congresses, paged) and keeps the items from this Congress.
 Re-fetched weekly. Likewise /member/{bioguide_id}/cosponsored-legislation,
 which runs to thousands of items (dozens of pages) for long-serving members
-and isn't sorted by Congress, so every page is read. To keep each hourly run
+and isn't sorted by Congress, so every page is read. A list whose count
+changes between its first and last page (a bill added or removed mid-fetch)
+is fetched once more. To keep each hourly run
 inside the job's timeout, a run fetches cosponsored lists, stalest first, only
 until it has used COSPONSORED_REQUEST_BUDGET requests or
 COSPONSORED_TIME_BUDGET (the list in progress is finished, so a run can go
@@ -139,14 +141,39 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     bills and resolutions (amendments, which have no bill type, are dropped), and the
     number of requests it took.
 
-    Pages are by offset, so a bill introduced mid-fetch shifts the list and can
-    repeat one item across a page boundary; repeats are dropped. An empty page ends the
-    list only if that page's count says the list ends there.
+    Pages are by offset, so a bill added or removed mid-fetch shifts the list: an item can
+    repeat across a page boundary (repeats are dropped) or be skipped. So if the count on
+    the last page differs from the first page's, the list is fetched once more, and that
+    second result is kept even if its count changed too (logged). An item that moves
+    without changing the count can't be seen this way. An empty page ends the list only
+    if that page's count says the list ends there.
 
     A response that isn't the expected shape raises ValueError. Any error carries the
-    number of requests made, the failed one included, as `requests`."""
+    number of requests made, the failed one and an earlier pass's included, as `requests`."""
+    requests = 0
+    try:
+        for attempt in (1, 2):
+            items, first_count, last_count, made = _fetch_member_list_pages(client, key, bioguide_id, kind)
+            requests += made
+            if first_count == last_count:
+                break
+            if attempt == 1:
+                log.info("congress.gov member %s: %s list count changed from %d to %d mid-fetch; "
+                         "fetching it again", bioguide_id, kind, first_count, last_count)
+            else:
+                log.warning("congress.gov member %s: %s list count changed from %d to %d again; "
+                            "keeping this fetch", bioguide_id, kind, first_count, last_count)
+    except Exception as e:
+        e.requests = requests + getattr(e, "requests", 0)
+        raise
+    return {"bioguideId": bioguide_id, "congress": CONGRESS, f"{kind}Legislation": items}, requests
+
+
+def _fetch_member_list_pages(client: Client, key: str, bioguide_id: str, kind: str) -> tuple[list, int, int, int]:
+    """One pass over a member list's pages: (this Congress's items, the first page's count,
+    the last page's count, requests made). Errors carry their pass's requests."""
     list_key = f"{kind}Legislation"
-    items, seen, offset, total, requests = [], set(), 0, None, 0
+    items, seen, offset, total, first_count, requests = [], set(), 0, None, None, 0
     try:
         while total is None or offset < total:
             url = MEMBER_LIST_URL.format(bioguide_id=bioguide_id, endpoint=f"{kind}-legislation",
@@ -155,6 +182,8 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
             resp = client.get(url, headers={"X-Api-Key": key})
             resp.raise_for_status()
             total, page = _member_list_page(resp.json(), list_key, bioguide_id, first=offset == 0)
+            if first_count is None:
+                first_count = total
             for item in page:
                 bill = (item.get("type"), item.get("number"))
                 if item.get("congress") == CONGRESS and item.get("type") and bill not in seen:
@@ -171,7 +200,7 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     except Exception as e:
         e.requests = requests
         raise
-    return {"bioguideId": bioguide_id, "congress": CONGRESS, list_key: items}, requests
+    return items, first_count, total, requests
 
 
 def _member_list_page(doc, list_key: str, bioguide_id: str, first: bool) -> tuple[int, list[dict]]:

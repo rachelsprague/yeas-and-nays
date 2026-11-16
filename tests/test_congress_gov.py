@@ -437,14 +437,98 @@ def test_a_request_that_raises_before_a_response_still_counts(monkeypatch):
     assert caught.value.requests == 1
 
 
+class _ChangingClient(_StubClient):
+    """A _StubClient whose list becomes `changes[n]` just before its nth request (from 1)."""
+
+    def __init__(self, items, page_size, changes):
+        super().__init__(items, page_size)
+        self.changes = changes
+
+    def get(self, url, headers=None):
+        self.items = self.changes.get(len(self.calls) + 1, self.items)
+        return super().get(url, headers)
+
+
+def _bill(number):
+    return {"congress": 119, "type": "S", "number": number}
+
+
 def test_an_empty_later_page_ends_a_list_that_shrank_between_requests(monkeypatch):
     from yan.ingest import congress_gov
 
     monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
-    client = _ShapeClient({"pagination": {"count": 1}, "cosponsoredLegislation": []})
+    # S 2 is removed before page two, which comes back empty with a count of 1; the
+    # count changed, so the list is fetched again and reads S 1 alone.
+    client = _ChangingClient([_bill("1"), _bill("2")], page_size=1, changes={2: [_bill("1")]})
     doc, requests = congress_gov.fetch_cosponsored(client, "k", "A000001")
     assert [i["number"] for i in doc["cosponsoredLegislation"]] == ["1"]
-    assert requests == 2
+    assert [offset for _, offset in client.calls] == [0, 1, 0]
+    assert requests == 3
+
+
+def test_a_list_whose_count_changes_mid_fetch_is_fetched_again(monkeypatch, caplog):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 2)
+    # S 9 is removed after page one, so S 5 moves up onto page one and is skipped by
+    # page two; the second pass reads the list as it now stands.
+    before = [_bill("1"), _bill("9"), _bill("5"), _bill("4")]
+    after = [_bill("1"), _bill("5"), _bill("4")]
+    client = _ChangingClient(before, page_size=2, changes={2: after})
+    with caplog.at_level("INFO", logger=congress_gov.log.name):
+        doc, requests = congress_gov.fetch_cosponsored(client, "k", "A000001")
+    assert [i["number"] for i in doc["cosponsoredLegislation"]] == ["1", "5", "4"]
+    assert [offset for _, offset in client.calls] == [0, 2, 0, 2]
+    assert requests == 4
+    assert "count changed from 4 to 3" in caplog.text
+
+
+def test_a_list_whose_count_changes_on_both_passes_keeps_the_second(monkeypatch, caplog):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    # A bill is added at the front during each pass: no third pass, and the second pass's
+    # result is kept (S 5, added during it, is missed until the next run).
+    client = _ChangingClient([_bill("1"), _bill("2")], page_size=1, changes={
+        2: [_bill("3"), _bill("1"), _bill("2")],
+        4: [_bill("4"), _bill("3"), _bill("1"), _bill("2")],
+        5: [_bill("5"), _bill("4"), _bill("3"), _bill("1"), _bill("2")],
+    })
+    with caplog.at_level("WARNING", logger=congress_gov.log.name):
+        doc, requests = congress_gov.fetch_cosponsored(client, "k", "A000001")
+    assert [offset for _, offset in client.calls] == [0, 1, 2, 0, 1, 2, 3, 4]
+    assert [i["number"] for i in doc["cosponsoredLegislation"]] == ["4", "3", "1", "2"]
+    assert requests == 8
+    assert "changed from 4 to 5 again" in caplog.text
+
+
+def test_a_list_with_a_steady_count_is_fetched_once(monkeypatch):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+    client = _StubClient([_bill("1"), _bill("2"), _bill("3")], page_size=1)
+    _, requests = congress_gov.fetch_cosponsored(client, "k", "A000001")
+    assert requests == 3 and len(client.calls) == 3
+
+
+def test_a_failure_on_the_second_pass_counts_both_passes(monkeypatch):
+    import httpx
+
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
+
+    class _FailsOnRefetch(_ChangingClient):
+        def get(self, url, headers=None):
+            if len(self.calls) == 2:  # the second pass's first request
+                self.calls.append(None)
+                return httpx.Response(503, request=httpx.Request("GET", url))
+            return super().get(url, headers)
+
+    client = _FailsOnRefetch([_bill("1"), _bill("2")], page_size=1, changes={2: [_bill("1")]})
+    with pytest.raises(httpx.HTTPStatusError) as caught:
+        congress_gov.fetch_cosponsored(client, "k", "A000001")
+    assert caught.value.requests == 3
 
 
 def test_an_empty_first_page_short_of_its_count_raises():
