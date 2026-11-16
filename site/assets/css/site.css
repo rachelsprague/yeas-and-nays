@@ -141,6 +141,14 @@ select.field { padding: 0 8px; }
 main.wrap { display: flex; flex-direction: column; gap: 36px; padding-top: 16px; padding-bottom: 48px; }
 main.home { gap: 20px; padding-top: 20px; }
 
+/* Home page floor band: live-floor.js marks a line .is-live from its convening
+   time; a chamber tab hides a line with [hidden]. The band shows only while a
+   line is both live and not hidden. */
+.live-band { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); }
+.live-band:not(:has(.live-line.is-live:not([hidden]))) { display: none; }
+.live-line { display: none; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; }
+.live-line.is-live:not([hidden]) { display: flex; }
+
 .back { font-size: 14px; line-height: 20px; padding: 12px 0; align-self: flex-start; margin-bottom: -24px; }
 .section { display: flex; flex-direction: column; gap: 12px; border-top: 1.5px solid var(--ink); padding-top: 12px; }
 .section-h { font-family: var(--font-display); font-size: 28px; line-height: 34px; font-weight: 600; }
