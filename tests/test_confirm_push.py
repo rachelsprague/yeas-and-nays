@@ -29,6 +29,18 @@ spec.loader.exec_module(confirm_push)
     "git \\\n  push",
     'git -C "path with space" push',
     "echo $(git push)",
+    # A commit message is skipped, but not the commands around it or other quoted words.
+    "git commit -m 'msg'; git push",
+    "sh -c 'git commit -m msg && git push'",
+    "git commit -m msg \"$(git push)\"",
+    # A double-quoted message runs `...` and $(...).
+    "git commit -m \"$(git push origin main)\"",
+    "git commit -m \"Fix `git push` hook\"",
+    "git commit -m x -m \"$(git push)\"",
+    "git commit -am \"then `git push`\"",
+    # ...also inside a string run by a shell, and with $ and ( split by a backslash-newline.
+    "sh -c 'git commit -m \"x `git push`\"'",
+    "git commit -m \"$\\\n(git push)\"",
 ])
 def test_finds_push(command):
     assert confirm_push.find_pushes(command)
@@ -41,6 +53,14 @@ def test_finds_push(command):
     "git commit -m \"don't push yet\"",
     "echo push",
     "git log --oneline origin/main..HEAD",
+    "git commit -m 'Run git push after the review'",
+    "git commit -am \"then git push\"",
+    "git commit --message='git push later'",
+    "git commit -m'git push later'",
+    "git -C . commit -m 'git push later'",
+    "git tag -a v1 -m 'git push --tags next'",
+    "git commit --message 'git push later'",
+    "git notes add -m 'git push later'",
 ])
 def test_ignores_non_push(command):
     assert not confirm_push.find_pushes(command)
@@ -122,6 +142,14 @@ def test_push_from_detached_head_is_denied(repo):
     "gh api -X PUT repos/o/r/pulls/12/merge",
     "gh api graphql -f query='mutation { mergePullRequest(input: {}) { clientMutationId } }'",
     "sh -c 'gh pr merge 12'",
+    # A flag before the action could hide it.
+    "gh pr -b x merge 12",
+    # A wrapper's gh argument, or a flag before pr.
+    "sudo -u gh gh pr merge 3",
+    "sudo -u gh -g pr gh pr merge 1",
+    "gh -X x pr merge 1",
+    # A double-quoted commit message runs $(...).
+    "git commit -m \"$(gh pr merge 3)\"",
 ])
 def test_gh_pr_merge_is_denied(repo, command):
     path, _ = repo
@@ -138,6 +166,11 @@ def test_gh_pr_merge_is_denied(repo, command):
     "gh api -X GET repos/o/r/pulls/2/comments -f per_page=100",
     "gh api -X GET repos/o/r/actions/runs -f status=failure",
     "git merge origin/main",
+    "gh pr list --search merge",
+    "gh pr list --state merged --search 'merge queue'",
+    "gh pr view merge-fix",
+    "git commit -m 'Explain why gh pr merge is denied'",
+    "git commit -am \"no gh pr merge here\"",
 ])
 def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo, command):
     path, _ = repo
@@ -148,6 +181,7 @@ def test_pr_commands_that_dont_merge_or_post_are_left_to_normal_permissions(repo
     "gh pr update-branch 12",
     "gh pr update-branch 12 --rebase",
     "gh -R owner/repo pr update-branch 12",
+    "git commit -m \"$(gh workflow run pipeline.yml)\"",
     "gh repo sync",
     "gh repo sync owner/repo --force",
     "gh workflow run pipeline.yml",
@@ -188,11 +222,26 @@ def test_gh_commands_that_only_read_workflows_and_repos_are_left_alone(repo, com
     "$'\\147\\150' pr merge 1",
     "$'\\u0067h' pr merge 1",
     "echo hi; $'\\x67it' push",
-    "$'\\U110000'",
+    "/usr/bin/$'\\x67h' pr merge 1",
+    "env -S$'git push'",
+    "env -S$'\\x67h pr merge 1'",
+    "echo $'x';gh pr merge 1",
 ])
 def test_merges_in_process_substitution_or_ansi_c_escapes_are_denied(repo, command):
     path, _ = repo
     assert confirm_push.decide(command, str(path))[0] == "deny"
+
+
+@pytest.mark.parametrize("command", [
+    "$'\\U110000'",
+    "echo $'\\xzz'",
+    "printf $'\\u'",
+    "echo $'\\U'",
+])
+def test_ansi_c_escapes_that_cant_be_decoded_are_denied_with_their_own_reason(repo, command):
+    path, _ = repo
+    decision, reason = confirm_push.decide(command, str(path))
+    assert decision == "deny" and "can't decode" in reason and "git and gh" not in reason
 
 
 @pytest.mark.parametrize("command", [
@@ -212,6 +261,11 @@ def test_git_aliases_defined_on_the_command_line_are_denied(repo, command):
 @pytest.mark.parametrize("command", [
     "printf $'a\\tb\\n'",
     "printf $'%s\\n' \"a\" 'b'",
+    # git or gh inside another word.
+    "printf $'through\\n'",
+    "printf $'high\\tlow\\n'",
+    "echo $'see github.com\\n'",
+    "printf $'.git/config\\n'",
     "cat <(echo hi)",
     "diff <(sort a) <(sort b)",
     "while read l; do echo $l; done < <(ls)",

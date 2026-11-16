@@ -215,21 +215,55 @@ def ansi_c_decoded(command: str) -> str:
     return ANSI_C_QUOTED.sub(lambda m: ANSI_C_ESCAPE.sub(char, m.group(1)), command)
 
 
-def _scan(command: str, in_segment, depth: int = 0) -> list:
+def _scan(command: str, in_segment, depth: int = 0, skip_messages: bool | None = None) -> list:
     found, segment = [], []
+    # A message in double quotes runs `...` and $(...), and tokens() can't tell the quotes apart,
+    # so messages are skipped only when the command has neither. Decided once, on the whole
+    # command as bash joins it (`$\<newline>(` is `$(`), since tokens() turns backticks into
+    # separators before the strings inside are scanned.
+    if skip_messages is None:
+        joined = command.replace("\\\n", "")
+        skip_messages = "`" not in joined and "$(" not in joined
     for tok in tokens(strip_redirects(command)) + [";"]:
         if tok not in SEPARATORS:
             segment.append(tok)
             continue
         found += in_segment(segment)
         if depth < 3:
-            for t in segment:
-                if any(c.isspace() for c in t):
+            messages = _git_messages(segment) if skip_messages else set()
+            for k, t in enumerate(segment):
+                if k not in messages and any(c.isspace() for c in t):
                     try:
-                        found += _scan(t, in_segment, depth + 1)
+                        found += _scan(t, in_segment, depth + 1, skip_messages)
                     except ValueError:
                         pass  # not valid shell on its own (e.g. a message with "can't"), so not run as a command
         segment = []
+    return found
+
+
+# git commands whose -m/--message text is only stored, never run.
+GIT_MESSAGE_COMMANDS = {"commit", "tag", "merge", "notes"}
+
+
+def _git_messages(seg: list[str]) -> set[int]:
+    """Indexes of the message words in a segment that is a `git commit/tag/merge/notes` command
+    (`-m <msg>`, `-am <msg>`, `--message <msg>`, `-m<msg>`, `--message=<msg>`), so a message
+    that mentions `git push` isn't read as a command. Only when git is the segment's first word,
+    so a quoted string handed to a shell or other runner is still checked."""
+    if not seg or os.path.basename(seg[0]) != "git":
+        return set()
+    j = 1
+    while j < len(seg) and seg[j].startswith("-"):
+        j += 2 if seg[j] in GLOBAL_OPTS_WITH_VALUE else 1
+    if j >= len(seg) or seg[j] not in GIT_MESSAGE_COMMANDS:
+        return set()
+    found = set()
+    for k in range(j + 1, len(seg)):
+        a = seg[k]
+        if (a == "--message" or re.fullmatch(r"-[A-Za-z]*m", a)) and k + 1 < len(seg):
+            found.add(k + 1)
+        elif a.startswith("--message=") or re.match(r"-[A-Za-z]*m.", a) and not a.startswith("--"):
+            found.add(k)
     return found
 
 
@@ -243,8 +277,13 @@ def _pr_merge_in_segment(seg: list[str]) -> list[bool]:
     if i is None:
         return []
     rest = seg[i + 1:]
-    if "pr" in rest and "merge" in rest[rest.index("pr") + 1:]:
-        return [True]
+    # The action, not a flag's value (`gh pr list --search merge`), read from each `pr` word so a
+    # wrapper's arguments (`sudo -u gh -g pr gh pr merge`) or a flag before `pr` can't hide it. A
+    # flag before the action (`gh pr -b x merge 3`) could, so then `merge` anywhere after counts.
+    for k in [k for k, tok in enumerate(rest) if tok == "pr"][:MAX_GH_CANDIDATES]:
+        from_pr = rest[k:]
+        if _gh_pair(from_pr) == ("pr", "merge") or ("merge" in from_pr and _flag_before_action(from_pr)):
+            return [True]
     if "api" in rest and any(re.search(r"/pulls/\d+/merge\b|mergePullRequest", a) for a in rest):
         return [True]
     if "alias" in rest and any("merge" in a for a in rest):
@@ -688,9 +727,13 @@ def decide(command: str, repo: str) -> tuple[str, str] | None:
         try:
             decoded = ansi_c_decoded(command)
         except ValueError:
-            decoded = "git"
+            return "deny", ("This command's $'...' quoting has an escape the push hook can't decode (\\x, \\u or \\U "
+                            "with no hex digit, or \\U above 10FFFF), so it can't check for a hidden push or merge; "
+                            "write the command without it.")
         decoded = re.sub(r"[\"'\\]", "", decoded)  # `$'\x67'"h"` is gh too
-        if "git" in decoded or "gh" in decoded:
+        # As words, so "through" and "github" don't count; `/usr/bin/gh`, `x;gh` and a value attached
+        # to a short flag (`env -S$'git push'`) do.
+        if re.search(r"(?:(?<![\w.-])|(?<=[\s;&|(]-[A-Za-z]))(git|gh)(?![\w.-])", decoded):
             return "deny", ("git and gh commands with $'...' quoting can hide a push or merge; write the command "
                             "without it.")
     command, scripts = split_heredocs(command)
