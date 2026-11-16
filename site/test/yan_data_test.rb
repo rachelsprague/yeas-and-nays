@@ -749,6 +749,21 @@ class VotePageTest < Minitest::Test
     end
   end
 
+  # The House's records don't give the share, so for both chambers it comes from required_share.
+  def test_the_tally_note_gives_the_yeas_needed_and_the_share
+    built = build_site([member("A000001", "AL", 1)],
+                       [[vote(1, "On Motion to Suspend the Rules and Pass").merge("required_share" => "2/3", "yeas_needed" => 1,
+                                                                             "yea_count" => 1, "nay_count" => 0),
+                         doc({ "A000001" => "Yea" }, { "yes" => 1 })],
+                        [vote(2, "On Passage").merge("required_share" => "3/5"), doc({ "A000001" => "Yea" }, { "yes" => 1 })],
+                        [vote(3, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
+    assert_includes built.fetch("/votes/119/house/1/1/index.html"), "1 members recorded. 1 needed to carry, two-thirds of those voting."
+    assert_includes built.fetch("/votes/119/house/1/2/index.html"), "1 members recorded. Needed to carry: three-fifths of senators."
+    three = built.fetch("/votes/119/house/1/3/index.html")
+    assert_includes three, "1 members recorded."
+    refute_includes three, "needed"
+  end
+
   def test_no_grids_for_a_speaker_election
     html = pages.fetch("/votes/119/house/1/2/index.html")
     refute_includes html, "grid-chart"
@@ -921,6 +936,16 @@ class SchedulePageTest < Minitest::Test
     cloture = ProcedureTest::PROCEDURES["questions"].find { |q| q["key"] == "cloture" }
     refute_empty cloture["timing"].to_s
     assert_includes page, "#{cloture["definition"]} #{cloture["timing"]} Source:"
+  end
+
+  # The footer's "Watch live" link lands on this section.
+  def test_the_live_section_links_each_chambers_official_feeds
+    live = page[%r{<section id="live".*?</section>}m]
+    %w[https://www.senate.gov/floor/ https://www.senate.gov/legislative/floor_activity_pail.htm
+       https://live.house.gov/ https://clerk.house.gov/FloorSummary].each do |url|
+      assert_includes live, %(href="#{url}"), url
+    end
+    assert_includes page, '<a href="/schedule/#live">Watch live</a>'
   end
 end
 
