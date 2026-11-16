@@ -10,9 +10,11 @@ permissions:
   contents: read
 
 # One run at a time: a run that's still posting must finish (and commit its
-# bot state) before the next one starts.
+# bot state) before the next one starts. Keyed by ref, so dispatches on a
+# branch (which skip every job) can't displace a pending run on main: a group
+# holds one pending run, and a newer one replaces it.
 concurrency:
-  group: update-vote-data
+  group: update-vote-data-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
