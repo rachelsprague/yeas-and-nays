@@ -33,6 +33,8 @@ Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item) and `backl
 
 Being gitignored, they exist only in the main checkout, and a session isolated in a worktree can't edit them. So board edits bracket worktree work: claim from the main checkout before entering the worktree, and update the board after leaving it.
 
+`/pick` (a global skill) works from this board. When it maps work in flight, ignore `data/out/`: the hourly pipeline regenerates it, so changes there never mean another session is in that area.
+
 ### Claiming items
 
 Several sessions may work in this repo at once. Claim an item before starting it so no other session picks it up:
