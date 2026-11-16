@@ -749,7 +749,7 @@ class VotePageTest < Minitest::Test
     end
   end
 
-  # The House records no share, so both chambers' come from required_share.
+  # The House's records don't give the share, so for both chambers it comes from required_share.
   def test_the_tally_note_gives_the_yeas_needed_and_the_share
     built = build_site([member("A000001", "AL", 1)],
                        [[vote(1, "On Motion to Suspend the Rules and Pass").merge("required_share" => "2/3", "yeas_needed" => 1,
