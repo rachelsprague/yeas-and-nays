@@ -22,6 +22,19 @@ class ProcedureTest < Minitest::Test
     assert_equal "passage", key("On Agreeing to the Resolution", measure_title: "Expressing support for X")
   end
 
+  # The question reads only "On Agreeing to the Resolution", so the title tells
+  # an expulsion apart; a motion to table one is still a motion to table.
+  def test_expulsion_needs_an_expulsion_title
+    assert_equal "expel", key("On Agreeing to the Resolution",
+                              measure_title: "Providing for the expulsion of Representative X from the House")
+    assert_equal "expel", key("On the Resolution", measure_title: "Expelling Senator X")
+    assert_equal "table", key("On Motion to Table", measure_title: "Expelling Representative X")
+    more = Yan.procedure({ "question" => "On Agreeing to the Resolution", "measure_title" => "Expelling X" },
+                         PROCEDURES)["more"]
+    assert_equal({ "url" => "/how/expulsion/", "label" => "How expulsion works" }, more)
+    assert_nil Yan.procedure({ "question" => "On Passage" }, PROCEDURES)["more"]
+  end
+
   def test_specific_patterns_win_over_general_ones
     assert_equal "concur_amendment", key("On Motion to Concur in the Senate Amendment with an Amendment")
     assert_equal "concur", key("On Motion to Concur in the Senate Amendment")
@@ -758,6 +771,20 @@ class VotePageTest < Minitest::Test
     # A000005's state code isn't on the map.
     assert_includes html, "Not on the map: 1 member with no seat drawn on it, such as a delegate from the District of Columbia " \
                           "or a territory. See the table by state."
+  end
+
+  # A definition with an explainer page links it from the vote page and About;
+  # one without links only How votes work.
+  def test_an_expulsion_vote_links_the_explainer
+    expel = vote(1, "On Agreeing to the Resolution").merge("measure_title" => "Expelling Member A000001")
+    built = build_site([member("A000001", "AL", 1)],
+                       [[expel, doc({ "A000001" => "Yea" }, { "yes" => 1 })],
+                        [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
+    link = '<a class="link small" href="/how/expulsion/">How expulsion works</a>'
+    assert_includes built.fetch("/votes/119/house/1/1/index.html"), link
+    refute_includes built.fetch("/votes/119/house/1/2/index.html"), "/how/expulsion/"
+    assert_includes built.fetch("/about/index.html"), '<a href="/how/expulsion/">How expulsion works</a>.'
+    assert_includes built.fetch("/how/expulsion/index.html"), "<h1 class=\"vote-h\">How expulsion works</h1>"
   end
 
   # A member whose latest seat is in the Senate has no district for a House vote.

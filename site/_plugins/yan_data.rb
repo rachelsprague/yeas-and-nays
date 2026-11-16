@@ -78,7 +78,7 @@ module Yan
     return nil unless q
 
     note = (procedures["measures"] || []).find { |m| m["types"].include?(v["bill_type"]) }
-    { "key" => q["key"], "term" => q["term"], "definition" => q["definition"],
+    { "key" => q["key"], "term" => q["term"], "definition" => q["definition"], "more" => q["more"],
       "measure_note" => (%w[passage suspend].include?(q["key"]) && note) ? note["definition"] : nil }
   end
 
@@ -370,7 +370,7 @@ module Yan
   # question with no definition, counts as procedural and other.
   VOTE_KINDS = [
     { "key" => "passage", "label" => "Passage",
-      "procedures" => %w[passage suspend concur concur_amendment veto_override] },
+      "procedures" => %w[passage suspend concur concur_amendment veto_override expel] },
     { "key" => "amendment", "label" => "Amendments", "procedures" => %w[amendment] },
     { "key" => "nomination", "label" => "Nominations", "procedures" => %w[nomination] },
     { "key" => "procedural", "label" => "Procedural and other", "procedures" => [] }

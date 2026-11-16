@@ -3,6 +3,9 @@
 {%- if p %}
 <div class="procedure">
   <p><span class="kicker soft">About this vote</span> {{ p.definition }}{% if p.measure_note %} {{ p.measure_note }}{% endif %}</p>
+  {%- if p.more %}
+  <a class="link small" href="{{ p.more.url | escape }}">{{ p.more.label | escape }}</a>
+  {%- endif %}
   <a class="link small" href="/about/#procedural-votes">How votes work</a>
 </div>
 {%- endif %}

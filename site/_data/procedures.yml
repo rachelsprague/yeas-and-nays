@@ -9,7 +9,8 @@
 # questions: matched against the official question in order; the first match
 # wins, so specific patterns come before general ones. `title` additionally
 # requires the measure title to match (a "rule" is an H.Res. providing for
-# consideration of another measure). Matching ignores case.
+# consideration of another measure). Matching ignores case. `more` links a
+# longer explainer page from the vote page and About.
 
 questions:
   - key: rule
@@ -21,6 +22,20 @@ questions:
       other measures, such as how long debate lasts and which amendments may be
       offered. Adopting a rule does not pass the measures it names; each still
       needs its own vote.
+
+  - key: expel
+    term: Expulsion
+    match: '^On (Agreeing to )?the Resolution'
+    title: '^(Expelling|Providing for the expulsion)'
+    definition: >-
+      A vote on a resolution to expel a member of this chamber. The
+      Constitution lets each chamber expel one of its own members with the
+      concurrence of two-thirds of those present and voting. Censure, by
+      contrast, is adopted by majority vote and does not remove a member from
+      office.
+    more:
+      url: /how/expulsion/
+      label: How expulsion works
 
   - key: previous_question
     term: Ordering the previous question (House)
