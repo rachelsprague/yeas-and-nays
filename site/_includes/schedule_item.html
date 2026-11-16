@@ -9,9 +9,11 @@
 {%- capture body -%}
     {%- if s.chamber == "senate" %}
     <span class="kicker muted nums">Cloture filed {{ s.filed_date | ap_date }}</span>
-    <span class="small soft">{{ s.question | escape }} · {{ s.measure_label | escape }}</span>
+    <span class="small soft">{{ s.question | escape }}{% if s.measure_label %} · {{ s.measure_label | escape }}{% endif %}</span>
     {%- else %}
+      {%- if s.measure_label %}
     <span class="kicker muted nums">{{ s.measure_label | escape }}</span>
+      {%- endif %}
       {%- if include.show_category and s.category_label %}
     <span class="small soft">{{ s.category_label | escape }}</span>
       {%- endif %}

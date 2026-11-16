@@ -238,7 +238,7 @@ def floor_schedule_document(items: list[dict], senate_sessions: list[dict]) -> d
     """
     for item in items:
         label = bill_label(item["bill_type"], item["bill_number"]) if item["bill_type"] else item["measure_number"]
-        item["measure_label"] = f"{label or 'Amendment'} to {item['amends']}" if item["amends"] else label
+        item["measure_label"] = f"{label or 'Amendment'} to {item['amends']}" if item["amends"] else label or None
     latest = senate_sessions[-1] if senate_sessions else {}
     return {
         "items": items,

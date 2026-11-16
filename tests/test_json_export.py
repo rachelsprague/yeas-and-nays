@@ -210,9 +210,10 @@ def test_floor_schedule_item_with_no_measure_number():
     items = [
         {"measure_number": None, "bill_type": None, "bill_number": None, "amends": None},
         {"measure_number": None, "bill_type": None, "bill_number": None, "amends": "H.R. 2347"},
+        {"measure_number": "", "bill_type": None, "bill_number": None, "amends": None},
         {"measure_number": "", "bill_type": None, "bill_number": None, "amends": "H.R. 2347"},
     ]
     doc = floor_schedule_document(items, [])
     assert [i["measure_label"] for i in doc["items"]] == [
-        None, "Amendment to H.R. 2347", "Amendment to H.R. 2347",
+        None, "Amendment to H.R. 2347", None, "Amendment to H.R. 2347",
     ]

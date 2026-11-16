@@ -658,8 +658,10 @@ class SchedulePageTest < Minitest::Test
                                  url: "https://www.congress.gov/bill/119th-congress/house-bill/3978"),
                            house("b", "H.R. 5549", "Voted Act", bill_type: "hr", vote_id: "h119-2-0316"),
                            house("c", "H. Res. ___", "Unnumbered resolution"),
+                           house("f", nil, "House item with no label"),
                            senate("d", "PN1272-3", "A nomination"),
-                           senate("e", "Amendment to H.R. 2347", "An amendment", amends: "H.R. 2347")
+                           senate("e", "Amendment to H.R. 2347", "An amendment", amends: "H.R. 2347"),
+                           senate("g", nil, "Senate item with no label")
                          ], "senate_next_convene_et" => "2026-11-16T15:00:00" })["/schedule/index.html"]
   end
 
@@ -677,10 +679,19 @@ class SchedulePageTest < Minitest::Test
   end
 
   def test_an_item_with_no_bill_type_or_link_is_unlinked
-    item = week("2026-11-09")[/<li class="vote-item"[^>]*>(?:(?!<\/li>).)*Unnumbered resolution.*?<\/li>/m]
+    item = li(week("2026-11-09"), "Unnumbered resolution")
     assert_includes item, %(<div class="unlinked">)
     assert_includes item, "H. Res. ___"
     refute_includes item, "<a "
+  end
+
+  def li(html, title) = html[/<li class="vote-item"[^>]*>(?:(?!<\/li>).)*#{title}.*?<\/li>/m]
+
+  def test_an_item_with_no_label_shows_no_empty_kicker_or_separator
+    house = li(week("2026-11-09"), "House item with no label")
+    refute_includes house, "kicker"
+    senate = li(week("2026-11-16"), "Senate item with no label")
+    assert_includes senate, %(<span class="small soft">On the Cloture Motion</span>)
   end
 
   def test_cloture_motions_sit_in_the_week_the_senate_next_convenes
