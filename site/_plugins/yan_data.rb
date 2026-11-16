@@ -9,6 +9,7 @@
 #   site.data["vote_volume"]  roll calls per week by chamber and kind of vote (Yan.vote_volume)
 #   site.data["policy_volume"]  roll calls by policy area, chamber and kind of vote (Yan.policy_volume)
 #   site.data["district_map"]  site/_maps/{congress}.json with each district's member (Yan.district_map)
+#   site.data["home"]      the home page's modules: week, closest, against, areas
 #
 # Routes: /votes/{congress}/{chamber}/{session}/{roll}/ (roll numbers restart
 # each session) and /members/{bioguide_id}/.
@@ -538,6 +539,90 @@ module Yan
     }
   end
 
+  # ---- Home page modules ----
+  # Each list holds its first rows from each chamber, so the chamber tabs
+  # still fill it; the page shows HOME_ROWS[key] at a time (data-limit).
+
+  HOME_ROWS = { "closest" => 3, "against" => 5 }.freeze
+  HOME_DAYS = 30 # closest votes: the days ending on the newest vote's date
+  HOME_WEEKS = 26 # this week's chart: weeks shown, ending with the newest
+  HOME_AREAS = 6
+  SHARE_WORDS = { "1/2" => "a majority of those voting", "2/3" => "two-thirds of those voting",
+                  "3/5" => "three-fifths of senators" }.freeze
+
+  # The first n rows of each chamber, in the order given.
+  def self.per_chamber(rows, n)
+    seen = Hash.new(0)
+    rows.select { |r| (seen[r["vote"]["chamber"]] += 1) <= n }
+  end
+
+  # Votes whose Yeas came nearest the Yeas needed to carry them (yeas_needed),
+  # nearest first, then newest, with the words each vote recorded (Yea or
+  # Aye). Nil until the export carries yeas_needed.
+  def self.closest_votes(votes, views = {}, n = HOME_ROWS["closest"])
+    return nil unless votes.any? { |v| v.key?("yeas_needed") }
+
+    through = votes.map { |v| Date.parse(v["vote_date"]) }.max
+    since = through - (HOME_DAYS - 1)
+    rows = votes.each_with_index.filter_map do |v, i|
+      next unless v["yeas_needed"] && Date.parse(v["vote_date"]) >= since
+
+      cast = v["yea_count"] + v["nay_count"]
+      { "vote" => v, "gap" => (v["yea_count"] - v["yeas_needed"]).abs, "order" => i,
+        "needed" => v["yeas_needed"], "share" => SHARE_WORDS[v["required_share"]],
+        "words" => views.dig(v["vote_id"], "words") || { "yes" => "Yea", "no" => "Nay" },
+        "yea_pct" => (100.0 * v["yea_count"] / cast).round(1),
+        "tick_pct" => [100.0 * v["yeas_needed"] / cast, 100].min.round(1) }
+    end
+    rows.sort_by! { |r| [r["gap"], r["order"]] }
+    { "since" => since.iso8601, "through" => through.iso8601,
+      "rows" => per_chamber(rows, n).map { |r| r.except("gap", "order") } }
+  end
+
+  # Votes the bot posts on which any member voted against their party's
+  # majority, newest first, with the members' names when there are 1 to 5
+  # (the bot's party-break line). Nil until the export carries bot_posts.
+  def self.against_votes(votes, views, n = HOME_ROWS["against"])
+    return nil unless votes.any? { |v| v.key?("bot_posts") }
+
+    rows = votes.filter_map do |v|
+      next unless v["bot_posts"] && v["against_party_majority_count"].to_i.positive?
+
+      against = views.dig(v["vote_id"], "against") || []
+      { "vote" => v, "count" => v["against_party_majority_count"],
+        "names" => against.size.between?(1, 5) ? against : [] }
+    end
+    per_chamber(rows, n)
+  end
+
+  # The newest week's roll calls by chamber, with bars for the HOME_WEEKS
+  # weeks ending with it (heights in percent of the tallest), from vote_volume.
+  def self.home_week(vol, weeks = HOME_WEEKS)
+    return nil unless vol
+
+    shown = vol["chambers"].map { |c| [c, c["weeks"].last(weeks)] }
+    top = [shown.flat_map { |_, w| w.map { |x| x["total"] } }.max.to_i, 1].max
+    first = shown.first[1].first["start"]
+    {
+      "start" => vol["last_week"], "first" => first,
+      "chambers" => shown.map do |c, w|
+        { "chamber" => c["chamber"], "name" => c["name"], "total" => w.last["total"],
+          "label" => "#{c["name"]} roll calls per week, week of #{Filters.ap_date(first)} " \
+                     "to week of #{Filters.ap_date(vol["last_week"])}: #{w.map { |x| x["total"] }.join(", ")}",
+          "bars" => w.map { |x| { "pct" => (100.0 * x["total"] / top).round(1), "summary" => x["summary"] } } }
+      end
+    }
+  end
+
+  # The policy areas with the most roll calls this Congress, from policy_volume.
+  def self.home_areas(pv, n = HOME_AREAS)
+    return nil unless pv
+
+    rows = pv["table"].first([n, pv["area_count"]].min)
+    top = rows.first["total"]
+    rows.map { |r| r.merge("pct" => (100.0 * r["total"] / top).round(1)) }
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
   def self.vote_view(vote, doc, members_by_id)
     words = words(doc["positions"])
@@ -733,6 +818,12 @@ module Yan
         "all" => views[votes.first["vote_id"]],
         "house" => (v = votes.find { |x| x["chamber"] == "house" }) && views[v["vote_id"]],
         "senate" => (v = votes.find { |x| x["chamber"] == "senate" }) && views[v["vote_id"]]
+      }
+      site.data["home"] = {
+        "week" => Yan.home_week(site.data["vote_volume"]),
+        "closest" => Yan.closest_votes(votes, views),
+        "against" => Yan.against_votes(votes, views),
+        "areas" => Yan.home_areas(site.data["policy_volume"])
       }
     end
   end

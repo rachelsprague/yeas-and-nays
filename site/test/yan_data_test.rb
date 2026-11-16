@@ -129,7 +129,11 @@ class EscapingTest < Minitest::Test
     "vote_date" => "2025-01-03", "question" => "On Passage", "result" => "Passed", "bill_type" => "hr",
     "measure_title" => %q(A bill to name the "KK" <kk> O'Kay & Co Post Office), "sponsor_bioguide_id" => "Z000001",
     # Shows the summary section and its "Introduced by" sponsor line.
-    "congress_gov_url" => "https://www.congress.gov/bill/119th-congress/house-bill/1"
+    "congress_gov_url" => "https://www.congress.gov/bill/119th-congress/house-bill/1",
+    # Puts the title and the member's name in the home page's closest and
+    # against-majority modules too.
+    "yea_count" => 0, "nay_count" => 1, "yeas_needed" => 1, "required_share" => "1/2",
+    "bot_posts" => true, "against_party_majority_count" => 1
   }.freeze
 
   DOC = {
@@ -154,6 +158,8 @@ class EscapingTest < Minitest::Test
     assert_includes pages.keys, "/members/index.html"
     assert_includes pages.keys, "/votes/119/house/1/1/index.html"
     assert_includes pages.keys, "/index.html"
+    assert_includes pages["/index.html"], 'id="close-h"'
+    assert_includes pages["/index.html"], 'id="against-h"'
     assert_includes pages["/votes/119/house/1/1/index.html"], '<g class="dot nay" fill="url(#hatch-R)">'
 
     # The district map's card data is JSON in a script tag, where quotes are
@@ -1209,5 +1215,85 @@ class ActivityListTest < Minitest::Test
     html = pages["/activity/index.html"]
     assert_includes html, 'data-week="2024-12-30"'
     assert_includes html, 'data-kinds="passage:1"'
+  end
+end
+
+# The home page's modules: closest votes, votes with members against their
+# party's majority, this week's roll calls and the top policy areas.
+class HomeModulesTest < Minitest::Test
+  def vote(id, chamber, date, yea, nay, needed, share: "1/2", posts: true, against: 0)
+    { "vote_id" => id, "chamber" => chamber, "vote_date" => date, "yea_count" => yea, "nay_count" => nay,
+      "yeas_needed" => needed, "required_share" => share, "bot_posts" => posts,
+      "against_party_majority_count" => against }
+  end
+
+  def test_closest_votes_sort_by_how_far_the_yeas_fell_from_the_yeas_needed
+    rows = Yan.closest_votes([
+      vote("h3", "house", "2026-11-12", 215, 209, 213),               # 2 over
+      vote("s2", "senate", "2026-11-12", 58, 40, 60, share: "3/5"),   # 2 short
+      vote("h2", "house", "2026-11-11", 300, 140, 294, share: "2/3"), # 6 over
+      vote("h1", "house", "2026-11-10", 211, 210, 211),               # exactly enough
+      vote("s1", "senate", "2026-10-13", 50, 49, 50),                 # outside the 30 days
+      vote("q1", "house", "2026-11-12", 0, 0, nil)                    # a quorum call
+    ], { "h1" => { "words" => { "yes" => "Aye", "no" => "No" } } }, 2)
+    assert_equal "2026-10-14", rows["since"]
+    assert_equal "2026-11-12", rows["through"]
+    # Two per chamber, nearest first; ties go to the newest.
+    assert_equal %w[h1 h3 s2], rows["rows"].map { |r| r["vote"]["vote_id"] }
+    # Each vote's own words; Yea and Nay when its page has none.
+    assert_equal %w[Aye Yea], rows["rows"].first(2).map { |r| r["words"]["yes"] }
+    s2 = rows["rows"].last
+    assert_equal "three-fifths of senators", s2["share"]
+    assert_equal 59.2, s2["yea_pct"]
+    assert_equal 61.2, s2["tick_pct"]
+    refute s2.key?("gap")
+  end
+
+  def test_tick_stays_on_the_bar_when_more_yeas_are_needed_than_were_cast
+    row = Yan.closest_votes([vote("s1", "senate", "2026-11-12", 40, 10, 60, share: "3/5")])["rows"].first
+    assert_equal 100, row["tick_pct"]
+  end
+
+  def test_against_lists_posted_votes_with_names_up_to_five
+    views = { "h2" => { "against" => [{ "name" => "A" }] }, "h1" => { "against" => Array.new(6) { { "name" => "B" } } } }
+    rows = Yan.against_votes([
+      vote("h3", "house", "2026-11-12", 1, 0, 1, posts: false, against: 4), # a rule: not posted
+      vote("h2", "house", "2026-11-11", 1, 0, 1, against: 1),
+      vote("h1", "house", "2026-11-10", 1, 0, 1, against: 6),
+      vote("h0", "house", "2026-11-09", 1, 0, 1, against: 0)
+    ], views)
+    assert_equal %w[h2 h1], rows.map { |r| r["vote"]["vote_id"] }
+    assert_equal [{ "name" => "A" }], rows[0]["names"]
+    assert_empty rows[1]["names"]
+    assert_equal 6, rows[1]["count"]
+  end
+
+  def test_modules_are_nil_until_the_export_carries_their_fields
+    old = { "vote_id" => "h1", "chamber" => "house", "vote_date" => "2026-11-12" }
+    assert_nil Yan.closest_votes([old])
+    assert_nil Yan.against_votes([old], {})
+    assert_nil Yan.home_week(nil)
+    assert_nil Yan.home_areas(nil)
+  end
+
+  def test_week_shows_the_newest_week_and_bars_on_one_scale
+    dates = { "house" => %w[2026-11-10 2026-11-11], "senate" => %w[2026-11-12 2026-10-27 2026-10-28 2026-10-29] }
+    vol = Yan.vote_volume(dates.flat_map { |c, ds| ds.map { |d| { "chamber" => c, "vote_date" => d } } })
+    week = Yan.home_week(vol, 2)
+    assert_equal "2026-11-09", week["start"]
+    assert_equal "2026-11-02", week["first"]
+    house, senate = week["chambers"]
+    assert_equal [2, 1], [house["total"], senate["total"]]
+    assert_equal [0.0, 100.0], house["bars"].map { |b| b["pct"] }
+    assert_equal [0.0, 50.0], senate["bars"].map { |b| b["pct"] }
+    assert_equal "Senate roll calls per week, week of Nov. 2, 2026 to week of Nov. 9, 2026: 0, 1", senate["label"]
+  end
+
+  def test_areas_take_the_top_areas_and_leave_out_rows_with_no_area
+    pv = { "area_count" => 2, "table" => [
+      { "area" => "Energy", "total" => 4 }, { "area" => "Taxation", "total" => 1 },
+      { "area" => "Nominations", "total" => 9 }
+    ] }
+    assert_equal [["Energy", 100.0], ["Taxation", 25.0]], Yan.home_areas(pv, 6).map { |r| [r["area"], r["pct"]] }
   end
 end
