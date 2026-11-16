@@ -203,12 +203,13 @@ class EscapingTest < Minitest::Test
   # A summary with no usable text reads as none, without the CRS credit line.
   def test_a_summary_without_text_reads_as_no_summary
     base = { "version" => "Introduced", "version_date" => "2025-01-03" }
-    votes = [base.merge("html" => 1), "<p>a</p>", base.merge("html" => ""), base.merge("html" => " <p> </p><br>\n")]
+    votes = [base.merge("html" => 1), "<p>a</p>", base.merge("html" => ""), base.merge("html" => " <p> </p><br>\n"),
+             base.merge("html" => "<p>\0</p>")]
             .each_with_index.map do |summary, i|
       [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
     end
     built = build_site([MEMBER], votes)
-    (1..4).each do |roll|
+    (1..5).each do |roll|
       page = built.fetch("/votes/119/house/1/#{roll}/index.html")
       assert_includes page, "No Congressional Research Service summary of", roll
       refute_includes page, "By the Congressional Research Service", roll

@@ -668,7 +668,7 @@ module Yan
   # that isn't an ISO date is left out rather than stopping the build.
   def self.summary_view(s)
     return nil unless s.is_a?(Hash) && (html = summary_html(s["html"]))
-    return nil if html.gsub(%r{</?\w+>}, "").strip.empty?
+    return nil if html.match?(%r{\A(?:[\s\0]|</?\w+>)*\z})
 
     date = begin
       Date.iso8601(s["version_date"]) if s["version_date"].is_a?(String)
