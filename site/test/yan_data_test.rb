@@ -929,6 +929,25 @@ class PolicyVolumeTest < Minitest::Test
     assert_equal %w[passage amendment procedural], pv["kinds"].map { |k| k["key"] }
   end
 
+  def test_activity_page_bars_match_the_area_table_with_zero_for_a_chamber_with_none
+    areas = { "house" => [*%w[Health Health Health Taxation Taxation], nil], "senate" => %w[Taxation Taxation Energy] }
+    votes = areas.flat_map do |chamber, list|
+      list.each_with_index.map do |area, i|
+        [EscapingTest::VOTE.merge("vote_id" => "#{chamber[0]}119-1-#{i + 1}", "chamber" => chamber, "roll_number" => i + 1,
+                                  "policy_area" => area), EscapingTest::DOC]
+      end
+    end
+    html = build_site([EscapingTest::MEMBER], votes)["/activity/index.html"]
+    section = html[html.index("By policy area")..]
+    bars = section.scan(/data-chamber="(\w+)" data-area="([^"]*)"[^>]*data-total="(\d+)"/)
+    rows = section.scan(%r{<tr><th scope="row">([^<]*)</th><td class="r">(\d+)</td><td class="r">(\d+)</td><td class="r">(\d+)</td></tr>})
+    # Taxation 4, Health 3, Energy 1: each area's House and Senate bars carry the counts in its table row, in the same order.
+    # The vote with no area gets a table row last but no bar.
+    assert_equal [["Taxation", "2", "2", "4"], ["Health", "3", "0", "3"], ["Energy", "0", "1", "1"],
+                  ["Not yet assigned", "1", "0", "1"]], rows
+    assert_equal rows[0, 3].flat_map { |a, h, s, _| [["house", a, h], ["senate", a, s]] }, bars
+  end
+
   def test_activity_page_escapes_area_names
     v = EscapingTest::VOTE.merge("policy_area" => %q(Arts & "Culture" <x>))
     html = build_site([EscapingTest::MEMBER], [[v, EscapingTest::DOC]])["/activity/index.html"]
