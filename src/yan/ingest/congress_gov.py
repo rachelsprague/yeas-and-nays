@@ -23,9 +23,9 @@ COSPONSORED_TIME_BUDGET (the list in progress is finished, so a run can go
 over by one list), and fetches none when the process has already run
 SKIP_COSPONSORED_AFTER (the weekly sponsored refresh). A list that fails is
 logged and skipped, and retried next run. A rate limit (HTTP 429) or
-MAX_FAILURES_IN_A_ROW failures stop the run's cosponsored lists early, and if
-that many fail with none fetched, the run fails, so a change in the API can't
-go unnoticed.
+MAX_FAILURES_IN_A_ROW failures in a row stop the run's cosponsored lists early.
+If the lists stop after MAX_FAILURES_IN_A_ROW failures with none fetched (not
+on a rate limit), the run fails, so a change in the API can't go unnoticed.
 
 The API key is read from CONGRESS_API_KEY and sent only in the X-Api-Key
 header, never in a URL. Without a key this step is skipped.
@@ -142,17 +142,17 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     repeat one item across a page boundary; repeats are dropped.
 
     A response that isn't the expected shape raises ValueError. Any error carries the
-    number of requests made before it, as `requests`."""
+    number of requests made, the failed one included, as `requests`."""
     list_key = f"{kind}Legislation"
     items, seen, offset, total, requests = [], set(), 0, None, 0
     try:
         while total is None or offset < total:
             url = MEMBER_LIST_URL.format(bioguide_id=bioguide_id, endpoint=f"{kind}-legislation",
                                          limit=PAGE_SIZE, offset=offset)
-            resp = client.get(url, headers={"X-Api-Key": key})
             requests += 1
+            resp = client.get(url, headers={"X-Api-Key": key})
             resp.raise_for_status()
-            total, page = _member_list_page(resp.json(), list_key, bioguide_id)
+            total, page = _member_list_page(resp.json(), list_key, bioguide_id, first=offset == 0)
             for item in page:
                 bill = (item.get("type"), item.get("number"))
                 if item.get("congress") == CONGRESS and item.get("type") and bill not in seen:
@@ -167,16 +167,17 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     return {"bioguideId": bioguide_id, "congress": CONGRESS, list_key: items}, requests
 
 
-def _member_list_page(doc, list_key: str, bioguide_id: str) -> tuple[int, list[dict]]:
+def _member_list_page(doc, list_key: str, bioguide_id: str, first: bool) -> tuple[int, list[dict]]:
     """A member-list response's total item count and its page of items, or ValueError if
-    it isn't shaped like one. An empty page with no pagination counts as 0 items."""
+    it isn't shaped like one. An empty first page with no pagination is an empty list;
+    on a later page, missing pagination could hide a list cut short, so it raises."""
     where = f"congress.gov member {bioguide_id}"
     if not isinstance(doc, dict) or list_key not in doc:
         raise ValueError(f"{where}: response has no {list_key}")
     pagination, page = doc.get("pagination"), doc[list_key]
     if not isinstance(page, list) or not all(isinstance(item, dict) for item in page):
         raise ValueError(f"{where}: {list_key} isn't a list of objects")
-    if pagination is None and not page:
+    if first and pagination is None and not page:
         return 0, page
     count = pagination.get("count") if isinstance(pagination, dict) else None
     if not isinstance(count, int) or isinstance(count, bool):
@@ -240,6 +241,7 @@ def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.d
         return
     deadline = time.monotonic() + COSPONSORED_TIME_BUDGET.total_seconds()
     used = fetched = failed = in_a_row = 0
+    rate_limited = False
     for bioguide_id in stale:
         if used >= COSPONSORED_REQUEST_BUDGET or time.monotonic() >= deadline:
             break
@@ -253,9 +255,10 @@ def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.d
             used += getattr(e, "requests", 1)
             failed += 1
             in_a_row += 1
-            if status == 429 or in_a_row >= MAX_FAILURES_IN_A_ROW:
+            rate_limited = status == 429
+            if rate_limited or in_a_row >= MAX_FAILURES_IN_A_ROW:
                 log.warning("congress.gov: %s; stopping cosponsored lists for this run",
-                            "rate limited" if status == 429 else f"{in_a_row} lists failed in a row")
+                            "rate limited" if rate_limited else f"{in_a_row} lists failed in a row")
                 break
             continue
         doc, requests = result
@@ -265,7 +268,9 @@ def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.d
         in_a_row = 0
     log.info("congress.gov: %d of %d stale cosponsored-legislation lists fetched, %d failed (%d requests)",
              fetched, len(stale), failed, used)
-    # A failure or two can be a passing outage, and failing the run would hold back the
-    # vote posts too; MAX_FAILURES_IN_A_ROW with nothing fetched looks like the API changed.
-    if failed >= MAX_FAILURES_IN_A_ROW and not fetched:
-        raise RuntimeError(f"congress.gov: every cosponsored-legislation list tried failed ({failed})")
+    # A failure or two, or a rate limit, can be a passing outage, and failing the run would
+    # hold back the vote posts too; MAX_FAILURES_IN_A_ROW with nothing fetched looks like
+    # the API changed.
+    if failed >= MAX_FAILURES_IN_A_ROW and not fetched and not rate_limited:
+        raise RuntimeError(f"congress.gov: {failed} cosponsored-legislation lists failed and none "
+                           "were fetched")

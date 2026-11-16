@@ -233,7 +233,7 @@ def test_the_run_fails_when_every_list_tried_fails(monkeypatch, tmp_path):
     fetched = []
     errors = {m: ValueError("renamed key") for m in ["A1", "B2", "C3"]}
     congress_gov, clock = _cosponsored_setup(monkeypatch, tmp_path, _failing_fetch(errors, fetched))
-    with pytest.raises(RuntimeError, match="every cosponsored-legislation list"):
+    with pytest.raises(RuntimeError, match="3 cosponsored-legislation lists failed and none were fetched"):
         congress_gov.ingest_cosponsored(None, "k", ["A1", "B2", "C3", "D4"], TODAY, started=clock["now"])
     assert fetched == ["A1", "B2", "C3"]
 
@@ -253,6 +253,14 @@ def test_a_rate_limit_on_the_first_list_stops_without_failing_the_run(monkeypatc
         monkeypatch, tmp_path, _failing_fetch({"A1": _http_error(429)}, fetched))
     congress_gov.ingest_cosponsored(None, "k", ["A1", "B2"], TODAY, started=clock["now"])
     assert fetched == ["A1"]
+
+
+def test_a_rate_limit_after_two_failures_doesnt_fail_the_run(monkeypatch, tmp_path):
+    fetched = []
+    errors = {"A1": _http_error(503), "B2": _http_error(503), "C3": _http_error(429)}
+    congress_gov, clock = _cosponsored_setup(monkeypatch, tmp_path, _failing_fetch(errors, fetched))
+    congress_gov.ingest_cosponsored(None, "k", ["A1", "B2", "C3", "D4"], TODAY, started=clock["now"])
+    assert fetched == ["A1", "B2", "C3"]
 
 
 def test_a_rate_limited_page_from_the_api_stops_the_lists(monkeypatch, tmp_path):
@@ -373,6 +381,7 @@ class _ShapeClient:
     {"pagination": {"count": "2"}, "cosponsoredLegislation": []},
     {"pagination": {"count": True}, "cosponsoredLegislation": []},
     {"cosponsoredLegislation": [{"congress": 119, "type": "S", "number": "2"}]},
+    {"cosponsoredLegislation": []},  # an empty later page could hide a list cut short
     {"pagination": {"count": 2}},
     {"pagination": {"count": 2}, "cosponsoredLegislation": None},
     {"pagination": {"count": 2}, "cosponsoredLegislation": ["S 2"]},
@@ -384,6 +393,20 @@ def test_a_malformed_member_list_response_raises_value_error_with_its_requests(m
     with pytest.raises(ValueError) as caught:
         congress_gov.fetch_cosponsored(_ShapeClient(second), "k", "A000001")
     assert caught.value.requests == 2
+
+
+def test_a_request_that_raises_before_a_response_still_counts(monkeypatch):
+    import httpx
+
+    from yan.ingest import congress_gov
+
+    class _Unreachable:
+        def get(self, url, headers=None):
+            raise httpx.ConnectError("unreachable")
+
+    with pytest.raises(httpx.ConnectError) as caught:
+        congress_gov.fetch_cosponsored(_Unreachable(), "k", "A000001")
+    assert caught.value.requests == 1
 
 
 @pytest.mark.parametrize("doc", [{"cosponsoredLegislation": []},
