@@ -200,6 +200,20 @@ class EscapingTest < Minitest::Test
     assert_includes page, "Version: Introduced &quot;&lt;vv&gt;&quot;,"
   end
 
+  # A summary with no usable text reads as none, without the CRS credit line.
+  def test_a_summary_without_text_reads_as_no_summary
+    votes = [{ "version" => "Introduced", "version_date" => "2025-01-03", "html" => 1 }, "<p>a</p>"]
+            .each_with_index.map do |summary, i|
+      [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
+    end
+    built = build_site([MEMBER], votes)
+    [1, 2].each do |roll|
+      page = built.fetch("/votes/119/house/1/#{roll}/index.html")
+      assert_includes page, "No Congressional Research Service summary of", roll
+      refute_includes page, "By the Congressional Research Service", roll
+    end
+  end
+
   def test_summary_tags_match_the_pipeline_allowlist
     py = File.read(File.expand_path("../../src/yan/export/summary_html.py", __dir__))
     assert_equal py[/^ALLOWED = \{(.*)\}$/, 1].scan(/"(\w+)"/).flatten.sort, Yan::SUMMARY_TAGS.sort
@@ -693,6 +707,10 @@ class SummaryHtmlTest < Minitest::Test
 
   def test_no_text_unless_a_string
     [nil, 1, ["<p>a</p>"], { "html" => "<p>a</p>" }].each { |html| assert_nil Yan.summary_html(html), html.inspect }
+  end
+
+  def test_no_text_unless_valid_utf8
+    assert_nil Yan.summary_html("<p>a\xFF</p>")
   end
 end
 

@@ -642,9 +642,10 @@ module Yan
   # is escaped, so nothing else in the data can become markup. Tags are also
   # balanced, so none reaches past the summary: a closing tag closes the tags
   # opened since its own (as a browser does), one with nothing to close is
-  # escaped, and tags left open are closed at the end. Not a string: no text.
+  # escaped, and tags left open are closed at the end. Not a string, or not
+  # valid UTF-8 (which would stop the build): no text.
   def self.summary_html(html)
-    return nil unless html.is_a?(String)
+    return nil unless html.is_a?(String) && html.valid_encoding?
 
     open = []
     out = html.gsub(SUMMARY_TOKEN) do |t|
@@ -711,7 +712,7 @@ module Yan
       "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
       "state_map" => other.empty? ? state_map(vote["chamber"], doc["positions"], members_by_id, words) : nil,
       "against" => against, "share" => SHARE_WORDS[vote["required_share"]],
-      "summary" => (s = doc["summary"]) && s.merge("html" => summary_html(s["html"]))
+      "summary" => (s = doc["summary"]).is_a?(Hash) && (html = summary_html(s["html"])) ? s.merge("html" => html) : nil
     }
   end
 
