@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -134,3 +135,25 @@ def test_outline_drops_holes_smaller_than_min_hole():
 
 def test_outline_is_a_multipolygon_for_a_one_part_state():
     assert vm.outline([box(0, 0, 100, 100)]).geom_type == "MultiPolygon"
+
+
+# build
+
+def test_build_exits_when_a_district_has_nothing_left_to_draw(tmp_path, monkeypatch):
+    source, out = tmp_path / "source", tmp_path / "out"
+    source.mkdir()
+    (source / "119.json").write_text(json.dumps({
+        "width": 3000,
+        "height": 2000,
+        "districts": [
+            {"state": "KY", "district": 1, "d": square(0, 0, 500)},
+            {"state": "KY", "district": 2, "d": "M500 0l5 5z"},
+            {"state": "WY", "district": 0, "d": square(1000, 0, 500)},
+        ],
+    }))
+    monkeypatch.setattr(vm, "SOURCE", source)
+    monkeypatch.setattr(vm, "OUT", out)
+    with pytest.raises(SystemExit) as stop:
+        vm.build(119)
+    assert str(stop.value) == "nothing left to draw for KY-2; lower SIMPLIFY or SCALE"
+    assert not out.exists()
