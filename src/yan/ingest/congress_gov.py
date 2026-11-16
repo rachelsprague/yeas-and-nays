@@ -20,10 +20,15 @@ and isn't sorted by Congress, so every page is read. To keep each hourly run
 inside the job's timeout, a run fetches cosponsored lists, stalest first, only
 until it has used COSPONSORED_REQUEST_BUDGET requests or
 COSPONSORED_TIME_BUDGET (the list in progress is finished, so a run can go
-over by one list), and fetches none when this step has already run
+over by one list), and fetches none when the process has already run
 SKIP_COSPONSORED_AFTER (the weekly sponsored refresh). A list that fails is
-logged and skipped, so it can't stop the run. The API key is read from CONGRESS_API_KEY and sent only
-in the X-Api-Key header, never in a URL. Without a key this step is skipped.
+logged and skipped, and retried next run. A rate limit (HTTP 429) or
+MAX_FAILURES_IN_A_ROW failures in a row stop the run's cosponsored lists early.
+If the lists stop after MAX_FAILURES_IN_A_ROW failures with none fetched (not
+on a rate limit), the run fails, so a change in the API can't go unnoticed.
+
+The API key is read from CONGRESS_API_KEY and sent only in the X-Api-Key
+header, never in a URL. Without a key this step is skipped.
 """
 
 import datetime as dt
@@ -34,6 +39,7 @@ import time
 
 import httpx
 
+import yan
 from yan.config import CONGRESS, RAW_DIR, SESSIONS
 from yan.http import Client, write_atomic
 from yan.measures import parse_measure
@@ -58,6 +64,9 @@ COSPONSORED_TIME_BUDGET = dt.timedelta(minutes=10)
 # The weekly sponsored refresh alone takes about 45 minutes; skip cosponsored lists on that
 # run so the job stays inside its 75-minute timeout.
 SKIP_COSPONSORED_AFTER = dt.timedelta(minutes=30)
+# This many cosponsored lists failing one after another means the API is down or has
+# changed; the rest wait for the next run.
+MAX_FAILURES_IN_A_ROW = 3
 
 
 def raw_path(bill_type: str, bill_number: str, kind: str = "summaries"):
@@ -130,29 +139,50 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     number of requests it took.
 
     Pages are by offset, so a bill introduced mid-fetch shifts the list and can
-    repeat one item across a page boundary; repeats are dropped."""
+    repeat one item across a page boundary; repeats are dropped.
+
+    A response that isn't the expected shape raises ValueError. Any error carries the
+    number of requests made, the failed one included, as `requests`."""
     list_key = f"{kind}Legislation"
     items, seen, offset, total, requests = [], set(), 0, None, 0
-    while total is None or offset < total:
-        url = MEMBER_LIST_URL.format(bioguide_id=bioguide_id, endpoint=f"{kind}-legislation",
-                                     limit=PAGE_SIZE, offset=offset)
-        resp = client.get(url, headers={"X-Api-Key": key})
-        requests += 1
-        resp.raise_for_status()
-        doc = resp.json()
-        if list_key not in doc:
-            raise ValueError(f"congress.gov member {bioguide_id}: response has no {list_key}")
-        total = doc.get("pagination", {}).get("count", 0)
-        page = doc[list_key]
-        for item in page:
-            bill = (item.get("type"), item.get("number"))
-            if item.get("congress") == CONGRESS and item.get("type") and bill not in seen:
-                seen.add(bill)
-                items.append(item)
-        if not page:
-            break
-        offset += PAGE_SIZE
+    try:
+        while total is None or offset < total:
+            url = MEMBER_LIST_URL.format(bioguide_id=bioguide_id, endpoint=f"{kind}-legislation",
+                                         limit=PAGE_SIZE, offset=offset)
+            requests += 1
+            resp = client.get(url, headers={"X-Api-Key": key})
+            resp.raise_for_status()
+            total, page = _member_list_page(resp.json(), list_key, bioguide_id, first=offset == 0)
+            for item in page:
+                bill = (item.get("type"), item.get("number"))
+                if item.get("congress") == CONGRESS and item.get("type") and bill not in seen:
+                    seen.add(bill)
+                    items.append(item)
+            if not page:
+                break
+            offset += PAGE_SIZE
+    except Exception as e:
+        e.requests = requests
+        raise
     return {"bioguideId": bioguide_id, "congress": CONGRESS, list_key: items}, requests
+
+
+def _member_list_page(doc, list_key: str, bioguide_id: str, first: bool) -> tuple[int, list[dict]]:
+    """A member-list response's total item count and its page of items, or ValueError if
+    it isn't shaped like one. An empty first page with no pagination is an empty list;
+    on a later page, missing pagination could hide a list cut short, so it raises."""
+    where = f"congress.gov member {bioguide_id}"
+    if not isinstance(doc, dict) or list_key not in doc:
+        raise ValueError(f"{where}: response has no {list_key}")
+    pagination, page = doc.get("pagination"), doc[list_key]
+    if not isinstance(page, list) or not all(isinstance(item, dict) for item in page):
+        raise ValueError(f"{where}: {list_key} isn't a list of objects")
+    if first and pagination is None and not page:
+        return 0, page
+    count = pagination.get("count") if isinstance(pagination, dict) else None
+    if not isinstance(count, int) or isinstance(count, bool):
+        raise ValueError(f"{where}: response has no pagination count")
+    return count, page
 
 
 def needs_fetch(path, last_vote: dt.date, today: dt.date) -> bool:
@@ -170,7 +200,6 @@ def ingest(client: Client) -> None:
         log.warning("congress.gov: CONGRESS_API_KEY not set; skipping bill details and summaries")
         return
 
-    started = time.monotonic()
     today = dt.date.today()
     bills = voted_bills()
     fetched = 0
@@ -195,38 +224,53 @@ def ingest(client: Client) -> None:
         write_atomic(sponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
     log.info("congress.gov: %d members, %d sponsored-legislation lists fetched", len(members), len(stale))
 
-    ingest_cosponsored(client, key, members, today, started)
+    ingest_cosponsored(client, key, members, today, yan.STARTED)
 
 
 def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.date, started: float) -> None:
     """Fetch stale cosponsored lists, stalest first (never fetched, then oldest file), so
-    lists rotate through the per-run budgets. `started` is when this step began
-    (time.monotonic())."""
+    lists rotate through the per-run budgets. `started` is when the process began
+    (time.monotonic()); the time budget counts from when the cosponsored lists start."""
     stale = sorted(
         (m for m in members if needs_fetch(cosponsored_path(m), dt.date.min, today)),
         key=lambda m: cosponsored_path(m).stat().st_mtime if cosponsored_path(m).exists() else 0,
     )
     if time.monotonic() - started >= SKIP_COSPONSORED_AFTER.total_seconds():
-        log.info("congress.gov: skipping %d stale cosponsored-legislation lists this run (step already "
-                 "ran %d min)", len(stale), (time.monotonic() - started) // 60)
+        log.info("congress.gov: skipping %d stale cosponsored-legislation lists this run (process "
+                 "already ran %d min)", len(stale), (time.monotonic() - started) // 60)
         return
     deadline = time.monotonic() + COSPONSORED_TIME_BUDGET.total_seconds()
-    used = fetched = failed = 0
+    used = fetched = failed = in_a_row = 0
+    rate_limited = False
     for bioguide_id in stale:
         if used >= COSPONSORED_REQUEST_BUDGET or time.monotonic() >= deadline:
             break
         try:
-            doc, requests = fetch_cosponsored(client, key, bioguide_id)
+            result = fetch_cosponsored(client, key, bioguide_id)
         except (httpx.HTTPError, ValueError) as e:
             # Log the error type and status only; the list stays stale and is retried next run.
             status = getattr(getattr(e, "response", None), "status_code", None)
             log.warning("congress.gov: cosponsored list for %s failed (%s, HTTP %s); skipping",
                         bioguide_id, type(e).__name__, status)
-            used += 1
+            used += getattr(e, "requests", 1)
             failed += 1
+            in_a_row += 1
+            rate_limited = status == 429
+            if rate_limited or in_a_row >= MAX_FAILURES_IN_A_ROW:
+                log.warning("congress.gov: %s; stopping cosponsored lists for this run",
+                            "rate limited" if rate_limited else f"{in_a_row} lists failed in a row")
+                break
             continue
+        doc, requests = result
         write_atomic(cosponsored_path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
         used += requests
         fetched += 1
+        in_a_row = 0
     log.info("congress.gov: %d of %d stale cosponsored-legislation lists fetched, %d failed (%d requests)",
              fetched, len(stale), failed, used)
+    # A failure or two, or a rate limit, can be a passing outage, and failing the run would
+    # hold back the vote posts too; MAX_FAILURES_IN_A_ROW with nothing fetched looks like
+    # the API changed.
+    if failed >= MAX_FAILURES_IN_A_ROW and not fetched and not rate_limited:
+        raise RuntimeError(f"congress.gov: {failed} cosponsored-legislation lists failed and none "
+                           "were fetched")
