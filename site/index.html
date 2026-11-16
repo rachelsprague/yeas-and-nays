@@ -31,7 +31,7 @@ nav: votes
 {%- endcomment %}
 <main id="main" class="wrap home" data-filter-scope>
   <div class="head-row">
-    <h1 class="kicker" style="font-size: 13px">Latest recorded votes</h1>
+    <h1 class="module-h">Latest recorded votes</h1>
     <div class="tabs js-only" role="group" aria-label="Filter by chamber">
       <button type="button" data-tab="chamber" data-value="all" aria-pressed="true">All</button>
       <button type="button" data-tab="chamber" data-value="house" aria-pressed="false">House</button>
@@ -50,7 +50,7 @@ nav: votes
     {%- if week %}
     <aside class="side" aria-labelledby="week-h">
       <section class="week">
-        <h2 id="week-h" class="kicker soft">On the floor · Week of {{ week.start | ap_date }}</h2>
+        <h2 id="week-h" class="module-h">On the floor · Week of {{ week.start | ap_date }}</h2>
         <div class="week-figs nums">
           {%- for c in week.chambers %}
           <div data-row data-chamber="{{ c.chamber }}"><span class="fig-sm">{{ c.total }}</span><span class="small soft">{{ c.name }} roll call{% if c.total != 1 %}s{% endif %}</span></div>
@@ -76,7 +76,7 @@ nav: votes
     {%- assign schedule = site.data.schedule %}
     {%- if schedule.upcoming_senate.size > 0 or schedule.upcoming_house.size > 0 %}
     <section aria-labelledby="soon-h" data-row data-chamber="{% if schedule.upcoming_senate.size > 0 %}senate{% if schedule.upcoming_house.size > 0 %} house{% endif %}{% else %}house{% endif %}">
-      <h2 id="soon-h" class="kicker soft">Coming up</h2>
+      <h2 id="soon-h" class="module-h">Coming up</h2>
       {%- comment -%} Each chamber's block is a data-row too, so the chamber tabs hide its heading with its list. {%- endcomment %}
       {%- if schedule.upcoming_senate.size > 0 %}
       <div data-row data-chamber="senate">
@@ -106,7 +106,7 @@ nav: votes
     {%- assign closest = home.closest %}
     {%- if closest and closest.rows.size > 0 %}
     <section aria-labelledby="close-h" data-row data-chamber="{{ closest.rows | map: "vote" | map: "chamber" | uniq | join: " " | escape }}">
-      <h2 id="close-h" class="kicker soft">Closest votes</h2>
+      <h2 id="close-h" class="module-h">Closest votes</h2>
       <p class="small muted nums">Roll calls from {{ closest.range }}</p>
       <ul class="ruled" data-limit="3">
         {%- for r in closest.rows %}
@@ -130,7 +130,7 @@ nav: votes
     {%- assign against = home.against %}
     {%- if against and against.size > 0 %}
     <section aria-labelledby="against-h" data-row data-chamber="{{ against | map: "vote" | map: "chamber" | uniq | join: " " | escape }}">
-      <h2 id="against-h" class="kicker soft">Voted against their party's majority</h2>
+      <h2 id="against-h" class="module-h">Voted against their party's majority</h2>
       <ul class="ruled" data-limit="5">
         {%- for r in against %}
         {%- assign v = r.vote %}
@@ -156,7 +156,7 @@ nav: votes
 
   <div class="modules two">
     <section aria-labelledby="more-h">
-      <h2 id="more-h" class="kicker soft">More recent votes</h2>
+      <h2 id="more-h" class="module-h">More recent votes</h2>
       <ul class="ruled" data-limit="6">
         {%- for v in site.data.votes limit: 40 %}
           {%- capture attrs -%}
@@ -176,7 +176,7 @@ nav: votes
     {%- assign areas = home.areas %}
     {%- if areas %}
     <section aria-labelledby="area-h">
-      <h2 id="area-h" class="kicker soft">Roll calls by policy area</h2>
+      <h2 id="area-h" class="module-h">Roll calls by policy area</h2>
       <p class="small muted">This Congress, most first. The Congressional Research Service assigns each bill one policy area.</p>
       <ul class="area-top">
         {%- for a in areas %}
