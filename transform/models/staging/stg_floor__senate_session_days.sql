@@ -6,5 +6,7 @@ select
     try_strptime(left(convene_time, 19), '%Y-%m-%dT%H:%M:%S') as convene_time_et,
     try_strptime(left(adjourn_time, 19), '%Y-%m-%dT%H:%M:%S') as adjourn_time_et,
     try_strptime(left(next_convene_time, 19), '%Y-%m-%dT%H:%M:%S') as next_convene_time_et,
+    -- Recorded as Y or N, and left empty on many entries: null when not recorded.
+    case next_convene_pro_forma when 'Y' then true when 'N' then false end as next_convene_pro_forma,
     source_file
 from {{ source('staged', 'senate_session_days') }}

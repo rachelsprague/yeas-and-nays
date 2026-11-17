@@ -6,6 +6,10 @@ considered that week, grouped by procedure, without days or times. This week's
 and next week's files are fetched on each run; next week's is usually posted
 a few days ahead.
 
+House floor days: the Clerk's floor proceedings for a legislative day, one
+XML file per day, posted once the House convenes. Only the newest is kept: it
+says when the House convened and, once it adjourns, when it next convenes.
+
 Senate: senate.gov publishes no list of upcoming measures. We fetch the session
 days (when the Senate met and when it next convenes) and the daily floor
 activity for the most recent session days. Its status lines record when a
@@ -26,6 +30,9 @@ from yan.http import Client, write_atomic
 log = logging.getLogger(__name__)
 
 HOUSE_URL = "https://docs.house.gov/floor/Download.aspx?file=/billsthisweek/{week:%Y%m%d}/{week:%Y%m%d}.xml"
+HOUSE_DAY_URL = "https://clerk.house.gov/floor/{day:%Y%m%d}.xml"
+# How far back to look for the House's last day when none is saved.
+HOUSE_LOOKBACK_DAYS = 14
 SENATE_DAYS_URL = "https://www.senate.gov/legislative/schedule/floor_schedule.xml"
 SENATE_DAY_URL = "https://www.senate.gov/legislative/LIS/floor_activity/{day:%m_%d_%Y}_Senate_Floor.xml"
 # Daily floor activity files read for filed cloture motions. A cloture vote
@@ -39,6 +46,10 @@ EASTERN = ZoneInfo("America/New_York")
 
 def house_dir():
     return RAW_DIR / "floor" / "house"
+
+
+def house_days_dir():
+    return RAW_DIR / "floor" / "house_days"
 
 
 def senate_dir():
@@ -96,6 +107,45 @@ def ingest_house_week(client: Client, week: dt.date) -> None:
     log.info("house floor schedule for week of %s: saved", week)
 
 
+def ingest_house_days(client: Client, today: dt.date) -> None:
+    # Yesterday too: a legislative day can run past midnight, and its file
+    # gains the adjournment and next convening time when it ends.
+    for day in (today - dt.timedelta(days=1), today):
+        try:
+            ingest_house_day(client, day)
+        except (httpx.HTTPError, ValueError, ET.ParseError) as e:
+            log.warning("house floor proceedings for %s not updated: %s", day, e)
+    # With nothing saved (a first run, or an emptied cache), look back for the
+    # last day the House met, so its next convening is known before it meets.
+    back = 2
+    while not any(house_days_dir().glob("????-??-??.xml")) and back <= HOUSE_LOOKBACK_DAYS:
+        day = today - dt.timedelta(days=back)
+        try:
+            ingest_house_day(client, day)
+        except (httpx.HTTPError, ValueError, ET.ParseError) as e:
+            log.warning("house floor proceedings for %s not updated: %s", day, e)
+        back += 1
+    # Only the newest is used, however old: through a recess it still holds
+    # the day the House is next set to convene.
+    for path in sorted(house_days_dir().glob("????-??-??.xml"))[:-1]:
+        path.unlink()
+
+
+def ingest_house_day(client: Client, day: dt.date) -> None:
+    resp = client.get(HOUSE_DAY_URL.format(day=day))
+    # No file until the House convenes that day.
+    if resp.status_code in (200, 404) and b"<legislative_activity" not in resp.content:
+        log.info("house floor proceedings for %s: not published", day)
+        return
+    resp.raise_for_status()
+    root = ET.fromstring(resp.content)
+    congress = root.find("legislative_congress")
+    if congress is None or congress.get("congress") != str(CONGRESS):
+        raise ValueError(f"House floor proceedings for {day} are not from the {CONGRESS}th Congress")
+    write_atomic(house_days_dir() / f"{day:%Y-%m-%d}.xml", resp.content)
+    log.info("house floor proceedings for %s: saved", day)
+
+
 def ingest_senate(client: Client, today: dt.date) -> None:
     resp = client.get(SENATE_DAYS_URL)
     resp.raise_for_status()
@@ -143,7 +193,7 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
     window; one that has left it is deleted even if its replacement failed, so
     a past week's House schedule isn't shown as current."""
     today = today or today_et()
-    for chamber, step in (("house", ingest_house), ("senate", ingest_senate)):
+    for chamber, step in (("house", ingest_house), ("house days", ingest_house_days), ("senate", ingest_senate)):
         try:
             step(client, today)
         except (httpx.HTTPError, ValueError, ET.ParseError) as e:

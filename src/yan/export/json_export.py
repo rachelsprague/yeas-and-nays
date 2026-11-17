@@ -7,7 +7,8 @@
                                   (cosponsored is null until first fetched)
     data/out/floor_schedule.json  what may come up for a vote: the House's weekly
                                   floor schedule and pending Senate cloture motions,
-                                  plus when the Senate next convenes
+                                  plus when the Senate next convenes and each
+                                  chamber's floor status (in session or next convening)
     data/out/votes.json           one entry per vote (metadata + tallies, and whether
                                   the bot posts it), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
@@ -25,6 +26,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import duckdb
 
@@ -36,6 +38,7 @@ from yan.measures import bill_label
 log = logging.getLogger(__name__)
 
 VOTE_ORDER = "vote_time_et desc, chamber, roll_number desc"
+EASTERN = ZoneInfo("America/New_York")
 
 
 def _default(value):
@@ -118,9 +121,14 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
                 item_id
         """)
         senate_sessions = _rows(con, """
-            select convene_time_et, adjourn_time_et, next_convene_time_et
+            select convene_time_et, adjourn_time_et, next_convene_time_et, next_convene_pro_forma
             from senate_sessions
             order by convene_time_et
+        """)
+        house_days = _rows(con, """
+            select convene_time_et, adjourned, next_convene_time_et
+            from house_floor_days
+            order by legislative_day
         """)
         summaries = {
             row.pop("vote_id"): row
@@ -179,7 +187,7 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             changed += 1
 
     changed += write_if_changed(
-        out_dir / "floor_schedule.json", dumps(floor_schedule_document(floor_items, senate_sessions))
+        out_dir / "floor_schedule.json", dumps(floor_schedule_document(floor_items, senate_sessions, house_days))
     )
 
     meta = meta_document(votes, members)
@@ -235,8 +243,9 @@ def vote_document(vote: dict, positions: list[dict], summary: dict | None = None
     }
 
 
-def floor_schedule_document(items: list[dict], senate_sessions: list[dict]) -> dict:
-    """Floor schedule items with a display label, and when the Senate is next set to convene.
+def floor_schedule_document(items: list[dict], senate_sessions: list[dict], house_days: list[dict]) -> dict:
+    """Floor schedule items with a display label, when the Senate is next set to convene,
+    and each chamber's floor status.
 
     The label is the citation form for bills and resolutions ("H.Res. 1650"), else
     the number as listed ("PN1272-3", "H. Res. ___"); amendments name what they amend
@@ -246,11 +255,44 @@ def floor_schedule_document(items: list[dict], senate_sessions: list[dict]) -> d
         label = bill_label(item["bill_type"], item["bill_number"]) if item["bill_type"] else item["measure_number"]
         item["measure_label"] = f"{label or 'Amendment'} to {item['amends']}" if item["amends"] else label or None
     latest = senate_sessions[-1] if senate_sessions else {}
+    # senate.gov flags a pro forma session on the session before it, so one
+    # under way (no adjournment yet) is pro forma if the previous row says so.
+    previous = senate_sessions[-2] if len(senate_sessions) > 1 else {}
+    senate_open = latest and not latest.get("adjourn_time_et") and previous.get("next_convene_pro_forma") is not True
+    house = house_days[-1] if house_days else {}
     return {
         "items": items,
         # Set when the Senate adjourns; null while it's in session or before any data.
         "senate_next_convene_et": latest.get("next_convene_time_et"),
+        "floor_status": {
+            "senate": floor_status(
+                convened=latest.get("convene_time_et") if senate_open else None,
+                next_convene=latest.get("next_convene_time_et"),
+                pro_forma=latest.get("next_convene_pro_forma"),
+            ),
+            "house": floor_status(
+                convened=house.get("convene_time_et") if house and not house.get("adjourned") else None,
+                next_convene=house.get("next_convene_time_et") if house.get("adjourned") else None,
+                pro_forma=None,  # The Clerk's file doesn't say.
+            ),
+        },
     }
+
+
+def floor_status(convened: dt.datetime | None, next_convene: dt.datetime | None, pro_forma: bool | None) -> dict:
+    """A chamber's floor status as of the latest data: when it convened if it hadn't
+    adjourned yet, else when it next convenes and whether that's a pro forma session
+    (null when not recorded). Times carry their Eastern offset, so a browser can
+    compare them with its own clock."""
+    return {
+        "convened_at": _eastern(convened),
+        "next_convene_at": _eastern(next_convene),
+        "next_convene_pro_forma": pro_forma,
+    }
+
+
+def _eastern(value: dt.datetime | None) -> dt.datetime | None:
+    return value.replace(tzinfo=EASTERN) if value else None
 
 
 def meta_document(votes: list[dict], members: list[dict]) -> dict:

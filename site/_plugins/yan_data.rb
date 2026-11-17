@@ -104,6 +104,41 @@ module Yan
     "#{Date::DAYNAMES[t.wday]}, #{Filters.ap_date(t)}, at #{clock_label(t)} ET"
   end
 
+  # Each chamber's official live floor pages, for the home page's floor band.
+  LIVE_FLOOR = {
+    "senate" => { "watch_url" => "https://www.senate.gov/floor/", "watch_label" => "Floor webcast",
+                  "floor_url" => "https://www.senate.gov/legislative/floor_activity_pail.htm",
+                  "floor_label" => "Floor proceedings" },
+    "house" => { "watch_url" => "https://live.house.gov/", "watch_label" => "Floor video",
+                 "floor_url" => "https://clerk.house.gov/FloorSummary", "floor_label" => "Floor summary" }
+  }.freeze
+
+  # One line per chamber for the home page's floor band, from the export's
+  # floor_status: when it convened if it hadn't adjourned as of the data,
+  # else when it's next set to convene (left out when that's a pro forma
+  # session). The page shows a line only from its time on (live-floor.js),
+  # since the site is rebuilt hourly and the Senate's file changes only when
+  # it adjourns. Times carry their Eastern offset, so the label reads in ET.
+  def self.live_floor(status)
+    return [] unless status
+
+    %w[senate house].filter_map do |chamber|
+      s = status[chamber] or next
+      at, verb = if s["convened_at"]
+                   [s["convened_at"], "Convened"]
+                 elsif s["next_convene_at"] && s["next_convene_pro_forma"] != true
+                   [s["next_convene_at"], "Scheduled to convene"]
+                 end
+      next unless at
+
+      t = DateTime.iso8601(at)
+      LIVE_FLOOR[chamber].merge("chamber" => chamber, "name" => CHAMBER_NAMES[chamber], "from" => t.iso8601,
+                                "label" => "#{verb} at #{clock_label(t)} ET")
+    rescue Date::Error
+      next
+    end
+  end
+
   # The Senate's next convene time, or nil once it has passed (a failed
   # fetch can leave a stale one). `now` is the build time in ET; a Date reads
   # as its midnight. Both are ET wall-clock times, so their ISO strings
@@ -858,6 +893,7 @@ module Yan
       # Absent until the pipeline first ingests the floor schedules.
       schedule = read_optional.call("floor_schedule.json") || { "items" => [] }
       site.data["schedule"] = Yan.schedule_view(schedule, votes_by_id, site.time)
+      site.data["live_floor"] = Yan.live_floor(schedule["floor_status"])
       # site.time is Eastern (timezone in _config.yml), the floor's own clock.
       site.data["schedule_calendar"] = Yan.schedule_calendar(site.data["schedule"], votes, site.time,
                                                              schedule["senate_next_convene_et"])

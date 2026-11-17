@@ -66,3 +66,19 @@ models:
       - name: convene_time_et
         description: Never null (malformed rows are dropped); stg_floor__senate_session_days tests for them.
         data_tests: [unique]
+      - name: next_convene_pro_forma
+        description: Whether the next convening is a pro forma session. Null when senate.gov leaves it blank.
+
+  - name: house_floor_days
+    description: >
+      The House's latest legislative day from the Clerk's floor proceedings: when it convened
+      and, once it adjourned, when it next convenes. Eastern wall-clock times.
+    columns:
+      - name: legislative_day
+        description: Never null (malformed rows are dropped); stg_floor__house_floor_days tests for them.
+        data_tests: [unique]
+      - name: adjourned
+        description: True once the Clerk marks the legislative day finished.
+        data_tests: [not_null]
+      - name: next_convene_time_et
+        description: When the next legislative day convenes. Null until the House adjourns.

@@ -46,6 +46,10 @@ sources:
           floor activity (senate.gov), for the most recent session days.
       - name: senate_session_days
         description: One row per time the Senate convened this session, from senate.gov.
+      - name: house_floor_days
+        description: >
+          One row per House legislative day in the Clerk's floor proceedings
+          (clerk.house.gov/floor); only the newest day is kept.
       - name: legislators
         description: One row per person in unitedstates/congress-legislators (current + historical).
       - name: legislator_terms

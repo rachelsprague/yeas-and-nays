@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<legislative_activity>
+<legislative_header>CURRENT HOUSE FLOOR PROCEEDINGS</legislative_header>
+<legislative_day date="20261113" previous-legislative-day-convened="20261112T09:00:00">LEGISLATIVE DAY OF NOVEMBER 13, 2026 </legislative_day>
+<legislative_congress congress="119" session="2"> 119TH CONGRESS - SECOND SESSION </legislative_congress>
+<language>en-us</language>
+<copyright>Pursuant to Title 17 Section 105 of the United States Code, this file is not subject to copyright protection and is in the public domain.</copyright>
+<pubDate>Mon, 16 Nov 2026 18:45:01 EST</pubDate>
+<floor_actions>
+<legislative_day_finished next-legislative-day-convenes="20261117T12:00">Yes</legislative_day_finished>
+<floor_action act-id="H61000" update-date-time="20261113T10:18" unique-id="46517">
+<action_time for-search="20261113T10:02:58">10:02:58 A.M. -</action_time>
+<action_description>
+The Speaker announced that the House do now adjourn pursuant to a previous special order. The next meeting is scheduled for 12:00 p.m. on November 17, 2026.
+</action_description>
+</floor_action>
+<floor_action act-id="H2C000" update-date-time="20261113T10:02" unique-id="46514">
+<action_time for-search="20261113T10:02:30">10:02:30 A.M. -</action_time>
+<action_description>
+PLEDGE OF ALLEGIANCE - The Chair led the House in reciting the Pledge of Allegiance to the Flag.
+</action_description>
+</floor_action>
+<floor_action act-id="H20100" update-date-time="20261113T10:00" unique-id="46510">
+<action_time for-search="20261113T10:00:00">10:00:00 A.M. -</action_time>
+<action_description>
+The House convened, starting a new legislative day.
+</action_description>
+</floor_action>
+</floor_actions>
+</legislative_activity>

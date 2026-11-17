@@ -2,12 +2,22 @@ import datetime as dt
 from pathlib import Path
 
 import httpx
+import pytest
 
 from yan.http import Client
 from yan.ingest import floor as ingest
-from yan.stage.floor import parse_house_week, parse_senate_day, parse_session_days
+from yan.stage.floor import parse_house_day, parse_house_week, parse_senate_day, parse_session_days
 
 FIXTURES = Path(__file__).parent / "fixtures"
+HOUSE_DAY = (FIXTURES / "house_floor_day_2026-11-13.xml").read_bytes()
+
+
+@pytest.fixture(autouse=True)
+def house_days_dir(monkeypatch, tmp_path):
+    """Every test's House floor days go to a temporary folder, never data/raw."""
+    path = tmp_path / "house_days"
+    monkeypatch.setattr(ingest, "house_days_dir", lambda: path)
+    return path
 
 
 def test_house_week_rows_are_floor_items_not_subitems():
@@ -106,6 +116,30 @@ def test_session_days():
     assert rows[-1]["legislative_day"] == "2026-11-12"
     assert rows[-1]["next_convene_time"] == "2026-11-16T15:00:00-05:00"
     assert ingest.session_days(SESSION_DAYS) == [dt.date(2026, 11, 11), dt.date(2026, 11, 12)]
+
+
+def test_session_days_keep_the_pro_forma_flag_as_recorded():
+    days = b"""<CongressSessionDayConvenings><LegislativeDay><SessionDay>
+      <NextConveneDate>2026-11-17T10:00:00-05:00</NextConveneDate><IsNextConveneProforma>Y</IsNextConveneProforma>
+      </SessionDay><SessionDay><IsNextConveneProforma>
+      </IsNextConveneProforma></SessionDay></LegislativeDay></CongressSessionDayConvenings>"""
+    assert [r["next_convene_pro_forma"] for r in parse_session_days(days, "senate/session_days.xml")] == ["Y", None]
+
+
+def test_house_day_gives_the_convening_and_once_finished_the_next():
+    row = parse_house_day(HOUSE_DAY, "house_days/2026-11-13.xml")
+    assert row == {
+        "source_file": "house_days/2026-11-13.xml", "legislative_day": "20261113",
+        "convene_time": "20261113T10:00:00", "finished": "Yes", "next_convene_time": "20261117T12:00",
+    }
+
+
+def test_house_day_in_progress_has_no_next_convening():
+    content = HOUSE_DAY.replace(
+        b'<legislative_day_finished next-legislative-day-convenes="20261117T12:00">Yes</legislative_day_finished>\n', b""
+    )
+    row = parse_house_day(content, "house_days/2026-11-13.xml")
+    assert (row["convene_time"], row["finished"], row["next_convene_time"]) == ("20261113T10:00:00", None, None)
 
 
 def test_week_start_is_monday():
@@ -263,3 +297,70 @@ def test_a_failed_fetch_logs_and_keeps_the_last_good_files(monkeypatch, tmp_path
     assert "house floor schedule for week of 2026-11-09 not updated" in caplog.text
     assert "house floor schedule for week of 2026-11-16 not updated" in caplog.text
     assert "senate floor schedule not updated" in caplog.text
+
+
+def test_house_days_keep_only_the_newest_file(house_days_dir):
+    house_days_dir.mkdir()
+    (house_days_dir / "2026-11-12.xml").write_text("older day")
+    client = _client({
+        ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 13)): httpx.Response(200, content=HOUSE_DAY),
+        ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 14)): httpx.Response(404, text="<html>Not Found</html>"),
+    })
+
+    ingest.ingest_house_days(client, dt.date(2026, 11, 14))
+
+    assert [p.name for p in house_days_dir.iterdir()] == ["2026-11-13.xml"]
+    assert (house_days_dir / "2026-11-13.xml").read_bytes() == HOUSE_DAY
+
+
+def test_house_days_keep_the_last_file_through_a_recess(house_days_dir, caplog):
+    house_days_dir.mkdir()
+    (house_days_dir / "2026-11-13.xml").write_bytes(HOUSE_DAY)
+    client = _client({})  # Nothing posted for Nov. 19 or 20.
+
+    with caplog.at_level("INFO"):
+        ingest.ingest_house_days(client, dt.date(2026, 11, 20))
+
+    assert [p.name for p in house_days_dir.iterdir()] == ["2026-11-13.xml"]
+    assert "house floor proceedings for 2026-11-20: not published" in caplog.text
+
+
+def test_house_day_from_another_congress_is_not_saved(house_days_dir, caplog):
+    client = _client({
+        ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 13)):
+            httpx.Response(200, content=HOUSE_DAY.replace(b'congress="119"', b'congress="120"')),
+    })
+
+    ingest.ingest_house_days(client, dt.date(2026, 11, 13))
+
+    assert not house_days_dir.exists() or not list(house_days_dir.iterdir())
+    assert "House floor proceedings for 2026-11-13 are not from the 119th Congress" in caplog.text
+
+
+def test_with_nothing_saved_house_days_look_back_for_the_last_day_met(house_days_dir):
+    fetched = []
+
+    def handler(request):
+        fetched.append(str(request.url))
+        if str(request.url) == ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 13)):
+            return httpx.Response(200, content=HOUSE_DAY)
+        return httpx.Response(404, text="<html>Not Found</html>")
+
+    ingest.ingest_house_days(Client(delay=0, transport=httpx.MockTransport(handler)), dt.date(2026, 11, 16))
+
+    # Nov. 15 and 16 first, then back from Nov. 14 until a day is found.
+    assert fetched == [ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, d)) for d in (15, 16, 14, 13)]
+    assert [p.name for p in house_days_dir.iterdir()] == ["2026-11-13.xml"]
+
+
+def test_house_days_look_back_at_most_two_weeks(house_days_dir):
+    fetched = []
+
+    def handler(request):
+        fetched.append(str(request.url))
+        return httpx.Response(404, text="<html>Not Found</html>")
+
+    ingest.ingest_house_days(Client(delay=0, transport=httpx.MockTransport(handler)), dt.date(2026, 11, 16))
+
+    assert len(fetched) == ingest.HOUSE_LOOKBACK_DAYS + 1  # yesterday and today, then Nov. 14 back to Nov. 2
+    assert fetched[-1] == ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 2))

@@ -24,7 +24,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 - **House:** Office of the Clerk, `clerk.house.gov/evs/{year}/rollNNN.xml`
 - **Senate:** `senate.gov/legislative/LIS/roll_call_votes/`
 - **Members:** `unitedstates/congress-legislators` (current and historical)
-- **Floor schedules:** House Majority Leader's weekly schedule, `docs.house.gov/floor/` (this week and next); Senate session days (`senate.gov/legislative/schedule/floor_schedule.xml`) and daily floor activity (`senate.gov/legislative/LIS/floor_activity/`, last 10 session days), read for cloture motions filed and voted on
+- **Floor schedules:** House Majority Leader's weekly schedule, `docs.house.gov/floor/` (this week and next); Senate session days (`senate.gov/legislative/schedule/floor_schedule.xml`) and daily floor activity (`senate.gov/legislative/LIS/floor_activity/`, last 10 session days), read for cloture motions filed and voted on; the House Clerk's floor proceedings for the latest legislative day (`clerk.house.gov/floor/`), read for when the House convened and next convenes
 - **District map:** Census Bureau congressional district boundaries (119th: cartographic boundary file `cb_2024_us_cd119_500k`; 120th: 2026 TIGER/Line `tl_2026_{state}_cd120`), place boundaries (`cb_2024_us_place_500k`) and 2024 city and town population estimates; see `scripts/build_district_map.py`
 - **Bills:** Congress.gov API, `/bill/{congress}/{type}/{number}`, `.../summaries`, `/member/{bioguide_id}/sponsored-legislation`, and `/member/{bioguide_id}/cosponsored-legislation` (key sent as the `X-Api-Key` header)
 
@@ -42,7 +42,8 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
 | `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
 | `floor_schedule` | one row per item that may come up for a vote: House weekly schedule items (removed items dropped) and Senate cloture motions filed but not yet voted on, each with the roll call that followed, if any | `item_id`, e.g. `h-2026-11-16-409831`, `s-pn1272-3`, `s-h-r-2347-measure` |
-| `senate_sessions` | one row per time the Senate convened this session, with when it's set to convene next | `convene_time_et` |
+| `senate_sessions` | one row per time the Senate convened this session, with when it's set to convene next and whether that's a pro forma session | `convene_time_et` |
+| `house_floor_days` | the House's latest legislative day: when it convened, whether it has adjourned, and when it next convenes | `legislative_day` |
 
 **Joining members across chambers.** House records carry the Bioguide ID. Senate records carry an LIS member ID, which is mapped to the Bioguide ID through congress-legislators. Party and caucus are taken from the term (or, for a mid-term party change, the affiliation period) in effect on the vote date.
 
@@ -55,7 +56,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 | `meta.json` | Vote and member counts, latest roll number per chamber and session |
 | `members.json` | All members, with their `member_stats` |
 | `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored this Congress (`cosponsored` is null until their list is first fetched) |
-| `floor_schedule.json` | `floor_schedule` items with display labels, and when the Senate next convenes |
+| `floor_schedule.json` | `floor_schedule` items with display labels, when the Senate next convenes, and each chamber's floor status (when it convened if it hadn't adjourned, else when it next convenes), for the home page's floor band |
 | `votes.json` | All votes: metadata, official tallies, source links, newest first |
 | `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded, and the CRS summary of the measure (HTML reduced to formatting tags), or null |
 

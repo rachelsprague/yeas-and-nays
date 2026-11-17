@@ -30,6 +30,24 @@ nav: votes
   it has rows for, so a tab with none hides the module, heading and all.
 {%- endcomment %}
 <main id="main" class="wrap home" data-filter-scope>
+  {%- comment -%}
+    One line per chamber, each shown by live-floor.js only from its convening
+    time on (and filtered by the chamber tabs); nothing without JS.
+  {%- endcomment %}
+  {%- assign live = site.data.live_floor %}
+  {%- if live.size > 0 %}
+  <section class="live-band" aria-label="Floor in session">
+    {%- for l in live %}
+    <p class="live-line small" data-row data-chamber="{{ l.chamber | escape }}" data-live-from="{{ l.from | escape }}">
+      <span class="kicker">{{ l.name | escape }} floor</span>
+      <span class="nums">{{ l.label | escape }}</span>
+      <a class="link" href="{{ l.watch_url | escape }}">{{ l.watch_label | escape }}</a>
+      <a class="link" href="{{ l.floor_url | escape }}">{{ l.floor_label | escape }}</a>
+    </p>
+    {%- endfor %}
+  </section>
+  <script src="/assets/js/live-floor.js" defer></script>
+  {%- endif %}
   <div class="head-row">
     <h1 class="module-h">Latest recorded votes</h1>
     <div class="tabs js-only" role="group" aria-label="Filter by chamber">

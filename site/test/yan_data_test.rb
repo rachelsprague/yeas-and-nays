@@ -1379,6 +1379,61 @@ end
 
 # The home page's modules: closest votes, votes with members against their
 # party's majority, this week's roll calls and the top policy areas.
+class LiveFloorTest < Minitest::Test
+  include SiteBuild
+
+  def status(convened: nil, next_at: nil, pro_forma: nil)
+    { "convened_at" => convened, "next_convene_at" => next_at, "next_convene_pro_forma" => pro_forma }
+  end
+
+  def test_a_line_per_chamber_from_its_convening_or_its_next
+    lines = Yan.live_floor("senate" => status(next_at: "2026-11-16T15:00:00-05:00", pro_forma: false),
+                           "house" => status(convened: "2026-11-17T12:00:04-05:00"))
+    assert_equal %w[senate house], lines.map { |l| l["chamber"] }
+    assert_equal ["Scheduled to convene at 3 p.m. ET", "Convened at noon ET"], lines.map { |l| l["label"] }
+    assert_equal ["2026-11-16T15:00:00-05:00", "2026-11-17T12:00:04-05:00"], lines.map { |l| l["from"] }
+    assert_equal ["https://www.senate.gov/floor/", "https://live.house.gov/"], lines.map { |l| l["watch_url"] }
+  end
+
+  # Summer time: the label stays in Eastern wall-clock time.
+  def test_the_label_reads_in_eastern_time
+    lines = Yan.live_floor("senate" => status(next_at: "2026-07-02T10:30:00-04:00"))
+    assert_equal ["Scheduled to convene at 10:30 a.m. ET"], lines.map { |l| l["label"] }
+  end
+
+  def test_no_line_for_a_pro_forma_session_no_time_or_no_status
+    assert_equal [], Yan.live_floor("senate" => status(next_at: "2026-11-17T10:00:00-05:00", pro_forma: true),
+                                    "house" => status)
+    assert_equal [], Yan.live_floor(nil)
+    assert_equal [], Yan.live_floor("house" => status(convened: "not a time"))
+  end
+
+  def build(floor_status)
+    schedule = { "items" => [], "floor_status" => floor_status }
+    build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], files: "index.html",
+               schedule: schedule).fetch("/index.html")
+  end
+
+  # Lines start without .is-live: live-floor.js shows them from their time.
+  def test_the_home_page_band_has_a_tab_filtered_line_per_chamber
+    html = build("senate" => status(next_at: "2026-11-16T15:00:00-05:00", pro_forma: false),
+                 "house" => status(convened: "2026-11-17T12:00:04-05:00"))
+    band = html[%r{<section class="live-band".*?</section>}m]
+    assert_includes band, '<p class="live-line small" data-row data-chamber="senate" data-live-from="2026-11-16T15:00:00-05:00">'
+    assert_includes band, '<p class="live-line small" data-row data-chamber="house" data-live-from="2026-11-17T12:00:04-05:00">'
+    assert_includes band, "Scheduled to convene at 3 p.m. ET"
+    assert_includes band, '<a class="link" href="https://clerk.house.gov/FloorSummary">Floor summary</a>'
+    refute_includes band, "is-live"
+    assert_includes html, '<script src="/assets/js/live-floor.js" defer></script>'
+  end
+
+  def test_no_band_or_script_without_a_line
+    html = build("senate" => status, "house" => status)
+    refute_includes html, "live-band"
+    refute_includes html, "live-floor.js"
+  end
+end
+
 class HomeModulesTest < Minitest::Test
   include SiteBuild
 

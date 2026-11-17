@@ -73,6 +73,10 @@ STRING_COLUMNS = {
     ],
     "senate_session_days": [
         "source_file", "legislative_day", "convene_time", "adjourn_time", "next_convene_time",
+        "next_convene_pro_forma",
+    ],
+    "house_floor_days": [
+        "source_file", "legislative_day", "convene_time", "finished", "next_convene_time",
     ],
 }
 SCHEMAS = {name: pa.schema([(c, pa.string()) for c in cols]) for name, cols in STRING_COLUMNS.items()}
@@ -115,10 +119,11 @@ def run() -> None:
     write("cosponsored_bills", cosponsored)
     write("cosponsored_lists", cosponsored_lists)
 
-    house_floor, senate_floor, session_days = floor.parse_dir(RAW_DIR / "floor")
+    house_floor, senate_floor, session_days, house_days = floor.parse_dir(RAW_DIR / "floor")
     write("house_floor_items", with_bill(house_floor, "legis_num"))
     write("senate_floor_actions", with_bill(senate_floor, "docnum"))
     write("senate_session_days", session_days)
+    write("house_floor_days", house_days)
 
     people, terms, affiliations = legislators.parse_dir(RAW_DIR / "legislators")
     write("legislators", people)
