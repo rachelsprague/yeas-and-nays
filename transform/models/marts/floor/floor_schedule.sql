@@ -93,11 +93,15 @@ events as (
     where activity_date is not null and status_order is not null and {{ id_part('docnum') }} is not null
 ),
 
--- The latest filing for each document and target.
+-- The latest filing for each document and target. Ties (spellings filed in the
+-- same status line) go to the first docnum, then title and amends, so the pick is stable.
 latest_filing as (
     select * from events
     where event = 'filed'
-    qualify row_number() over (partition by docnum_key, target order by activity_date desc, status_order desc, docnum) = 1
+    qualify row_number() over (
+        partition by docnum_key, target
+        order by activity_date desc, status_order desc, docnum, document_title, amends
+    ) = 1
 ),
 
 filed as (
