@@ -237,7 +237,7 @@ class EscapingTest < Minitest::Test
     assert_includes amendment_page, %(href="https://clerk.house.gov/?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;")
     assert_includes amendment_page, %(href="https://www.congress.gov/?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;/text")
     assert_includes amendment_page, %(data-party="&quot;WQ&quot; &lt;wq&gt;" data-state="&quot;WQ&quot; &lt;wq&gt;")
-    assert_includes built.fetch("/members/Z000002/index.html"), %(<span class="initials" aria-hidden="true">&amp;&lt;</span>)
+    assert_includes built.fetch("/members/Z000002/index.html"), %(<span class="initials" aria-hidden="true" data-pagefind-ignore>&amp;&lt;</span>)
     assert_includes built.fetch("/members/index.html"), %(<option value="&quot;WQ&quot; &lt;wq&gt;">)
 
     # Map and card data are JSON in script tags (checked above); drop them.
@@ -587,6 +587,32 @@ class LayoutTest < Minitest::Test
       assert_equal [CURRENT[path]].compact, nav.scan(/<a href="([^"]+)" aria-current="page">/).flatten, path
       assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/schedule/">Floor schedule</a>', path
       assert_includes html[%r{<footer.*</footer>}m].to_s, '<a href="/activity/">Floor activity</a>', path
+    end
+  end
+
+  # Site search (Pagefind) indexes each page's content under a "Show" label,
+  # leaves out the home and search pages, and skips the lists that would match
+  # every query. Every page but /search/ has the masthead search box.
+  def test_search_index_labels_pages_and_skips_long_lists
+    pages = build
+    body = ->(path) { pages.fetch(path)[%r{<div data-pagefind-body[^>]*>(.*)</div>\s*<footer}m, 1] }
+    {
+      "/votes/119/house/1/1/index.html" => "Votes", "/members/Z000001/index.html" => "Members",
+      "/how/bills/index.html" => "How it works", "/about/index.html" => "About this site",
+      "/votes/index.html" => "Other pages"
+    }.each { |path, label| assert_includes body.(path).to_s, %(data-pagefind-filter="Show:#{label}"), path }
+    %w[/index.html /search/index.html].each { |path| refute_includes pages.fetch(path), "data-pagefind-body", path }
+
+    vote = body.("/votes/119/house/1/1/index.html")
+    assert_includes vote, %(aria-labelledby="roll-h" data-filter-scope data-pagefind-ignore>)
+    assert_includes vote, %(<div class="twocol" data-pagefind-ignore>)
+    # The result title, escaped once (the measure title holds " < > ' &).
+    assert_includes vote, 'data-title="On Passage: A bill to name the &quot;KK&quot; &lt;kk&gt; O&#39;Kay &amp; Co Post Office (House, Jan. 3, 2025)"'
+    assert_includes body.("/members/Z000001/index.html"), %(aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>)
+
+    pages.each do |path, html|
+      has_box = html.include?('<form class="sitesearch" action="/search/"')
+      assert_equal path != "/search/index.html", has_box, path
     end
   end
 
@@ -958,6 +984,13 @@ class VotePageTest < Minitest::Test
                           "or a territory. See the table by state."
   end
 
+  # A vote with no measure or vote title (a Speaker election) has the question
+  # as its search result title once, not "question: question".
+  def test_a_speaker_election_search_title_names_the_question_once
+    assert_includes pages.fetch("/votes/119/house/1/2/index.html"),
+                    'data-title="Election of the Speaker (House, Jan. 3, 2025)"'
+  end
+
   # A definition with an explainer page links it from the vote page and About;
   # one without links only How votes work.
   def test_an_expulsion_vote_links_the_explainer
@@ -965,7 +998,7 @@ class VotePageTest < Minitest::Test
     built = build_site([member("A000001", "AL", 1)],
                        [[expel, doc({ "A000001" => "Yea" }, { "yes" => 1 })],
                         [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
-    link = '<a class="link small" href="/how/expulsion/">How expulsion works</a>'
+    link = '<a class="link small" href="/how/expulsion/" data-pagefind-ignore>How expulsion works</a>'
     assert_includes built.fetch("/votes/119/house/1/1/index.html"), link
     refute_includes built.fetch("/votes/119/house/1/2/index.html"), "/how/expulsion/"
     assert_includes built.fetch("/about/index.html"), '<a href="/how/expulsion/">How expulsion works</a>.'
@@ -977,7 +1010,7 @@ class VotePageTest < Minitest::Test
     built = build_site([member("A000001", "AL", 1)],
                        [[vote(1, "On Passage").merge("bill_type" => "hr"), doc({ "A000001" => "Yea" }, { "yes" => 1 })],
                         [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
-    link = '<a class="link small" href="/how/bills/">How a bill becomes law</a>'
+    link = '<a class="link small" href="/how/bills/" data-pagefind-ignore>How a bill becomes law</a>'
     assert_includes built.fetch("/votes/119/house/1/1/index.html"), link
     refute_includes built.fetch("/votes/119/house/1/2/index.html"), "/how/bills/"
     assert_includes built.fetch("/about/index.html"), '<a href="/how/bills/">How a bill becomes law</a>'

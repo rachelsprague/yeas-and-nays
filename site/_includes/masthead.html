@@ -8,6 +8,13 @@
       <a href="/activity/"{% if page.nav == "activity" %} aria-current="page"{% endif %}>Activity</a>
       <a href="/about/"{% if page.nav == "about" %} aria-current="page"{% endif %}>About</a>
     </nav>
+    {%- unless page.url == "/search/" %}
+    <form class="sitesearch" action="/search/" method="get" role="search">
+      <label for="site-q" class="visually-hidden">Search the site</label>
+      <input id="site-q" class="field" type="search" name="q" placeholder="Search the site" autocomplete="off">
+      <button class="button" type="submit">Search</button>
+    </form>
+    {%- endunless %}
   </div>
 </div>
 <header class="wrap mast{% if include.large %} large{% endif %}">

@@ -16,7 +16,7 @@ nav: members
   </section>
 
   {%- if map %}
-  <section class="dmap" data-dmap aria-label="District map">
+  <section class="dmap" data-dmap aria-label="District map" data-pagefind-ignore>
     <div class="dmap-view">
       {%- comment -%} The map is for pointing; the search below is its keyboard and screen reader route. {%- endcomment %}
       <svg viewBox="0 0 {{ map.width | escape }} {{ map.height | escape }}" aria-hidden="true" focusable="false">

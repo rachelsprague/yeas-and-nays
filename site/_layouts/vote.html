@@ -4,7 +4,15 @@ layout: default
 {%- assign v = page.vote -%}
 <main id="main" class="wrap">
   <section class="vote-head">
-    <a class="back" href="/votes/">← All votes</a>
+    <a class="back" href="/votes/" data-pagefind-ignore>← All votes</a>
+    {%- comment -%}
+      Search results title: the question first, so several votes on one measure
+      read apart; the question alone when it is the title (a Speaker election).
+      Built from raw values (vote_title.html escapes) and escaped once.
+    {%- endcomment -%}
+    {%- assign raw_title = v.measure_title | default: v.vote_title | default: v.question | strip -%}
+    {%- capture search_title %}{{ v.question | strip }}{% if raw_title != "" and raw_title != v.question %}: {{ raw_title }}{% endif %} ({{ v.chamber_name }}, {{ v.vote_date | ap_date }}){% endcapture %}
+    <span hidden data-pagefind-meta="title[data-title]" data-title="{{ search_title | strip | escape }}"></span>
     {% include vote_kicker.html vote=v %}
     <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
     {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number | escape }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
@@ -12,7 +20,7 @@ layout: default
     {%- include procedure.html vote=v %}
   </section>
 
-  <div class="twocol">
+  <div class="twocol" data-pagefind-ignore>
     <section class="tally" aria-labelledby="tally-h">
       <h2 id="tally-h" class="kicker soft">Tally</h2>
       {% include tally.html view=page %}
@@ -53,7 +61,7 @@ layout: default
 
   {%- assign smap = page.state_map -%}
   {%- if smap %}
-  <section class="section" aria-labelledby="state-h">
+  <section class="section" aria-labelledby="state-h" data-pagefind-ignore>
     <h2 id="state-h" class="section-h sm">By state</h2>
     {%- if smap.src %}
     {%- include vote_map.html map=smap %}
@@ -112,7 +120,7 @@ layout: default
   {%- endif %}
 
   {%- if page.against.size > 0 %}
-  <section class="section against" aria-labelledby="against-h">
+  <section class="section against" aria-labelledby="against-h" data-pagefind-ignore>
     <h2 id="against-h" class="section-h sm">Voted against party majority</h2>
     <p class="small soft">Members whose {{ page.words.yes | escape }} or {{ page.words.no | escape }} differed from most of their party. <a class="link" href="/about/#party-majority">How this is counted</a></p>
     <ul class="ruled thin">
@@ -126,7 +134,7 @@ layout: default
   </section>
   {%- endif %}
 
-  <section class="section" aria-labelledby="roll-h" data-filter-scope>
+  <section class="section" aria-labelledby="roll-h" data-filter-scope data-pagefind-ignore>
     <div>
       <h2 id="roll-h" class="section-h">Full roll call</h2>
       <p class="small muted nums" data-count data-noun="members" aria-live="polite">{{ page.rows.size }} members</p>
@@ -171,7 +179,7 @@ layout: default
   </section>
 
   {%- if v.source_url or v.congress_gov_url %}
-  <section class="section" style="gap: 6px">
+  <section class="section" style="gap: 6px" data-pagefind-ignore>
     <h2 class="kicker soft">Official sources</h2>
     {%- if v.source_url %}
     <p style="font-size: 15px; line-height: 22px">

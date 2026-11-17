@@ -235,6 +235,7 @@ site/_site/
 site/.jekyll-cache/
 site/.bundle/
 site/vendor/
+site/node_modules/
 
 # Local backlog (this repo is public; see CLAUDE.md).
 /BOARD.md

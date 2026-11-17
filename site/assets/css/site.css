@@ -80,6 +80,29 @@ h1, h2, h3, p, ul, ol { margin: 0; }
   text-decoration: none; border-bottom: 2px solid transparent;
 }
 .mainnav a[aria-current="page"] { border-bottom-color: var(--accent); }
+/* Masthead search: its own full-width row on phones, beside the nav on desktop. */
+.sitesearch { display: flex; gap: 8px; flex: 1 1 100%; padding-bottom: 12px; }
+.sitesearch .field { height: 40px; font-size: 15px; min-width: 0; }
+.sitesearch .button { height: 40px; padding: 0 14px; font-size: 14px; }
+/* Pagefind's results UI on /search/, in the site's colors and type. */
+.sitesearch-results {
+  --pagefind-ui-scale: 0.9;
+  --pagefind-ui-primary: var(--accent);
+  --pagefind-ui-text: var(--ink);
+  --pagefind-ui-background: var(--surface);
+  --pagefind-ui-border: var(--ink);
+  --pagefind-ui-tag: var(--surface-alt);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 0;
+  --pagefind-ui-font: var(--font-sans);
+  margin-top: 8px;
+}
+.sitesearch-results input { color: var(--ink); }
+.sitesearch-results fieldset { border: 0; margin: 0; padding: 0; }
+.sitesearch-results .pagefind-ui__search-clear { border: 0; }
+.sitesearch-results .pagefind-ui__result-link { font-family: var(--font-display); }
+.sitesearch-results .pagefind-ui__result-excerpt { color: var(--ink-soft); }
+.sitesearch-results mark { background: none; color: inherit; font-weight: 600; box-shadow: inset 0 -2px var(--accent); }
 
 .mast { display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 16px; padding-bottom: 12px; text-align: center; }
 .mast a { display: block; max-width: 100%; }
@@ -558,6 +581,7 @@ footer.wrap { padding-bottom: 28px; }
   .wrap { padding-left: 40px; padding-right: 40px; }
   .mast img { height: 48px; }
   .mast.large img { height: 88px; }
+  .sitesearch { flex: 0 1 300px; padding: 6px 0; }
 
   .vote-h, .lead-h { font-size: 44px; line-height: 48px; }
   .fig { font-size: 64px; line-height: 60px; }
