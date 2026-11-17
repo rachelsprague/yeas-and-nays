@@ -402,6 +402,31 @@ class EscapingTest < Minitest::Test
   end
 end
 
+# A member's sponsored list is null until first fetched (no section; a fetch
+# can fail), then [] (an empty section) or the bills introduced this Congress.
+class MemberSponsoredTest < Minitest::Test
+  include SiteBuild
+
+  # The member page's sponsored section, or nil when there is none.
+  def section(sponsored)
+    files = { "Z000001" => { "sponsored" => sponsored, "cosponsored" => [] } }
+    @page = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], member_files: files)
+            .fetch("/members/Z000001/index.html")
+    @page[%r{<section aria-labelledby="bills-h".*?</section>}m]
+  end
+
+  def test_no_section_until_the_list_is_fetched
+    assert_nil section(nil)
+    assert_includes @page, '<section aria-labelledby="cosponsored-h"'
+  end
+
+  def test_an_empty_list_says_none
+    s = section([])
+    assert_includes s, "0 this Congress"
+    assert_includes s, "No bills or resolutions introduced this Congress."
+  end
+end
+
 # A member's cosponsored list is null until first fetched (no section), then
 # [] (an empty section) or the bills cosponsored this Congress.
 class MemberCosponsoredTest < Minitest::Test

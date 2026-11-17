@@ -37,6 +37,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 | `positions` | one row per member per vote | `vote_id` + `bioguide_id` |
 | `bills` | one row per bill or resolution with a recorded vote: sponsor, introduced date, cosponsor count | `bill_id`, e.g. `119-hr-1013` |
 | `sponsored_bills` | one row per bill or resolution a member introduced this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
+| `sponsored_lists` | one row per member whose sponsored list has been fetched (a failed fetch leaves none) | `bioguide_id` |
 | `cosponsored_bills` | one row per bill or resolution a member cosponsored this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
 | `cosponsored_lists` | one row per member whose cosponsored list has been fetched (lists fill in over several runs) | `bioguide_id` |
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
@@ -55,7 +56,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 | --- | --- |
 | `meta.json` | Vote and member counts, latest roll number per chamber and session |
 | `members.json` | All members, with their `member_stats` |
-| `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored this Congress (`cosponsored` is null until their list is first fetched) |
+| `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored this Congress (each list is null until it is first fetched) |
 | `floor_schedule.json` | `floor_schedule` items with display labels, when the Senate next convenes, and each chamber's floor status (when it convened if it hadn't adjourned, else when it next convenes), for the home page's floor band |
 | `votes.json` | All votes: metadata, official tallies, source links, newest first |
 | `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded, and the CRS summary of the measure (HTML reduced to formatting tags), or null |

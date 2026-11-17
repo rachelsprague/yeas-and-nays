@@ -910,8 +910,8 @@ module Yan
           p.merge("recent" => i < RECENT_VOTES)
         end
         bills = read_optional.call("members/#{m["bioguide_id"]}.json") || {}
-        sponsored = bills.fetch("sponsored", [])
-        # Nil until the member's cosponsored list is first fetched; the page leaves the section out.
+        # Each nil until the member's list is first fetched; the page leaves that section out.
+        sponsored = bills["sponsored"]
         cosponsored = bills["cosponsored"]
         [*sponsored, *cosponsored].each do |b|
           b["congress_gov_url"] = Yan.web_url(b["congress_gov_url"])

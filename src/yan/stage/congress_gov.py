@@ -83,29 +83,38 @@ def parse_member_list(content: bytes, source_file: str, list_key: str) -> list[d
     ]
 
 
+def parse_sponsored_dir(raw_root: Path) -> tuple[list[dict], list[dict]]:
+    """(sponsored, lists): every sponsored bill, and one row per member whose list has been
+    fetched (see parse_member_lists_dir)."""
+    return parse_member_lists_dir(raw_root, "sponsored", parse_sponsored)
+
+
 def parse_cosponsored_dir(raw_root: Path) -> tuple[list[dict], list[dict]]:
     """(cosponsored, lists): every cosponsored bill, and one row per member whose list has
-    been fetched. Lists fill in over several runs, so a member with no rows may just not
-    have been fetched yet; `lists` tells that apart from cosponsoring nothing."""
-    cosponsored, lists = [], []
-    for path in sorted(raw_root.glob("*/cosponsored/*.json")):
+    been fetched (see parse_member_lists_dir)."""
+    return parse_member_lists_dir(raw_root, "cosponsored", parse_cosponsored)
+
+
+def parse_member_lists_dir(raw_root: Path, kind: str, parse) -> tuple[list[dict], list[dict]]:
+    """(bills, lists) for one kind of member list. Lists fill in over several runs, and a
+    fetch that fails leaves no file, so a member with no rows may just not have been fetched
+    yet; `lists` tells that apart from a list with nothing on it."""
+    bills, lists = [], []
+    for path in sorted(raw_root.glob(f"*/{kind}/*.json")):
         source_file = str(path.relative_to(raw_root))
-        rows = parse_cosponsored(path.read_bytes(), source_file)
-        cosponsored += rows
+        rows = parse(path.read_bytes(), source_file)
+        bills += rows
         doc = json.loads(path.read_bytes())
         lists.append({"source_file": source_file, "bioguide_id": doc["bioguideId"],
                       "congress": str(doc["congress"]), "bill_count": str(len(rows))})
-    return cosponsored, lists
+    return bills, lists
 
 
-def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict]]:
-    """(bills, summaries, sponsored) from everything under data/raw/congress_gov/."""
+def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict]]:
+    """(bills, summaries) from everything under data/raw/congress_gov/."""
     bills = [parse_bill(p.read_bytes(), str(p.relative_to(raw_root)))
              for p in sorted(raw_root.glob("*/bills/*.json"))]
     summaries = []
     for path in sorted(raw_root.glob("*/summaries/*.json")):
         summaries += parse_summaries(path.read_bytes(), str(path.relative_to(raw_root)))
-    sponsored = []
-    for path in sorted(raw_root.glob("*/sponsored/*.json")):
-        sponsored += parse_sponsored(path.read_bytes(), str(path.relative_to(raw_root)))
-    return bills, summaries, sponsored
+    return bills, summaries

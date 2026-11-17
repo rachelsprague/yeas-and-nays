@@ -4,7 +4,7 @@
     data/out/members.json         one entry per member, with their stats this Congress
     data/out/members/{bioguide}.json  one member: bills and resolutions they introduced
                                   and cosponsored this Congress, newest first
-                                  (cosponsored is null until first fetched)
+                                  (each list is null until first fetched)
     data/out/floor_schedule.json  what may come up for a vote: the House's weekly
                                   floor schedule and pending Senate cloture motions,
                                   plus when the Senate next convenes and each
@@ -108,6 +108,7 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             from cosponsored_bills
             order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
         """)
+        sponsored_fetched = {row["bioguide_id"] for row in _rows(con, "select bioguide_id from sponsored_lists")}
         cosponsored_fetched = {row["bioguide_id"] for row in _rows(con, "select bioguide_id from cosponsored_lists")}
         floor_items = _rows(con, """
             select chamber, item_id, week_date, filed_date, category, question, measure_number,
@@ -175,9 +176,10 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
         bioguide_id = member["bioguide_id"]
         doc = {
             "bioguide_id": bioguide_id,
-            "sponsored": sponsored_by[bioguide_id],
-            # Null until the member's cosponsored list is first fetched (lists fill in over
-            # several runs), so the site can leave the section out rather than show none.
+            # Each list is null until it is first fetched (a fetch can fail, and cosponsored
+            # lists fill in over several runs), so the site can leave the section out rather
+            # than show none.
+            "sponsored": sponsored_by[bioguide_id] if bioguide_id in sponsored_fetched else None,
             "cosponsored": cosponsored_by[bioguide_id] if bioguide_id in cosponsored_fetched else None,
         }
         changed += write_if_changed(member_dir / name, dumps(doc))
