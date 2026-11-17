@@ -698,13 +698,15 @@ module Yan
     out + open.reverse.map { |o| "</#{o}>" }.join
   end
 
-  # Entities that only make whitespace: &nbsp;, &ensp;, &emsp;, &thinsp; and
-  # the tab, line break, carriage return, space, no-break space, en space,
-  # em space, thin space and zero-width space as numbers.
+  # Entities that only make whitespace or nothing visible: &nbsp;, &ensp;,
+  # &emsp;, &thinsp;, &zwnj;, &zwj;, &shy; and the tab, line break, carriage
+  # return, space, no-break space, soft hyphen, en space, em space, thin
+  # space, zero-width space, zero-width non-joiner, zero-width joiner, word
+  # joiner and byte order mark as numbers.
   BLANK_ENTITY = Regexp.union(
-    /&(?:nbsp|ensp|emsp|thinsp);/i,
-    /&#0*(?:9|10|13|32|160|8194|8195|8201|8203);/,
-    /&#x0*(?:9|a|d|20|a0|2002|2003|2009|200b);/i
+    /&(?:nbsp|ensp|emsp|thinsp|zwnj|zwj|shy);/i,
+    /&#0*(?:9|10|13|32|160|173|8194|8195|8201|8203|8204|8205|8288|65279);/,
+    /&#x0*(?:9|a|d|20|a0|ad|2002|2003|2009|200b|200c|200d|2060|feff);/i
   )
 
   # A CRS summary as the vote page shows it, or nil when it has no text
