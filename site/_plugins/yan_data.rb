@@ -698,9 +698,14 @@ module Yan
     out + open.reverse.map { |o| "</#{o}>" }.join
   end
 
-  # Entities that only make whitespace: &nbsp; and the tab, line break,
-  # carriage return, space and no-break space as numbers.
-  BLANK_ENTITY = /&(?:nbsp|#0*(?:9|10|13|32|160)|#x0*(?:9|a|d|20|a0));/i
+  # Entities that only make whitespace: &nbsp;, &ensp;, &emsp;, &thinsp; and
+  # the tab, line break, carriage return, space, no-break space, en space,
+  # em space, thin space and zero-width space as numbers.
+  BLANK_ENTITY = Regexp.union(
+    /&(?:nbsp|ensp|emsp|thinsp);/i,
+    /&#0*(?:9|10|13|32|160|8194|8195|8201|8203);/,
+    /&#x0*(?:9|a|d|20|a0|2002|2003|2009|200b);/i
+  )
 
   # A CRS summary as the vote page shows it, or nil when it has no text
   # (only tags, whitespace or whitespace entities), which reads as no
