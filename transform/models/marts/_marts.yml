@@ -181,11 +181,25 @@ models:
           The fewest Yeas that carry the question: more than half, or at least two-thirds, of
           those voting yea or nay; three-fifths of the senators on the roll call (senators duly
           chosen and sworn) for 3/5, null when no senators are on the roll. Leaves out a Vice
-          President's tie-breaking vote.
+          President's tie-breaking vote. Also null when it disagrees with the official result
+          (carried short of it, or failed with it) and no tie was broken; the warning lists
+          those votes.
         data_tests:
           - not_null:
               config:
                 where: required_share is not null and member_count > 0
+                severity: warn
+      - name: carried
+        description: >
+          Whether the question carried, read from the official result (Agreed to, Passed,
+          Confirmed, Sustained, Well Taken; or Rejected, Failed, Defeated, Not Sustained, Not
+          Well Taken). Null for a result that isn't a yes or no (Speaker elections); a warning
+          lists any other result wording.
+        data_tests:
+          - not_null:
+              config:
+                where: required_share is not null
+                severity: warn
       - name: tie_breaker_by
         description: Senate only. Set when the Vice President cast a tie-breaking vote.
       - name: source_url

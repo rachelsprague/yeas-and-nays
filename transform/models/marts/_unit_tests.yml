@@ -416,3 +416,46 @@ unit_tests:
         - {vote_id: s2, required_share: "1/2", yeas_needed: 50}
         - {vote_id: s3, required_share: "2/3", yeas_needed: 67}
         - {vote_id: s4, required_share: "3/5", yeas_needed: null}
+
+  - name: votes_read_carried_and_drop_yeas_needed_the_result_contradicts
+    description: >
+      Carried comes from the official result, "Not Sustained" read before
+      "Sustained"; a Speaker's name is neither. Yeas needed is left out when
+      the result disagrees with it (a 3/5 waiver agreed to short of
+      three-fifths, a majority vote rejected with enough Yeas), but kept for
+      a tie the Vice President broke and for a vote whose result isn't a yes
+      or no.
+    model: votes
+    given:
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s1, chamber: senate, majority_requirement: "3/5", result: Motion Agreed to, yea_count: 2, nay_count: 1}
+          - {vote_id: s2, chamber: senate, majority_requirement: "1/2", result: Nomination Confirmed, yea_count: 50, nay_count: 50, tie_breaker_by: Vice President of the United States}
+          - {vote_id: s3, chamber: senate, majority_requirement: "1/2", result: Amendment Rejected, yea_count: 60, nay_count: 40}
+          - {vote_id: s4, chamber: senate, majority_requirement: "1/2", result: Decision of Chair Not Sustained, yea_count: 40, nay_count: 59}
+          - {vote_id: s5, chamber: senate, majority_requirement: "1/2", result: Point of Order Well Taken, yea_count: 51, nay_count: 47}
+          - {vote_id: h1, chamber: house, result: Passed, yea_count: 215, nay_count: 209}
+          - {vote_id: h2, chamber: house, result: Failed, yea_count: 210, nay_count: 210}
+          - {vote_id: h3, chamber: house, result: Smith, yea_count: 1, nay_count: 0}
+      - input: ref('bills')
+        rows: []
+      # Five senators on the roll for s1: three-fifths is 3 Yeas.
+      - input: ref('positions')
+        rows:
+          - {vote_id: s1, bioguide_id: A}
+          - {vote_id: s1, bioguide_id: B}
+          - {vote_id: s1, bioguide_id: C}
+          - {vote_id: s1, bioguide_id: D}
+          - {vote_id: s1, bioguide_id: E}
+      - input: ref('int_positions_resolved')
+        rows: []
+    expect:
+      rows:
+        - {vote_id: s1, carried: true, yeas_needed: null}
+        - {vote_id: s2, carried: true, yeas_needed: 51}
+        - {vote_id: s3, carried: false, yeas_needed: null}
+        - {vote_id: s4, carried: false, yeas_needed: 50}
+        - {vote_id: s5, carried: true, yeas_needed: 50}
+        - {vote_id: h1, carried: true, yeas_needed: 213}
+        - {vote_id: h2, carried: false, yeas_needed: 211}
+        - {vote_id: h3, carried: null, yeas_needed: 1}
