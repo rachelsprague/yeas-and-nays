@@ -7,7 +7,7 @@ layout: default
     <a class="back" href="/votes/">← All votes</a>
     {% include vote_kicker.html vote=v %}
     <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
-    {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
+    {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number | escape }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
     <span class="kicker result">{{ v.result_label | escape }}</span>
     {%- include procedure.html vote=v %}
   </section>
@@ -18,8 +18,8 @@ layout: default
       {% include tally.html view=page %}
       <p class="small muted nums">
         {{ page.total }} members recorded.
-        {%- if page.share %} {% if v.yeas_needed %}{{ v.yeas_needed }} needed to carry, {{ page.share }}{% else %}Needed to carry: {{ page.share }}{% endif %}.{% endif %}
-        {%- if v.tie_breaker_by %} The {{ v.tie_breaker_by }} voted {{ v.tie_breaker_vote }} to break the tie.{% endif %}
+        {%- if page.share %} {% if v.yeas_needed %}{{ v.yeas_needed | escape }} needed to carry, {{ page.share | escape }}{% else %}Needed to carry: {{ page.share | escape }}{% endif %}.{% endif %}
+        {%- if v.tie_breaker_by %} The {{ v.tie_breaker_by | escape }} voted {{ v.tie_breaker_vote | escape }} to break the tie.{% endif %}
       </p>
     </section>
 
@@ -31,15 +31,15 @@ layout: default
           <thead><tr>
             <th scope="col">Party</th>
             {%- if page.has_other %}<th scope="col" class="r">Candidates</th>{% else %}
-            <th scope="col" class="r">{{ page.words.yes }}</th>
-            <th scope="col" class="r">{{ page.words.no }}</th>{% endif %}
+            <th scope="col" class="r">{{ page.words.yes | escape }}</th>
+            <th scope="col" class="r">{{ page.words.no | escape }}</th>{% endif %}
             <th scope="col" class="r">Present</th>
             <th scope="col" class="r">Not Voting</th>
           </tr></thead>
           <tbody>
             {%- for p in page.by_party %}
             <tr>
-              <th scope="row" class="party">{{ p.party }} · {{ p.name }}</th>
+              <th scope="row" class="party">{{ p.party | escape }} · {{ p.name | escape }}</th>
               {%- if page.has_other %}<td class="r">{{ p.other }}</td>{% else %}
               <td class="r">{{ p.yes }}</td><td class="r">{{ p.no }}</td>{% endif %}<td class="r">{{ p.present }}</td><td class="r">{{ p.not_voting }}</td>
             </tr>
@@ -64,14 +64,14 @@ layout: default
         <table class="roll nums">
           <thead><tr>
             <th scope="col">State</th>
-            <th scope="col" class="r">{{ page.words.yes }}</th>
-            <th scope="col" class="r">{{ page.words.no }}</th>
+            <th scope="col" class="r">{{ page.words.yes | escape }}</th>
+            <th scope="col" class="r">{{ page.words.no | escape }}</th>
             <th scope="col" class="r">Present</th>
             <th scope="col" class="r">Not Voting</th>
           </tr></thead>
           <tbody>
             {%- for s in smap.table %}
-            <tr><th scope="row">{{ s.name }}</th><td class="r">{{ s.yes }}</td><td class="r">{{ s.no }}</td><td class="r">{{ s.present }}</td><td class="r">{{ s.not_voting }}</td></tr>
+            <tr><th scope="row">{{ s.name | escape }}</th><td class="r">{{ s.yes }}</td><td class="r">{{ s.no }}</td><td class="r">{{ s.present }}</td><td class="r">{{ s.not_voting }}</td></tr>
             {%- endfor %}
           </tbody>
         </table>
@@ -87,7 +87,7 @@ layout: default
   <section class="section" aria-labelledby="summary-h">
     <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label | escape }}</h2>
     {%- if page.sponsor %}
-    <p class="nums" style="font-size: 15px; line-height: 22px">Introduced by <a class="link" href="{{ page.sponsor.url }}">{{ page.sponsor.name | escape }}</a> ({{ page.sponsor.code }}){% if v.introduced_date %} on {{ v.introduced_date | ap_date }}{% endif %}{% if v.cosponsor_count %} · {{ v.cosponsor_count }} cosponsor{% if v.cosponsor_count != 1 %}s{% endif %}{% endif %}</p>
+    <p class="nums" style="font-size: 15px; line-height: 22px">Introduced by <a class="link" href="{{ page.sponsor.url | escape }}">{{ page.sponsor.name | escape }}</a> ({{ page.sponsor.code | escape }}){% if v.introduced_date %} on {{ v.introduced_date | ap_date }}{% endif %}{% if v.cosponsor_count %} · {{ v.cosponsor_count }} cosponsor{% if v.cosponsor_count != 1 %}s{% endif %}{% endif %}</p>
     {%- endif %}
     {%- if page.summary %}
     <p class="small soft">By the Congressional Research Service, Library of Congress, as published.{% if page.summary.version %} Version: {{ page.summary.version | escape }}{% if page.summary.version_date %}, {{ page.summary.version_date | ap_date }}{% endif %}.{% elsif page.summary.version_date %} Version dated {{ page.summary.version_date | ap_date }}.{% endif %}{% if v.amendment_number or v.amendment_purpose %} It describes the measure, not the amendment voted on.{% endif %}</p>
@@ -103,19 +103,19 @@ layout: default
     {%- else %}
     <p class="small soft">No Congressional Research Service summary of {{ v.measure_label | escape }} is available.</p>
     {%- endif %}
-    <a class="more" href="{{ v.congress_gov_url }}/text">Full text on Congress.gov →</a>
+    <a class="more" href="{{ v.congress_gov_url | escape }}/text">Full text on Congress.gov →</a>
   </section>
   {%- endif %}
 
   {%- if page.against.size > 0 %}
   <section class="section against" aria-labelledby="against-h">
     <h2 id="against-h" class="section-h sm">Voted against party majority</h2>
-    <p class="small soft">Members whose {{ page.words.yes }} or {{ page.words.no }} differed from most of their party. <a class="link" href="/about/#party-majority">How this is counted</a></p>
+    <p class="small soft">Members whose {{ page.words.yes | escape }} or {{ page.words.no | escape }} differed from most of their party. <a class="link" href="/about/#party-majority">How this is counted</a></p>
     <ul class="ruled thin">
       {%- for a in page.against %}
       <li>
-        <a href="{{ a.url }}">{{ a.name | escape }} <span>{{ a.code }}</span></a>
-        <span class="small soft nums">Voted <strong>{{ a.position }}</strong> · {{ a.caucus }} majority voted {{ a.majority }}</span>
+        <a href="{{ a.url | escape }}">{{ a.name | escape }} <span>{{ a.code | escape }}</span></a>
+        <span class="small soft nums">Voted <strong>{{ a.position | escape }}</strong> · {{ a.caucus | escape }} majority voted {{ a.majority | escape }}</span>
       </li>
       {%- endfor %}
     </ul>
@@ -142,14 +142,14 @@ layout: default
         <label for="rc-state" class="kicker">State</label>
         <select id="rc-state" class="field" data-filter="state">
           <option value="">All</option>
-          {%- for s in page.states %}<option>{{ s }}</option>{% endfor %}
+          {%- for s in page.states %}<option>{{ s | escape }}</option>{% endfor %}
         </select>
       </div>
       <div>
         <label for="rc-pos" class="kicker">Vote</label>
         <select id="rc-pos" class="field" data-filter="position">
           <option value="">All</option>
-          {%- for p in page.position_options %}<option>{{ p }}</option>{% endfor %}
+          {%- for p in page.position_options %}<option>{{ p | escape }}</option>{% endfor %}
         </select>
       </div>
     </div>
@@ -158,7 +158,7 @@ layout: default
         <thead><tr><th scope="col">Member</th><th scope="col">Party</th><th scope="col">{% if v.chamber == "house" %}District{% else %}State{% endif %}</th><th scope="col">Vote</th></tr></thead>
         <tbody>
           {%- for r in page.rows %}
-          <tr data-row data-name="{{ r.name | downcase | escape }}" data-party="{{ r.party }}" data-state="{{ r.state }}" data-position="{{ r.position }}"><td><a class="headline-link" href="/members/{{ r.id }}/">{{ r.name | escape }}</a></td><td class="party">{{ r.party }}</td><td class="nums">{{ r.seat }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position }}</span></td></tr>
+          <tr data-row data-name="{{ r.name | downcase | escape }}" data-party="{{ r.party | escape }}" data-state="{{ r.state | escape }}" data-position="{{ r.position | escape }}"><td><a class="headline-link" href="/members/{{ r.id | escape }}/">{{ r.name | escape }}</a></td><td class="party">{{ r.party | escape }}</td><td class="nums">{{ r.seat | escape }}</td><td><span class="pos">{% if r.mark %}<span class="mark {{ r.mark }}" aria-hidden="true"></span>{% endif %}{{ r.position | escape }}</span></td></tr>
           {%- endfor %}
         </tbody>
       </table>
@@ -170,12 +170,12 @@ layout: default
     <h2 class="kicker soft">Official sources</h2>
     <p style="font-size: 15px; line-height: 22px">
       {% if v.chamber == "house" %}Office of the Clerk, U.S. House of Representatives{% else %}U.S. Senate{% endif %}:
-      <a class="link" href="{{ v.source_url }}" style="overflow-wrap: anywhere">{{ v.source_url | remove_first: "https://" | remove_first: "www." }}</a>
+      <a class="link" href="{{ v.source_url | escape }}" style="overflow-wrap: anywhere">{{ v.source_url | remove_first: "https://" | remove_first: "www." | escape }}</a>
     </p>
     {%- if v.congress_gov_url %}
     <p style="font-size: 15px; line-height: 22px">
       {{ v.measure_label | escape }} on Congress.gov:
-      <a class="link" href="{{ v.congress_gov_url }}" style="overflow-wrap: anywhere">{{ v.congress_gov_url | remove_first: "https://" | remove_first: "www." }}</a>
+      <a class="link" href="{{ v.congress_gov_url | escape }}" style="overflow-wrap: anywhere">{{ v.congress_gov_url | remove_first: "https://" | remove_first: "www." | escape }}</a>
     </p>
     {%- endif %}
   </section>

@@ -71,14 +71,14 @@ nav: votes
         <h2 id="week-h" class="module-h">On the floor · Week of {{ week.start | ap_date }}</h2>
         <div class="week-figs nums">
           {%- for c in week.chambers %}
-          <div data-row data-chamber="{{ c.chamber }}"><span class="fig-sm">{{ c.total }}</span><span class="small soft">{{ c.name }} roll call{% if c.total != 1 %}s{% endif %}</span></div>
+          <div data-row data-chamber="{{ c.chamber | escape }}"><span class="fig-sm">{{ c.total }}</span><span class="small soft">{{ c.name | escape }} roll call{% if c.total != 1 %}s{% endif %}</span></div>
           {%- endfor %}
         </div>
         {%- for c in week.chambers %}
-        <div class="spark" data-row data-chamber="{{ c.chamber }}">
-          <span class="small muted">{{ c.name }}, by week</span>
+        <div class="spark" data-row data-chamber="{{ c.chamber | escape }}">
+          <span class="small muted">{{ c.name | escape }}, by week</span>
           <div class="spark-bars" role="img" aria-label="{{ c.label | escape }}">
-            {%- for b in c.bars %}<span style="height: {{ b.pct }}%"{% if forloop.last %} class="now"{% endif %}></span>{% endfor -%}
+            {%- for b in c.bars %}<span style="height: {{ b.pct | escape }}%"{% if forloop.last %} class="now"{% endif %}></span>{% endfor -%}
           </div>
         </div>
         {%- endfor %}
@@ -135,8 +135,8 @@ nav: votes
             <span class="small soft">{{ v.question | escape }}</span>
             <span class="t">{% include vote_title.html vote=v %}</span>
           </a>
-          <div class="close-bar" aria-hidden="true"><span class="yea" style="width: {{ r.yea_pct }}%"></span>{% unless v.tie_breaker_by %}<span class="tick" style="left: {{ r.tick_pct }}%"></span>{% endunless %}</div>
-          <p class="small nums">{{ v.yea_count }} {{ r.words.yes | escape }}, {{ v.nay_count }} {{ r.words.no | escape }} · {% if v.tie_breaker_by %}Tie broken by the {{ v.tie_breaker_by | escape }}{% else %}{{ r.needed }} needed, {{ r.share }}{% endif %}</p>
+          <div class="close-bar" aria-hidden="true"><span class="yea" style="width: {{ r.yea_pct | escape }}%"></span>{% unless v.tie_breaker_by %}<span class="tick" style="left: {{ r.tick_pct | escape }}%"></span>{% endunless %}</div>
+          <p class="small nums">{{ v.yea_count }} {{ r.words.yes | escape }}, {{ v.nay_count }} {{ r.words.no | escape }} · {% if v.tie_breaker_by %}Tie broken by the {{ v.tie_breaker_by | escape }}{% else %}{{ r.needed | escape }} needed, {{ r.share | escape }}{% endif %}</p>
           <p class="small soft">{{ v.result_label | escape }}</p>
         </li>
         {%- endfor %}
@@ -153,7 +153,7 @@ nav: votes
         {%- for r in against %}
         {%- assign v = r.vote %}
         <li class="against-item" data-row data-chamber="{{ v.chamber | escape }}"{% if forloop.index > 5 %} hidden{% endif %}>
-          <span class="against-n nums"><span class="fig-sm">{{ r.count }}</span><span class="small soft">member{% if r.count != 1 %}s{% endif %}</span></span>
+          <span class="against-n nums"><span class="fig-sm">{{ r.count | escape }}</span><span class="small soft">member{% if r.count != 1 %}s{% endif %}</span></span>
           <span class="against-v">
             <a class="headline-link" href="{{ v.url | escape }}">
               <span class="kicker muted nums">{{ v.chamber_name | escape }} · {{ v.vote_date | ap_date }}</span>
@@ -200,7 +200,7 @@ nav: votes
         {%- for a in areas %}
         <li>
           <span class="small nums"><span>{{ a.area | escape }}</span><span>{{ a.total }}</span></span>
-          <span class="area-top-bar" aria-hidden="true"><span style="width: {{ a.pct }}%"></span></span>
+          <span class="area-top-bar" aria-hidden="true"><span style="width: {{ a.pct | escape }}%"></span></span>
         </li>
         {%- endfor %}
       </ul>

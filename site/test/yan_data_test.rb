@@ -198,6 +198,54 @@ class EscapingTest < Minitest::Test
     end
   end
 
+  # The rest of the feed's text: a candidate's name as a position (tallies,
+  # filters, rows), amendment, tie-breaker and source fields, and a second
+  # member whose state, party and initials hold the special characters.
+  def test_positions_vote_fields_and_member_codes_are_escaped
+    other = MEMBER.merge("bioguide_id" => "Z000002", "official_full_name" => %q(Will "WQ" <wq> O'Wee & Two),
+                         "first_name" => "&", "last_name" => "<Two", "state" => %q("WQ" <wq>),
+                         "party" => %q("WQ" <wq>), "website_url" => nil, "x_url" => nil)
+    candidate = %q("VQ" <vq> O'Vee & Co)
+    speaker = VOTE.merge("vote_id" => "h119-1-0002", "roll_number" => 2, "question" => "Election of the Speaker",
+                         "result" => "Doe (AL)", "measure_title" => nil, "bill_type" => nil, "congress_gov_url" => nil,
+                         "sponsor_bioguide_id" => nil, "yeas_needed" => nil, "bot_posts" => false)
+    speaker_doc = DOC.merge("positions" => { "Z000001" => candidate, "Z000002" => candidate },
+                            "party_totals" => { "R" => { "other" => 1 } }, "against_party_majority" => [])
+    amendment = VOTE.merge("vote_id" => "h119-1-0003", "roll_number" => 3, "question" => "On Agreeing to the Amendment",
+                           "amendment_number" => %q("VQ" <vq> 1), "amendment_purpose" => "To add a section.",
+                           "tie_breaker_by" => %q("VQ" <vq> O'Vee & VP), "tie_breaker_vote" => %q("VQ" <vq> Yea),
+                           "source_url" => %q(https://clerk.house.gov/?q="vq"<vq>&x='vq'),
+                           "congress_gov_url" => %q(https://www.congress.gov/?q="vq"<vq>&x='vq'))
+    amendment_doc = DOC.merge("positions" => { "Z000001" => "Nay", "Z000002" => "Yea" })
+    built = build_site([MEMBER, other], [[VOTE, DOC], [speaker, speaker_doc], [amendment, amendment_doc]])
+
+    speaker_page = built.fetch("/votes/119/house/1/2/index.html")
+    escaped = "&quot;VQ&quot; &lt;vq&gt; O&#39;Vee &amp; Co"
+    assert_includes speaker_page, %(<option>#{escaped}</option>)
+    assert_includes speaker_page, %(data-position="#{escaped}")
+    amendment_page = built.fetch("/votes/119/house/1/3/index.html")
+    assert_includes amendment_page, "Amendment &quot;VQ&quot; &lt;vq&gt; 1:"
+    assert_includes amendment_page, %(href="https://clerk.house.gov/?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;")
+    assert_includes amendment_page, %(href="https://www.congress.gov/?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;/text")
+    assert_includes amendment_page, %(data-party="&quot;WQ&quot; &lt;wq&gt;" data-state="&quot;WQ&quot; &lt;wq&gt;")
+    assert_includes built.fetch("/members/Z000002/index.html"), %(<span class="initials" aria-hidden="true">&amp;&lt;</span>)
+    assert_includes built.fetch("/members/index.html"), %(<option value="&quot;WQ&quot; &lt;wq&gt;">)
+
+    # Map and card data are JSON in script tags (checked above); drop them.
+    scripts = %r{<script type="application/json" data-(?:people|seats)>.*?</script>}m
+    pages = built.transform_values { |html| html.gsub(scripts, "") }.select { |_, html| html.match?(/vq|wq/i) }
+    assert_includes pages.keys, "/votes/119/house/1/2/index.html"
+    assert_includes pages.keys, "/members/Z000002/index.html"
+    pages.each do |path, html|
+      html.scan(/.?(?:vq|wq).?/i).each do |hit|
+        assert_match(/\A;(vq|wq)&\z/i, hit, "#{path}: quote or angle bracket not escaped")
+      end
+      ["O'Vee", "O'Wee", "& Co", "& VP", "& Two", "='vq'"].each do |raw|
+        refute_includes html, raw, "#{path}: apostrophe or ampersand not escaped"
+      end
+    end
+  end
+
   # The pipeline sanitizes CRS summaries, but in a job that runs third-party
   # code; the site build re-checks them and escapes the version label.
   def test_summary_keeps_only_bare_allowed_tags_and_escapes_the_version

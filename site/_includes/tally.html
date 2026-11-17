@@ -5,12 +5,12 @@
   {%- for t in view.tally %}
   <div>
     <span class="fig">{{ t.count }}</span>
-    <span class="fig-label">{% if t.mark %}<span class="mark {{ t.mark }}" aria-hidden="true"></span>{% endif %}{{ t.label }}</span>
+    <span class="fig-label">{% if t.mark %}<span class="mark {{ t.mark }}" aria-hidden="true"></span>{% endif %}{{ t.label | escape }}</span>
   </div>
   {%- endfor %}
 </div>
 {%- unless view.has_other %}
-<div class="bar" role="img" aria-label="{{ view.tally[0].count }} {{ view.words.yes }}, {{ view.tally[1].count }} {{ view.words.no }}, of {{ view.total }} members">
+<div class="bar" role="img" aria-label="{{ view.tally[0].count }} {{ view.words.yes | escape }}, {{ view.tally[1].count }} {{ view.words.no | escape }}, of {{ view.total }} members">
   <div class="yea" style="width: {{ view.yes_pct }}%"></div>
   <div class="nay hatch" style="width: {{ view.no_pct }}%"></div>
 </div>
