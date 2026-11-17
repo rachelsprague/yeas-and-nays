@@ -1,6 +1,6 @@
 """Tracking more than one Congress: a past Congress's raw files are fetched only when
-missing, bills are fetched under their own vote's Congress, and export never drops a
-past Congress's votes."""
+missing (once it's been over REFRESH_AFTER_END since it ended), bills are fetched under
+their own vote's Congress, and export never drops a past Congress's votes."""
 
 import datetime as dt
 import json
@@ -16,6 +16,18 @@ from yan.http import Client
 FIXTURES = Path(__file__).parent / "fixtures"
 HOUSE_VOTE = (FIXTURES / "house_2025_roll010.xml").read_bytes()  # <congress>119</congress>
 NOT_A_VOTE = b"<error>File not found</error>"
+# The 119th Congress ends 2027-01-03; it's refreshed until 60 days after.
+JUST_ENDED = dt.date(2027, 1, 20)
+LONG_ENDED = dt.date(2027, 6, 1)
+
+
+def test_recently_ended():
+    from yan.config import recently_ended
+
+    sessions = {1: 2025, 2: 2026}
+    assert recently_ended(sessions, dt.date(2026, 11, 16))  # still in session
+    assert recently_ended(sessions, JUST_ENDED)
+    assert not recently_ended(sessions, LONG_ENDED)
 
 
 def _client(handler, fetched):
@@ -45,16 +57,17 @@ def _house_setup(monkeypatch, tmp_path, current, last_roll):
 def test_house_past_congress_walks_on_from_its_last_file(monkeypatch, tmp_path):
     house, handler = _house_setup(monkeypatch, tmp_path, current=120, last_roll=31)
     fetched = []
-    house.ingest(_client(handler, fetched), {119: {1: 2025}})
+    house.ingest(_client(handler, fetched), {119: {1: 2025}}, LONG_ENDED)
     # No refresh of recent votes: roll 31 is new, then two misses end the walk.
     assert fetched == [house.URL.format(year=2025, roll=r) for r in (31, 32, 33)]
     assert (tmp_path / "house" / "2025" / "roll031.xml").exists()
 
 
-def test_house_current_congress_refreshes_its_recent_votes(monkeypatch, tmp_path):
-    house, handler = _house_setup(monkeypatch, tmp_path, current=119, last_roll=30)
+@pytest.mark.parametrize("current, today", [(119, LONG_ENDED), (120, JUST_ENDED)])
+def test_house_current_or_just_ended_congress_refreshes_its_recent_votes(monkeypatch, tmp_path, current, today):
+    house, handler = _house_setup(monkeypatch, tmp_path, current=current, last_roll=30)
     fetched = []
-    house.ingest(_client(handler, fetched), {119: {1: 2025}})
+    house.ingest(_client(handler, fetched), {119: {1: 2025, 2: 2026}}, today)
     assert fetched[0] == house.URL.format(year=2025, roll=30 - house.REFRESH_RECENT + 1)
 
 
@@ -96,14 +109,16 @@ def _senate_setup(monkeypatch, tmp_path, current):
 def test_senate_past_congress_uses_its_saved_menu_and_fetches_only_missing_votes(monkeypatch, tmp_path):
     senate, handler = _senate_setup(monkeypatch, tmp_path, current=120)
     fetched = []
-    senate.ingest(_client(handler, fetched), {119: {2: 2026}})
+    senate.ingest(_client(handler, fetched), {119: {2: 2026}}, LONG_ENDED)
     assert fetched == [senate.VOTE_URL.format(congress=119, session=2, vote=3)]
 
 
-def test_senate_current_congress_fetches_its_menu_and_recent_votes(monkeypatch, tmp_path):
-    senate, handler = _senate_setup(monkeypatch, tmp_path, current=119)
+@pytest.mark.parametrize("current, today", [(119, LONG_ENDED), (120, JUST_ENDED)])
+def test_senate_current_or_just_ended_congress_fetches_its_menu_and_recent_votes(
+        monkeypatch, tmp_path, current, today):
+    senate, handler = _senate_setup(monkeypatch, tmp_path, current=current)
     fetched = []
-    senate.ingest(_client(handler, fetched), {119: {2: 2026}})
+    senate.ingest(_client(handler, fetched), {119: {2: 2026}}, today)
     assert fetched == [senate.MENU_URL.format(congress=119, session=2)] + [
         senate.VOTE_URL.format(congress=119, session=2, vote=n) for n in (3, 4, 5)]
 
@@ -111,7 +126,7 @@ def test_senate_current_congress_fetches_its_menu_and_recent_votes(monkeypatch, 
 def test_senate_past_congress_with_no_saved_menu_fetches_it(monkeypatch, tmp_path):
     senate, handler = _senate_setup(monkeypatch, tmp_path, current=120)
     fetched = []
-    senate.ingest(_client(handler, fetched), {119: {1: 2025}})
+    senate.ingest(_client(handler, fetched), {119: {1: 2025}}, LONG_ENDED)
     assert fetched[0] == senate.MENU_URL.format(congress=119, session=1)
     assert len(fetched) == 6
     assert (tmp_path / "senate" / "119" / "1" / "vote_menu.xml").exists()
@@ -145,6 +160,7 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
     monkeypatch.setenv("CONGRESS_API_KEY", "k")
     monkeypatch.setattr(congress_gov, "RAW_DIR", tmp_path)
     monkeypatch.setattr(congress_gov, "CONGRESS", 120)
+    monkeypatch.setattr(congress_gov, "CONGRESSES", {119: {1: 2025, 2: 2026}, 120: {1: 2027, 2: 2028}})
     monkeypatch.setattr(congress_gov, "members_in_congress", lambda: [])
     old = dt.date(2025, 3, 1)
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {
@@ -159,7 +175,7 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
         os.utime(path, (path.stat().st_mtime - 30 * 24 * 3600,) * 2)
 
     client = _BillClient()
-    congress_gov.ingest(client)
+    congress_gov.ingest(client, LONG_ENDED)
 
     assert client.urls == [
         congress_gov.BILL_URL.format(congress=119, bill_type="hr", bill_number="2"),
@@ -168,6 +184,11 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
         congress_gov.SUMMARIES_URL.format(congress=120, bill_type="hr", bill_number="1"),
     ]
     assert congress_gov.raw_path(120, "hr", "1", "bills").exists()
+
+    # Just after the 119th ended, its week-old H.R. 1 files are still refreshed.
+    client = _BillClient()
+    congress_gov.ingest(client, JUST_ENDED)
+    assert congress_gov.BILL_URL.format(congress=119, bill_type="hr", bill_number="1") in client.urls
 
 
 def _votes_json(out_dir, vote_ids):

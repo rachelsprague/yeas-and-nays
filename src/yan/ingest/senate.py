@@ -2,16 +2,17 @@
 
 The vote menu for each session lists every vote number; each vote has its own
 XML file. Votes already on disk are skipped, except the most recent few, which
-are re-fetched to pick up corrections. For a past Congress, the menu saved on
-disk is used and only missing votes are fetched, so a run makes no requests
-unless the cache was lost.
+are re-fetched to pick up corrections. For a Congress that ended more than
+REFRESH_AFTER_END ago, the menu saved on disk is used and only missing votes
+are fetched, so a run makes no requests unless the cache was lost.
 """
 
+import datetime as dt
 import logging
 
 import defusedxml.ElementTree as ET
 
-from yan.config import CONGRESS, CONGRESSES, RAW_DIR, REFRESH_RECENT
+from yan.config import CONGRESS, CONGRESSES, RAW_DIR, REFRESH_RECENT, recently_ended
 from yan.http import Client, write_atomic
 
 log = logging.getLogger(__name__)
@@ -34,10 +35,13 @@ def vote_numbers_from_menu(content: bytes) -> list[int]:
     return sorted(int(v.findtext("vote_number")) for v in root.iter("vote"))
 
 
-def ingest(client: Client, congresses: dict[int, dict[int, int]] | None = None) -> None:
+def ingest(client: Client, congresses: dict[int, dict[int, int]] | None = None,
+           today: dt.date | None = None) -> None:
+    today = today or dt.date.today()
     for congress, sessions in (congresses or CONGRESSES).items():
+        current = congress == CONGRESS or recently_ended(sessions, today)
         for session in sessions:
-            ingest_session(client, congress, session, current=congress == CONGRESS)
+            ingest_session(client, congress, session, current)
 
 
 def ingest_session(client: Client, congress: int, session: int, current: bool) -> None:

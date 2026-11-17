@@ -5,16 +5,18 @@ and has no machine-readable index. Requests past the last vote return HTTP 200
 with a short error body rather than a 404, so we walk roll numbers upward and
 stop when a response doesn't contain a vote.
 
-For the Congress in session, the most recent votes are re-fetched each run to
-pick up corrections. A past Congress's files only get walked on from the last
-one on disk, so a run costs a couple of requests per year, and a lost cache
-refills.
+For the Congress in session (and one that ended less than REFRESH_AFTER_END
+ago), the most recent votes are re-fetched each run to pick up corrections.
+Earlier Congresses are only walked on from the last file on disk, so a run
+costs a couple of requests per year, and a year whose files are all lost (the
+raw cache is restored whole or not at all) is fetched again.
 """
 
+import datetime as dt
 import logging
 import re
 
-from yan.config import CONGRESS, CONGRESSES, RAW_DIR, REFRESH_RECENT
+from yan.config import CONGRESS, CONGRESSES, RAW_DIR, REFRESH_RECENT, recently_ended
 from yan.http import Client, write_atomic
 
 log = logging.getLogger(__name__)
@@ -45,9 +47,12 @@ def existing_rolls(year: int) -> list[int]:
     )
 
 
-def ingest(client: Client, congresses: dict[int, dict[int, int]] | None = None) -> None:
+def ingest(client: Client, congresses: dict[int, dict[int, int]] | None = None,
+           today: dt.date | None = None) -> None:
+    today = today or dt.date.today()
     for congress, sessions in (congresses or CONGRESSES).items():
-        refresh = REFRESH_RECENT if congress == CONGRESS else 0
+        current = congress == CONGRESS or recently_ended(sessions, today)
+        refresh = REFRESH_RECENT if current else 0
         for year in sessions.values():
             ingest_year(client, congress, year, refresh)
 

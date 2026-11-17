@@ -9,8 +9,8 @@ ingesters), fetches:
 
 Both change over time (cosponsors are added; CRS writes summaries days to
 weeks after each version of a bill), so each file is re-fetched once it's a
-week old, and for any bill voted on in the last week. A past Congress's bill
-files are fetched only when missing.
+week old, and for any bill voted on in the last week. Bill files of a Congress
+that ended more than REFRESH_AFTER_END ago are fetched only when missing.
 
 For every member who served in this Congress, also fetches
 /member/{bioguide_id}/sponsored-legislation (every bill and resolution they
@@ -44,7 +44,7 @@ import time
 import httpx
 
 import yan
-from yan.config import CONGRESS, RAW_DIR, SESSIONS
+from yan.config import CONGRESS, CONGRESSES, RAW_DIR, SESSIONS, recently_ended
 from yan.http import Client, write_atomic
 from yan.measures import parse_measure
 from yan.stage import house, legislators, senate
@@ -233,19 +233,20 @@ def needs_fetch(path, last_vote: dt.date, today: dt.date) -> bool:
     return age >= REFETCH_AFTER
 
 
-def ingest(client: Client) -> None:
+def ingest(client: Client, today: dt.date | None = None) -> None:
     key = os.environ.get("CONGRESS_API_KEY")
     if not key:
         log.warning("congress.gov: CONGRESS_API_KEY not set; skipping bill details and summaries")
         return
 
-    today = dt.date.today()
+    today = today or dt.date.today()
     bills = voted_bills()
     fetched = 0
     for (congress, bill_type, bill_number), last_vote in sorted(bills.items()):
         for url_template, kind, required_key in ENDPOINTS:
             path = raw_path(congress, bill_type, bill_number, kind)
-            stale = needs_fetch(path, last_vote, today) if congress == CONGRESS else not path.exists()
+            current = congress == CONGRESS or recently_ended(CONGRESSES[congress], today)
+            stale = needs_fetch(path, last_vote, today) if current else not path.exists()
             if not stale:
                 continue
             url = url_template.format(congress=congress, bill_type=bill_type, bill_number=bill_number)
