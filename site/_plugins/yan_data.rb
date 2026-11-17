@@ -723,6 +723,26 @@ module Yan
     /[\u00AD\u200B-\u200F\u2060\uFEFF]/
   )
 
+  # The steps on a measure's path (src/yan/export/bill_path.py) and their
+  # links into /how/bills/. Only known statuses and anchors pass; a date that
+  # isn't an ISO date is left out rather than stopping the build.
+  PATH_STATUSES = %w[done failed skipped in_progress upcoming].freeze
+  PATH_ANCHORS = %w[introduced committee first-chamber second-chamber differences president override].freeze
+
+  def self.bill_path_view(path)
+    steps = path.is_a?(Hash) && path["steps"]
+    return nil unless steps.is_a?(Array) && !steps.empty?
+
+    view = steps.filter_map do |s|
+      next unless s.is_a?(Hash) && PATH_STATUSES.include?(s["status"]) && s["label"].is_a?(String)
+
+      { "label" => s["label"], "status" => s["status"], "current" => s["current"] == true,
+        "date" => (s["date"] if s["date"].is_a?(String) && s["date"].match?(/\A\d{4}-\d{2}-\d{2}\z/)),
+        "anchor" => (s["anchor"] if PATH_ANCHORS.include?(s["anchor"])) }
+    end
+    view.empty? ? nil : view
+  end
+
   # A CRS summary as the vote page shows it, or nil when it has no text
   # (only tags, whitespace or the invisible text above), which reads as no
   # summary. A version date that isn't an ISO date, or a blank version
@@ -789,7 +809,8 @@ module Yan
       "by_party" => by_party, "party_grid" => other.empty? ? party_grid(by_party, words) : [],
       "state_map" => other.empty? ? state_map(vote["chamber"], doc["positions"], members_by_id, words) : nil,
       "against" => against, "share" => SHARE_WORDS[vote["required_share"]],
-      "summary" => summary_view(doc["summary"])
+      "summary" => summary_view(doc["summary"]),
+      "bill_path" => bill_path_view(doc["path"])
     }
   end
 

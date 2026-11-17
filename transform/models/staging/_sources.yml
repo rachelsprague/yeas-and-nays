@@ -40,6 +40,12 @@ sources:
         description: >
           One row per Congressional Research Service summary (one per bill version), from the
           Congress.gov API, for bills and resolutions with a recorded vote.
+      - name: bill_actions
+        description: >
+          One row per recorded action on a bill or resolution with a recorded vote, from the
+          Congress.gov API actions endpoint (up to 250 per bill). Actions from the Library of
+          Congress (source system code 9) carry its standard milestone codes, such as 8000
+          for passed in the House.
       - name: house_floor_items
         description: >
           One row per item on the House Majority Leader's weekly floor schedule

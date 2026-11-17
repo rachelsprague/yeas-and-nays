@@ -153,7 +153,7 @@ class _BillClient:
 
     def get(self, url, headers=None):
         self.urls.append(url)
-        return httpx.Response(200, json={"bill": {}, "summaries": []}, request=httpx.Request("GET", url))
+        return httpx.Response(200, json={"bill": {}, "summaries": [], "actions": []}, request=httpx.Request("GET", url))
 
 
 def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
@@ -168,8 +168,8 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {
         (119, "hr", "1"): old, (119, "hr", "2"): old, (120, "hr", "1"): old,
     })
-    # The 119th's H.R. 1 files are on disk and over a week old: a past Congress's
-    # files aren't refreshed. The 120th's H.R. 1 is a different bill and gets its own.
+    # The 119th's H.R. 1 bill and summaries files are on disk and over a week old: a past
+    # Congress's files aren't refreshed, only fetched when missing (its actions file). The 120th's H.R. 1 is a different bill and gets its own.
     for kind in ("bills", "summaries"):
         path = congress_gov.raw_path(119, "hr", "1", kind)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -180,10 +180,13 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
     congress_gov.ingest(client, LONG_ENDED)
 
     assert client.urls == [
+        congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="1", offset=0),
         congress_gov.BILL_URL.format(congress=119, bill_type="hr", bill_number="2"),
         congress_gov.SUMMARIES_URL.format(congress=119, bill_type="hr", bill_number="2"),
+        congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="2", offset=0),
         congress_gov.BILL_URL.format(congress=120, bill_type="hr", bill_number="1"),
         congress_gov.SUMMARIES_URL.format(congress=120, bill_type="hr", bill_number="1"),
+        congress_gov.ACTIONS_URL.format(congress=120, bill_type="hr", bill_number="1", offset=0),
     ]
     assert congress_gov.raw_path(120, "hr", "1", "bills").exists()
 
@@ -206,7 +209,8 @@ def test_a_bill_from_an_unlisted_congress_is_fetched_only_when_missing(monkeypat
 
     client = _BillClient()
     congress_gov.ingest(client, JUST_ENDED)  # no KeyError
-    assert client.urls == [congress_gov.SUMMARIES_URL.format(congress=118, bill_type="hr", bill_number="1")]
+    assert client.urls == [congress_gov.SUMMARIES_URL.format(congress=118, bill_type="hr", bill_number="1"),
+                           congress_gov.ACTIONS_URL.format(congress=118, bill_type="hr", bill_number="1", offset=0)]
 
 
 def _votes_json(out_dir, vote_ids):

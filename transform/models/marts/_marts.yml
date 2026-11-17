@@ -357,6 +357,34 @@ models:
         description: CRS summary as published (HTML). Sanitized at export.
         data_tests: [not_null]
 
+  - name: bill_milestones
+    description: >
+      One row per bill or resolution with a recorded vote per step it has reached on its
+      path from introduction to law (introduced, committee report, passage or failure in
+      each chamber, resolving differences, presented to the President, veto, override,
+      became law), with the first and last date of that step. From the introduced date,
+      Congress.gov actions recorded by the Library of Congress, and this site's roll calls.
+    columns:
+      - name: milestone_id
+        description: bill_id and milestone, e.g. "119-hr-1:passed_house".
+        data_tests: [unique, not_null]
+      - name: bill_id
+        data_tests: [not_null]
+      - name: milestone
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [introduced, committee, passed_house, failed_house, passed_senate,
+                         failed_senate, differences, differences_resolved, conference_report_house,
+                         conference_report_senate, presented, vetoed, pocket_vetoed,
+                         override_passed_house, override_failed_house, override_passed_senate,
+                         override_failed_senate, became_law]
+      - name: first_date
+        data_tests: [not_null]
+      - name: last_date
+        data_tests: [not_null]
+
   - name: positions
     description: One row per member per vote.
     columns:

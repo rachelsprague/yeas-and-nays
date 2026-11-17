@@ -87,7 +87,10 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
     con.execute("""create table votes as select 'h119-1-0001' as vote_id, 'house' as chamber, 1 as session,
                    1 as roll_number, date '2025-01-03' as vote_date, timestamp '2025-01-03 12:00' as vote_time_et,
                    'H R 1' as measure_number, 'On Passage' as question, 'Passed' as result,
-                   1 as yea_count""")
+                   1 as yea_count, 119 as congress, 'hr' as bill_type, '1' as bill_number,
+                   'An Act' as measure_title""")
+    con.execute("""create table bill_milestones as select 119 as congress, 'hr' as bill_type, '1' as bill_number,
+                   'passed_house' as milestone, date '2025-01-03' as first_date, date '2025-01-03' as last_date""")
     con.execute("""create table positions as select 'h119-1-0001' as vote_id, 'A000001' as bioguide_id,
                    'A (R-TX-1)' as member_label, 'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
                    'yes' as position, 'yes' as caucus_majority_position, false as voted_against_party_majority""")
@@ -138,6 +141,21 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
     }
     assert sorted(p.name for p in (out / "members").iterdir()) == ["A000001.json", "B000002.json"]
     assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True
+
+
+def test_run_writes_each_vote_with_its_measures_path(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    out = tmp_path / "out"
+    run(warehouse, out)
+
+    path = json.loads((out / "votes" / "h119-1-0001.json").read_text())["path"]
+    assert path["track"] == "law"
+    passed = next(s for s in path["steps"] if s["key"] == "passed_house")
+    assert passed == {"key": "passed_house", "label": "Passed House", "date": "2025-01-03", "status": "done",
+                      "anchor": "first-chamber", "current": True}
 
 
 def test_run_writes_nothing_when_a_past_congress_vote_is_missing(tmp_path):

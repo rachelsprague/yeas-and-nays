@@ -173,6 +173,41 @@ main.home { gap: 20px; padding-top: 20px; }
 .procedure .kicker { margin-right: 6px; }
 .procedure a { align-self: flex-start; padding: 4px 0; }
 
+/* ---- Bill path (vote page) --------------------------------------------- */
+/* Round pips, unlike the square position marks, so a step never reads as a vote.
+   A list down the page on phones and tablets; a row across from 960px, where even a
+   vetoed path's nine steps have room. */
+
+.bill-path { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bill-path .step { position: relative; display: flex; gap: 12px; padding-bottom: 14px; }
+.bill-path .step:not(:last-child)::before {
+  content: ""; position: absolute; left: 7px; top: 18px; bottom: 0; width: 1.5px; background: var(--line);
+}
+.bill-path .step.done:not(:last-child)::before { background: var(--ink); }
+.bill-path .pip {
+  flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: var(--radius-full);
+  border: 1.5px solid var(--ink); background: var(--surface); box-sizing: border-box;
+}
+.bill-path .done .pip { background: var(--ink); }
+.bill-path .in_progress .pip { background: linear-gradient(90deg, var(--ink) 50%, var(--surface) 50%); }
+.bill-path .failed .pip {
+  background: linear-gradient(135deg, var(--surface) calc(50% - 1px), var(--ink) calc(50% - 1px),
+                              var(--ink) calc(50% + 1px), var(--surface) calc(50% + 1px));
+}
+.bill-path .skipped .pip { border-style: dotted; }
+.bill-path .upcoming .pip { border-color: var(--line); }
+.bill-path .upcoming .step-text, .bill-path .skipped .step-text { color: var(--ink-muted); }
+.bill-path .current .pip { box-shadow: 0 0 0 3px var(--surface), 0 0 0 4.5px var(--accent); }
+.bill-path .step-text { display: flex; flex-direction: column; gap: 2px; font-size: 15px; line-height: 20px; }
+.bill-path .step-text .link { align-self: flex-start; }
+.bill-path .current .kicker { color: var(--accent); }
+
+@media (min-width: 960px) {
+  .bill-path { flex-direction: row; }
+  .bill-path .step { flex: 1 1 0; flex-direction: column; gap: 8px; padding-bottom: 0; padding-right: 8px; }
+  .bill-path .step:not(:last-child)::before { left: 18px; right: 2px; top: 9px; bottom: auto; width: auto; height: 1.5px; }
+}
+
 .vote-head { display: flex; flex-direction: column; gap: 12px; max-width: 860px; }
 .vote-head .back { margin-bottom: -8px; }
 .question { font-size: 16px; line-height: 22px; color: var(--ink-soft); }
