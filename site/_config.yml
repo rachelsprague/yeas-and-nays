@@ -14,4 +14,7 @@ exclude:
   - Gemfile.lock
   - vendor
   - .bundle
+  - package.json
+  - package-lock.json
+  - node_modules
   - test

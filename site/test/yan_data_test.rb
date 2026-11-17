@@ -606,7 +606,8 @@ class LayoutTest < Minitest::Test
     vote = body.("/votes/119/house/1/1/index.html")
     assert_includes vote, %(aria-labelledby="roll-h" data-filter-scope data-pagefind-ignore>)
     assert_includes vote, %(<div class="twocol" data-pagefind-ignore>)
-    assert_match(/data-pagefind-meta="title\[data-title\]" data-title="[^"]+: [^"]+ \(House, [^"]+\)"/, vote)
+    # The result title, escaped once (the measure title holds " < > ' &).
+    assert_includes vote, 'data-title="On Passage: A bill to name the &quot;KK&quot; &lt;kk&gt; O&#39;Kay &amp; Co Post Office (House, Jan. 3, 2025)"'
     assert_includes body.("/members/Z000001/index.html"), %(aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>)
 
     pages.each do |path, html|
@@ -981,6 +982,13 @@ class VotePageTest < Minitest::Test
     # A000005's state code isn't on the map.
     assert_includes html, "Not on the map: 1 member with no seat drawn on it, such as a delegate from the District of Columbia " \
                           "or a territory. See the table by state."
+  end
+
+  # A vote with no measure or vote title (a Speaker election) has the question
+  # as its search result title once, not "question: question".
+  def test_a_speaker_election_search_title_names_the_question_once
+    assert_includes pages.fetch("/votes/119/house/1/2/index.html"),
+                    'data-title="Election of the Speaker (House, Jan. 3, 2025)"'
   end
 
   # A definition with an explainer page links it from the vote page and About;

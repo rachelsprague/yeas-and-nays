@@ -5,8 +5,13 @@ layout: default
 <main id="main" class="wrap">
   <section class="vote-head">
     <a class="back" href="/votes/" data-pagefind-ignore>← All votes</a>
-    {%- comment -%} Search results title: the question first, so several votes on one measure read apart. {%- endcomment -%}
-    {%- capture search_title %}{{ v.question }}: {% include vote_title.html vote=v %} ({{ v.chamber_name }}, {{ v.vote_date | ap_date }}){% endcapture %}
+    {%- comment -%}
+      Search results title: the question first, so several votes on one measure
+      read apart; the question alone when it is the title (a Speaker election).
+      Built from raw values (vote_title.html escapes) and escaped once.
+    {%- endcomment -%}
+    {%- assign raw_title = v.measure_title | default: v.vote_title | default: v.question | strip -%}
+    {%- capture search_title %}{{ v.question | strip }}{% if raw_title != "" and raw_title != v.question %}: {{ raw_title }}{% endif %} ({{ v.chamber_name }}, {{ v.vote_date | ap_date }}){% endcapture %}
     <span hidden data-pagefind-meta="title[data-title]" data-title="{{ search_title | strip | escape }}"></span>
     {% include vote_kicker.html vote=v %}
     <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>

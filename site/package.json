@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Build tools for the site. Pagefind writes the search index into _site/pagefind/ after the Jekyll build; package-lock.json pins it by hash.",
+  "devDependencies": {
+    "pagefind": "1.5.2"
+  }
+}

@@ -24,7 +24,7 @@ site:            ## build the Jekyll site from data/out/ into site/_site/
 	cd site && bundle install --quiet && bundle exec jekyll build
 
 site-search:     ## build the site and its Pagefind search index, then serve both (Pagefind prints the address)
-	cd site && bundle install --quiet && bundle exec jekyll build && npx -y pagefind@1.5.2 --site _site --serve
+	cd site && bundle install --quiet && npm ci --ignore-scripts --no-audit --no-fund && bundle exec jekyll build && npx --no-install pagefind --site _site --serve
 
 site-serve:      ## build and serve the site at http://localhost:4000
 	cd site && bundle install --quiet && bundle exec jekyll serve
