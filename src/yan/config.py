@@ -3,6 +3,7 @@
 from pathlib import Path
 
 CONGRESS = 119
+SITE_URL = "https://yeasandnaysdata.com"
 # House Clerk files are organized by calendar year; Senate files by session number.
 SESSIONS = {1: 2025, 2: 2026}
 

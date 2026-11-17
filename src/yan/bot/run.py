@@ -15,7 +15,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from yan.bot import state as bot_state
-from yan.bot.format import MAX_GRAPHEMES, PostTooLong, format_post, grapheme_length
+from yan.bot.format import MAX_GRAPHEMES, PostTooLong, display_url, format_post, grapheme_length, vote_page_url
 from yan.bot.rules import Decision, decide
 from yan.config import OUT_DIR
 
@@ -84,12 +84,25 @@ def preview(n: int = 10, extra: list[str] | None = None, out_dir: Path = OUT_DIR
         print_post(vote, decision, text)
 
 
+def is_live(url: str) -> bool:
+    """Whether the page is up on the site, so a post never links a 404."""
+    import httpx
+
+    from yan.http import USER_AGENT
+
+    try:
+        resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0)
+    except httpx.HTTPError:
+        return False
+    return resp.status_code == 200
+
+
 def pending(state: dict, out_dir: Path = OUT_DIR) -> list[dict]:
     return [v for v in load_votes(out_dir) if bot_state.is_new(v["vote_id"], state[v["chamber"]])]
 
 
 def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publish: bool = False,
-        publisher=None, sleep=time.sleep, today: dt.date | None = None) -> None:
+        publisher=None, sleep=time.sleep, today: dt.date | None = None, page_live=None) -> None:
     state = bot_state.load(state_path)
     missing = [c for c, last in state.items() if last is None]
     if missing:
@@ -114,6 +127,7 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
         from yan.bot.publish import BlueskyPublisher
 
         publisher = BlueskyPublisher()
+    page_live = page_live or is_live
     already_posted = publisher.recent_links()
     print(f"PUBLISHING: {len(queue)} new votes since last run (at most {MAX_POSTS_PER_RUN} posts).\n")
     posts = 0
@@ -126,12 +140,20 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
             if posts == MAX_POSTS_PER_RUN:
                 print("Post limit reached; remaining votes wait for the next run.")
                 break
-            if text.rsplit("\n", 1)[-1] in already_posted:
+            url = vote_page_url(vote)
+            # Posts made before they linked our vote page end with the official record's URL.
+            if {text.rsplit("\n", 1)[-1], display_url(vote["source_url"])} & already_posted:
                 print(f"--- {vote['vote_id']}  already on Bluesky; not posting again\n")
+            elif not page_live(url):
+                # The site deploys after this run commits its data, so a new
+                # vote's page isn't up yet. Stop here, keeping posts in order;
+                # the next run posts it once the page is live.
+                print(f"--- {vote['vote_id']}  page not live yet ({url}); it and later votes wait for the next run")
+                break
             else:
                 if posts:
                     sleep(POST_INTERVAL_SECONDS)
-                publisher.post(text, vote["source_url"])
+                publisher.post(text, url)
                 posts += 1
                 print_post(vote, decision, text)
         # Save after every vote handled, so a failure later in the run

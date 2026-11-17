@@ -66,7 +66,7 @@ Senate confirms {Nominee} as {Position}
 50 Yea · 50 Nay · Vice President voted Yea to break the tie
 D 0–45 · I 0–2 · R 50–3
 Voted against party majority: {Name (R-ME)}, {Name (R-AK)}, {Name (R-KY)}
-senate.gov/legislative/LIS/roll_call_votes/...
+yeasandnaysdata.com/votes/119/senate/{session}/{roll}/
 ```
 
 ### Pacing
