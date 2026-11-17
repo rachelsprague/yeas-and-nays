@@ -12,6 +12,9 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="/assets/css/tokens.css">
   <link rel="stylesheet" href="/assets/css/site.css">
+  {%- if page.house_ad %}
+  <link rel="stylesheet" href="/assets/css/house-ads.css">
+  {%- endif %}
   <script>document.documentElement.classList.add("has-js")</script>
   <script src="/assets/js/filters.js" defer></script>
   {%- if jekyll.environment == "production" %}
@@ -41,14 +44,23 @@
     Pages mark sections that would match nearly every query (roll call
     lists, the lists on /votes/ and /members/) with data-pagefind-ignore.
   {%- endcomment %}
+  {%- comment -%}
+    Explainer pages opt in to a house ad with `house_ad: true`; it goes at
+    the end of the page's <main>, after the explainer's text.
+  {%- endcomment %}
+  {%- assign body = content %}
+  {%- if page.house_ad %}
+  {%- capture house_ad %}{% include house-ad.html %}</main>{% endcapture %}
+  {%- assign body = content | replace_first: "</main>", house_ad %}
+  {%- endif %}
   {%- if page.search == false %}
-  {{ content }}
+  {{ body }}
   {%- else %}
   {%- case page.layout %}{% when "vote" %}{% assign search_type = "Votes" %}{% when "member" %}{% assign search_type = "Members" %}{% else %}{% assign search_type = page.search_type | default: "Other pages" %}{% endcase %}
   {%- comment -%} Explainers outrank the many votes that use the same terms ("cloture"). {%- endcomment %}
   <div data-pagefind-body{% unless search_type == "Votes" or search_type == "Members" %} data-pagefind-weight="4"{% endunless %}>
     <span hidden data-pagefind-filter="Show:{{ search_type | escape }}"></span>
-    {{ content }}
+    {{ body }}
   </div>
   {%- endif %}
   {% include footer.html %}

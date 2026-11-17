@@ -1,0 +1,56 @@
+{%- comment -%}
+  House ads for the maker's other projects, on explainer pages only (front
+  matter `house_ad: true`), never on vote, member, bill or other data pages.
+  Not paid placements: no third-party scripts, just links with UTM params and
+  the Umami click event. Each unit wears the advertised site's brand, scoped
+  to its own class in house-ads.css.
+
+  Rotation is per visit: the slot carries every unit, all but the first
+  hidden, and the inline script shows one at random. Without JS the first
+  shows. A hidden unit's font never downloads and its lazy images wait.
+
+  KeepScore's copy is _data/house_ad_keepscore.json (the year-round copy).
+{%- endcomment -%}
+{%- assign slot = page.url | slugify -%}
+{%- assign utm = "utm_source=yeasandnays&amp;utm_medium=house-ad&amp;utm_content=" | append: slot -%}
+{%- assign ks = site.data.house_ad_keepscore -%}
+<aside class="house-ad-slot" aria-labelledby="house-ad-label" data-pagefind-ignore>
+  <p class="house-ad-label" id="house-ad-label">From the maker of Yeas &amp; Nays</p>
+  <div data-house-ad="keepscore">
+    <a class="ks-ad" href="{{ ks.href | escape }}?{{ utm }}" target="_blank" rel="noopener" data-umami-event="house-ad-click" data-umami-event-unit="keepscore" aria-label="{{ ks.aria_label | escape }}">
+      <img class="ks-ad-logo" src="/assets/house-ads/keepscore-logo.png" alt="" width="144" height="56" loading="lazy">
+      <span class="ks-ad-divider" aria-hidden="true"></span>
+      <span class="ks-ad-copy">
+        <span class="ks-ad-eyebrow">{{ ks.eyebrow | escape }}</span>
+        <span class="ks-ad-headline">{{ ks.headline | escape }}</span>
+      </span>
+      <span class="ks-ad-cta">{{ ks.cta | escape }}</span>
+      <span class="ks-ad-strip" aria-hidden="true"></span>
+    </a>
+  </div>
+  <div data-house-ad="hiringradar" hidden>
+    <a class="hr-ad" href="https://hiringradarjobs.com/?{{ utm }}" target="_blank" rel="noopener" data-umami-event="house-ad-click" data-umami-event-unit="hiringradar" aria-label="HiringRadar: three jobs worth applying to, every day. See today's three.">
+      <span class="hr-ad-copy">
+        <span class="hr-ad-brand">
+          <svg viewBox="0 0 48 48" width="26" height="26" aria-hidden="true">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="#0EA47A" stroke-width="2.5"/>
+            <circle cx="24" cy="24" r="11" fill="none" stroke="#0EA47A" stroke-width="1.5"/>
+            <circle cx="24" cy="24" r="3.5" fill="#0EA47A"/>
+            <line x1="24" y1="24" x2="36" y2="11" stroke="#0EA47A" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          HiringRadar
+        </span>
+        <span class="hr-ad-headline">Three jobs worth applying to. Every day.</span>
+        <span class="hr-ad-sub">Picked from thousands of fresh listings, sorted by career lane.</span>
+      </span>
+      <span class="hr-ad-rows" aria-hidden="true">
+        {%- assign widths = "62,22|48,26|70,16" | split: "|" %}
+        {%- for pair in widths %}{% assign w = pair | split: "," %}
+        <span class="hr-ad-row"><span class="hr-ad-num">{{ forloop.index }}</span><span class="hr-ad-bar" style="width: {{ w[0] }}%"></span><span class="hr-ad-bar hr-ad-bar-light" style="width: {{ w[1] }}%"></span></span>
+        {%- endfor %}
+      </span>
+      <span class="hr-ad-cta">See today's three &rarr;</span>
+    </a>
+  </div>
+  <script>(function(slot){var units=slot.querySelectorAll("[data-house-ad]");var pick=Math.floor(Math.random()*units.length);for(var i=0;i<units.length;i++){units[i].hidden=i!==pick;}})(document.currentScript.parentNode);</script>
+</aside>

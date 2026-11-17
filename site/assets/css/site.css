@@ -550,6 +550,19 @@ table.roll { border-collapse: collapse; width: 100%; }
 .prose dd { margin: 4px 0 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); }
 .prose code { font-family: var(--font-mono); font-size: 0.88em; padding: 1px 5px; border-radius: var(--radius-sm); background: var(--surface-alt); }
 
+/* About: "Who built this" credit card, the maker's other projects. */
+.credit { background: var(--surface-alt); border-radius: var(--radius-md); padding: 6px 20px 8px; }
+.credit-h { padding: 10px 0 6px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
+.prose .credit ul { list-style: none; padding: 0; gap: 0; }
+.credit li + li { border-top: 1px solid var(--line); }
+.credit-row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 0; color: var(--ink); text-decoration: none; }
+.credit-row:hover .credit-name { text-decoration: underline; text-decoration-color: var(--accent); }
+.credit-mark { flex-shrink: 0; display: block; width: 40px; height: 40px; border-radius: 9px; }
+.credit-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.credit-name { font-size: 16px; line-height: 22px; font-weight: 600; }
+.credit-line { font-size: 14px; line-height: 20px; color: var(--ink-soft); }
+.credit-arrow { flex-shrink: 0; color: var(--accent); }
+
 /* ---- Floor schedule calendar ------------------------------------------ */
 /* Phones: days stack, each with its Senate and House cells. Wider screens:
    a grid with a column per day and a row per chamber (see Desktop). */
