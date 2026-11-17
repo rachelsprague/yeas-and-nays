@@ -419,12 +419,12 @@ unit_tests:
 
   - name: votes_read_carried_and_drop_yeas_needed_the_result_contradicts
     description: >
-      Carried comes from the official result, "Not Sustained" read before
-      "Sustained"; a Speaker's name is neither. Yeas needed is left out when
-      the result disagrees with it (a 3/5 waiver agreed to short of
-      three-fifths, a majority vote rejected with enough Yeas), but kept for
-      a tie the Vice President broke and for a vote whose result isn't a yes
-      or no.
+      Carried comes from the official result, any "Not" read as not carried
+      ("Not Sustained", "Not Agreed to"); a Speaker's name is neither. Yeas
+      needed is left out when the result disagrees with it (a 3/5 waiver
+      agreed to short of three-fifths, a majority vote rejected with enough
+      Yeas), but kept for a tie the Vice President broke and for a vote whose
+      result isn't a yes or no.
     model: votes
     given:
       - input: ref('int_votes_unioned')
@@ -434,6 +434,7 @@ unit_tests:
           - {vote_id: s3, chamber: senate, majority_requirement: "1/2", result: Amendment Rejected, yea_count: 60, nay_count: 40}
           - {vote_id: s4, chamber: senate, majority_requirement: "1/2", result: Decision of Chair Not Sustained, yea_count: 40, nay_count: 59}
           - {vote_id: s5, chamber: senate, majority_requirement: "1/2", result: Point of Order Well Taken, yea_count: 51, nay_count: 47}
+          - {vote_id: s6, chamber: senate, majority_requirement: "1/2", result: Motion Not Agreed to, yea_count: 45, nay_count: 50}
           - {vote_id: h1, chamber: house, result: Passed, yea_count: 215, nay_count: 209}
           - {vote_id: h2, chamber: house, result: Failed, yea_count: 210, nay_count: 210}
           - {vote_id: h3, chamber: house, result: Smith, yea_count: 1, nay_count: 0}
@@ -456,6 +457,7 @@ unit_tests:
         - {vote_id: s3, carried: false, yeas_needed: null}
         - {vote_id: s4, carried: false, yeas_needed: 50}
         - {vote_id: s5, carried: true, yeas_needed: 50}
+        - {vote_id: s6, carried: false, yeas_needed: 48}
         - {vote_id: h1, carried: true, yeas_needed: 213}
         - {vote_id: h2, carried: false, yeas_needed: 211}
         - {vote_id: h3, carried: null, yeas_needed: 1}

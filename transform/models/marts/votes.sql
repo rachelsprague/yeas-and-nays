@@ -57,10 +57,11 @@ votes_counted as (
             else '1/2'
         end as required_share,
         {#- Whether the question carried, from the official result ("Bill
-            Passed", "Decision of Chair Not Sustained"). Null for a result that
-            isn't a yes or no (a Speaker election's winner). #}
+            Passed", "Decision of Chair Not Sustained"); any "Not" reads as
+            not carried. Null for a result that isn't a yes or no (a Speaker
+            election's winner). #}
         case
-            when regexp_matches(votes.result, '(Rejected|Failed|Defeated|Not Sustained|Not Well Taken)$') then false
+            when regexp_matches(votes.result, '(Rejected|Failed|Defeated)$|\bNot\b') then false
             when regexp_matches(votes.result, '(Agreed to|Passed|Confirmed|Sustained|Well Taken)$') then true
         end as carried
     from votes

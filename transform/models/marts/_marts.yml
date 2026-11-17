@@ -192,8 +192,8 @@ models:
       - name: carried
         description: >
           Whether the question carried, read from the official result (Agreed to, Passed,
-          Confirmed, Sustained, Well Taken; or Rejected, Failed, Defeated, Not Sustained, Not
-          Well Taken). Null for a result that isn't a yes or no (Speaker elections); a warning
+          Confirmed, Sustained, Well Taken; or Rejected, Failed, Defeated, or any result with
+          "Not"). Null for a result that isn't a yes or no (Speaker elections); a warning
           lists any other result wording.
         data_tests:
           - not_null:
