@@ -8,9 +8,8 @@ Downloads Census Bureau boundary files and population estimates (public
 domain), clips districts to the shoreline, projects them to an Albers USA
 layout (Alaska and Hawaii inset), simplifies them as one coverage (so each
 shared edge is simplified once; it stops if districts overlap or their shared
-edges don't match), and writes SVG path data,
-city labels and each district's largest cities and towns to
-site/_maps/<congress>.json. The site plugin pairs each district with its
+edges don't match), and writes SVG path data, city labels and each district's
+largest cities and towns to site/_maps/<congress>.json. The site plugin pairs each district with its
 current member.
 
     uv run scripts/build_district_map.py 119
@@ -90,8 +89,8 @@ WIDTH, HEIGHT = 9750, 6100
 MARGIN = 100
 SIMPLIFY = 1  # coverage simplification tolerance in output units (about 500 m in the lower 48)
 MIN_PART = 40  # drop islands smaller than this many square units unless they are a district's only part
-# Longest stretch of a district's edges that may miss its neighbors' (half a
-# pixel). The 120th's shoreline clip leaves a few such slivers (under 1 unit).
+# Total length of a district's edges that may miss its neighbors' (under half
+# a pixel). The 120th's shoreline clip leaves a few such slivers (under 1 unit).
 MAX_MISMATCH = 5
 ALASKA_SCALE = 0.35  # Alaska is drawn at about a third of its size, as on most US maps
 

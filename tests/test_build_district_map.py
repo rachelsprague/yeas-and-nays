@@ -361,6 +361,19 @@ def test_build_writes_city_labels_and_each_districts_places(monkeypatch, tmp_pat
                       "WA": ([], 0), "ME": ([], 0), "AK": ([], 0), "HI": ([], 0)}
 
 
+def test_check_coverage_allows_a_mismatch_under_half_a_pixel_and_names_only_the_districts_that_miss():
+    def areas(w):
+        # B has a point halfway up the edge it shares with A, which A lacks; C fits both.
+        a, c = box(0, 0, w, w), box(0, w, w, 2 * w)
+        b = Polygon([(w, 0), (2 * w, 0), (2 * w, w), (w, w), (w, w / 2)])
+        return [MultiPolygon([g]) for g in (a, b, c)]
+
+    seats = [("TX", 1), ("TX", 2), ("TX", 3)]
+    dm.check_coverage(seats, areas(dm.MAX_MISMATCH - 0.1))
+    with pytest.raises(SystemExit, match="neighbors: TX-1, TX-2$"):
+        dm.check_coverage(seats, areas(dm.MAX_MISMATCH))
+
+
 def with_texas(make_tx):
     """load_districts with one district each, Texas replaced by make_tx(states)."""
     def load(congress, states):
