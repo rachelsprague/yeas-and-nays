@@ -724,7 +724,8 @@ class LayoutTest < Minitest::Test
 
   # Site search (Pagefind) indexes each page's content under a "Show" label,
   # leaves out the home and search pages, and skips the lists that would match
-  # every query. Every page but /search/ has the masthead search box.
+  # every query. Every page but /search/ and the 404 page (which have their
+  # own) has the masthead search box.
   def test_search_index_labels_pages_and_skips_long_lists
     pages = build
     body = ->(path) { pages.fetch(path)[%r{<div data-pagefind-body[^>]*>(.*)</div>\s*<footer}m, 1] }
@@ -733,7 +734,7 @@ class LayoutTest < Minitest::Test
       "/how/bills/index.html" => "How it works", "/about/index.html" => "About this site",
       "/votes/index.html" => "Other pages"
     }.each { |path, label| assert_includes body.(path).to_s, %(data-pagefind-filter="Show:#{label}"), path }
-    %w[/index.html /search/index.html].each { |path| refute_includes pages.fetch(path), "data-pagefind-body", path }
+    %w[/index.html /search/index.html /404.html].each { |path| refute_includes pages.fetch(path), "data-pagefind-body", path }
 
     vote = body.("/votes/119/house/1/1/index.html")
     assert_includes vote, %(aria-labelledby="roll-h" data-filter-scope data-pagefind-ignore>)
@@ -743,8 +744,26 @@ class LayoutTest < Minitest::Test
     assert_includes body.("/members/Z000001/index.html"), %(aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>)
 
     pages.each do |path, html|
-      has_box = html.include?('<form class="sitesearch" action="/search/"')
-      assert_equal path != "/search/index.html", has_box, path
+      has_box = html.include?(%(<form class="sitesearch" action="/search/" method="get" role="search">\n      <label for="site-q"))
+      assert_equal !%w[/search/index.html /404.html].include?(path), has_box, path
+    end
+  end
+
+  # GitHub Pages serves /404.html for a missing address at any depth, so its
+  # links and assets are root-relative. It's kept out of search engines and
+  # the search index, and offers a search box and the main sections.
+  def test_404_page
+    pages = build
+    html = pages.fetch("/404.html")
+    assert_includes html, "<title>Page not found · Yeas & Nays</title>"
+    assert_includes html, '<meta name="robots" content="noindex">'
+    pages.each { |path, page| assert_equal path == "/404.html", page.include?('name="robots"'), path }
+    refute_includes html, "data-pagefind-body"
+    assert_match(%r{<form class="sitesearch inpage" action="/search/" method="get" role="search">.*?name="q"}m, html)
+    hrefs = html.scan(/(?:href|src|srcset|action)="([^"]*)"/).flatten
+    assert_empty hrefs.reject { |u| u.start_with?("/", "#", "https://") }
+    %w[/ /votes/ /members/ /find/ /how/bills/ /how/expulsion/ /about/].each do |url|
+      assert_includes hrefs, url
     end
   end
 
@@ -766,19 +785,21 @@ class LayoutTest < Minitest::Test
     end
   end
 
-  # The sitemap lists every built HTML page by its full URL, an index.html by
-  # its directory, and nothing else (no data files); robots.txt points to it.
+  # The sitemap lists every built HTML page but the 404 page by its full URL,
+  # an index.html by its directory, and nothing else (no data files);
+  # robots.txt points to it.
   def test_sitemap_lists_every_page_and_robots_points_to_it
     files = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], files: "*.{html,xml,txt,json}",
-                       pages: [["", "404.html"], ["how", "notes.html"]])
+                       pages: [["", "extra.html"], ["how", "notes.html"]])
     sitemap = files.fetch("/sitemap.xml")
     assert sitemap.start_with?('<?xml version="1.0" encoding="UTF-8"?>'), "XML declaration must come first"
     locs = sitemap.scan(%r{<loc>([^<]*)</loc>}).flatten
-    pages = files.keys.grep(/\.html\z/).map { |p| "https://yeasandnaysdata.com#{p.delete_suffix("index.html")}" }
+    pages = (files.keys.grep(/\.html\z/) - ["/404.html"]).map { |p| "https://yeasandnaysdata.com#{p.delete_suffix("index.html")}" }
+    assert_includes files.keys, "/404.html"
     assert_equal locs.uniq, locs
     assert_equal pages.sort, locs.sort
     assert_includes locs, "https://yeasandnaysdata.com/votes/119/house/1/1/"
-    assert_includes locs, "https://yeasandnaysdata.com/404.html"
+    assert_includes locs, "https://yeasandnaysdata.com/extra.html"
     assert_includes locs, "https://yeasandnaysdata.com/how/notes.html"
     assert_includes files.keys, "/activity/rollcalls.json"
     assert_equal "User-agent: *\nAllow: /\n\nSitemap: https://yeasandnaysdata.com/sitemap.xml\n", files.fetch("/robots.txt")
