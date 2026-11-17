@@ -1438,7 +1438,8 @@ class SchedulePageTest < Minitest::Test
   def test_the_live_section_links_each_chambers_official_feeds
     live = page[%r{<section id="live".*?</section>}m]
     %w[https://www.senate.gov/floor/ https://www.senate.gov/legislative/floor_activity_pail.htm
-       https://live.house.gov/ https://clerk.house.gov/FloorSummary].each do |url|
+       https://www.youtube.com/USHouseClerk/live https://live.house.gov/
+       https://clerk.house.gov/FloorSummary].each do |url|
       assert_includes live, %(href="#{url}"), url
     end
     assert_includes page, '<a href="/schedule/#live">Watch live</a>'
@@ -1783,7 +1784,7 @@ class LiveFloorTest < Minitest::Test
     assert_equal ["Scheduled to convene at 3 p.m. ET", "Convened at noon ET"], lines.map { |l| l["label"] }
     assert_equal [false, true], lines.map { |l| l["in_session"] }
     assert_equal ["2026-11-16T15:00:00-05:00", "2026-11-17T12:00:04-05:00"], lines.map { |l| l["from"] }
-    assert_equal ["https://www.senate.gov/floor/", "https://live.house.gov/"], lines.map { |l| l["watch_url"] }
+    assert_equal ["https://www.senate.gov/floor/", "https://www.youtube.com/USHouseClerk/live"], lines.map { |l| l["watch_url"] }
   end
 
   # Summer time: the label stays in Eastern wall-clock time.

@@ -105,11 +105,13 @@ module Yan
   end
 
   # Each chamber's official live floor pages, for the home page's floor band.
+  # The House's is the Clerk's YouTube stream: live.house.gov's player
+  # doesn't play on phones.
   LIVE_FLOOR = {
     "senate" => { "watch_url" => "https://www.senate.gov/floor/", "watch_label" => "Floor webcast",
                   "floor_url" => "https://www.senate.gov/legislative/floor_activity_pail.htm",
                   "floor_label" => "Floor proceedings" },
-    "house" => { "watch_url" => "https://live.house.gov/", "watch_label" => "Floor video",
+    "house" => { "watch_url" => "https://www.youtube.com/USHouseClerk/live", "watch_label" => "Floor video",
                  "floor_url" => "https://clerk.house.gov/FloorSummary", "floor_label" => "Floor summary" }
   }.freeze
 
