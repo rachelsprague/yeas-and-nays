@@ -10,6 +10,7 @@
 import re
 
 from yan.bot.rules import Decision, measure_label, outcome
+from yan.config import SITE_URL
 
 MAX_GRAPHEMES = 300
 MAX_NAMES = 5
@@ -110,6 +111,12 @@ def party_break_line(labels: list[str], max_names: int = MAX_NAMES) -> str | Non
     return f"Voted against party majority: {', '.join(labels)}"
 
 
+def vote_page_url(vote: dict) -> str:
+    """Our page for the vote, which links the official record (STYLE.md).
+    Same route as the site's vote pages in site/_plugins/yan_data.rb."""
+    return f"{SITE_URL}/votes/{vote['congress']}/{vote['chamber']}/{vote['session']}/{vote['roll_number']}/"
+
+
 def display_url(url: str) -> str:
     return re.sub(r"^https?://(www\.)?", "", url)
 
@@ -125,7 +132,7 @@ def format_post(vote_doc: dict, decision: Decision, max_length: int = MAX_GRAPHE
     title = headline_title(vote, decision)
     names = party_break_line([m["member_label"] for m in vote_doc["against_party_majority"]])
     lines = [tally_line(vote, vote_doc["positions"]), party_line(vote_doc["party_totals"])]
-    fixed = "\n" + "\n".join(lines + ([names] if names else []) + [display_url(vote["source_url"])])
+    fixed = "\n" + "\n".join(lines + ([names] if names else []) + [display_url(vote_page_url(vote))])
 
     # Only the title is shortened; the tally, party lines, names, and link stay whole.
     text = headline(vote, decision, title) + fixed

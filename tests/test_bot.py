@@ -112,7 +112,7 @@ def test_disposing_motion_post_matches_style_example():
         "211 Yea · 204 Nay · 18 Not Voting\n"
         "D 0–203 · I 1–0 · R 210–1\n"
         "Voted against party majority: Massie (R-KY-4)\n"
-        "clerk.house.gov/Votes/2026317"
+        "yeasandnaysdata.com/votes/119/house/2/317/"
     )
 
 
@@ -126,7 +126,7 @@ def test_nomination_post_with_tie_break():
         "50 Yea · 50 Nay · Vice President voted Yea to break the tie",
         "D 0–45 · I 0–2 · R 50–3",
         "Voted against party majority: Collins (R-ME), McConnell (R-KY), Murkowski (R-AK)",
-        "senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00015.htm",
+        "yeasandnaysdata.com/votes/119/senate/1/15/",
     ]
 
 
@@ -205,7 +205,7 @@ def test_long_post_truncates_title_and_keeps_every_other_line():
         "211 Yea · 204 Nay",
         "D 0–1 · R 1–0",
         "Voted against party majority: " + ", ".join(labels),
-        "clerk.house.gov/Votes/2026317",
+        "yeasandnaysdata.com/votes/119/house/2/317/",
     ]
 
 
@@ -452,10 +452,10 @@ class FakePublisher:
         self.posts.append((text, url))
 
 
-def publish_run(out_dir, state_path, publisher, today="2026-11-11", sleeps=None):
+def publish_run(out_dir, state_path, publisher, today="2026-11-11", sleeps=None, page_live=lambda url: True):
     bot.run(state_path, out_dir, publish=True, publisher=publisher,
             sleep=(sleeps.append if sleeps is not None else lambda s: None),
-            today=__import__("datetime").date.fromisoformat(today))
+            today=__import__("datetime").date.fromisoformat(today), page_live=page_live)
 
 
 def test_publish_posts_in_order_and_advances_state(out_dir, tmp_path):
@@ -465,9 +465,9 @@ def test_publish_posts_in_order_and_advances_state(out_dir, tmp_path):
     publish_run(out_dir, state_path, publisher, sleeps=sleeps)
 
     assert [url for _, url in publisher.posts] == [
-        "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1191/vote_119_1_00015.htm",
-        "https://clerk.house.gov/Votes/2026317",
-        "https://clerk.house.gov/Votes/2026317",
+        "https://yeasandnaysdata.com/votes/119/senate/2/257/",
+        "https://yeasandnaysdata.com/votes/119/house/2/316/",
+        "https://yeasandnaysdata.com/votes/119/house/2/317/",
     ]
     assert sleeps == [bot.POST_INTERVAL_SECONDS] * 2  # between posts, not before the first
     assert bot_state.load(state_path) == {"house": "h119-2-0317", "senate": "s119-2-0257"}
@@ -481,10 +481,67 @@ def test_publish_posts_in_order_and_advances_state(out_dir, tmp_path):
 def test_publish_skips_votes_already_on_bluesky_but_advances_state(out_dir, tmp_path):
     state_path = tmp_path / "state.json"
     bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher(already={"yeasandnaysdata.com/votes/119/house/2/317/"})
+    publish_run(out_dir, state_path, publisher)
+    assert publisher.posts == []
+    assert bot_state.load(state_path)["house"] == "h119-2-0317"
+
+
+def test_publish_recognizes_earlier_posts_that_linked_the_official_record(out_dir, tmp_path):
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
     publisher = FakePublisher(already={"clerk.house.gov/Votes/2026317"})
     publish_run(out_dir, state_path, publisher)
     assert publisher.posts == []
     assert bot_state.load(state_path)["house"] == "h119-2-0317"
+
+
+def test_publish_waits_for_a_vote_page_that_is_not_live_and_keeps_order(out_dir, tmp_path, capsys):
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0300", "senate": "s119-2-0200"}, state_path)
+    publisher, checked = FakePublisher(), []
+
+    def page_live(url):
+        checked.append(url)
+        return not url.endswith("/house/2/316/")
+
+    publish_run(out_dir, state_path, publisher, page_live=page_live)
+
+    # The senate vote posts; h119-2-0316's page isn't up, so it and the vote after it wait.
+    assert [url for _, url in publisher.posts] == ["https://yeasandnaysdata.com/votes/119/senate/2/257/"]
+    assert checked[-1] == "https://yeasandnaysdata.com/votes/119/house/2/316/"
+    assert bot_state.load(state_path) == {"house": "h119-2-0300", "senate": "s119-2-0257"}
+    assert "page not live yet" in capsys.readouterr().out
+
+    # Once the page is live, the next run picks up where this one stopped.
+    later = FakePublisher()
+    publish_run(out_dir, state_path, later)
+    assert [url for _, url in later.posts] == [
+        "https://yeasandnaysdata.com/votes/119/house/2/316/",
+        "https://yeasandnaysdata.com/votes/119/house/2/317/",
+    ]
+
+
+def test_is_live_only_for_a_200_and_logs_why_not(monkeypatch, capsys):
+    import httpx
+
+    responses = {"https://a.test/": 200, "https://b.test/": 404}
+    calls = []
+
+    def fake_get(url, **kwargs):
+        calls.append(kwargs)
+        if url not in responses:
+            raise httpx.ConnectError("down")
+        return httpx.Response(responses[url])
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    assert bot.is_live("https://a.test/")
+    assert not bot.is_live("https://b.test/")
+    assert not bot.is_live("https://c.test/")
+    assert all(kwargs["follow_redirects"] for kwargs in calls)
+    out = capsys.readouterr().out
+    assert "https://b.test/: HTTP 404" in out
+    assert "https://c.test/: ConnectError" in out
 
 
 def test_publish_stops_at_post_limit_and_leaves_rest_for_next_run(out_dir, tmp_path, monkeypatch):
@@ -507,7 +564,7 @@ def test_publish_skips_a_vote_too_long_to_post_and_keeps_going(out_dir, tmp_path
     publisher = FakePublisher()
     publish_run(out_dir, state_path, publisher)
 
-    assert [url for _, url in publisher.posts] == ["https://clerk.house.gov/Votes/2026317"]
+    assert [url for _, url in publisher.posts] == ["https://yeasandnaysdata.com/votes/119/house/2/317/"]
     assert bot_state.load(state_path)["house"] == "h119-2-0317"
     assert "too long to post in 300 characters" in capsys.readouterr().out
 
