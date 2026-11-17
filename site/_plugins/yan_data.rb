@@ -317,6 +317,15 @@ module Yan
     ACCOUNTS.filter_map { |key, label, icon| m[key] && { "label" => label, "url" => m[key], "icon" => icon } }
   end
 
+  # A link from the data, kept only as a web address: escaping keeps it inside
+  # its href, but a "javascript:" or other scheme would still run when clicked.
+  def self.web_url(url)
+    url if url.is_a?(String) && url.match?(%r{\Ahttps?://}i)
+  end
+
+  # Member fields that hold links, website first (website_label reads it).
+  MEMBER_LINKS = ["website_url", "contact_form_url", *ACCOUNTS.map(&:first)].freeze
+
   # "https://www.example.house.gov/" -> "example.house.gov"
   def self.website_label(url)
     url && url.sub(%r{\Ahttps?://(www\.)?}, "").chomp("/")
@@ -840,6 +849,7 @@ module Yan
       votes = read.call("votes.json")["votes"]
 
       members.each do |m|
+        MEMBER_LINKS.each { |key| m[key] = Yan.web_url(m[key]) if m.key?(key) }
         m["url"] = Yan.member_url(m["bioguide_id"])
         m["name"] = Yan.member_name(m)
         m["seat"] = Yan.seat(m)
@@ -858,6 +868,8 @@ module Yan
       views = {}
       votes.each do |v|
         v["url"] = Yan.vote_url(v)
+        v["source_url"] = Yan.web_url(v["source_url"])
+        v["congress_gov_url"] = Yan.web_url(v["congress_gov_url"])
         v["chamber_name"] = CHAMBER_NAMES[v["chamber"]]
         v["result_label"] = Yan.result_label(v, by_id)
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
@@ -902,6 +914,7 @@ module Yan
         # Nil until the member's cosponsored list is first fetched; the page leaves the section out.
         cosponsored = bills["cosponsored"]
         [*sponsored, *cosponsored].each do |b|
+          b["congress_gov_url"] = Yan.web_url(b["congress_gov_url"])
           vote = b["latest_vote_id"] && votes_by_id[b["latest_vote_id"]]
           b["vote_url"] = vote && vote["url"]
         end
@@ -910,6 +923,7 @@ module Yan
 
       # Absent until the pipeline first ingests the floor schedules.
       schedule = read_optional.call("floor_schedule.json") || { "items" => [] }
+      schedule["items"].each { |item| item["congress_gov_url"] = Yan.web_url(item["congress_gov_url"]) }
       site.data["schedule"] = Yan.schedule_view(schedule, votes_by_id, site.time)
       site.data["live_floor"] = Yan.live_floor(schedule["floor_status"])
       # site.time is Eastern (timezone in _config.yml), the floor's own clock.

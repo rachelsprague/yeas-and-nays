@@ -5,14 +5,20 @@ sitemap: false
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {%- comment -%}
-  Every HTML page is an index.html, so its URL ends in "/"; that leaves out
-  data files such as /activity/rollcalls.json. No <lastmod>: pages carry no
-  change dates, and the build time would mark every page changed each hour.
+  Every HTML page: an index.html's URL ends in "/", any other HTML page's in
+  ".html". That leaves out data files such as /activity/rollcalls.json. A
+  page that isn't content (an error page such as 404.html) needs
+  `sitemap: false` in its front matter, like this file. No
+  <lastmod>: pages carry no change dates, and the build time would mark every
+  page changed each hour.
 {%- endcomment -%}
 {%- for p in site.pages -%}
   {%- assign last = p.url | slice: -1 -%}
-  {%- if last == "/" and p.sitemap != false %}
+  {%- assign ext = p.url | slice: -5, 5 -%}
+  {%- if last == "/" or ext == ".html" -%}
+  {%- if p.sitemap != false %}
   <url><loc>{{ p.url | absolute_url | xml_escape }}</loc></url>
+  {%- endif -%}
   {%- endif -%}
 {%- endfor %}
 </urlset>
