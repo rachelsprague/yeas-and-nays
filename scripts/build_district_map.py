@@ -7,7 +7,8 @@
 Downloads Census Bureau boundary files and population estimates (public
 domain), clips districts to the shoreline, projects them to an Albers USA
 layout (Alaska and Hawaii inset), simplifies them as one coverage (so each
-shared edge is simplified once), and writes SVG path data,
+shared edge is simplified once; it stops if districts overlap or their shared
+edges don't match), and writes SVG path data,
 city labels and each district's largest cities and towns to
 site/_maps/<congress>.json. The site plugin pairs each district with its
 current member.
@@ -89,6 +90,9 @@ WIDTH, HEIGHT = 9750, 6100
 MARGIN = 100
 SIMPLIFY = 1  # coverage simplification tolerance in output units (about 500 m in the lower 48)
 MIN_PART = 40  # drop islands smaller than this many square units unless they are a district's only part
+# Longest stretch of a district's edges that may miss its neighbors' (half a
+# pixel). The 120th's shoreline clip leaves a few such slivers (under 1 unit).
+MAX_MISMATCH = 5
 ALASKA_SCALE = 0.35  # Alaska is drawn at about a third of its size, as on most US maps
 
 # City labels by 2024 population: tier 1 on the whole map, the others once
@@ -148,6 +152,18 @@ def tidy(geom):
     """Drops small islands from a simplified geometry (keeping the largest part)."""
     parts = sorted(polygons(geom), key=lambda p: -p.area)
     return [p for i, p in enumerate(parts) if i == 0 or p.area >= MIN_PART]
+
+
+def check_coverage(seats, areas):
+    """Stops the build if drawn districts overlap or their shared edges don't match.
+
+    coverage_simplify leaves such edges as they are instead of failing, so each
+    side would be drawn as its own line. Islands tidy() drops aren't checked.
+    """
+    edges = shapely.coverage_invalid_edges([MultiPolygon(tidy(a)) for a in areas])
+    bad = [f"{s}-{n}" for (s, n), e in zip(seats, edges) if e.length >= MAX_MISMATCH]
+    if bad:
+        sys.exit(f"districts overlap or don't fit their neighbors: {', '.join(bad)}")
 
 
 def path_data(parts):
@@ -290,6 +306,7 @@ def build(congress):
     # Simplified together, so an edge two districts share (a state border too)
     # is simplified once: both sides keep the same points and it's drawn once.
     areas = [MultiPolygon(polygons(shapely.make_valid(g))) for _, _, g in full]
+    check_coverage([(s, n) for s, n, _ in full], areas)
     simple = shapely.coverage_simplify(areas, SIMPLIFY)
     drawn = [(s, n, tidy(g)) for (s, n, _), g in zip(full, simple)]
     places = [(s, name, pop, shapely.make_valid(placed_full(s, projector(s)(g)))) for s, name, pop, g in load_places()]

@@ -3,6 +3,7 @@ import json
 import re
 from pathlib import Path
 
+import pytest
 from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Point, Polygon, box
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "build_district_map.py"
@@ -358,3 +359,33 @@ def test_build_writes_city_labels_and_each_districts_places(monkeypatch, tmp_pat
     places = {d["state"]: (d["places"], d["more_places"]) for d in doc["districts"]}
     assert places == {"TX": (["Big City"], 0), "NM": (["Town"], 0),
                       "WA": ([], 0), "ME": ([], 0), "AK": ([], 0), "HI": ([], 0)}
+
+
+def with_texas(make_tx):
+    """load_districts with one district each, Texas replaced by make_tx(states)."""
+    def load(congress, states):
+        return [(st, n, make_tx(states) if st == "TX" else g) for st, n, g in one_district_each(congress, states)]
+    return load
+
+
+def test_build_stops_when_districts_overlap(monkeypatch, tmp_path):
+    load = with_texas(lambda states: states["TX"].union(box(-107, 32, -105, 33)))
+    with pytest.raises(SystemExit, match="overlap or don't fit their neighbors: NM-1, TX-1$"):
+        build_doc(monkeypatch, tmp_path, load)
+    assert not (tmp_path / "119.json").exists()
+
+
+def test_build_stops_when_a_shared_edge_has_different_points_on_each_side(monkeypatch, tmp_path):
+    # As if Texas came from another source file: the same line, with every other point.
+    edge = SHARED_EDGE[::2]
+    load = with_texas(lambda states: Polygon([(-106, 26), (-94, 26), (-94, 36), *reversed(edge), (-106, 31)]))
+    with pytest.raises(SystemExit, match="NM-1, TX-1$"):
+        build_doc(monkeypatch, tmp_path, load)
+
+
+def test_build_ignores_an_island_too_small_to_draw_over_a_neighbor(monkeypatch, tmp_path):
+    # As the Northwestern Hawaiian Islands land on the Alaska inset.
+    load = with_texas(lambda states: MultiPolygon([states["TX"], box(-107.5, 34, -107.49, 34.01)]))
+    doc = build_doc(monkeypatch, tmp_path, load)
+    tx = next(d for d in doc["districts"] if d["state"] == "TX")
+    assert len(path_points(tx["d"])) == 1
