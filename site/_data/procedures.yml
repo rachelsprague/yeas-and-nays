@@ -255,7 +255,9 @@ measures:
     term: Bill
     definition: >-
       Bills become law if both chambers pass them in identical form and the
-      President signs them, or if both chambers override a veto.
+      President signs them or does not return them within ten days (Sundays
+      excepted), unless Congress's adjournment prevents their return. A vetoed
+      bill becomes law if both chambers override the veto.
   - types: [hjres, sjres]
     term: Joint resolution
     definition: >-
