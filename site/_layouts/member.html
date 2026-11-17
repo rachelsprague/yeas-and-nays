@@ -3,7 +3,7 @@ layout: default
 ---
 {%- assign m = page.member -%}
 <main id="main" class="wrap">
-  <a class="back" href="/members/">← All members</a>
+  <a class="back" href="/members/" data-pagefind-ignore>← All members</a>
   <section class="who">
     {% include portrait.html member=m alt=true %}
     <div>
@@ -17,7 +17,7 @@ layout: default
   </section>
 
   {%- if m.website_url or m.contact_form_url or m.phone or m.office or m.accounts.size > 0 %}
-  <section aria-labelledby="links-h" class="facts">
+  <section aria-labelledby="links-h" class="facts" data-pagefind-ignore>
     <h2 id="links-h" class="kicker soft">Official links</h2>
     {%- if m.website_url or m.accounts.size > 0 %}
     <ul class="account-icons">
@@ -46,7 +46,7 @@ layout: default
   {%- endif %}
 
   {%- if m.roll_calls %}
-  <section aria-labelledby="stats-h" style="display: flex; flex-direction: column; gap: 12px">
+  <section aria-labelledby="stats-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
     <div class="head-row">
       <h2 id="stats-h" class="kicker soft">This Congress ({{ site.data.meta.congress | ordinal }})</h2>
       <a class="link small" href="/about/#definitions">How these are calculated</a>
@@ -72,7 +72,7 @@ layout: default
   {%- endif %}
 
   {%- if site.data.meta.has_sponsored_bills and page.sponsored %}
-  <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px">
+  <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
     <div class="head-row">
       <h2 id="bills-h" class="section-h">Bills introduced</h2>
       <span class="small muted nums">{{ page.sponsored.size }} this Congress</span>
@@ -97,7 +97,7 @@ layout: default
   {%- endif %}
 
   {%- if page.cosponsored %}
-  <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px">
+  <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
     <div class="head-row">
       <h2 id="cosponsored-h" class="section-h">Bills cosponsored</h2>
       <span class="small muted nums">{{ page.cosponsored.size }} this Congress</span>
@@ -121,7 +121,7 @@ layout: default
   </section>
   {%- endif %}
 
-  <section aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope>
+  <section aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>
     <div class="head-row">
       <h2 id="recent-h" class="section-h">Recent votes</h2>
       <div class="tabs js-only" role="group" aria-label="Show">

@@ -33,7 +33,24 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
   {% include masthead.html large=page.large_masthead %}
+  {%- comment -%}
+    Site search (Pagefind) indexes what's inside data-pagefind-body, so the
+    masthead and footer stay out of results. `search: false` in front matter
+    leaves a page out; `search_type` sets the label results can be narrowed
+    by (under "Show").
+    Pages mark sections that would match nearly every query (roll call
+    lists, the lists on /votes/ and /members/) with data-pagefind-ignore.
+  {%- endcomment %}
+  {%- if page.search == false %}
   {{ content }}
+  {%- else %}
+  {%- case page.layout %}{% when "vote" %}{% assign search_type = "Votes" %}{% when "member" %}{% assign search_type = "Members" %}{% else %}{% assign search_type = page.search_type | default: "Other pages" %}{% endcase %}
+  {%- comment -%} Explainers outrank the many votes that use the same terms ("cloture"). {%- endcomment %}
+  <div data-pagefind-body{% unless search_type == "Votes" or search_type == "Members" %} data-pagefind-weight="4"{% endunless %}>
+    <span hidden data-pagefind-filter="Show:{{ search_type }}"></span>
+    {{ content }}
+  </div>
+  {%- endif %}
   {% include footer.html %}
 </body>
 </html>

@@ -1,0 +1,42 @@
+---
+layout: default
+title: Search
+description: Search every vote, member and explainer on Yeas & Nays.
+search: false
+---
+{%- comment -%}
+  Results come from Pagefind's index, written into /pagefind/ after the
+  Jekyll build (see .github/workflows/site.yml). Locally: `make site-search`.
+  The masthead's search box sends ?q= here.
+{%- endcomment -%}
+<link rel="stylesheet" href="/pagefind/pagefind-ui.css">
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <h1 class="vote-h">Search</h1>
+    <p class="soft intro">Search every vote, member and explainer on the site. Try a bill number such as H.R. 1, a member&rsquo;s name, a state, or a term such as cloture.</p>
+  </section>
+
+  <div id="search" class="sitesearch-results"></div>
+  <noscript><p class="soft">Search needs JavaScript. You can browse <a class="link" href="/votes/">all votes</a> or <a class="link" href="/members/">all members</a> instead.</p></noscript>
+</main>
+<script src="/pagefind/pagefind-ui.js"></script>
+<script>
+  (function () {
+    "use strict";
+    if (typeof PagefindUI === "undefined") return;
+    var ui = new PagefindUI({
+      element: "#search",
+      showImages: false,
+      showSubResults: false,
+      resetStyles: false,
+      showEmptyFilters: false,
+      autofocus: true,
+      translations: {
+        placeholder: "Search votes, members and explainers",
+        zero_results: "Nothing matches [SEARCH_TERM]. Try a bill number, a name or a state."
+      }
+    });
+    var q = new URLSearchParams(location.search).get("q");
+    if (q) ui.triggerSearch(q);
+  })();
+</script>

@@ -1,6 +1,6 @@
 {%- comment -%} A measure's path from introduction to law (src/yan/export/bill_path.py), with the step this vote was taken at. {%- endcomment -%}
 {%- assign v = include.vote -%}
-<section class="section" aria-labelledby="path-h">
+<section class="section" aria-labelledby="path-h" data-pagefind-ignore>
   <h2 id="path-h" class="section-h sm">Path of {{ v.measure_label | escape }}</h2>
   <ol class="bill-path">
     {%- for s in include.steps %}

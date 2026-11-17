@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: hooks all ingest stage model export bot-preview site site-serve test pytest sitetest clean
+.PHONY: hooks all ingest stage model export bot-preview site site-search site-serve test pytest sitetest clean
 
 all: ingest stage model export
 
@@ -22,6 +22,9 @@ bot-preview:     ## print the 10 most recent postable votes (dry run, never publ
 
 site:            ## build the Jekyll site from data/out/ into site/_site/
 	cd site && bundle install --quiet && bundle exec jekyll build
+
+site-search:     ## build the site and its Pagefind search index, then serve both (Pagefind prints the address)
+	cd site && bundle install --quiet && bundle exec jekyll build && npx -y pagefind@1.5.2 --site _site --serve
 
 site-serve:      ## build and serve the site at http://localhost:4000
 	cd site && bundle install --quiet && bundle exec jekyll serve
