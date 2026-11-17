@@ -140,6 +140,24 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
     assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True
 
 
+def test_run_writes_nothing_when_a_past_congress_vote_is_missing(tmp_path):
+    import pytest
+
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    out = tmp_path / "out"
+    out.mkdir()
+    before = json.dumps({"congress": 118, "votes": [{"vote_id": "h118-2-0500", "congress": 118}]})
+    (out / "votes.json").write_text(before)
+
+    with pytest.raises(RuntimeError, match="h118-2-0500"):
+        run(warehouse, out)
+    assert [p.name for p in out.iterdir()] == ["votes.json"]
+    assert (out / "votes.json").read_text() == before
+
+
 def test_run_writes_cosponsored_bills_and_null_until_a_list_is_fetched(tmp_path):
     from yan.export.json_export import run
 
