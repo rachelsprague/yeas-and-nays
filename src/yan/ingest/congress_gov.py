@@ -9,7 +9,8 @@ ingesters), fetches:
 
 Both change over time (cosponsors are added; CRS writes summaries days to
 weeks after each version of a bill), so each file is re-fetched once it's a
-week old, and for any bill voted on in the last week.
+week old, and for any bill voted on in the last week. A past Congress's bill
+files are fetched only when missing.
 
 For every member who served in this Congress, also fetches
 /member/{bioguide_id}/sponsored-legislation (every bill and resolution they
@@ -72,22 +73,24 @@ SKIP_COSPONSORED_AFTER = dt.timedelta(minutes=30)
 MAX_FAILURES_IN_A_ROW = 3
 
 
-def raw_path(bill_type: str, bill_number: str, kind: str = "summaries"):
-    return RAW_DIR / "congress_gov" / str(CONGRESS) / kind / f"{bill_type}{bill_number}.json"
+def raw_path(congress: int, bill_type: str, bill_number: str, kind: str = "summaries"):
+    return RAW_DIR / "congress_gov" / str(congress) / kind / f"{bill_type}{bill_number}.json"
 
 
-def voted_bills() -> dict[tuple[str, str], dt.date]:
-    """Every (bill_type, bill_number) with a recorded vote this Congress -> its latest vote date."""
-    latest: dict[tuple[str, str], dt.date] = {}
+def voted_bills() -> dict[tuple[int, str, str], dt.date]:
+    """Every (congress, bill_type, bill_number) with a recorded vote -> its latest vote date.
+    Bill numbers restart each Congress, so the Congress comes from the vote itself."""
+    latest: dict[tuple[int, str, str], dt.date] = {}
     h_votes, _ = house.parse_dir(RAW_DIR / "house")
     s_votes, _ = senate.parse_dir(RAW_DIR / "senate")
-    rows = [(v["legis_num"], dt.datetime.strptime(v["action_date"], "%d-%b-%Y").date()) for v in h_votes]
-    rows += [(v["document_name"], dt.datetime.strptime(v["vote_date"], "%B %d, %Y, %I:%M %p").date())
-             for v in s_votes]
-    for measure, date in rows:
+    rows = [(v["congress"], v["legis_num"], dt.datetime.strptime(v["action_date"], "%d-%b-%Y").date())
+            for v in h_votes]
+    rows += [(v["congress"], v["document_name"],
+              dt.datetime.strptime(v["vote_date"], "%B %d, %Y, %I:%M %p").date()) for v in s_votes]
+    for congress, measure, date in rows:
         bill = parse_measure(measure)
-        if bill and date > latest.get(bill, dt.date.min):
-            latest[bill] = date
+        if bill and date > latest.get(key := (int(congress), *bill), dt.date.min):
+            latest[key] = date
     return latest
 
 
@@ -239,12 +242,13 @@ def ingest(client: Client) -> None:
     today = dt.date.today()
     bills = voted_bills()
     fetched = 0
-    for (bill_type, bill_number), last_vote in sorted(bills.items()):
+    for (congress, bill_type, bill_number), last_vote in sorted(bills.items()):
         for url_template, kind, required_key in ENDPOINTS:
-            path = raw_path(bill_type, bill_number, kind)
-            if not needs_fetch(path, last_vote, today):
+            path = raw_path(congress, bill_type, bill_number, kind)
+            stale = needs_fetch(path, last_vote, today) if congress == CONGRESS else not path.exists()
+            if not stale:
                 continue
-            url = url_template.format(congress=CONGRESS, bill_type=bill_type, bill_number=bill_number)
+            url = url_template.format(congress=congress, bill_type=bill_type, bill_number=bill_number)
             resp = client.get(url, headers={"X-Api-Key": key})
             resp.raise_for_status()
             if required_key not in resp.json():

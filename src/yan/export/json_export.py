@@ -19,6 +19,11 @@
 Output is a pure function of the warehouse: keys are sorted, each list
 element sits on its own line, and nothing time-of-run is written. A re-run
 with no new data produces no git diff.
+
+A past Congress's votes never leave the site: if a vote from before the
+current Congress is in the existing votes.json but not the warehouse (its raw
+files lost), export fails before writing anything, so the run commits nothing
+and the vote's page stays up.
 """
 
 import datetime as dt
@@ -62,6 +67,19 @@ def dumps(document: dict) -> str:
         else:
             lines.append(f"  {json.dumps(key)}: {_compact(value)}")
     return "{\n" + ",\n".join(lines) + "\n}\n"
+
+
+def check_past_votes_kept(out_dir: Path, votes: list[dict]) -> None:
+    """Raise if a past Congress's vote in the existing votes.json is missing from `votes`."""
+    path = out_dir / "votes.json"
+    if not path.exists():
+        return
+    kept = {v["vote_id"] for v in votes}
+    lost = sorted(v["vote_id"] for v in json.loads(path.read_text())["votes"]
+                  if int(v["congress"]) < CONGRESS and v["vote_id"] not in kept)
+    if lost:
+        raise RuntimeError(f"export: {len(lost)} votes from past Congresses are missing from the "
+                           f"warehouse (e.g. {lost[0]}); their raw files may be lost. Nothing written.")
 
 
 def write_if_changed(path: Path, text: str) -> bool:
@@ -140,6 +158,8 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
         }
     finally:
         con.close()
+
+    check_past_votes_kept(out_dir, votes)
 
     by_vote = defaultdict(list)
     for p in positions:

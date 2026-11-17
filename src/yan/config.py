@@ -1,11 +1,15 @@
-"""Shared settings: which Congress we track and where data lives on disk."""
+"""Shared settings: which Congresses we track and where data lives on disk."""
 
 from pathlib import Path
 
+# The Congress in session: the bot posts its votes and ingest refreshes its recent files.
 CONGRESS = 119
+# Every Congress on the site, each session -> its calendar year. House Clerk files are
+# organized by calendar year; Senate files by session number. Past Congresses stay on
+# the site, so ingest re-fetches their files only when they're missing (a lost cache).
+CONGRESSES = {119: {1: 2025, 2: 2026}}
+SESSIONS = CONGRESSES[CONGRESS]
 SITE_URL = "https://yeasandnaysdata.com"
-# House Clerk files are organized by calendar year; Senate files by session number.
-SESSIONS = {1: 2025, 2: 2026}
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"
