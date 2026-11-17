@@ -14,7 +14,10 @@
 //   [data-limit=n]             on a list: show at most n matching rows
 //   [data-skip-when=key:v ...] on a row: hide while that tab is selected
 //   [data-show-when=key:v]     shown only while that tab is selected
-//   [data-count]               "Showing x of n {noun}" (data-noun)
+//   [data-count]               "Showing x of n {noun}" (data-noun); with
+//                              data-count-of=key, n counts only rows whose
+//                              data-{key} matches that select (current or
+//                              former members), so it's not "x of all".
 //   [data-empty]               shown when nothing matches
 (function () {
   "use strict";
@@ -26,6 +29,7 @@
     var count = scope.querySelector("[data-count]");
     var empty = scope.querySelector("[data-empty]");
     var noun = count ? count.getAttribute("data-noun") || "" : "";
+    var countOf = count && scope.querySelector('[data-filter="' + count.getAttribute("data-count-of") + '"]');
     var tabState = {};
 
     tabs.forEach(function (b) {
@@ -79,9 +83,16 @@
         el.hidden = tabState[kv[0]] !== kv[1];
       });
       if (count) {
-        count.textContent = shown === rows.length
-          ? rows.length + " " + noun
-          : "Showing " + shown + " of " + rows.length + " " + noun;
+        var total = rows.length;
+        if (countOf) {
+          total = 0;
+          rows.forEach(function (row) {
+            if (row.getAttribute("data-" + countOf.dataset.filter) === countOf.value) total++;
+          });
+        }
+        count.textContent = shown === total
+          ? total + " " + noun
+          : "Showing " + shown + " of " + total + " " + noun;
       }
       if (empty) empty.hidden = shown !== 0;
     }

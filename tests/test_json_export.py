@@ -192,6 +192,33 @@ def test_run_gives_each_member_stats_for_their_last_congress_and_every_congress(
     assert [c["congress"] for c in members["B000002"]["congresses"]] == [119]
 
 
+def test_run_leaves_stats_null_when_the_last_congress_has_none(tmp_path):
+    """A returning member before their chamber's first roll call of the new Congress:
+    a row for their last Congress with no stats, or no row at all. Earlier Congresses keep theirs."""
+    import duckdb
+
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    con = duckdb.connect(str(warehouse))
+    con.execute("update members set last_congress = 120 where bioguide_id = 'B000002'")
+    con.execute("""insert into member_congresses values
+                   ('A000001', 121, true, date '2029-01-03', date '2031-01-03', null)""")
+    con.execute("update members set last_congress = 121 where bioguide_id = 'A000001'")
+    con.close()
+    out = tmp_path / "out"
+    run(warehouse, out)
+
+    members = {m["bioguide_id"]: m for m in json.loads((out / "members.json").read_text())["members"]}
+    a, b = members["A000001"], members["B000002"]
+    assert a["votes_cast"] is None
+    assert [(c["congress"], c["votes_cast"]) for c in a["congresses"]] == [(121, None), (120, 1), (119, 10)]
+    # No row for the last Congress at all: still exported, stats null.
+    assert b["last_congress"] == 120 and b["votes_cast"] is None
+    assert [c["congress"] for c in b["congresses"]] == [119]
+
+
 def test_run_writes_each_vote_with_its_measures_path(tmp_path):
     from yan.export.json_export import run
 

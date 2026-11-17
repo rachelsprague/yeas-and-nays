@@ -406,7 +406,7 @@ class EscapingTest < Minitest::Test
 end
 
 # A member's sponsored list is null until first fetched (no section; a fetch
-# can fail), then [] (an empty section) or the bills introduced this Congress.
+# can fail), then [] (an empty section) or the bills introduced in their last Congress.
 class MemberSponsoredTest < Minitest::Test
   include SiteBuild
 
@@ -425,13 +425,13 @@ class MemberSponsoredTest < Minitest::Test
 
   def test_an_empty_list_says_none
     s = section([])
-    assert_includes s, "0 this Congress"
-    assert_includes s, "No bills or resolutions introduced this Congress."
+    assert_includes s, "0 in the 119th Congress"
+    assert_includes s, "No bills or resolutions introduced in the 119th Congress."
   end
 end
 
 # A member's cosponsored list is null until first fetched (no section), then
-# [] (an empty section) or the bills cosponsored this Congress.
+# [] (an empty section) or the bills cosponsored in their last Congress.
 class MemberCosponsoredTest < Minitest::Test
   include SiteBuild
 
@@ -465,13 +465,13 @@ class MemberCosponsoredTest < Minitest::Test
   def test_an_empty_list_says_none
     s = section([])
     assert_includes s, "Bills cosponsored"
-    assert_includes s, "0 this Congress"
-    assert_includes s, "No bills or resolutions cosponsored this Congress."
+    assert_includes s, "0 in the 119th Congress"
+    assert_includes s, "No bills or resolutions cosponsored in the 119th Congress."
   end
 
   def test_bills_are_listed_with_their_latest_action_and_vote
     s = section([BILL])
-    assert_includes s, "1 this Congress"
+    assert_includes s, "1 in the 119th Congress"
     assert_includes s, "S. 7 · Introduced Feb. 1, 2025"
     assert_includes s, %(<a class="t headline-link" href="#{BILL["congress_gov_url"]}">A bill to rename a post office</a>)
     assert_includes s, "Latest action, March 4, 2025: Read twice and referred to committee."
@@ -484,7 +484,7 @@ class MemberCosponsoredTest < Minitest::Test
   def test_more_than_five_bills_fold_the_rest_under_show_all
     bills = (1..6).map { |n| BILL.merge("measure_label" => "S. #{n}", "title" => "Bill #{n}") }
     s = section(bills)
-    assert_includes s, "6 this Congress"
+    assert_includes s, "6 in the 119th Congress"
     parts = s.split("<summary")
     assert_equal 2, parts.size
     shown, folded = parts
@@ -495,7 +495,7 @@ class MemberCosponsoredTest < Minitest::Test
 
   def test_exactly_five_bills_all_show_with_no_show_all
     s = section((1..5).map { |n| BILL.merge("measure_label" => "S. #{n}", "title" => "Bill #{n}") })
-    assert_includes s, "5 this Congress"
+    assert_includes s, "5 in the 119th Congress"
     assert_equal (1..5).map { |n| "Bill #{n}" }, titles(s)
     refute_includes s, "<summary"
     refute_includes s, "Show all"
@@ -540,6 +540,112 @@ class CongressBillsTest < Minitest::Test
   def test_an_ungrouped_list_is_returned_as_is
     assert_equal [{ "bill_id" => "119-hr-1" }], Yan.congress_bills([{ "bill_id" => "119-hr-1" }], 119)
     assert_equal [], Yan.congress_bills([], 119)
+  end
+
+  def test_earlier_groups_are_every_other_congress_newest_first
+    lists = [LISTS[1], { "congress" => 118, "bills" => [] }, LISTS[0]]
+    assert_equal [119, 118], Yan.earlier_congress_bills(lists, 120).map { |g| g["congress"] }
+    assert_equal [120, 118], Yan.earlier_congress_bills(lists, 119).map { |g| g["congress"] }
+    assert_equal [], Yan.earlier_congress_bills(nil, 120)
+    assert_equal [], Yan.earlier_congress_bills([{ "bill_id" => "119-hr-1" }], 120)
+  end
+end
+
+# A member page across Congresses: stats, term line and bill lists name the
+# member's last Congress (not the site's), with earlier Congresses below.
+class MemberCongressesTest < Minitest::Test
+  include SiteBuild
+
+  STATS_119 = { "roll_calls" => 685, "votes_cast" => 665, "missed_votes" => 20, "missed_votes_pct" => 2.9,
+                "party_majority_votes" => 662, "with_party_majority_pct" => 98.0 }.freeze
+  CONGRESS_119 = STATS_119.merge("congress" => 119, "served_from" => "2025-01-03", "served_to" => "2027-01-03").freeze
+  BILL = MemberCosponsoredTest::BILL
+
+  def page(member, files = { "sponsored" => [], "cosponsored" => [] })
+    @site = build_site([EscapingTest::MEMBER.merge(member)], [[EscapingTest::VOTE, EscapingTest::DOC]],
+                       member_files: { "Z000001" => files })
+    @site.fetch("/members/Z000001/index.html")
+  end
+
+  def section(html, id)
+    html[%r{<section aria-labelledby="#{id}".*?</section>}m]
+  end
+
+  # A returning member from Jan. 3 until their chamber's first 120th roll call.
+  def test_a_last_congress_with_no_roll_calls_yet_shows_earlier_congresses
+    html = page("last_congress" => 120, "served_from" => "2027-01-03", "served_to" => "2029-01-03",
+                "congresses" => [{ "congress" => 120, "served_from" => "2027-01-03", "roll_calls" => nil },
+                                 CONGRESS_119])
+    s = section(html, "stats-h")
+    assert_includes s, ">120th Congress</h2>"
+    assert_includes s, "No roll calls yet in the 120th Congress."
+    refute_includes s, '<div class="tiles'
+    assert_includes s, "<th scope=\"row\">119th</th><td class=\"r\" style=\"white-space: nowrap\">665 of 685</td><td class=\"r\">2.9%</td><td class=\"r\">98.0%</td>"
+    assert_includes html, "In office in the 120th Congress since Jan. 3, 2027"
+    refute_includes html, "this Congress"
+  end
+
+  def test_a_member_with_one_congress_has_tiles_and_no_table
+    s = section(page(STATS_119.merge("congresses" => [CONGRESS_119])), "stats-h")
+    assert_includes s, ">119th Congress</h2>"
+    assert_includes s, '<div class="tiles'
+    refute_includes s, "Earlier Congresses"
+  end
+
+  def test_a_former_member_reads_as_former_with_their_last_congress
+    html = page(STATS_119.merge("is_current" => false, "served_from" => "2025-01-03", "served_to" => "2025-05-21",
+                                "congresses" => [CONGRESS_119]))
+    assert_includes html, "Former member · Served in the 119th Congress Jan. 3, 2025–May 21, 2025"
+    assert_includes section(html, "stats-h"), ">119th Congress</h2>"
+    refute_includes html, "In office"
+  end
+
+  # The 120th's lists aren't fetched yet; the 119th's go in collapsed sections.
+  def test_last_congress_120_with_only_a_119th_list
+    files = { "sponsored" => [{ "congress" => 119, "bills" => [BILL] }],
+              "cosponsored" => [{ "congress" => 119, "bills" => [] }] }
+    html = page(STATS_119.merge("last_congress" => 120, "congresses" => [CONGRESS_119]), files)
+    s = section(html, "bills-h")
+    assert_includes s, %(<summary class="small nums">119th Congress (1)</summary>)
+    assert_includes s, ">A bill to rename a post office</a>"
+    assert_includes s, 'href="/votes/119/house/1/1/">Recorded vote →</a>'
+    refute_includes s, "in the 120th Congress"
+    c = section(html, "cosponsored-h")
+    assert_includes c, "119th Congress (0)</summary>"
+    assert_includes c, "No bills or resolutions cosponsored in the 119th Congress."
+    refute_includes html, "this Congress"
+  end
+
+  def test_earlier_lists_follow_the_last_congress_list
+    files = { "sponsored" => [{ "congress" => 120, "bills" => [BILL.merge("title" => "New bill")] },
+                              { "congress" => 119, "bills" => [BILL] }],
+              "cosponsored" => [] }
+    s = section(page({ "last_congress" => 120 }, files), "bills-h")
+    assert_includes s, "1 in the 120th Congress"
+    assert_operator s.index("New bill"), :<, s.index("119th Congress (1)")
+  end
+
+  # Exports from before per-Congress stats: no last_congress or congresses.
+  def test_an_older_export_reads_as_meta_congress
+    s = section(page(STATS_119.merge("last_congress" => nil)), "stats-h")
+    assert_includes s, ">119th Congress</h2>"
+    refute_includes s, "Earlier Congresses"
+  end
+
+  def test_directory_lists_former_members_hidden_until_chosen
+    former = EscapingTest::MEMBER.merge("bioguide_id" => "F000001", "official_full_name" => "Fay Former",
+                                        "is_current" => false, "served_to" => "2025-05-21")
+    delegate = former.merge("bioguide_id" => "D000001", "official_full_name" => "Dee Delegate", "state" => "GU",
+                            "is_voting_member" => false)
+    positions = { "Z000001" => "Nay", "F000001" => "Yea", "D000001" => "Yea" }
+    vote = [EscapingTest::VOTE, EscapingTest::DOC.merge("positions" => positions)]
+    html = build_site([EscapingTest::MEMBER, former, delegate], [vote]).fetch("/members/index.html")
+    refute_includes html, "Dee Delegate"
+    rows = html.scan(%r{<li data-row data-status="(\w+)".*?</li>}m).flatten
+    assert_equal %w[current former], rows
+    assert_match %r{<li data-row data-status="former"[^>]* hidden>.*?Fay Former.*?Served until May 21, 2025}m, html
+    assert_includes html, %(<option value="current" selected>Current members</option><option value="former">Former members</option>)
+    assert_includes html, 'data-count-of="status"'
   end
 end
 

@@ -2,6 +2,7 @@
 layout: default
 ---
 {%- assign m = page.member -%}
+{%- assign congress = m.last_congress | ordinal -%}
 <main id="main" class="wrap">
   <a class="back" href="/members/" data-pagefind-ignore>← All members</a>
   <section class="who">
@@ -10,8 +11,12 @@ layout: default
       <span class="kicker muted">{{ m.chamber_name }}</span>
       <h1 class="name-h">{{ m.name | escape }}</h1>
       <p class="meta">{{ m.party | escape }} · {{ m.party_name | escape }} · {{ m.where | escape }}</p>
+      {%- if m.is_current %}
       {%- if m.served_from %}
-      <p class="term nums">{% if m.is_current %}In office this Congress since {{ m.served_from | ap_date }}{% else %}Served this Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
+      <p class="term nums">In office in the {{ congress }} Congress since {{ m.served_from | ap_date }}</p>
+      {%- endif %}
+      {%- else %}
+      <p class="term nums">Former member{% if m.served_from %} · Served in the {{ congress }} Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
       {%- endif %}
     </div>
   </section>
@@ -45,12 +50,13 @@ layout: default
   </section>
   {%- endif %}
 
-  {%- if m.roll_calls %}
+  {%- if m.roll_calls or m.earlier_congresses.size > 0 %}
   <section aria-labelledby="stats-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
     <div class="head-row">
-      <h2 id="stats-h" class="kicker soft">This Congress ({{ site.data.meta.congress | ordinal }})</h2>
+      <h2 id="stats-h" class="kicker soft">{{ congress }} Congress</h2>
       <a class="link small" href="/about/#definitions">How these are calculated</a>
     </div>
+    {%- if m.roll_calls %}
     <div class="tiles nums">
       <div>
         <span class="fig">{{ m.votes_cast }}</span>
@@ -68,56 +74,42 @@ layout: default
         <span class="of">of {{ m.party_majority_votes }} Yea or Nay votes where {% if m.party == "I" %}the {{ m.caucus_party | escape }} caucus{% else %}the party{% endif %} had a majority</span>
       </div>
     </div>
+    {%- else %}
+    <p class="empty">No roll calls {% if m.is_current %}yet {% endif %}in the {{ congress }} Congress.</p>
+    {%- endif %}
+    {%- if m.earlier_congresses.size > 0 %}
+    <h3 class="kicker soft">Earlier Congresses</h3>
+    <table class="roll nums">
+      <thead><tr><th scope="col">Congress</th><th scope="col" class="r">Votes cast</th><th scope="col" class="r">Missed votes</th><th scope="col" class="r">With party majority</th></tr></thead>
+      <tbody>
+        {%- for c in m.earlier_congresses %}
+        <tr><th scope="row">{{ c.congress | ordinal }}</th><td class="r" style="white-space: nowrap">{{ c.votes_cast }} of {{ c.roll_calls }}</td><td class="r">{{ c.missed_votes_pct }}%</td><td class="r">{% if c.with_party_majority_pct %}{{ c.with_party_majority_pct }}%{% else %}—{% endif %}</td></tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+    {%- endif %}
   </section>
   {%- endif %}
 
-  {%- if site.data.meta.has_sponsored_bills and page.sponsored %}
+  {%- if site.data.meta.has_sponsored_bills and page.sponsored or page.sponsored_earlier.size > 0 %}
   <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
     <div class="head-row">
       <h2 id="bills-h" class="section-h">Bills introduced</h2>
-      <span class="small muted nums">{{ page.sponsored.size }} this Congress</span>
+      {%- if page.sponsored %}<span class="small muted nums">{{ page.sponsored.size }} in the {{ congress }} Congress</span>{% endif %}
     </div>
     <p class="small soft">Bills and resolutions {{ m.name | escape }} introduced as the sponsor, with the latest action on each as Congress.gov records it.</p>
-    {%- if page.sponsored.size > 0 %}
-    <ul class="ruled">
-      {%- for b in page.sponsored limit: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
-    </ul>
-    {%- if page.sponsored.size > 5 %}
-    <details class="crs">
-      <summary class="small">Show all {{ page.sponsored.size }}</summary>
-      <ul class="ruled thin">
-        {%- for b in page.sponsored offset: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
-      </ul>
-    </details>
-    {%- endif %}
-    {%- else %}
-    <p class="empty">No bills or resolutions introduced this Congress.</p>
-    {%- endif %}
+    {%- include member_bills.html bills=page.sponsored earlier=page.sponsored_earlier verb="introduced" congress=congress %}
   </section>
   {%- endif %}
 
-  {%- if page.cosponsored %}
+  {%- if page.cosponsored or page.cosponsored_earlier.size > 0 %}
   <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
     <div class="head-row">
       <h2 id="cosponsored-h" class="section-h">Bills cosponsored</h2>
-      <span class="small muted nums">{{ page.cosponsored.size }} this Congress</span>
+      {%- if page.cosponsored %}<span class="small muted nums">{{ page.cosponsored.size }} in the {{ congress }} Congress</span>{% endif %}
     </div>
     <p class="small soft">Bills and resolutions {{ m.name | escape }} cosponsored, with the latest action on each as Congress.gov records it. A cosponsor is a member who adds their name as a supporter of a bill or resolution another member introduced.</p>
-    {%- if page.cosponsored.size > 0 %}
-    <ul class="ruled">
-      {%- for b in page.cosponsored limit: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
-    </ul>
-    {%- if page.cosponsored.size > 5 %}
-    <details class="crs">
-      <summary class="small">Show all {{ page.cosponsored.size }}</summary>
-      <ul class="ruled thin">
-        {%- for b in page.cosponsored offset: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
-      </ul>
-    </details>
-    {%- endif %}
-    {%- else %}
-    <p class="empty">No bills or resolutions cosponsored this Congress.</p>
-    {%- endif %}
+    {%- include member_bills.html bills=page.cosponsored earlier=page.cosponsored_earlier verb="cosponsored" congress=congress %}
   </section>
   {%- endif %}
 
@@ -148,7 +140,7 @@ layout: default
       </li>
       {%- endfor %}
     </ul>
-    <p class="empty" data-empty hidden>No votes against the party majority this Congress.</p>
+    <p class="empty" data-empty hidden>No votes against the party majority.</p>
   </section>
 
 </main>
