@@ -83,6 +83,10 @@ layout: default
   </section>
   {%- endif %}
 
+  {%- if page.bill_path and v.measure_label %}
+  {% include bill_path.html vote=v steps=page.bill_path %}
+  {%- endif %}
+
   {%- if v.congress_gov_url %}
   <section class="section" aria-labelledby="summary-h">
     <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label | escape }}</h2>

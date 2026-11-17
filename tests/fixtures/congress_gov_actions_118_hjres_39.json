@@ -1,0 +1,504 @@
+{
+    "actions": [
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-05-24",
+            "actionTime": "17:07:57",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "The Chair directed the Clerk to notify the Senate of the action of the House.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H43110",
+            "actionDate": "2023-05-24",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "On motion to refer the bill and the accompanying veto message to the Committee on Ways and Means. Agreed to without objection.",
+            "type": "Veto"
+        },
+        {
+            "actionCode": "H43100",
+            "actionDate": "2023-05-24",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Motion to refer the bill and accompanying veto message to the Committee on Ways and Means.",
+            "type": "Veto"
+        },
+        {
+            "actionCode": "H43410",
+            "actionDate": "2023-05-24",
+            "recordedVotes": [
+                {
+                    "chamber": "House",
+                    "congress": 118,
+                    "date": "2023-05-24T21:07:29Z",
+                    "rollNumber": 233,
+                    "sessionNumber": 1,
+                    "url": "https://clerk.house.gov/evs/2023/roll233.xml"
+                }
+            ],
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "On passage, the objections of the President to the contrary notwithstanding Failed by the Yeas and Nays: (2/3 required): 214 - 205 (Roll no. 233).",
+            "type": "Veto"
+        },
+        {
+            "actionCode": "33000",
+            "actionDate": "2023-05-24",
+            "recordedVotes": [
+                {
+                    "chamber": "House",
+                    "congress": 118,
+                    "date": "2023-05-24T21:07:29Z",
+                    "rollNumber": 233,
+                    "sessionNumber": 1,
+                    "url": "https://clerk.house.gov/evs/2023/roll233.xml"
+                }
+            ],
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Failed of passage in House over veto On passage, the objections of the President to the contrary notwithstanding Failed by the Yeas and Nays: (2/3 required): 214 - 205 (Roll no. 233).",
+            "type": "Veto"
+        },
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-05-24",
+            "actionTime": "14:26:50",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "POSTPONED PROCEEDINGS - At the conclusion of debate on the veto message of the President to H. J. Res. 39, the Chair put the question on will the House, on reconsideration, pass H. J. Res. 39, the objections of the President to the contrary notwithstanding. Under the Constitution, the vote must be taken by the yeas and nays. Further proceedings were postponed until a time to be announced.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H35000",
+            "actionDate": "2023-05-24",
+            "actionTime": "14:26:40",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "The previous question was ordered without objection.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-05-24",
+            "actionTime": "13:41:22",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "DEBATE - Pursuant to a previous order of the House of May 16, 2023, the unfinished business is the further consideration of the veto message of the President on H. J. Res. 39. The House proceeded with one hour of debate on the objections of the President to the contrary notwithstanding. (consideration: CR H2571-2577)",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H40300",
+            "actionDate": "2023-05-24",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "The Chair laid before the House the veto message from the President.",
+            "type": "Veto"
+        },
+        {
+            "actionCode": "E30000",
+            "actionDate": "2023-05-16",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Vetoed by President.",
+            "type": "President"
+        },
+        {
+            "actionCode": "31000",
+            "actionDate": "2023-05-16",
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Vetoed by President.",
+            "type": "President"
+        },
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-05-16",
+            "actionTime": "13:30:30",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "The Chair announced that the objections of the President to H.J. Res. 39 would be spread at large upon the Journal and the veto message would be printed as a House document (118-41). Further consideration of the veto message and the resolution, H.J. Res. 39, is postponed until the legislative day of May 24, 2023. Agreed to without objection.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-05-16",
+            "actionTime": "13:30:20",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "The Chair laid before the House the veto message from the President. (text: CR H2370)",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "E20000",
+            "actionDate": "2023-05-09",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Presented to President.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "28000",
+            "actionDate": "2023-05-09",
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Presented to President.",
+            "type": "President"
+        },
+        {
+            "actionDate": "2023-05-04",
+            "sourceSystem": {
+                "name": "Senate"
+            },
+            "text": "Message on Senate action sent to the House.",
+            "type": "Floor"
+        },
+        {
+            "actionDate": "2023-05-03",
+            "recordedVotes": [
+                {
+                    "chamber": "Senate",
+                    "congress": 118,
+                    "date": "2023-05-03T22:30:41Z",
+                    "rollNumber": 109,
+                    "sessionNumber": 1,
+                    "url": "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1181/vote_118_1_00109.xml"
+                }
+            ],
+            "sourceSystem": {
+                "name": "Senate"
+            },
+            "text": "Passed Senate without amendment by Yea-Nay Vote. 56 - 41. Record Vote Number: 109.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "17000",
+            "actionDate": "2023-05-03",
+            "recordedVotes": [
+                {
+                    "chamber": "Senate",
+                    "congress": 118,
+                    "date": "2023-05-03T22:30:41Z",
+                    "rollNumber": 109,
+                    "sessionNumber": 1,
+                    "url": "https://www.senate.gov/legislative/LIS/roll_call_votes/vote1181/vote_118_1_00109.xml"
+                }
+            ],
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Passed/agreed to in Senate: Passed Senate without amendment by Yea-Nay Vote. 56 - 41. Record Vote Number: 109.",
+            "type": "Floor"
+        },
+        {
+            "actionDate": "2023-05-03",
+            "sourceSystem": {
+                "name": "Senate"
+            },
+            "text": "Measure laid before Senate by unanimous consent. (consideration: CR S1478-1499)",
+            "type": "Floor"
+        },
+        {
+            "actionDate": "2023-05-01",
+            "sourceSystem": {
+                "name": "Senate"
+            },
+            "text": "Received in the Senate, read twice.",
+            "type": "IntroReferral"
+        },
+        {
+            "actionCode": "H38310",
+            "actionDate": "2023-04-28",
+            "actionTime": "10:32:05",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Motion to reconsider laid on the table Agreed to without objection.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H37100",
+            "actionDate": "2023-04-28",
+            "actionTime": "10:32:02",
+            "recordedVotes": [
+                {
+                    "chamber": "House",
+                    "congress": 118,
+                    "date": "2023-04-28T14:32:02Z",
+                    "rollNumber": 202,
+                    "sessionNumber": 1,
+                    "url": "https://clerk.house.gov/evs/2023/roll202.xml"
+                }
+            ],
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "On passage Passed by the Yeas and Nays: 221 - 202 (Roll no. 202). (text: CR H2093)",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "8000",
+            "actionDate": "2023-04-28",
+            "actionTime": "10:32:02",
+            "recordedVotes": [
+                {
+                    "chamber": "House",
+                    "congress": 118,
+                    "date": "2023-04-28T14:32:02Z",
+                    "rollNumber": 202,
+                    "sessionNumber": 1,
+                    "url": "https://clerk.house.gov/evs/2023/roll202.xml"
+                }
+            ],
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Passed/agreed to in House: On passage Passed by the Yeas and Nays: 221 - 202 (Roll no. 202). (text: CR H2093)",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H35000",
+            "actionDate": "2023-04-28",
+            "actionTime": "09:58:17",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "The previous question was ordered pursuant to the rule.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-04-28",
+            "actionTime": "09:16:31",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "DEBATE - The House proceeded with one hour of debate on H.J. Res. 39.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H8D000",
+            "actionDate": "2023-04-28",
+            "actionTime": "09:16:00",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Rule provides for consideration of H.R. 2811 and H.J. Res. 39. Resolution provides for two hours of general debate on H.R. 2811 and one hour of general debate on H.J. Res. 39. The previous question is considered as ordered with one motion to recommit allowed on each measure.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H30000",
+            "actionDate": "2023-04-28",
+            "actionTime": "09:15:55",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Considered under the provisions of rule H. Res. 327. (consideration: CR H2093-2103)",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H1L220",
+            "actionDate": "2023-04-26",
+            "actionTime": "14:11:08",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Rule H. Res. 327 passed House.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H1L210",
+            "actionDate": "2023-04-26",
+            "actionTime": "10:05:36",
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Rules Committee Resolution H. Res. 327 Reported to House. Rule provides for consideration of H.R. 2811 and H.J. Res. 39. Resolution provides for two hours of general debate on H.R. 2811 and one hour of general debate on H.J. Res. 39. The previous question is considered as ordered with one motion to recommit allowed on each measure.",
+            "type": "Floor"
+        },
+        {
+            "actionCode": "H12410",
+            "actionDate": "2023-04-21",
+            "calendarNumber": {
+                "calendar": "U00024"
+            },
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Placed on the Union Calendar, Calendar No. 24.",
+            "type": "Calendars"
+        },
+        {
+            "actionCode": "H12200",
+            "actionDate": "2023-04-21",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Reported by the Committee on Ways and Means. H. Rept. 118-38.",
+            "type": "Committee"
+        },
+        {
+            "actionCode": "5000",
+            "actionDate": "2023-04-21",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Reported by the Committee on Ways and Means. H. Rept. 118-38.",
+            "type": "Committee"
+        },
+        {
+            "actionCode": "H19000",
+            "actionDate": "2023-04-19",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 1,
+                "name": "House committee actions"
+            },
+            "text": "Ordered to be Reported by the Yeas and Nays: 26 - 13.",
+            "type": "Committee"
+        },
+        {
+            "actionCode": "H15000-B",
+            "actionDate": "2023-04-19",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 1,
+                "name": "House committee actions"
+            },
+            "text": "Committee Consideration and Mark-up Session Held.",
+            "type": "Committee"
+        },
+        {
+            "actionCode": "H11100",
+            "actionDate": "2023-03-07",
+            "committees": [
+                {
+                    "name": "Ways and Means Committee",
+                    "systemCode": "hswm00",
+                    "url": "https://api.congress.gov/v3/committee/house/hswm00?format=json"
+                }
+            ],
+            "sourceSystem": {
+                "code": 2,
+                "name": "House floor actions"
+            },
+            "text": "Referred to the House Committee on Ways and Means.",
+            "type": "IntroReferral"
+        },
+        {
+            "actionCode": "Intro-H",
+            "actionDate": "2023-03-07",
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Introduced in House",
+            "type": "IntroReferral"
+        },
+        {
+            "actionCode": "1000",
+            "actionDate": "2023-03-07",
+            "sourceSystem": {
+                "code": 9,
+                "name": "Library of Congress"
+            },
+            "text": "Introduced in House",
+            "type": "IntroReferral"
+        }
+    ],
+    "pagination": {
+        "count": 37
+    },
+    "request": {
+        "billNumber": "39",
+        "billType": "hjres",
+        "billUrl": "https://api.congress.gov/v3/bill/118/hjres/39?format=json",
+        "congress": "118",
+        "contentType": "application/json",
+        "format": "json"
+    }
+}

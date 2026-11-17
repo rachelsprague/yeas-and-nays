@@ -6,11 +6,14 @@ ingesters), fetches:
 
     /bill/{congress}/{type}/{number}            sponsor, cosponsor count, introduced date
     /bill/{congress}/{type}/{number}/summaries  Congressional Research Service summaries
+    /bill/{congress}/{type}/{number}/actions    every recorded action (up to 250), newest first
 
-Both change over time (cosponsors are added; CRS writes summaries days to
-weeks after each version of a bill), so each file is re-fetched once it's a
-week old, and for any bill voted on in the last week. Bill files of a Congress
-that ended more than REFRESH_AFTER_END ago are fetched only when missing.
+All change over time (cosponsors are added; CRS writes summaries days to
+weeks after each version of a bill; actions are added as a bill moves), so
+each file is re-fetched once it's a week old, and for any bill voted on in the
+last week. Bill files of a Congress that ended more than REFRESH_AFTER_END ago
+are fetched only when missing. Missing actions files of bills not voted on in
+the last week are fetched at most ACTIONS_BACKFILL_PER_RUN per run.
 
 For every member who served in this Congress, also fetches
 /member/{bioguide_id}/sponsored-legislation (every bill and resolution they
@@ -54,8 +57,13 @@ log = logging.getLogger(__name__)
 API = "https://api.congress.gov/v3"
 BILL_URL = API + "/bill/{congress}/{bill_type}/{bill_number}?format=json"
 SUMMARIES_URL = API + "/bill/{congress}/{bill_type}/{bill_number}/summaries?format=json"
+ACTIONS_URL = API + "/bill/{congress}/{bill_type}/{bill_number}/actions?format=json&limit=250"
 # Endpoint URL, raw subdirectory, and the key every valid response must have.
-ENDPOINTS = [(BILL_URL, "bills", "bill"), (SUMMARIES_URL, "summaries", "summaries")]
+ENDPOINTS = [(BILL_URL, "bills", "bill"), (SUMMARIES_URL, "summaries", "summaries"),
+             (ACTIONS_URL, "actions", "actions")]
+# Missing actions files fetched per run for bills not voted on recently, so filling them
+# in for every bill at once (one request each) doesn't push a run past its timeout.
+ACTIONS_BACKFILL_PER_RUN = 100
 MEMBER_LIST_URL = API + "/member/{bioguide_id}/{endpoint}?format=json&limit={limit}&offset={offset}"
 PAGE_SIZE = 250  # the API maximum
 REFETCH_AFTER = dt.timedelta(days=7)
@@ -241,7 +249,7 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
 
     today = today or dt.date.today()
     bills = voted_bills()
-    fetched = 0
+    fetched = backfilled = 0
     for (congress, bill_type, bill_number), last_vote in sorted(bills.items()):
         for url_template, kind, required_key in ENDPOINTS:
             path = raw_path(congress, bill_type, bill_number, kind)
@@ -250,6 +258,10 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
             stale = needs_fetch(path, last_vote, today) if current else not path.exists()
             if not stale:
                 continue
+            if kind == "actions" and not path.exists() and (today - last_vote).days > RECENT_VOTE_DAYS:
+                if backfilled >= ACTIONS_BACKFILL_PER_RUN:
+                    continue
+                backfilled += 1
             url = url_template.format(congress=congress, bill_type=bill_type, bill_number=bill_number)
             resp = client.get(url, headers={"X-Api-Key": key})
             resp.raise_for_status()

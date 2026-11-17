@@ -61,6 +61,10 @@ STRING_COLUMNS = {
         "source_file", "congress", "bill_type", "bill_number", "version_code", "action_date",
         "action_desc", "update_date", "summary_html",
     ],
+    "bill_actions": [
+        "source_file", "congress", "bill_type", "bill_number", "action_date", "action_code",
+        "action_type", "source_system_code", "action_text",
+    ],
     "legislator_party_affiliations": [
         "bioguide_id", "term_start", "affiliation_start", "affiliation_end", "party", "caucus",
     ],
@@ -115,6 +119,7 @@ def run() -> None:
     bills, summaries = congress_gov.parse_dir(RAW_DIR / "congress_gov")
     write("bills", bills)
     write("bill_summaries", summaries)
+    write("bill_actions", congress_gov.parse_actions_dir(RAW_DIR / "congress_gov"))
     sponsored, sponsored_lists = congress_gov.parse_sponsored_dir(RAW_DIR / "congress_gov")
     write("sponsored_bills", sponsored)
     write("sponsored_lists", sponsored_lists)

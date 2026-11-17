@@ -972,6 +972,48 @@ class VotePageTest < Minitest::Test
     assert_includes built.fetch("/how/expulsion/index.html"), "<h1 class=\"vote-h\">How expulsion works</h1>"
   end
 
+  def path_doc
+    doc({ "A000001" => "Yea" }, { "yes" => 1 }).merge("path" => { "track" => "law", "steps" => [
+      { "key" => "introduced", "label" => "Introduced", "status" => "done", "date" => "2025-01-03",
+        "anchor" => "introduced", "current" => false },
+      { "key" => "passed_house", "label" => "Passed House", "status" => "done", "date" => "2025-02-01",
+        "anchor" => "first-chamber", "current" => true },
+      { "key" => "differences", "label" => "Differences resolved", "status" => "skipped", "date" => nil,
+        "anchor" => "differences", "current" => false },
+      { "key" => "became_law", "label" => "Became law", "status" => "upcoming", "date" => nil,
+        "anchor" => "president", "current" => false },
+    ] })
+  end
+
+  # The path lists each step with its date or status, marks the step this vote was
+  # taken at, and links each step to its part of How a bill becomes law.
+  def test_a_vote_on_a_measure_shows_its_path
+    v = vote(1, "On Passage").merge("bill_type" => "hr", "measure_number" => "H R 1", "measure_label" => "H.R. 1")
+    built = build_site([member("A000001", "AL", 1)],
+                       [[v, path_doc], [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
+    html = built.fetch("/votes/119/house/1/1/index.html")
+    assert_includes html, '<h2 id="path-h" class="section-h sm">Path of H.R. 1</h2>'
+    assert_includes html, '<li class="step done current" aria-current="step">'
+    assert_includes html, '<span class="kicker">This vote</span><a class="link" href="/how/bills/#first-chamber">Passed House</a>'
+    assert_includes html, "Feb. 1, 2025"
+    assert_includes html, "Not needed"
+    assert_includes html, '<span class="visually-hidden">Not reached</span>'
+    refute_includes built.fetch("/votes/119/house/1/2/index.html"), 'id="path-h"'
+  end
+
+  def test_the_path_view_keeps_only_known_statuses_anchors_and_dates
+    path = { "steps" => [
+      { "label" => "A", "status" => "done", "date" => "2025-13-99x", "anchor" => "elsewhere", "current" => "yes" },
+      { "label" => "B", "status" => "unknown" },
+      { "label" => 5, "status" => "done" },
+    ] }
+    assert_equal [{ "label" => "A", "status" => "done", "current" => false, "date" => nil, "anchor" => nil }],
+                 Yan.bill_path_view(path)
+    assert_nil Yan.bill_path_view({ "steps" => [{ "label" => "B", "status" => "unknown" }] })
+    assert_nil Yan.bill_path_view(nil)
+    assert_nil Yan.bill_path_view({ "steps" => [] })
+  end
+
   # A member whose latest seat is in the Senate has no district for a House vote.
   def test_the_note_names_members_who_have_since_moved_to_the_senate
     senator = member("S000001", "AL", nil).merge("chamber" => "senate")

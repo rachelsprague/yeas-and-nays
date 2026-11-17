@@ -1,0 +1,25 @@
+{%- comment -%} A measure's path from introduction to law (src/yan/export/bill_path.py), with the step this vote was taken at. {%- endcomment -%}
+{%- assign v = include.vote -%}
+<section class="section" aria-labelledby="path-h">
+  <h2 id="path-h" class="section-h sm">Path of {{ v.measure_label | escape }}</h2>
+  <ol class="bill-path">
+    {%- for s in include.steps %}
+    <li class="step {{ s.status }}{% if s.current %} current{% endif %}"{% if s.current %} aria-current="step"{% endif %}>
+      <span class="pip" aria-hidden="true"></span>
+      <span class="step-text">
+        {%- if s.current %}<span class="kicker">This vote</span>{% endif %}
+        {%- if s.anchor %}<a class="link" href="/how/bills/#{{ s.anchor }}">{{ s.label | escape }}</a>{% else %}<span>{{ s.label | escape }}</span>{% endif %}
+        <span class="small soft nums">
+          {%- case s.status -%}
+          {%- when "skipped" -%}Not needed
+          {%- when "in_progress" -%}In progress{% if s.date %}, {{ s.date | ap_date }}{% endif %}
+          {%- when "upcoming" -%}<span class="visually-hidden">Not reached</span>
+          {%- else -%}{% if s.date %}{{ s.date | ap_date }}{% endif %}
+          {%- endcase -%}
+        </span>
+      </span>
+    </li>
+    {%- endfor %}
+  </ol>
+  <p class="small soft">From Congress.gov's record of actions on {{ v.measure_label | escape }}, which can trail the floor by several days, and the recorded votes on this site. A step with no date was reached, but its date isn't recorded yet. <a class="link" href="/how/bills/">How a bill becomes law</a></p>
+</section>

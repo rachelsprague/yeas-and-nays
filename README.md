@@ -12,7 +12,7 @@ make all      # ingest -> stage -> model -> export
 
 | Step | Command | What it does |
 | --- | --- | --- |
-| Ingest | `make ingest` | Downloads House Clerk roll call XML, Senate roll call XML, [congress-legislators](https://github.com/unitedstates/congress-legislators) member data, and, from the [Congress.gov API](https://api.congress.gov/), bill details (sponsor, cosponsors), Congressional Research Service summaries, and the bills each member introduced, plus the House and Senate floor schedules, into `data/raw/` (gitignored). Incremental: re-fetches only the most recent votes to pick up corrections, and summaries for recently voted bills or once a week. The Congress.gov step needs `CONGRESS_API_KEY`; without it that step is skipped. |
+| Ingest | `make ingest` | Downloads House Clerk roll call XML, Senate roll call XML, [congress-legislators](https://github.com/unitedstates/congress-legislators) member data, and, from the [Congress.gov API](https://api.congress.gov/), bill details (sponsor, cosponsors), Congressional Research Service summaries, each bill's actions (for its path from introduction to law), and the bills each member introduced, plus the House and Senate floor schedules, into `data/raw/` (gitignored). Incremental: re-fetches only the most recent votes to pick up corrections, and summaries for recently voted bills or once a week. The Congress.gov step needs `CONGRESS_API_KEY`; without it that step is skipped. |
 | Stage | `make stage` | Parses raw files into flat Parquet under `data/staged/` (gitignored). Values kept as recorded. |
 | Model | `make model` | `dbt build` in `transform/`: builds DuckDB models and runs unit and data tests. |
 | Export | `make export` | Writes JSON from the marts into `data/out/` (committed). |
@@ -41,6 +41,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 | `cosponsored_bills` | one row per bill or resolution a member cosponsored this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
 | `cosponsored_lists` | one row per member whose cosponsored list has been fetched (lists fill in over several runs) | `bioguide_id` |
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
+| `bill_milestones` | one row per bill or resolution with a recorded vote per step it has reached toward law (introduced, committee, passed or failed in each chamber, differences, President, veto, override, law), with its dates, from Congress.gov actions and this site's roll calls | `milestone_id`, e.g. `119-hr-1:passed_house` |
 | `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
 | `floor_schedule` | one row per item that may come up for a vote: House weekly schedule items (removed items dropped) and Senate cloture motions filed but not yet voted on, each with the roll call that followed, if any | `item_id`, e.g. `h-2026-11-16-409831`, `s-pn1272-3`, `s-h-r-2347-measure` |
 | `senate_sessions` | one row per time the Senate convened this session, with when it's set to convene next and whether that's a pro forma session | `convene_time_et` |

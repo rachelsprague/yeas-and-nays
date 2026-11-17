@@ -13,8 +13,9 @@
                                   the bot posts it), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
-                                  every member's position as recorded, and the CRS
-                                  summary of the measure, when there is one
+                                  every member's position as recorded, the CRS
+                                  summary of the measure, when there is one, and the
+                                  measure's path from introduction to law
 
 Output is a pure function of the warehouse: keys are sorted, each list
 element sits on its own line, and nothing time-of-run is written. A re-run
@@ -38,6 +39,7 @@ import duckdb
 from yan.bot.rules import decide, measure_label
 from yan.config import CONGRESS, OUT_DIR, WAREHOUSE_PATH
 from yan.export import summary_html
+from yan.export.bill_path import vote_path
 from yan.measures import bill_label
 
 log = logging.getLogger(__name__)
@@ -149,6 +151,13 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             from house_floor_days
             order by legislative_day
         """)
+        milestones = defaultdict(dict)
+        for row in _rows(con, """
+            select congress, bill_type, bill_number, milestone, first_date, last_date
+            from bill_milestones
+        """):
+            bill = (row["congress"], row["bill_type"], row["bill_number"])
+            milestones[bill][row["milestone"]] = (row["first_date"], row["last_date"])
         summaries = {
             row.pop("vote_id"): row
             for row in _rows(con, """
@@ -174,7 +183,9 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     for vote in votes:
         name = f"{vote['vote_id']}.json"
         expected.add(name)
-        doc = vote_document(vote, by_vote[vote["vote_id"]], summaries.get(vote["vote_id"]))
+        bill = (vote["congress"], vote["bill_type"], vote["bill_number"])
+        doc = vote_document(vote, by_vote[vote["vote_id"]], summaries.get(vote["vote_id"]),
+                            vote_path(vote, milestones.get(bill, {})))
         changed += write_if_changed(vote_dir / name, dumps(doc))
 
     # Remove files for votes no longer in the warehouse.
@@ -242,7 +253,8 @@ def summary_document(summary: dict | None) -> dict | None:
     }
 
 
-def vote_document(vote: dict, positions: list[dict], summary: dict | None = None) -> dict:
+def vote_document(vote: dict, positions: list[dict], summary: dict | None = None,
+                  path: dict | None = None) -> dict:
     party_totals = defaultdict(lambda: defaultdict(int))
     caucus_majority = {}
     against = []
@@ -262,6 +274,7 @@ def vote_document(vote: dict, positions: list[dict], summary: dict | None = None
         "against_party_majority": against,
         "positions": {p["bioguide_id"]: p["position_raw"] for p in positions},
         "summary": summary_document(summary),
+        "path": path,
     }
 
 

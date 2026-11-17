@@ -1,8 +1,11 @@
-"""Parse Congress.gov responses: bills (details), CRS summaries (one per bill version), and
-the bills each member sponsored and cosponsored."""
+"""Parse Congress.gov responses: bills (details), CRS summaries (one per bill version), bill
+actions, and the bills each member sponsored and cosponsored."""
 
 import json
+import logging
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 
 def parse_summaries(content: bytes, source_file: str) -> list[dict]:
@@ -22,6 +25,39 @@ def parse_summaries(content: bytes, source_file: str) -> list[dict]:
         }
         for s in doc["summaries"]
     ]
+
+
+def parse_actions(content: bytes, source_file: str) -> list[dict]:
+    """One row per recorded action. The API lists up to 250, newest first; a bill with more
+    is logged, and its oldest actions are left out."""
+    doc = json.loads(content)
+    request = doc["request"]
+    actions = doc["actions"]
+    count = (doc.get("pagination") or {}).get("count")
+    if isinstance(count, int) and count > len(actions):
+        log.warning("congress.gov %s: %d of %d actions fetched", source_file, len(actions), count)
+    return [
+        {
+            "source_file": source_file,
+            "congress": request["congress"],
+            "bill_type": request["billType"].lower(),
+            "bill_number": request["billNumber"],
+            "action_date": a.get("actionDate"),
+            "action_code": a.get("actionCode"),
+            "action_type": a.get("type"),
+            "source_system_code": str((a.get("sourceSystem") or {}).get("code", "")) or None,
+            "action_text": a.get("text"),
+        }
+        for a in actions
+    ]
+
+
+def parse_actions_dir(raw_root: Path) -> list[dict]:
+    """Every bill's actions from everything under data/raw/congress_gov/."""
+    rows = []
+    for path in sorted(raw_root.glob("*/actions/*.json")):
+        rows += parse_actions(path.read_bytes(), str(path.relative_to(raw_root)))
+    return rows
 
 
 def parse_bill(content: bytes, source_file: str) -> dict:
