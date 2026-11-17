@@ -47,6 +47,31 @@ unit_tests:
         - {item_id: h-2026-11-09-4098-1, title: Hyphen}
         - {item_id: s-h-r-4-measure, title: Later}
 
+  - name: floor_schedule_senate_same_line_filings_pick_the_first_docnum
+    description: >
+      Two spellings of a docnum filed on the same day in the same status order tie on the
+      latest filing; the first docnum is kept ("H.R. 4" before "H.R.4"), then the first
+      title, whatever their raw order.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-09, item_id: "4098.1", measure_number: H.R. 5, bill_type: hr, bill_number: "5", title: A, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows:
+          - {docnum: H.R.4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: No space}
+          - {docnum: H.R. 4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: Space}
+          - {docnum: PN8, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: Z}
+          - {docnum: PN8, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: Y}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-09-4098-1, measure_number: H.R. 5, title: A}
+        - {item_id: s-h-r-4-measure, measure_number: H.R. 4, title: Space}
+        - {item_id: s-pn8, measure_number: PN8, title: Y}
+
   - name: floor_schedule_ids_skip_an_all_punctuation_part
     description: >
       A target with no letters or digits is left out of the item ID rather than leaving a
