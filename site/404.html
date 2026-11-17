@@ -1,0 +1,52 @@
+---
+layout: default
+title: Page not found
+description: There is no page at this address on Yeas & Nays.
+permalink: /404.html
+sitemap: false
+search: false
+noindex: true
+---
+{%- comment -%}
+  GitHub Pages serves this page, with a 404 status, for any address that has
+  no page, at whatever depth it was asked for. So every link and asset path
+  here (and in the layout) starts with "/". It stays out of the sitemap, the
+  search index and search engines' results.
+{%- endcomment -%}
+{%- assign how_pages = site.pages | where: "search_type", "How it works" | sort: "title" %}
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <span class="kicker muted">Page not found</span>
+    <h1 class="vote-h">There&rsquo;s no page at this address</h1>
+    <p class="soft intro">The page may have moved, or the address may have a typo. You can search the site or start from one of the pages below.</p>
+  </section>
+
+  <div class="prose">
+    <form class="sitesearch inpage" action="/search/" method="get" role="search">
+      <label for="notfound-q" class="visually-hidden">Search the site</label>
+      <input id="notfound-q" class="field" type="search" name="q" placeholder="Search votes, members and explainers" autocomplete="off">
+      <button class="button" type="submit">Search</button>
+    </form>
+
+    <section>
+      <h2>Votes and members</h2>
+      <ul>
+        <li><a class="link" href="/">Latest votes</a></li>
+        <li><a class="link" href="/votes/">All votes</a></li>
+        <li><a class="link" href="/members/">All members</a></li>
+        <li><a class="link" href="/find/">Find your members</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>How things work</h2>
+      <ul>
+        {%- for p in how_pages %}
+        <li><a class="link" href="{{ p.url }}">{{ p.title | escape }}</a></li>
+        {%- endfor %}
+        <li><a class="link" href="/about/#procedural-votes">How votes work</a></li>
+        <li><a class="link" href="/about/">About &amp; methodology</a></li>
+      </ul>
+    </section>
+  </div>
+</main>
