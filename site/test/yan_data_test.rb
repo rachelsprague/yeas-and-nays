@@ -994,7 +994,7 @@ class VotePageTest < Minitest::Test
     html = built.fetch("/votes/119/house/1/1/index.html")
     assert_includes html, '<h2 id="path-h" class="section-h sm">Path of H.R. 1</h2>'
     assert_includes html, '<li class="step done current" aria-current="step">'
-    assert_includes html, '<span class="kicker">This vote</span><a class="link" href="/how/bills/#first-chamber">Passed House</a>'
+    assert_match %r{<span class="kicker">This vote was taken here</span>\s+<a class="link" href="/how/bills/#first-chamber">Passed House</a>}, html
     assert_includes html, "Feb. 1, 2025"
     assert_includes html, "Not needed"
     assert_includes html, '<span class="visually-hidden">Not reached</span>'

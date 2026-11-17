@@ -6,7 +6,7 @@ ingesters), fetches:
 
     /bill/{congress}/{type}/{number}            sponsor, cosponsor count, introduced date
     /bill/{congress}/{type}/{number}/summaries  Congressional Research Service summaries
-    /bill/{congress}/{type}/{number}/actions    every recorded action (up to 250), newest first
+    /bill/{congress}/{type}/{number}/actions    every recorded action (paged), newest first
 
 All change over time (cosponsors are added; CRS writes summaries days to
 weeks after each version of a bill; actions are added as a bill moves), so
@@ -57,7 +57,7 @@ log = logging.getLogger(__name__)
 API = "https://api.congress.gov/v3"
 BILL_URL = API + "/bill/{congress}/{bill_type}/{bill_number}?format=json"
 SUMMARIES_URL = API + "/bill/{congress}/{bill_type}/{bill_number}/summaries?format=json"
-ACTIONS_URL = API + "/bill/{congress}/{bill_type}/{bill_number}/actions?format=json&limit=250"
+ACTIONS_URL = API + "/bill/{congress}/{bill_type}/{bill_number}/actions?format=json&limit=250&offset={offset}"
 # Endpoint URL, raw subdirectory, and the key every valid response must have.
 ENDPOINTS = [(BILL_URL, "bills", "bill"), (SUMMARIES_URL, "summaries", "summaries"),
              (ACTIONS_URL, "actions", "actions")]
@@ -100,6 +100,26 @@ def voted_bills() -> dict[tuple[int, str, str], dt.date]:
         if bill and date > latest.get(key := (int(congress), *bill), dt.date.min):
             latest[key] = date
     return latest
+
+
+def fetch_actions(client: Client, key: str, congress: int, bill_type: str, bill_number: str) -> bytes:
+    """Every page of a bill's actions (newest first), saved as one response: the first
+    page's request, every action, and the count. A response without actions raises."""
+    actions, offset, doc = [], 0, None
+    while True:
+        url = ACTIONS_URL.format(congress=congress, bill_type=bill_type, bill_number=bill_number, offset=offset)
+        resp = client.get(url, headers={"X-Api-Key": key})
+        resp.raise_for_status()
+        page = resp.json()
+        if not isinstance(page.get("actions"), list):
+            raise ValueError(f"congress.gov {bill_type}{bill_number}: response has no 'actions'")
+        doc = doc or page
+        actions += page["actions"]
+        count = (page.get("pagination") or {}).get("count")
+        offset += PAGE_SIZE
+        if not page["actions"] or not isinstance(count, int) or offset >= count:
+            break
+    return json.dumps({**doc, "actions": actions}, sort_keys=True).encode()
 
 
 def members_in_congress() -> list[str]:
@@ -262,12 +282,16 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
                 if backfilled >= ACTIONS_BACKFILL_PER_RUN:
                     continue
                 backfilled += 1
-            url = url_template.format(congress=congress, bill_type=bill_type, bill_number=bill_number)
-            resp = client.get(url, headers={"X-Api-Key": key})
-            resp.raise_for_status()
-            if required_key not in resp.json():
-                raise ValueError(f"congress.gov {bill_type}{bill_number}: response has no {required_key!r}")
-            write_atomic(path, resp.content)
+            if kind == "actions":
+                content = fetch_actions(client, key, congress, bill_type, bill_number)
+            else:
+                url = url_template.format(congress=congress, bill_type=bill_type, bill_number=bill_number)
+                resp = client.get(url, headers={"X-Api-Key": key})
+                resp.raise_for_status()
+                if required_key not in resp.json():
+                    raise ValueError(f"congress.gov {bill_type}{bill_number}: response has no {required_key!r}")
+                content = resp.content
+            write_atomic(path, content)
             fetched += 1
     log.info("congress.gov: %d bills with votes, %d files fetched", len(bills), fetched)
 

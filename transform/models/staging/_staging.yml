@@ -16,6 +16,38 @@ models:
               config:
                 severity: warn
 
+  - name: stg_congress_gov__bill_actions
+    description: >
+      One row per Congress.gov action on a bill or resolution with a recorded vote. An action
+      with no date or bill can't place a step on the path (`bill_milestones` drops it), so
+      these tests flag it; they warn because the path is secondary to votes.
+    columns:
+      - name: congress
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: bill_type
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - accepted_values:
+              arguments:
+                values: [hr, s, hjres, sjres, hconres, sconres, hres, sres]
+              config:
+                severity: warn
+      - name: bill_number
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: action_date
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
   - name: stg_floor__senate_actions
     description: >
       One row per status line in the Senate's daily floor activity. Every document there has

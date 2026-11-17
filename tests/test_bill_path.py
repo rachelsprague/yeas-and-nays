@@ -82,6 +82,43 @@ HJRES39 = m(introduced="2023-03-07", committee="2023-04-21", passed_house="2023-
             presented="2023-05-09", vetoed="2023-05-16", override_failed_house="2023-05-24")
 
 
+def test_a_senate_concurrence_vote_is_placed_at_differences():
+    path = vote_path(vote(bill_type="s", chamber="senate", date="2026-10-01",
+                          question="On the Motion (Motion to Concur in the House Amendment to S. 1071)"),
+                     m(passed_senate="2026-06-01", passed_house="2026-09-01"))
+    assert current(path) == ["differences"]
+
+
+def test_an_undated_passage_counts_as_before_a_vote_when_a_later_step_is():
+    # S. 1071: the Senate's passage is known only from the House's later one. Cloture on
+    # the motion to concur, after the House passed it, is at differences, not Senate passage.
+    path = vote_path(vote(bill_type="s", chamber="senate", date="2025-12-18", question="On the Cloture Motion S. 1071"),
+                     m(passed_house="2025-12-10"))
+    assert path["steps"][2]["key"] == "passed_senate" and path["steps"][2]["date"] is None
+    assert current(path) == ["differences"]
+    # Still there once the concurrence later that day resolved them.
+    resolved = m(passed_house="2025-12-10", differences_resolved="2025-12-18")
+    assert current(vote_path(vote(bill_type="s", chamber="senate", date="2025-12-18",
+                                  question="On the Cloture Motion S. 1071"), resolved)) == ["differences"]
+
+
+def test_differences_are_resolved_by_a_concurrence_before_congress_gov_records_it():
+    # The last vote agreed to the other chamber's amendment; not yet sent to the President.
+    path = vote_path(vote(), m(passed_house="2026-06-01", passed_senate="2026-07-01",
+                               differences=("2026-09-01", "2026-09-10"), differences_resolved="2026-09-10"))
+    assert path["steps"][4]["status"] == "done" and path["steps"][4]["date"] == "2026-09-10"
+    assert path["steps"][5]["status"] == "upcoming"
+
+
+def test_differences_are_resolved_when_both_chambers_agree_to_the_conference_report():
+    both = m(passed_house="2026-06-01", passed_senate="2026-07-01", differences=("2026-09-01", "2026-09-12"),
+             conference_report_house="2026-09-10", conference_report_senate="2026-09-12")
+    assert vote_path(vote(), both)["steps"][4]["status"] == "done"
+    assert vote_path(vote(), both)["steps"][4]["date"] == "2026-09-12"
+    one = {k: v for k, v in both.items() if k != "conference_report_senate"}
+    assert vote_path(vote(), one)["steps"][4]["status"] == "in_progress"
+
+
 def test_a_veto_and_a_failed_override():
     path = vote_path(vote(bill_type="hjres", date="2023-05-24",
                           question="Passage, Objections of the President To The Contrary Notwithstanding"), HJRES39)
@@ -108,6 +145,11 @@ def test_an_override_that_passed_ends_in_law():
                                override_passed_senate="2026-02-03", became_law="2026-02-03"))
     assert steps(path)[-2:] == [("override", "Veto override", "done", "2026-02-03"),
                                 ("became_law", "Became law", "done", "2026-02-03")]
+
+
+def test_an_override_passed_in_one_chamber_is_in_progress():
+    path = vote_path(vote(), m(presented="2026-01-01", vetoed="2026-01-05", override_passed_house="2026-02-01"))
+    assert steps(path)[-1] == ("override", "Veto override", "in_progress", "2026-02-01")
 
 
 def test_a_pocket_veto_ends_the_path():
@@ -168,6 +210,17 @@ def test_a_constitutional_amendment_stops_after_both_chambers():
 
 def test_a_vote_on_no_measure_has_no_path():
     assert vote_path(vote(bill_type=None), {}) is None
+
+
+def test_procedural_votes_are_placed_at_the_step_the_measure_was_on():
+    for question in ("On Agreeing to the Amendment", "On Ordering the Previous Question"):
+        assert current(vote_path(vote(date="2025-05-21", question=question), HR1)) == ["passed_house"]
+    cloture = vote(chamber="senate", date="2025-06-28", question="On Cloture on the Motion to Proceed H.R. 1")
+    assert current(vote_path(cloture, HR1)) == ["passed_senate"]
+
+
+def test_a_vote_with_no_date_is_placed_at_its_chambers_step_until_passed():
+    assert current(vote_path(vote(date="2025-05-22") | {"vote_date": None}, {})) == ["passed_house"]
 
 
 def test_a_vote_after_the_measure_became_law_is_placed_at_no_step():

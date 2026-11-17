@@ -28,7 +28,9 @@ from_library_of_congress as (
                 then 'introduced'
             when action_type = 'Committee' then 'committee'
             when action_code = '8000' then 'passed_house'
-            when action_code = '9000' then 'failed_house'
+            -- A failed suspension vote can be followed by passage under a rule, so it
+            -- doesn't stop the path (as with this site's own votes below).
+            when action_code = '9000' and action_text not ilike '%suspend the rules%' then 'failed_house'
             when action_code = '17000' then 'passed_senate'
             when action_code = '18000' then 'failed_senate'
             when action_code = '28000' then 'presented'
@@ -73,11 +75,30 @@ from_votes as (
                     -- A failed suspension vote can be followed by passage under a rule.
                     when question not like 'On Motion to Suspend%' then 'failed_' || chamber
                 end
-            when carried and (regexp_matches(question, '^On (the )?Motion to (Suspend the Rules and )?Concur')
+            -- House: "On Motion to Concur in the Senate Amendment"; Senate: "On the Motion
+            -- (Motion to Concur in the House Amendment to S. 1071)".
+            when carried and (regexp_matches(question, '^On (the )?Motion (\(Motion )?to (Suspend the Rules and )?Concur')
                 or regexp_matches(question, '^On (Agreeing to )?the Conference Report'))
                 then 'differences'
         end as milestone
     from votes
+),
+
+{#- The chambers agree on one text when one concurs in the other's amendment
+    without amending it further, or when both agree to a conference report.
+    Congress.gov records this only when the bill goes to the President. #}
+from_final_agreement as (
+    select
+        congress, bill_type, bill_number, vote_date as action_date,
+        case
+            when regexp_matches(question, '^On (the )?Motion (\(Motion )?to (Suspend the Rules and )?Concur')
+                and not regexp_matches(question, 'with (an )?Amendment', 'i')
+                then 'differences_resolved'
+            when regexp_matches(question, '^On (Agreeing to )?the Conference Report')
+                then 'conference_report_' || chamber
+        end as milestone
+    from votes
+    where carried
 ),
 
 introduced as (
@@ -92,6 +113,8 @@ all_milestones as (
     select * from from_resolving_differences
     union all by name
     select * from from_votes
+    union all by name
+    select * from from_final_agreement
     union all by name
     select * from introduced
 )

@@ -57,13 +57,13 @@ def test_missing_actions_files_are_backfilled_a_few_per_run(monkeypatch, tmp_pat
     congress_gov.ingest(client, TODAY)
     actions = [u for u in client.urls if "/actions?" in u]
     # Two backfilled, then H.R. 4, voted on recently, past the cap.
-    assert actions == [congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number=n)
+    assert actions == [congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number=n, offset=0)
                        for n in "124"]
 
     client = _ActionsClient()
     congress_gov.ingest(client, TODAY)
-    assert congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="3") in client.urls
-    assert congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="1") not in client.urls
+    assert congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="3", offset=0) in client.urls
+    assert congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="1", offset=0) not in client.urls
 
 
 def test_parse_bill_takes_the_sponsor_and_counts():
@@ -79,6 +79,46 @@ def test_parse_bill_takes_the_sponsor_and_counts():
     assert bill["cosponsor_count"] == "24"
     assert bill["introduced_date"] == "2025-02-05"
     assert bill["legislation_url"] == "https://www.congress.gov/bill/119th-congress/house-bill/1013"
+
+
+class _PagedActionsClient:
+    """300 actions, served 250 per page."""
+
+    def __init__(self):
+        self.urls = []
+
+    def get(self, url, headers=None):
+        import httpx
+
+        self.urls.append(url)
+        offset = int(url.rsplit("offset=", 1)[1])
+        page = [{"actionDate": "2025-01-03", "text": f"Action {i}"} for i in range(offset, min(offset + 250, 300))]
+        doc = {"request": {"congress": "119", "billType": "hr", "billNumber": "1"},
+               "actions": page, "pagination": {"count": 300}}
+        return httpx.Response(200, json=doc, request=httpx.Request("GET", url))
+
+
+def test_fetch_actions_reads_every_page():
+    from yan.ingest.congress_gov import fetch_actions
+
+    client = _PagedActionsClient()
+    doc = json.loads(fetch_actions(client, "k", 119, "hr", "1"))
+    assert [u.rsplit("offset=", 1)[1] for u in client.urls] == ["0", "250"]
+    assert len(doc["actions"]) == 300 and doc["actions"][-1]["text"] == "Action 299"
+    assert doc["request"]["billNumber"] == "1"
+
+
+def test_fetch_actions_raises_on_a_response_without_actions(monkeypatch):
+    import httpx
+
+    from yan.ingest.congress_gov import fetch_actions
+
+    class Client:
+        def get(self, url, headers=None):
+            return httpx.Response(200, json={"error": "x"}, request=httpx.Request("GET", url))
+
+    with pytest.raises(ValueError, match="no 'actions'"):
+        fetch_actions(Client(), "k", 119, "hr", "1")
 
 
 def test_parse_actions_keeps_each_action_with_its_code_and_source():

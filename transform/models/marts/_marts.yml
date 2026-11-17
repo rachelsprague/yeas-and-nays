@@ -376,7 +376,8 @@ models:
           - accepted_values:
               arguments:
                 values: [introduced, committee, passed_house, failed_house, passed_senate,
-                         failed_senate, differences, presented, vetoed, pocket_vetoed,
+                         failed_senate, differences, differences_resolved, conference_report_house,
+                         conference_report_senate, presented, vetoed, pocket_vetoed,
                          override_passed_house, override_failed_house, override_passed_senate,
                          override_failed_senate, became_law]
       - name: first_date

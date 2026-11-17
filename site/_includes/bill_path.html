@@ -7,8 +7,8 @@
     <li class="step {{ s.status }}{% if s.current %} current{% endif %}"{% if s.current %} aria-current="step"{% endif %}>
       <span class="pip" aria-hidden="true"></span>
       <span class="step-text">
-        {%- if s.current %}<span class="kicker">This vote</span>{% endif %}
-        {%- if s.anchor %}<a class="link" href="/how/bills/#{{ s.anchor }}">{{ s.label | escape }}</a>{% else %}<span>{{ s.label | escape }}</span>{% endif %}
+        {%- if s.current %}<span class="kicker">This vote was taken here</span>{% endif %}
+        {% if s.anchor %}<a class="link" href="/how/bills/#{{ s.anchor }}">{{ s.label | escape }}</a>{% else %}<span>{{ s.label | escape }}</span>{% endif %}
         <span class="small soft nums">
           {%- case s.status -%}
           {%- when "skipped" -%}Not needed

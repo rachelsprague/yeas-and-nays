@@ -180,13 +180,13 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
     congress_gov.ingest(client, LONG_ENDED)
 
     assert client.urls == [
-        congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="1"),
+        congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="1", offset=0),
         congress_gov.BILL_URL.format(congress=119, bill_type="hr", bill_number="2"),
         congress_gov.SUMMARIES_URL.format(congress=119, bill_type="hr", bill_number="2"),
-        congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="2"),
+        congress_gov.ACTIONS_URL.format(congress=119, bill_type="hr", bill_number="2", offset=0),
         congress_gov.BILL_URL.format(congress=120, bill_type="hr", bill_number="1"),
         congress_gov.SUMMARIES_URL.format(congress=120, bill_type="hr", bill_number="1"),
-        congress_gov.ACTIONS_URL.format(congress=120, bill_type="hr", bill_number="1"),
+        congress_gov.ACTIONS_URL.format(congress=120, bill_type="hr", bill_number="1", offset=0),
     ]
     assert congress_gov.raw_path(120, "hr", "1", "bills").exists()
 
@@ -210,7 +210,7 @@ def test_a_bill_from_an_unlisted_congress_is_fetched_only_when_missing(monkeypat
     client = _BillClient()
     congress_gov.ingest(client, JUST_ENDED)  # no KeyError
     assert client.urls == [congress_gov.SUMMARIES_URL.format(congress=118, bill_type="hr", bill_number="1"),
-                           congress_gov.ACTIONS_URL.format(congress=118, bill_type="hr", bill_number="1")]
+                           congress_gov.ACTIONS_URL.format(congress=118, bill_type="hr", bill_number="1", offset=0)]
 
 
 def _votes_json(out_dir, vote_ids):

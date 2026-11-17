@@ -19,7 +19,8 @@ Each step's status is one of:
     failed       the chamber voted it down (and hasn't passed it since), or the
                  override failed
     skipped      not needed: both chambers passed the same text
-    in_progress  differences being resolved, not yet sent to the President
+    in_progress  differences being resolved, not yet agreed or sent to the President; or a
+                 veto override passed in one chamber, with the other still to vote
     upcoming     not reached
 """
 
@@ -29,8 +30,10 @@ import re
 CHAMBERS = {"house": "House", "senate": "Senate"}
 CONSTITUTIONAL_AMENDMENT = re.compile(r"^Proposing an amendment to the Constitution", re.I)
 OVERRIDE_QUESTION = re.compile(r"Objections of the President|^On (Overriding the Veto|the Veto Message)")
+# House: "On Motion to Concur in the Senate Amendment"; Senate: "On the Motion (Motion to
+# Concur in the House Amendment to S. 1071)".
 DIFFERENCES_QUESTION = re.compile(
-    r"^On (the )?Motion to (Suspend the Rules and )?Concur|^On (Agreeing to )?the Conference Report|"
+    r"^On (the )?Motion (\(Motion )?to (Suspend the Rules and )?Concur|^On (Agreeing to )?the Conference Report|"
     r"^On Motion to Instruct Conferees")
 
 
@@ -87,7 +90,14 @@ def vote_path(vote: dict, milestones: dict[str, tuple]) -> dict | None:
         steps[1]["date"] = None
 
     if kind == "law":
-        steps.append({"key": "differences", "label": "Differences resolved", "date": dated("differences", 1),
+        # Agreed by this site's votes (a concurrence with no further amendment, or a conference
+        # report agreed to in both chambers) before Congress.gov records it going to the President.
+        agreed = [dated("differences_resolved")]
+        if "conference_report_house" in milestones and "conference_report_senate" in milestones:
+            agreed.append(max(dated("conference_report_house"), dated("conference_report_senate")))
+        agreed = min((a for a in agreed if a), default=None)
+        steps.append({"key": "differences", "label": "Differences resolved",
+                      "date": agreed or dated("differences", 1), "resolved": bool(agreed),
                       "anchor": "differences"})
         steps.append({"key": "presented", "label": "To President", "date": dated("presented"), "anchor": "president"})
         overrides = [m for m in milestones if m.startswith("override_")]
@@ -95,18 +105,21 @@ def vote_path(vote: dict, milestones: dict[str, tuple]) -> dict | None:
             steps.append({"key": "pocket_vetoed", "label": "Pocket vetoed", "date": dated("pocket_vetoed"),
                           "failed": True, "anchor": "president"})
         elif "vetoed" in milestones or overrides:
-            override_failed = [dated(m) for m in overrides if "_failed_" in m]
+            became_law = "became_law" in milestones
+            override_failed = [dated(m) for m in overrides if "_failed_" in m] if not became_law else []
+            override_passed = [dated(m) for m in overrides if "_passed_" in m]
             steps.append({"key": "vetoed", "label": "Vetoed", "date": dated("vetoed"), "failed": True,
                           "anchor": "president"})
             steps.append({
                 "key": "override",
-                "label": "Veto override failed" if override_failed and "became_law" not in milestones else "Veto override",
-                "date": (min(override_failed) if override_failed and "became_law" not in milestones
-                         else max((dated(m) for m in overrides if "_passed_" in m), default=None)),
-                "failed": bool(override_failed) and "became_law" not in milestones,
+                "label": "Veto override failed" if override_failed else "Veto override",
+                "date": min(override_failed) if override_failed else max(override_passed, default=None),
+                "failed": bool(override_failed),
+                # Passed in one chamber, with the other still to vote.
+                "in_progress": not override_failed and not became_law and len(override_passed) == 1,
                 "anchor": "override",
             })
-            if "became_law" in milestones:
+            if became_law:
                 steps.append({"key": "became_law", "label": "Became law", "date": dated("became_law"),
                               "anchor": "president"})
         else:
@@ -130,9 +143,13 @@ def _set_statuses(steps: list[dict]) -> None:
         key = step["key"]
         if step.pop("failed", False):
             status = "failed"
+        elif step.pop("in_progress", False):
+            status = "in_progress"
         elif key == "differences":
             presented = any(s["status"] in ("done", "failed") for s in steps[steps.index(step) + 1:])
-            if presented:
+            if step.pop("resolved", False):
+                status = "done"
+            elif presented:
                 status = "done" if step["date"] else "skipped"
             else:
                 status = "in_progress" if step["date"] else "upcoming"
@@ -152,6 +169,17 @@ def _set_statuses(steps: list[dict]) -> None:
             break
 
 
+def _reached_before(step: dict, steps: list[dict], vote_date: str | None) -> bool:
+    """Whether the step was reached before the vote date: by its own date, or, undated, by a
+    later step's (the second chamber passed it before the first chamber's next vote)."""
+    if step["status"] != "done" or not vote_date:
+        return False
+    if step["date"]:
+        return step["date"] < vote_date
+    later = steps[steps.index(step) + 1:]
+    return any(s["date"] and s["date"] < vote_date for s in later)
+
+
 def _current_step(vote: dict, steps: list[dict]) -> str | None:
     """The step this vote was taken at: a veto override vote at the override; a vote on
     the other chamber's amendment or a conference report at resolving differences;
@@ -165,8 +193,13 @@ def _current_step(vote: dict, steps: list[dict]) -> str | None:
         return "differences"
     vote_date = _date(vote.get("vote_date"))
     passage = keys.get(f"passed_{vote.get('chamber')}")
-    if passage and not (passage["status"] == "done" and passage["date"] and passage["date"] < vote_date):
+    if passage and not _reached_before(passage, steps, vote_date):
         return passage["key"]
-    if "differences" in keys and keys["differences"]["status"] in ("upcoming", "in_progress"):
+    # Both chambers had passed it: resolving differences, unless that was done (or wasn't
+    # needed) before this vote.
+    differences, presented = keys.get("differences"), keys.get("presented")
+    if (differences and differences["status"] != "skipped"
+            and not _reached_before(differences, steps, vote_date)
+            and not _reached_before(presented, steps, vote_date)):
         return "differences"
     return None
