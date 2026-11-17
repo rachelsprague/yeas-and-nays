@@ -62,7 +62,7 @@ layout: default
   {%- assign smap = page.state_map -%}
   {%- if smap %}
   <section class="section" aria-labelledby="state-h" data-pagefind-ignore>
-    <h2 id="state-h" class="section-h sm">By state</h2>
+    <h2 id="state-h" class="section-h sm">{% if smap.src and smap.chamber == "house" %}By district{% else %}By state{% endif %}</h2>
     {%- if smap.src %}
     {%- include vote_map.html map=smap %}
     {%- endif %}

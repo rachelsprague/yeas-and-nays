@@ -1128,6 +1128,7 @@ class VotePageTest < Minitest::Test
     %w[yea present nv].each { |mark| assert_equal 1, html.scan(%(<g class="dot #{mark}")).size, mark }
     assert_includes html, '<g class="dot nay" fill="url(#hatch-R)">'
     assert_includes html, 'data-vmap data-src="/assets/maps/119.json" data-chamber="house"'
+    assert_includes html, '<h2 id="state-h" class="section-h sm">By district</h2>'
     seats = JSON.parse(html[%r{<script type="application/json" data-seats>(.*?)</script>}m, 1])
     assert_equal({ "AL-1" => ["yea"], "AL-2" => ["present"], "AL-3" => ["nv"], "AL-4" => ["nay"] },
                  seats.transform_values { |s| s["marks"] })
@@ -1249,6 +1250,7 @@ class VotePageTest < Minitest::Test
                                              { "yes" => 1, "no" => 2 })]])
     one = built.fetch("/votes/119/senate/1/1/index.html")
     assert_includes one, 'data-chamber="senate"'
+    assert_includes one, '<h2 id="state-h" class="section-h sm">By state</h2>'
     assert_includes one, "Not on the map: 1 senator with no state on record. District and state lines"
     refute_includes one, "such as a delegate"
     assert_includes built.fetch("/votes/119/senate/1/2/index.html"), "Not on the map: 2 senators with no state on record."
@@ -1261,7 +1263,8 @@ class VotePageTest < Minitest::Test
                        [99, 120].map { |c| [vote(1, "On Passage").merge("congress" => c), doc({ "A000001" => "Yea" }, { "yes" => 1 })] })
     %w[99 120].each do |c|
       html = built.fetch("/votes/#{c}/house/1/1/index.html")
-      assert_includes html, "By state", c
+      # With no map to draw districts, the House heading names the table.
+      assert_includes html, '<h2 id="state-h" class="section-h sm">By state</h2>', c
       refute_includes html, "data-vmap", c
     end
   end

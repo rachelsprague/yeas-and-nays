@@ -1,4 +1,4 @@
-// By state map on vote pages: fetches the US shapes (scripts/build_vote_map.py)
+// Vote page map: fetches the US shapes (scripts/build_vote_map.py)
 // and fills each House district, or each senator's side of a state, with the
 // member's mark. The seats come from the page (Yan.state_map). Hovering or
 // tapping a shape names its members in the caption under the map.
