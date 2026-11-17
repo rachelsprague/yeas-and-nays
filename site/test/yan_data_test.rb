@@ -87,6 +87,13 @@ class ProcedureTest < Minitest::Test
   end
 end
 
+# build_site's extra pages, added once the source is read.
+Jekyll::Hooks.register :site, :post_read do |site|
+  site.config.fetch("test_pages", []).each do |dir, name|
+    site.pages << Jekyll::PageWithoutAFile.new(site, site.source, dir, name).tap { |p| p.content = "<p>Test page</p>" }
+  end
+end
+
 # Builds the site from a small export written to a temp dir.
 module SiteBuild
   SOURCE = File.expand_path("..", __dir__)
@@ -94,7 +101,8 @@ module SiteBuild
   # Returns { "/path/index.html" => html } for every page built from these
   # members and [vote, vote file] pairs, plus a floor schedule export, a build
   # time (Eastern) and members' bill files ({ bioguide_id => file }) when given.
-  def build_site(members, votes, files: "*.html", schedule: nil, time: nil, member_files: {})
+  # `pages` adds pages the source doesn't have, as [[dir, name]] pairs.
+  def build_site(members, votes, files: "*.html", schedule: nil, time: nil, member_files: {}, pages: [])
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
@@ -115,6 +123,7 @@ module SiteBuild
         "quiet" => true
       }
       config["time"] = time if time
+      config["test_pages"] = pages
       site = Jekyll::Site.new(Jekyll.configuration(config))
       site.process
       Dir[File.join(tmp, "_site", "**", files)].to_h { |f| [f.delete_prefix("#{tmp}/_site"), File.read(f)] }
@@ -483,6 +492,50 @@ class MemberCosponsoredTest < Minitest::Test
   end
 end
 
+# Links from the data reach a page only as http(s) web addresses.
+class WebUrlTest < Minitest::Test
+  include SiteBuild
+
+  def test_only_http_and_https_pass
+    %w[https://www.house.gov/ http://example.senate.gov HTTPS://X.COM/a].each { |u| assert_equal u, Yan.web_url(u) }
+    ["javascript:alert(1)", "JavaScript:alert(1)", " javascript:alert(1)", "data:text/html,x", "//example.com/",
+     "/members/", "www.house.gov", "https:example.com", "", nil, 7].each { |u| assert_nil Yan.web_url(u), u.inspect }
+  end
+
+  # Every link field holds a script URL; none reaches a page, and the page
+  # leaves out each link it dropped (an http:// one stays).
+  def test_other_schemes_are_dropped_from_every_page
+    bad = "javascript:alert(1)"
+    member = EscapingTest::MEMBER.merge("website_url" => bad, "contact_form_url" => "JavaScript:alert(1)",
+                                        "x_url" => " javascript:alert(1)", "facebook_url" => "data:text/html,alert(1)",
+                                        "mastodon_url" => "http://example.social/@ex")
+    vote = EscapingTest::VOTE.merge("congress_gov_url" => bad, "source_url" => bad)
+    bill = MemberCosponsoredTest::BILL.merge("congress_gov_url" => bad)
+    item = { "chamber" => "house", "item_id" => "a", "week_date" => "2026-11-09", "question" => nil,
+             "category" => "Items that may be considered under suspension of the rules", "measure_number" => "H.R. 1",
+             "bill_type" => "hr", "measure_label" => "H.R. 1", "title" => "Linked Act", "amends" => nil,
+             "congress_gov_url" => bad, "vote_id" => nil }
+    built = build_site([member], [[vote, EscapingTest::DOC]], time: "2026-11-13 12:00:00 -0500",
+                       member_files: { "Z000001" => { "sponsored" => [bill], "cosponsored" => [bill] } },
+                       schedule: { "items" => [item] })
+
+    built.each { |path, html| refute_match(/alert|data:text/, html, path) }
+    member_page = built.fetch("/members/Z000001/index.html")
+    assert_includes member_page, '<a href="http://example.social/@ex"'
+    refute_includes member_page, "Website ("
+    refute_includes member_page, "Contact form"
+    refute_includes member_page, 'title="X"'
+    # Each bill's title as text, in both lists, with no link to the page itself.
+    assert_equal 2, member_page.scan('<span class="t">A bill to rename a post office</span>').size
+    refute_includes member_page, 'href=""'
+    vote_page = built.fetch("/votes/119/house/1/1/index.html")
+    refute_includes vote_page, "Full text on Congress.gov"
+    refute_includes vote_page, "Official sources"
+    refute_includes vote_page, 'href=""'
+    assert_includes built.fetch("/schedule/index.html"), "Linked Act"
+  end
+end
+
 # The masthead, footer and analytics tag that every page shares.
 class LayoutTest < Minitest::Test
   include SiteBuild
@@ -530,17 +583,20 @@ class LayoutTest < Minitest::Test
     end
   end
 
-  # The sitemap lists every built HTML page by its full URL, and nothing else
-  # (no data files); robots.txt points to it.
+  # The sitemap lists every built HTML page by its full URL, an index.html by
+  # its directory, and nothing else (no data files); robots.txt points to it.
   def test_sitemap_lists_every_page_and_robots_points_to_it
-    files = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], files: "*.{html,xml,txt,json}")
+    files = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], files: "*.{html,xml,txt,json}",
+                       pages: [["", "404.html"], ["how", "notes.html"]])
     sitemap = files.fetch("/sitemap.xml")
     assert sitemap.start_with?('<?xml version="1.0" encoding="UTF-8"?>'), "XML declaration must come first"
     locs = sitemap.scan(%r{<loc>([^<]*)</loc>}).flatten
-    pages = files.keys.grep(%r{/index\.html\z}).map { |p| "https://yeasandnaysdata.com#{p.delete_suffix("index.html")}" }
+    pages = files.keys.grep(/\.html\z/).map { |p| "https://yeasandnaysdata.com#{p.delete_suffix("index.html")}" }
     assert_equal locs.uniq, locs
     assert_equal pages.sort, locs.sort
     assert_includes locs, "https://yeasandnaysdata.com/votes/119/house/1/1/"
+    assert_includes locs, "https://yeasandnaysdata.com/404.html"
+    assert_includes locs, "https://yeasandnaysdata.com/how/notes.html"
     assert_includes files.keys, "/activity/rollcalls.json"
     assert_equal "User-agent: *\nAllow: /\n\nSitemap: https://yeasandnaysdata.com/sitemap.xml\n", files.fetch("/robots.txt")
   end

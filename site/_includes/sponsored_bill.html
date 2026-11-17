@@ -2,7 +2,11 @@
 <li class="vrow">
   <span class="kicker muted nums">{{ b.measure_label | escape }}{% if b.introduced_date %} · Introduced {{ b.introduced_date | ap_date }}{% endif %}</span>
   <span class="stack">
+    {%- if b.congress_gov_url %}
     <a class="t headline-link" href="{{ b.congress_gov_url | escape }}">{{ b.title | escape }}</a>
+    {%- else %}
+    <span class="t">{{ b.title | escape }}</span>
+    {%- endif %}
     {%- if b.latest_action_text %}
     <span class="q nums">Latest action{% if b.latest_action_date %}, {{ b.latest_action_date | ap_date }}{% endif %}: {{ b.latest_action_text | escape }}</span>
     {%- endif %}
