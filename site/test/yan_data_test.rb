@@ -482,6 +482,21 @@ class LayoutTest < Minitest::Test
     end
   end
 
+  # The sitemap lists every built HTML page by its full URL, and nothing else
+  # (no data files); robots.txt points to it.
+  def test_sitemap_lists_every_page_and_robots_points_to_it
+    files = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], files: "*.{html,xml,txt,json}")
+    sitemap = files.fetch("/sitemap.xml")
+    assert sitemap.start_with?('<?xml version="1.0" encoding="UTF-8"?>'), "XML declaration must come first"
+    locs = sitemap.scan(%r{<loc>([^<]*)</loc>}).flatten
+    pages = files.keys.grep(%r{/index\.html\z}).map { |p| "https://yeasandnaysdata.com#{p.delete_suffix("index.html")}" }
+    assert_equal locs.uniq, locs
+    assert_equal pages.sort, locs.sort
+    assert_includes locs, "https://yeasandnaysdata.com/votes/119/house/1/1/"
+    assert_includes files.keys, "/activity/rollcalls.json"
+    assert_equal "User-agent: *\nAllow: /\n\nSitemap: https://yeasandnaysdata.com/sitemap.xml\n", files.fetch("/robots.txt")
+  end
+
   def with_env(value)
     saved = ENV["JEKYLL_ENV"]
     ENV["JEKYLL_ENV"] = value
