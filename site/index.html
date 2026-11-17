@@ -37,10 +37,14 @@ nav: votes
   {%- endcomment %}
   {%- assign live = site.data.live_floor %}
   {%- if live.size > 0 %}
-  <section class="live-band" aria-label="Floor in session">
+  <section class="live-band" aria-label="On the floor">
     {%- for l in live %}
     <p class="live-line small" data-row data-chamber="{{ l.chamber | escape }}" data-live-from="{{ l.from | escape }}">
-      <span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>In session</span>
+      {%- if l.in_session %}
+      <span class="live-flag kicker"><span class="live-dot pulse" aria-hidden="true"></span>In session</span>
+      {%- else %}
+      <span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Convening</span>
+      {%- endif %}
       <span class="kicker">{{ l.name | escape }} floor</span>
       <span class="nums">{{ l.label | escape }}</span>
       <a class="link" href="{{ l.watch_url | escape }}">{{ l.watch_label | escape }}</a>

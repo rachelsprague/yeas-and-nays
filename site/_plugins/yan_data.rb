@@ -119,6 +119,8 @@ module Yan
   # session). The page shows a line only from its time on (live-floor.js),
   # since the site is rebuilt hourly and the Senate's file changes only when
   # it adjourns. Times carry their Eastern offset, so the label reads in ET.
+  # "in_session" only when the data shows the chamber convened, not when the
+  # line comes from a scheduled time.
   def self.live_floor(status)
     return [] unless status
 
@@ -133,7 +135,7 @@ module Yan
 
       t = DateTime.iso8601(at)
       LIVE_FLOOR[chamber].merge("chamber" => chamber, "name" => CHAMBER_NAMES[chamber], "from" => t.iso8601,
-                                "label" => "#{verb} at #{clock_label(t)} ET")
+                                "label" => "#{verb} at #{clock_label(t)} ET", "in_session" => verb == "Convened")
     rescue Date::Error
       next
     end
