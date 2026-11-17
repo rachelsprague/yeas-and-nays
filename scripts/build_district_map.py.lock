@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 requirements = [
     { name = "pyproj", specifier = ">=3.6" },
     { name = "pyshp", specifier = ">=2.3" },
-    { name = "shapely", specifier = ">=2.0" },
+    { name = "shapely", specifier = ">=2.1" },
 ]
 
 [[package]]

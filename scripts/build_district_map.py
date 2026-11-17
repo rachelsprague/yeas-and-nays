@@ -1,12 +1,13 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pyproj>=3.6", "pyshp>=2.3", "shapely>=2.0"]
+# dependencies = ["pyproj>=3.6", "pyshp>=2.3", "shapely>=2.1"]
 # ///
 """Build the congressional district map for the site's /find/ page.
 
 Downloads Census Bureau boundary files and population estimates (public
 domain), clips districts to the shoreline, projects them to an Albers USA
-layout (Alaska and Hawaii inset), simplifies them, and writes SVG path data,
+layout (Alaska and Hawaii inset), simplifies them as one coverage (so each
+shared edge is simplified once), and writes SVG path data,
 city labels and each district's largest cities and towns to
 site/_maps/<congress>.json. The site plugin pairs each district with its
 current member.
@@ -25,8 +26,9 @@ Sources:
   119th Congress: cartographic boundary file cb_2024_us_cd119_500k (already
     clipped to the shoreline).
   120th Congress: TIGER/Line 2026 tl_2026_<state>_cd120, one file per state,
-    clipped here to cb_2024_us_state_500k. The Census Bureau's note on these
-    files: census.gov/programs-surveys/geography/technical-documentation/user-note/120cd.html
+    clipped here to the shoreline of cb_2024_us_state_500k. The Census Bureau's
+    note on these files:
+    census.gov/programs-surveys/geography/technical-documentation/user-note/120cd.html
 """
 
 import io
@@ -85,7 +87,7 @@ HAWAII = "+proj=aea +lat_1=8 +lat_2=18 +lat_0=13 +lon_0=-157 +datum=NAD83 +units
 # so the lines stay sharp when zoomed in on dense city districts.
 WIDTH, HEIGHT = 9750, 6100
 MARGIN = 100
-SIMPLIFY = 0.5  # simplification tolerance in output units (about 250 m in the lower 48)
+SIMPLIFY = 1  # coverage simplification tolerance in output units (about 500 m in the lower 48)
 MIN_PART = 40  # drop islands smaller than this many square units unless they are a district's only part
 ALASKA_SCALE = 0.35  # Alaska is drawn at about a third of its size, as on most US maps
 
@@ -138,16 +140,13 @@ def place(geom, scale, left, top, bounds):
 
 
 def polygons(geom):
-    if isinstance(geom, Polygon):
-        return [geom]
-    if isinstance(geom, MultiPolygon):
-        return list(geom.geoms)
-    return [g for g in getattr(geom, "geoms", []) if isinstance(g, Polygon)]
+    """The polygons in a geometry, including those inside a collection's multipolygons."""
+    return [p for part in shapely.get_parts(geom) for p in shapely.get_parts(part) if isinstance(p, Polygon)]
 
 
 def tidy(geom):
-    """Simplifies a placed geometry and drops small islands (keeping the largest part)."""
-    parts = sorted(polygons(geom.simplify(SIMPLIFY, preserve_topology=True)), key=lambda p: -p.area)
+    """Drops small islands from a simplified geometry (keeping the largest part)."""
+    parts = sorted(polygons(geom), key=lambda p: -p.area)
     return [p for i, p in enumerate(parts) if i == 0 or p.area >= MIN_PART]
 
 
@@ -239,6 +238,10 @@ def city_labels(places_placed):
 def load_districts(congress, states):
     """Returns [(state, district number, lon/lat geometry)]; 0 is an at-large seat."""
     keep = KEEP_119.get(congress, set())
+    # Clipped to the whole shoreline, not each state's own outline: the state file
+    # draws state lines a little differently from TIGER/Line, so per-state clips
+    # would leave slivers of gap and overlap between neighboring states.
+    land = unary_union(list(states.values())) if congress != 119 else None
     rows = []
     for url in DISTRICT_FILES[congress]:
         for r, g in read_shapes(url):
@@ -247,7 +250,7 @@ def load_districts(congress, states):
             if state is None or state in keep or not code.isdigit():  # "ZZ": water with no district
                 continue
             if congress != 119:  # TIGER/Line runs out into the water; clip to the shoreline
-                g = g.buffer(0).intersection(states[state])
+                g = g.buffer(0).intersection(land)
             rows.append((state, int(code), g))
     for url in DISTRICT_FILES[119] if keep else []:
         for r, g in read_shapes(url):
@@ -284,7 +287,11 @@ def build(congress):
         return place(geom_m, s, left, top, bounds)
 
     full = [(s, n, placed_full(s, g)) for s, n, g in districts_m]
-    drawn = [(s, n, tidy(g)) for s, n, g in full]
+    # Simplified together, so an edge two districts share (a state border too)
+    # is simplified once: both sides keep the same points and it's drawn once.
+    areas = [MultiPolygon(polygons(shapely.make_valid(g))) for _, _, g in full]
+    simple = shapely.coverage_simplify(areas, SIMPLIFY)
+    drawn = [(s, n, tidy(g)) for (s, n, _), g in zip(full, simple)]
     places = [(s, name, pop, shapely.make_valid(placed_full(s, projector(s)(g)))) for s, name, pop, g in load_places()]
     listed = place_lists(full, places)
     # Borders between states, taken from the drawn districts so they line up
