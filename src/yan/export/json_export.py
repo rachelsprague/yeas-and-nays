@@ -101,12 +101,16 @@ def _rows(con, sql: str) -> list[dict]:
 def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     con = duckdb.connect(str(warehouse), read_only=True)
     try:
+        # A member's top-level stats are for their last Congress; `congresses` has each one.
         members = _rows(con, """
-            select members.*, stats.* exclude (bioguide_id)
+            select members.*,
+                   stats.* exclude (bioguide_id, congress, served_in_congress, served_from, served_to)
             from members
-            left join member_stats as stats using (bioguide_id)
+            left join member_congresses as stats
+                on stats.bioguide_id = members.bioguide_id and stats.congress = members.last_congress
             order by bioguide_id
         """)
+        member_congresses = _rows(con, "select * from member_congresses order by bioguide_id, congress desc")
         votes = [with_bot_posts(with_measure_label(v)) for v in _rows(con, f"select * from votes order by {VOTE_ORDER}")]
         positions = _rows(con, """
             select vote_id, bioguide_id, member_label, party, caucus_party, position_raw,
@@ -115,21 +119,21 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             order by vote_id, member_label, bioguide_id
         """)
         sponsored = _rows(con, """
-            select bioguide_id, bill_id, bill_type, bill_number, title, introduced_date,
-                   latest_action_date, latest_action_text, policy_area, congress_gov_url,
-                   latest_vote_id
+            select bioguide_id, cast(congress as integer) as congress, bill_id, bill_type, bill_number,
+                   title, introduced_date, latest_action_date, latest_action_text, policy_area,
+                   congress_gov_url, latest_vote_id
             from sponsored_bills
             order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
         """)
         cosponsored = _rows(con, """
-            select bioguide_id, bill_id, bill_type, bill_number, title, introduced_date,
-                   latest_action_date, latest_action_text, policy_area, congress_gov_url,
-                   latest_vote_id
+            select bioguide_id, cast(congress as integer) as congress, bill_id, bill_type, bill_number,
+                   title, introduced_date, latest_action_date, latest_action_text, policy_area,
+                   congress_gov_url, latest_vote_id
             from cosponsored_bills
             order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
         """)
-        sponsored_fetched = {row["bioguide_id"] for row in _rows(con, "select bioguide_id from sponsored_lists")}
-        cosponsored_fetched = {row["bioguide_id"] for row in _rows(con, "select bioguide_id from cosponsored_lists")}
+        sponsored_fetched = _fetched_lists(con, "sponsored_lists")
+        cosponsored_fetched = _fetched_lists(con, "cosponsored_lists")
         floor_items = _rows(con, """
             select chamber, item_id, week_date, filed_date, category, question, measure_number,
                    bill_type, bill_number, title, amends, congress_gov_url, vote_id
@@ -174,6 +178,12 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     for p in positions:
         by_vote[p["vote_id"]].append(p)
 
+    congresses_by = defaultdict(list)
+    for row in member_congresses:
+        congresses_by[row.pop("bioguide_id")].append(row)
+    for member in members:
+        member["congresses"] = congresses_by[member["bioguide_id"]]
+
     changed = 0
     changed += write_if_changed(out_dir / "members.json", dumps({"congress": CONGRESS, "members": members}))
     changed += write_if_changed(out_dir / "votes.json", dumps({"congress": CONGRESS, "votes": votes}))
@@ -195,10 +205,10 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             changed += 1
 
     sponsored_by, cosponsored_by = defaultdict(list), defaultdict(list)
-    for bills, by_member in ((sponsored, sponsored_by), (cosponsored, cosponsored_by)):
+    for bills, by_list in ((sponsored, sponsored_by), (cosponsored, cosponsored_by)):
         for bill in bills:
             bill["measure_label"] = bill_label(bill["bill_type"], bill["bill_number"])
-            by_member[bill.pop("bioguide_id")].append(bill)
+            by_list[(bill.pop("bioguide_id"), bill.pop("congress"))].append(bill)
     member_dir = out_dir / "members"
     expected = set()
     for member in members:
@@ -207,11 +217,11 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
         bioguide_id = member["bioguide_id"]
         doc = {
             "bioguide_id": bioguide_id,
-            # Each list is null until it is first fetched (a fetch can fail, and cosponsored
-            # lists fill in over several runs), so the site can leave the section out rather
-            # than show none.
-            "sponsored": sponsored_by[bioguide_id] if bioguide_id in sponsored_fetched else None,
-            "cosponsored": cosponsored_by[bioguide_id] if bioguide_id in cosponsored_fetched else None,
+            # One list per Congress, newest first, for each Congress whose list has been
+            # fetched. Null until any is (a fetch can fail, and cosponsored lists fill in over
+            # several runs), so the site can leave the section out rather than show none.
+            "sponsored": member_lists(bioguide_id, sponsored_fetched, sponsored_by),
+            "cosponsored": member_lists(bioguide_id, cosponsored_fetched, cosponsored_by),
         }
         changed += write_if_changed(member_dir / name, dumps(doc))
     for path in member_dir.glob("*.json"):
@@ -229,6 +239,22 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     meta["has_sponsored_bills"] = bool(sponsored_fetched)
     changed += write_if_changed(out_dir / "meta.json", dumps(meta))
     log.info("export: %d votes, %d members, %d files changed", len(votes), len(members), changed)
+
+
+def _fetched_lists(con, table: str) -> dict[str, list[int]]:
+    """Bioguide ID -> the Congresses whose list of this kind has been fetched, newest first."""
+    fetched = defaultdict(list)
+    for row in _rows(con, f"select bioguide_id, congress from {table} order by congress desc"):
+        fetched[row["bioguide_id"]].append(row["congress"])
+    return fetched
+
+
+def member_lists(bioguide_id: str, fetched: dict[str, list[int]], bills: dict) -> list[dict] | None:
+    """A member's sponsored or cosponsored bills as one group per fetched Congress, newest
+    first ({"congress": 120, "bills": [...]}), or None when no list has been fetched."""
+    if bioguide_id not in fetched:
+        return None
+    return [{"congress": c, "bills": bills.get((bioguide_id, c), [])} for c in fetched[bioguide_id]]
 
 
 def with_measure_label(vote: dict) -> dict:
@@ -331,10 +357,12 @@ def _eastern(value: dt.datetime | None) -> dt.datetime | None:
 
 
 def meta_document(votes: list[dict], members: list[dict]) -> dict:
-    latest = defaultdict(dict)
+    # Chamber -> Congress -> session -> latest roll number (roll numbers restart each session).
+    latest = defaultdict(lambda: defaultdict(dict))
     for v in votes:
+        by_session = latest[v["chamber"]][str(v["congress"])]
         key = str(v["session"])
-        latest[v["chamber"]][key] = max(latest[v["chamber"]].get(key, 0), v["roll_number"])
+        by_session[key] = max(by_session.get(key, 0), v["roll_number"])
     return {
         "congress": CONGRESS,
         "vote_count": len(votes),

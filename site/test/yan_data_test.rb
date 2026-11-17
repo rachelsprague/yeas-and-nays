@@ -108,11 +108,14 @@ module SiteBuild
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
       write = ->(path, obj) { File.write(File.join(data, path), JSON.generate(obj)) }
       write.call("meta.json", { "congress" => 119, "has_sponsored_bills" => true })
+      members = members.map { |m| { "last_congress" => 119 }.merge(m) }
       write.call("members.json", { "members" => members })
       write.call("votes.json", { "votes" => votes.map(&:first) })
       votes.each { |v, doc| write.call("votes/#{v["vote_id"]}.json", doc) }
       members.each do |m|
         file = member_files.fetch(m["bioguide_id"], { "sponsored" => [], "cosponsored" => [] })
+        # Bills given as a plain list are the 119th's; the export groups them by Congress.
+        file = file.to_h { |k, v| [k, v.is_a?(Array) && !v.first&.key?("bills") ? [{ "congress" => 119, "bills" => v }] : v] }
         write.call("members/#{m["bioguide_id"]}.json", file)
       end
       write.call("floor_schedule.json", schedule) if schedule
@@ -514,6 +517,29 @@ class MemberCosponsoredTest < Minitest::Test
     assert_includes s, "S. &lt;7&gt;"
     assert_equal ["A &quot;bill&quot; &lt;b&gt;to&lt;/b&gt; &amp; &#39;rename&#39;"], titles(s)
     refute_includes s, "<b>to</b>"
+  end
+end
+
+# Member bill lists come one group per fetched Congress; a page shows the
+# member's last Congress.
+class CongressBillsTest < Minitest::Test
+  LISTS = [{ "congress" => 120, "bills" => [{ "bill_id" => "120-hr-2" }] },
+           { "congress" => 119, "bills" => [{ "bill_id" => "119-hr-1" }] }].freeze
+
+  def test_picks_the_congress_group
+    assert_equal [{ "bill_id" => "119-hr-1" }], Yan.congress_bills(LISTS, 119)
+    assert_equal [{ "bill_id" => "120-hr-2" }], Yan.congress_bills(LISTS, 120)
+  end
+
+  def test_a_congress_not_fetched_or_no_lists_is_nil
+    assert_nil Yan.congress_bills(LISTS, 118)
+    assert_nil Yan.congress_bills(nil, 119)
+  end
+
+  # Exported before lists were grouped: one Congress's bills as a plain list.
+  def test_an_ungrouped_list_is_returned_as_is
+    assert_equal [{ "bill_id" => "119-hr-1" }], Yan.congress_bills([{ "bill_id" => "119-hr-1" }], 119)
+    assert_equal [], Yan.congress_bills([], 119)
   end
 end
 

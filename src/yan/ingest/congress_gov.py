@@ -15,10 +15,13 @@ last week. Bill files of a Congress that ended more than REFRESH_AFTER_END ago
 are fetched only when missing. Missing actions files of bills not voted on in
 the last week are fetched at most ACTIONS_BACKFILL_PER_RUN per run.
 
-For every member who served in this Congress, also fetches
+For every member who served in a Congress on the site, also fetches
 /member/{bioguide_id}/sponsored-legislation (every bill and resolution they
-introduced, all Congresses, paged) and keeps the items from this Congress.
-Re-fetched weekly. Likewise /member/{bioguide_id}/cosponsored-legislation,
+introduced, all Congresses, paged) and saves one file per Congress on the site
+they served in, with that Congress's items. A member's list is re-fetched
+weekly while they served in the Congress in session or one that ended less
+than REFRESH_AFTER_END ago; otherwise only when a Congress's file is missing.
+Likewise /member/{bioguide_id}/cosponsored-legislation,
 which runs to thousands of items (dozens of pages) for long-serving members
 and isn't sorted by Congress, so every page is read. A list whose count
 changes between its first and last page (a bill added or removed mid-fetch)
@@ -47,7 +50,7 @@ import time
 import httpx
 
 import yan
-from yan.config import CONGRESS, CONGRESSES, RAW_DIR, SESSIONS, recently_ended
+from yan.config import CONGRESS, CONGRESSES, RAW_DIR, recently_ended
 from yan.http import Client, write_atomic
 from yan.measures import parse_measure
 from yan.stage import house, legislators, senate
@@ -126,13 +129,24 @@ def fetch_actions(client: Client, key: str, congress: int, bill_type: str, bill_
     return json.dumps({**doc, "actions": actions}, sort_keys=True).encode()
 
 
-def members_in_congress() -> list[str]:
-    """Bioguide IDs of everyone with a House or Senate term overlapping this Congress.
+def members_by_congress() -> dict[str, list[int]]:
+    """Bioguide ID -> the Congresses on the site (CONGRESSES) the member served in, oldest
+    first, for everyone who served in at least one."""
+    served: dict[str, list[int]] = {}
+    for congress in sorted(CONGRESSES):
+        for bioguide_id in members_in_congress(congress):
+            served.setdefault(bioguide_id, []).append(congress)
+    return served
+
+
+def members_in_congress(congress: int = CONGRESS) -> list[str]:
+    """Bioguide IDs of everyone with a House or Senate term overlapping a Congress.
     A term with no end date is treated as ongoing, and one with no start date as having
-    started before this Congress. A date that doesn't parse is logged and treated as
+    started before the Congress. A date that doesn't parse is logged and treated as
     missing, so one bad row can't stop the ingest or drop a sitting member."""
-    start = dt.date(SESSIONS[1], 1, 3)
-    end = dt.date(SESSIONS[2] + 1, 1, 3)
+    sessions = CONGRESSES[congress]
+    start = dt.date(sessions[1], 1, 3)
+    end = dt.date(sessions[2] + 1, 1, 3)
     _, terms, _ = legislators.parse_dir(RAW_DIR / "legislators")
     members = set()
     for t in terms:
@@ -155,12 +169,20 @@ def _term_date(term: dict, field: str, missing: dt.date) -> dt.date:
         return missing
 
 
-def sponsored_path(bioguide_id: str):
-    return RAW_DIR / "congress_gov" / str(CONGRESS) / "sponsored" / f"{bioguide_id}.json"
+def sponsored_path(bioguide_id: str, congress: int = CONGRESS):
+    return RAW_DIR / "congress_gov" / str(congress) / "sponsored" / f"{bioguide_id}.json"
 
 
-def cosponsored_path(bioguide_id: str):
-    return RAW_DIR / "congress_gov" / str(CONGRESS) / "cosponsored" / f"{bioguide_id}.json"
+def cosponsored_path(bioguide_id: str, congress: int = CONGRESS):
+    return RAW_DIR / "congress_gov" / str(congress) / "cosponsored" / f"{bioguide_id}.json"
+
+
+def list_needs_fetch(path, congress: int, today: dt.date) -> bool:
+    """Whether one Congress's member-list file needs fetching: weekly for the Congress in
+    session or one that ended less than REFRESH_AFTER_END ago, else only when missing."""
+    if congress == CONGRESS or recently_ended(CONGRESSES[congress], today):
+        return needs_fetch(path, dt.date.min, today)
+    return not path.exists()
 
 
 def fetch_sponsored(client: Client, key: str, bioguide_id: str) -> tuple[dict, int]:
@@ -172,9 +194,9 @@ def fetch_cosponsored(client: Client, key: str, bioguide_id: str) -> tuple[dict,
 
 
 def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> tuple[dict, int]:
-    """Every page of a member's sponsored or cosponsored legislation, keeping this Congress's
-    bills and resolutions (amendments, which have no bill type, are dropped), and the
-    number of requests it took.
+    """Every page of a member's sponsored or cosponsored legislation, keeping the bills and
+    resolutions of the Congresses on the site (amendments, which have no bill type, are
+    dropped), and the number of requests it took. split_lists() makes one list per Congress.
 
     Pages are by offset, so a bill added or removed mid-fetch shifts the list: an item can
     repeat across a page boundary (repeats are dropped) or be skipped. So if the count on
@@ -201,11 +223,20 @@ def fetch_member_list(client: Client, key: str, bioguide_id: str, kind: str) -> 
     except Exception as e:
         e.requests = requests + getattr(e, "requests", 0)
         raise
-    return {"bioguideId": bioguide_id, "congress": CONGRESS, f"{kind}Legislation": items}, requests
+    return {"bioguideId": bioguide_id, f"{kind}Legislation": items}, requests
+
+
+def split_lists(doc: dict, kind: str, congresses: list[int]) -> dict[int, dict]:
+    """A fetched member list as one list per Congress -> {congress: list}, each saved as
+    its own file, with a Congress that has no items getting an empty list."""
+    list_key = f"{kind}Legislation"
+    return {c: {"bioguideId": doc["bioguideId"], "congress": c,
+                list_key: [item for item in doc[list_key] if item.get("congress") == c]}
+            for c in congresses}
 
 
 def _fetch_member_list_pages(client: Client, key: str, bioguide_id: str, kind: str) -> tuple[list, int, int, int]:
-    """One pass over a member list's pages: (this Congress's items, the first page's count,
+    """One pass over a member list's pages: (the site's Congresses' items, the first page's count,
     the last page's count, requests made). Errors carry their pass's requests."""
     list_key = f"{kind}Legislation"
     items, seen, offset, total, first_count, requests = [], set(), 0, None, None, 0
@@ -220,8 +251,8 @@ def _fetch_member_list_pages(client: Client, key: str, bioguide_id: str, kind: s
             if first_count is None:
                 first_count = total
             for item in page:
-                bill = (item.get("type"), item.get("number"))
-                if item.get("congress") == CONGRESS and item.get("type") and bill not in seen:
+                bill = (item.get("congress"), item.get("type"), item.get("number"))
+                if item.get("congress") in CONGRESSES and item.get("type") and bill not in seen:
                     seen.add(bill)
                     items.append(item)
             if not page:
@@ -299,38 +330,50 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
             fetched += 1
     log.info("congress.gov: %d bills with votes, %d files fetched", len(bills), fetched)
 
-    members = members_in_congress()
-    stale = [m for m in members if needs_fetch(sponsored_path(m), dt.date.min, today)]
-    ingest_sponsored(client, key, members, stale)
-    ingest_cosponsored(client, key, members, today, yan.STARTED)
+    served = members_by_congress()
+    members = sorted(served)
+    stale = [m for m in members
+             if any(list_needs_fetch(sponsored_path(m, c), c, today) for c in served[m])]
+    ingest_sponsored(client, key, members, stale, served)
+    ingest_cosponsored(client, key, members, today, yan.STARTED, served)
 
 
-def ingest_sponsored(client: Client, key: str, members: list[str], stale: list[str]) -> None:
-    """Fetch stale sponsored lists, with no budget."""
+def ingest_sponsored(client: Client, key: str, members: list[str], stale: list[str],
+                     served: dict[str, list[int]] | None = None) -> None:
+    """Fetch stale sponsored lists, with no budget. `served` maps each member to the
+    Congresses to save a list for (default: the one in session)."""
     log.info("congress.gov: %d members, %d stale sponsored-legislation lists", len(members), len(stale))
-    _fetch_lists(client, key, "sponsored", stale, fetch_sponsored, sponsored_path)
+    _fetch_lists(client, key, "sponsored", stale, fetch_sponsored, sponsored_path, served or {})
 
 
-def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.date, started: float) -> None:
+def ingest_cosponsored(client: Client, key: str, members: list[str], today: dt.date, started: float,
+                       served: dict[str, list[int]] | None = None) -> None:
     """Fetch stale cosponsored lists, stalest first (never fetched, then oldest file), so
     lists rotate through the per-run budgets. `started` is when the process began
-    (time.monotonic()); the time budget counts from when the cosponsored lists start."""
+    (time.monotonic()); the time budget counts from when the cosponsored lists start.
+    `served` is as for ingest_sponsored."""
+    served = served or {}
+
+    def files(m):
+        return [(cosponsored_path(m, c), c) for c in served.get(m, [CONGRESS])]
+
     stale = sorted(
-        (m for m in members if needs_fetch(cosponsored_path(m), dt.date.min, today)),
-        key=lambda m: cosponsored_path(m).stat().st_mtime if cosponsored_path(m).exists() else 0,
+        (m for m in members if any(list_needs_fetch(path, c, today) for path, c in files(m))),
+        key=lambda m: min(path.stat().st_mtime if path.exists() else 0 for path, _ in files(m)),
     )
     if time.monotonic() - started >= SKIP_COSPONSORED_AFTER.total_seconds():
         log.info("congress.gov: skipping %d stale cosponsored-legislation lists this run (process "
                  "already ran %d min)", len(stale), (time.monotonic() - started) // 60)
         return
     deadline = time.monotonic() + COSPONSORED_TIME_BUDGET.total_seconds()
-    _fetch_lists(client, key, "cosponsored", stale, fetch_cosponsored, cosponsored_path,
+    _fetch_lists(client, key, "cosponsored", stale, fetch_cosponsored, cosponsored_path, served,
                  within_budget=lambda used: used < COSPONSORED_REQUEST_BUDGET and time.monotonic() < deadline)
 
 
 def _fetch_lists(client: Client, key: str, kind: str, stale: list[str], fetch, path,
-                 within_budget=lambda used: True) -> None:
-    """Fetch and save each stale member list in order. `within_budget(requests used so far)`
+                 served: dict[str, list[int]], within_budget=lambda used: True) -> None:
+    """Fetch each stale member list in order and save it as one file per Congress in
+    `served` (default: the one in session). `within_budget(requests used so far)`
     is checked before each list starts. A list that fails is logged and skipped (its old
     file kept, retried next run); a rate limit (HTTP 429) or MAX_FAILURES_IN_A_ROW failures
     in a row stop the rest, and stopping that way with none fetched (not on a rate limit)
@@ -358,7 +401,8 @@ def _fetch_lists(client: Client, key: str, kind: str, stale: list[str], fetch, p
             continue
         # Unpacked outside the try, so a bug here raises instead of reading as an API error.
         doc, requests = result
-        write_atomic(path(bioguide_id), json.dumps(doc, sort_keys=True).encode())
+        for congress, part in split_lists(doc, kind, served.get(bioguide_id, [CONGRESS])).items():
+            write_atomic(path(bioguide_id, congress), json.dumps(part, sort_keys=True).encode())
         used += requests
         fetched += 1
         in_a_row = 0

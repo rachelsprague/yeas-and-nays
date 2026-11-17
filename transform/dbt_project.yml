@@ -10,10 +10,9 @@ target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
 vars:
+  # The Congress in session (CONGRESS in src/yan/config.py). Every Congress on the
+  # site, with its dates, is in seeds/congresses.csv.
   congress: 119
-  # A term "overlaps" the 119th Congress if it ends after the start date.
-  congress_start: "2025-01-03"
-  congress_end: "2027-01-03"
 
 models:
   yeas_and_nays:

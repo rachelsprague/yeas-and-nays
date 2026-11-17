@@ -1,5 +1,5 @@
 {#-
-  One row per bill or resolution a member cosponsored this Congress, with
+  One row per bill or resolution a member cosponsored in a Congress on the site, with
   its latest action as Congress.gov records it, and the most recent roll call
   vote on it, if there has been one.
 -#}

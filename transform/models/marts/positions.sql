@@ -19,6 +19,7 @@ select
     positions.vote_id,
     positions.bioguide_id,
     positions.chamber,
+    positions.congress,
     positions.vote_date,
     positions.lis_id,
     positions.member_label,

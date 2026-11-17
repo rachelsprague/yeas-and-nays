@@ -17,7 +17,7 @@
 -#}
 
 with votes as (
-    select vote_id, chamber, vote_date from {{ ref('int_votes_unioned') }}
+    select vote_id, chamber, congress, vote_date from {{ ref('int_votes_unioned') }}
 ),
 
 house as (
@@ -53,6 +53,7 @@ periods as (
 select
     positions.vote_id,
     votes.chamber,
+    votes.congress,
     votes.vote_date,
     positions.bioguide_id,
     positions.lis_id,
