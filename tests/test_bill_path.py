@@ -128,6 +128,8 @@ def test_a_veto_and_a_failed_override():
         ("override", "Veto override failed", "failed", "2023-05-24"),
     ]
     assert current(path) == ["override"]
+    # Only the exported fields, on every step.
+    assert all(set(s) == {"key", "label", "date", "anchor", "status", "current"} for s in path["steps"])
 
 
 def test_an_override_vote_alone_shows_the_bill_was_vetoed():

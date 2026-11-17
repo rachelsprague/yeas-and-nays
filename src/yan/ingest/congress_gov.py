@@ -104,7 +104,9 @@ def voted_bills() -> dict[tuple[int, str, str], dt.date]:
 
 def fetch_actions(client: Client, key: str, congress: int, bill_type: str, bill_number: str) -> bytes:
     """Every page of a bill's actions (newest first), saved as one response: the first
-    page's request, every action, and the count. A response without actions raises."""
+    page's request, every action, and the count. A response without actions raises, and so
+    does a later page without a count, which could hide a list cut short; a first page
+    without one is the whole list."""
     actions, offset, doc = [], 0, None
     while True:
         url = ACTIONS_URL.format(congress=congress, bill_type=bill_type, bill_number=bill_number, offset=offset)
@@ -113,9 +115,11 @@ def fetch_actions(client: Client, key: str, congress: int, bill_type: str, bill_
         page = resp.json()
         if not isinstance(page.get("actions"), list):
             raise ValueError(f"congress.gov {bill_type}{bill_number}: response has no 'actions'")
+        count = (page.get("pagination") or {}).get("count")
+        if (not isinstance(count, int) or isinstance(count, bool)) and offset > 0:
+            raise ValueError(f"congress.gov {bill_type}{bill_number}: actions page has no pagination count")
         doc = doc or page
         actions += page["actions"]
-        count = (page.get("pagination") or {}).get("count")
         offset += PAGE_SIZE
         if not page["actions"] or not isinstance(count, int) or offset >= count:
             break

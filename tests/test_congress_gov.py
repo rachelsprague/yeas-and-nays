@@ -108,6 +108,23 @@ def test_fetch_actions_reads_every_page():
     assert doc["request"]["billNumber"] == "1"
 
 
+def test_fetch_actions_raises_on_a_later_page_without_a_count():
+    import httpx
+
+    from yan.ingest.congress_gov import fetch_actions
+
+    class Client:
+        def get(self, url, headers=None):
+            first = url.endswith("offset=0")
+            doc = {"request": {}, "actions": [{"text": "a"}] * (250 if first else 1)}
+            if first:
+                doc["pagination"] = {"count": 300}
+            return httpx.Response(200, json=doc, request=httpx.Request("GET", url))
+
+    with pytest.raises(ValueError, match="no pagination count"):
+        fetch_actions(Client(), "k", 119, "hr", "1")
+
+
 def test_fetch_actions_raises_on_a_response_without_actions(monkeypatch):
     import httpx
 

@@ -141,13 +141,15 @@ def _set_statuses(steps: list[dict]) -> None:
     reached_later = False
     for step in reversed(steps):
         key = step["key"]
-        if step.pop("failed", False):
+        # Taken off every step first, so none reaches the exported JSON.
+        failed, in_progress, resolved = (step.pop(k, False) for k in ("failed", "in_progress", "resolved"))
+        if failed:
             status = "failed"
-        elif step.pop("in_progress", False):
+        elif in_progress:
             status = "in_progress"
         elif key == "differences":
             presented = any(s["status"] in ("done", "failed") for s in steps[steps.index(step) + 1:])
-            if step.pop("resolved", False):
+            if resolved:
                 status = "done"
             elif presented:
                 status = "done" if step["date"] else "skipped"
