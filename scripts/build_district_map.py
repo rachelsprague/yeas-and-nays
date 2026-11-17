@@ -9,8 +9,8 @@ domain), clips districts to the shoreline, projects them to an Albers USA
 layout (Alaska and Hawaii inset), simplifies them as one coverage (so each
 shared edge is simplified once; it stops if districts overlap or their shared
 edges don't match), and writes SVG path data, city labels and each district's
-largest cities and towns to site/_maps/<congress>.json. The site plugin pairs each district with its
-current member.
+largest cities and towns to site/_maps/<congress>.json. The site plugin pairs
+each district with its current member.
 
     uv run scripts/build_district_map.py 119
     uv run scripts/build_district_map.py 120
