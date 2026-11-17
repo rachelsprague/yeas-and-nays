@@ -77,7 +77,7 @@ def test_summary_carries_the_version_it_describes():
     assert summary_document(None) is None
 
 
-def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=()):
+def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), sponsored_lists=()):
     """A minimal warehouse with the tables run() reads: two members, one vote."""
     import duckdb
 
@@ -99,9 +99,10 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=()):
         for row in rows:
             con.execute(f"insert into {table} (bioguide_id, bill_type, bill_number, introduced_date) "
                         "values (?, ?, ?, ?)", row)
-    con.execute("create table cosponsored_lists (bioguide_id varchar, congress integer, bill_count integer)")
-    for bioguide_id in cosponsored_lists:
-        con.execute("insert into cosponsored_lists values (?, 119, 0)", [bioguide_id])
+    for table, ids in (("sponsored_lists", sponsored_lists), ("cosponsored_lists", cosponsored_lists)):
+        con.execute(f"create table {table} (bioguide_id varchar, congress integer, bill_count integer)")
+        for bioguide_id in ids:
+            con.execute(f"insert into {table} values (?, 119, 0)", [bioguide_id])
     con.execute("""create table vote_summaries (vote_id varchar, version_code varchar, action_date date,
                    action_desc varchar, summary_html varchar)""")
     con.execute("""create table floor_schedule (chamber varchar, item_id varchar, week_date date, filed_date date,
@@ -123,7 +124,7 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
         ("A000001", "hr", "9", dt.date(2025, 3, 1)),
         ("A000001", "hr", "10", dt.date(2025, 3, 1)),
         ("A000001", "hres", "2", dt.date(2025, 5, 1)),
-    ])
+    ], sponsored_lists=["A000001"])
     out = tmp_path / "out"
     (out / "members").mkdir(parents=True)
     (out / "members" / "Z000009.json").write_text("{}")  # member no longer in the warehouse
@@ -133,7 +134,7 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
     a = json.loads((out / "members" / "A000001.json").read_text())
     assert [b["measure_label"] for b in a["sponsored"]] == ["H.Res. 2", "H.R. 10", "H.R. 9"]
     assert json.loads((out / "members" / "B000002.json").read_text()) == {
-        "bioguide_id": "B000002", "sponsored": [], "cosponsored": None,
+        "bioguide_id": "B000002", "sponsored": None, "cosponsored": None,
     }
     assert sorted(p.name for p in (out / "members").iterdir()) == ["A000001.json", "B000002.json"]
     assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True
@@ -163,6 +164,19 @@ def test_run_writes_an_empty_cosponsored_list_once_fetched(tmp_path):
     _warehouse(warehouse, [], cosponsored_lists=["B000002"])
     run(warehouse, tmp_path / "out")
     assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["cosponsored"] == []
+
+
+def test_run_writes_an_empty_sponsored_list_once_fetched(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [], sponsored_lists=["B000002"])
+    run(warehouse, tmp_path / "out")
+    # B000002's list was fetched and is empty; A000001's wasn't (a failed fetch): null.
+    assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["sponsored"] == []
+    assert json.loads((tmp_path / "out" / "members" / "A000001.json").read_text())["sponsored"] is None
+    # A fetched list counts even with no bills on it, so the section shows "none".
+    assert json.loads((tmp_path / "out" / "meta.json").read_text())["has_sponsored_bills"] is True
 
 
 def test_run_flags_missing_sponsored_lists(tmp_path):

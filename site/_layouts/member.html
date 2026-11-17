@@ -71,7 +71,7 @@ layout: default
   </section>
   {%- endif %}
 
-  {%- if site.data.meta.has_sponsored_bills %}
+  {%- if site.data.meta.has_sponsored_bills and page.sponsored %}
   <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px">
     <div class="head-row">
       <h2 id="bills-h" class="section-h">Bills introduced</h2>

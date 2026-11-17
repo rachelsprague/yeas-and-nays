@@ -300,6 +300,23 @@ models:
                 to: ref('votes')
                 field: vote_id
 
+  - name: sponsored_lists
+    description: >
+      One row per member whose Congress.gov sponsored list has been fetched. A fetch that
+      fails leaves no list; a member not listed here hasn't been fetched yet.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: bill_count
+        description: This Congress's bills and resolutions on the member's sponsored list.
+        data_tests: [not_null]
+
   - name: cosponsored_lists
     description: >
       One row per member whose Congress.gov cosponsored list has been fetched. Lists fill in

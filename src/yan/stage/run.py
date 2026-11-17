@@ -51,6 +51,7 @@ STRING_COLUMNS = {
         "source_file", "bioguide_id", "congress", "bill_type", "bill_number", "title",
         "introduced_date", "latest_action_date", "latest_action_text", "policy_area",
     ],
+    "sponsored_lists": ["source_file", "bioguide_id", "congress", "bill_count"],
     "cosponsored_bills": [
         "source_file", "bioguide_id", "congress", "bill_type", "bill_number", "title",
         "introduced_date", "latest_action_date", "latest_action_text", "policy_area",
@@ -111,10 +112,12 @@ def run() -> None:
     write("senate_votes", with_bill(s_votes, "document_name"))
     write("senate_positions", s_positions)
 
-    bills, summaries, sponsored = congress_gov.parse_dir(RAW_DIR / "congress_gov")
+    bills, summaries = congress_gov.parse_dir(RAW_DIR / "congress_gov")
     write("bills", bills)
     write("bill_summaries", summaries)
+    sponsored, sponsored_lists = congress_gov.parse_sponsored_dir(RAW_DIR / "congress_gov")
     write("sponsored_bills", sponsored)
+    write("sponsored_lists", sponsored_lists)
     cosponsored, cosponsored_lists = congress_gov.parse_cosponsored_dir(RAW_DIR / "congress_gov")
     write("cosponsored_bills", cosponsored)
     write("cosponsored_lists", cosponsored_lists)
