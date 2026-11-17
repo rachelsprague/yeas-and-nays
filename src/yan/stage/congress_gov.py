@@ -46,18 +46,6 @@ def parse_bill(content: bytes, source_file: str) -> dict:
     }
 
 
-def parse_sponsored(content: bytes, source_file: str) -> list[dict]:
-    return parse_member_list(content, source_file, "sponsoredLegislation")
-
-
-def parse_cosponsored(content: bytes, source_file: str) -> list[dict]:
-    return parse_member_list(content, source_file, "cosponsoredLegislation")
-
-
-def parse_member_list(content: bytes, source_file: str, list_key: str) -> list[dict]:
-    return member_list_rows(json.loads(content), source_file, list_key)
-
-
 def member_list_rows(doc: dict, source_file: str, list_key: str) -> list[dict]:
     """One row per bill in a member's list. The fetch drops repeats, but a file cached
     before it did can still hold one, so repeats (same Congress, type and number) are

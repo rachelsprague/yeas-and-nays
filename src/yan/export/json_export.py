@@ -193,9 +193,9 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     )
 
     meta = meta_document(votes, members)
-    # False when Congress.gov sponsored lists weren't ingested (e.g. no API key), so the
+    # False when no Congress.gov sponsored list has been fetched (e.g. no API key), so the
     # site can hide the section instead of showing every member with no bills.
-    meta["has_sponsored_bills"] = bool(sponsored)
+    meta["has_sponsored_bills"] = bool(sponsored_fetched)
     changed += write_if_changed(out_dir / "meta.json", dumps(meta))
     log.info("export: %d votes, %d members, %d files changed", len(votes), len(members), changed)
 

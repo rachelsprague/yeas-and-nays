@@ -767,8 +767,8 @@ def test_fetch_sponsored_keeps_a_bill_type_or_congress_that_differs(monkeypatch)
         ("HR", "2"), ("HRES", "2"), ("S", "5")]
 
 
-def test_parse_sponsored_flattens_each_item():
-    from yan.stage.congress_gov import parse_sponsored
+def test_member_list_rows_flattens_each_item():
+    from yan.stage.congress_gov import member_list_rows
 
     doc = {"bioguideId": "M001184", "sponsoredLegislation": [
         {"congress": 119, "type": "HRES", "number": 12, "title": "Original title",
@@ -778,7 +778,7 @@ def test_parse_sponsored_flattens_each_item():
         {"congress": 119, "type": "S", "number": "4", "title": "Only title",
          "latestAction": None, "policyArea": None},
     ]}
-    rows = parse_sponsored(json.dumps(doc).encode(), "119/sponsored/M001184.json")
+    rows = member_list_rows(doc, "119/sponsored/M001184.json", "sponsoredLegislation")
     assert rows[0] == {
         "source_file": "119/sponsored/M001184.json", "bioguide_id": "M001184", "congress": "119",
         "bill_type": "hres", "bill_number": "12", "title": "Latest title", "introduced_date": "2025-01-09",
@@ -789,8 +789,8 @@ def test_parse_sponsored_flattens_each_item():
     assert rows[1]["latest_action_date"] is None and rows[1]["policy_area"] is None
 
 
-def test_parse_sponsored_drops_a_repeat_from_an_older_cached_file():
-    from yan.stage.congress_gov import parse_sponsored
+def test_member_list_rows_drops_a_repeat_from_an_older_cached_file():
+    from yan.stage.congress_gov import member_list_rows
 
     # Files cached before the fetch dropped repeats can hold one.
     doc = {"bioguideId": "M001184", "sponsoredLegislation": [
@@ -798,7 +798,7 @@ def test_parse_sponsored_drops_a_repeat_from_an_older_cached_file():
         {"congress": 119, "type": "HR", "number": 2, "title": "Repeat"},
         {"congress": 119, "type": "HRES", "number": "2", "title": "Another type"},
     ]}
-    rows = parse_sponsored(json.dumps(doc).encode(), "119/sponsored/M001184.json")
+    rows = member_list_rows(doc, "119/sponsored/M001184.json", "sponsoredLegislation")
     assert [(r["bill_type"], r["bill_number"], r["title"]) for r in rows] == [
         ("hr", "2", "First"), ("hres", "2", "Another type")]
 

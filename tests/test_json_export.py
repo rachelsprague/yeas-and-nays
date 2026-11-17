@@ -175,6 +175,8 @@ def test_run_writes_an_empty_sponsored_list_once_fetched(tmp_path):
     # B000002's list was fetched and is empty; A000001's wasn't (a failed fetch): null.
     assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["sponsored"] == []
     assert json.loads((tmp_path / "out" / "members" / "A000001.json").read_text())["sponsored"] is None
+    # A fetched list counts even with no bills on it, so the section shows "none".
+    assert json.loads((tmp_path / "out" / "meta.json").read_text())["has_sponsored_bills"] is True
 
 
 def test_run_flags_missing_sponsored_lists(tmp_path):
