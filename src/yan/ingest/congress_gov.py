@@ -245,7 +245,8 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
     for (congress, bill_type, bill_number), last_vote in sorted(bills.items()):
         for url_template, kind, required_key in ENDPOINTS:
             path = raw_path(congress, bill_type, bill_number, kind)
-            current = congress == CONGRESS or recently_ended(CONGRESSES[congress], today)
+            # A Congress not listed (a stray raw file) is treated as long past.
+            current = congress == CONGRESS or (congress in CONGRESSES and recently_ended(CONGRESSES[congress], today))
             stale = needs_fetch(path, last_vote, today) if current else not path.exists()
             if not stale:
                 continue

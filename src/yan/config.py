@@ -7,7 +7,8 @@ from pathlib import Path
 CONGRESS = 119
 # Every Congress on the site, each session -> its calendar year. House Clerk files are
 # organized by calendar year; Senate files by session number. Past Congresses stay on
-# the site, so ingest re-fetches their files only when they're missing (a lost cache).
+# the site; once REFRESH_AFTER_END has passed since one ended, ingest re-fetches its
+# files only when they're missing (a lost cache).
 CONGRESSES = {119: {1: 2025, 2: 2026}}
 SESSIONS = CONGRESSES[CONGRESS]
 # A Congress that just ended is still refreshed like the one in session for this long:

@@ -27,6 +27,8 @@ def test_recently_ended():
     sessions = {1: 2025, 2: 2026}
     assert recently_ended(sessions, dt.date(2026, 11, 16))  # still in session
     assert recently_ended(sessions, JUST_ENDED)
+    assert recently_ended(sessions, dt.date(2027, 3, 3))  # 59 days after Jan. 3
+    assert not recently_ended(sessions, dt.date(2027, 3, 4))
     assert not recently_ended(sessions, LONG_ENDED)
 
 
@@ -189,6 +191,22 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
     client = _BillClient()
     congress_gov.ingest(client, JUST_ENDED)
     assert congress_gov.BILL_URL.format(congress=119, bill_type="hr", bill_number="1") in client.urls
+
+
+def test_a_bill_from_an_unlisted_congress_is_fetched_only_when_missing(monkeypatch, tmp_path):
+    from yan.ingest import congress_gov
+
+    monkeypatch.setenv("CONGRESS_API_KEY", "k")
+    monkeypatch.setattr(congress_gov, "RAW_DIR", tmp_path)
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: [])
+    monkeypatch.setattr(congress_gov, "voted_bills", lambda: {(118, "hr", "1"): JUST_ENDED})
+    path = congress_gov.raw_path(118, "hr", "1", "bills")
+    path.parent.mkdir(parents=True)
+    path.write_text("{}")
+
+    client = _BillClient()
+    congress_gov.ingest(client, JUST_ENDED)  # no KeyError
+    assert client.urls == [congress_gov.SUMMARIES_URL.format(congress=118, bill_type="hr", bill_number="1")]
 
 
 def _votes_json(out_dir, vote_ids):
