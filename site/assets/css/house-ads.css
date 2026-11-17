@@ -1,0 +1,106 @@
+/* House ads on explainer pages (_includes/house-ad.html). Linked only on
+   pages with `house_ad: true`. Each unit wears the advertised site's brand,
+   in both of this site's themes, with its tokens scoped to the unit's own
+   class so they never leak into the page's. Only the slot label uses this
+   site's tokens. */
+
+.house-ad-slot { max-width: 720px; margin-top: var(--space-12); }
+.house-ad-label {
+  margin-bottom: 8px;
+  font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-muted);
+}
+.house-ad-slot a { text-decoration: none; }
+
+/* ---- KeepScore: dark card, system serif (nothing to load). Contrast:
+   fg on bg 16:1, green on bg 6.9:1, text on green 7.3:1. */
+.ks-ad {
+  --ks-bg: #121212;
+  --ks-fg: #f0f0f0;
+  --ks-accent: #4caf7d;
+  --ks-on-accent: #0a0a0a;
+  --ks-divider: #333333;
+  --ks-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --ks-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 14px;
+  padding: 20px 20px 25px;
+  border: 1px solid var(--ks-divider); border-radius: 12px;
+  background: var(--ks-bg); color: var(--ks-fg); font-family: var(--ks-sans);
+}
+.ks-ad:hover { color: var(--ks-fg); }
+.ks-ad-logo { display: block; width: auto; height: 44px; }
+.ks-ad-divider { display: none; flex-shrink: 0; width: 1px; height: 56px; background: var(--ks-divider); }
+.ks-ad-copy { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ks-ad-eyebrow { font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: 0.12em; color: var(--ks-accent); }
+.ks-ad-headline { font-family: var(--ks-serif); font-size: 23px; line-height: 1.2; font-weight: 700; }
+.ks-ad-cta {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  min-height: 44px; padding: 0 20px; border-radius: 999px;
+  background: var(--ks-accent); color: var(--ks-on-accent);
+  font-size: 15px; font-weight: 700; white-space: nowrap;
+}
+/* Team strip: SF, LA, NY, BOS. */
+.ks-ad-strip {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 5px;
+  background: linear-gradient(to right, #af8eda 0 25%, #b59972 25% 50%, #4aa6d9 50% 75%, #00aeb7 75% 100%);
+}
+
+/* ---- HiringRadar: white card, Public Sans 700/800 (self-hosted; a
+   browser fetches a @font-face only once text renders in it). Contrast:
+   CTA white on teal 4.9:1, sub on white 10.9:1, row numbers on
+   the tint 4.9:1 (a shade darker than the CTA's teal, which is 4.4:1 there). */
+@font-face {
+  font-family: "Public Sans"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("/assets/fonts/public-sans-700-latin.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Public Sans"; font-style: normal; font-weight: 800; font-display: swap;
+  src: url("/assets/fonts/public-sans-800-latin.woff2") format("woff2");
+}
+.hr-ad {
+  --hr-bg: #FFFFFF;
+  --hr-fg: #121212;
+  --hr-sub: #3D3D3D;
+  --hr-border: #B9DDE6;
+  --hr-accent: #0B7C93;
+  --hr-tint: #EAF5F8;
+  --hr-accent-on-tint: #0A7488;
+  --hr-row-border: #D5E8ED;
+  --hr-sans: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  display: flex; flex-direction: column; gap: 18px;
+  padding: 20px;
+  border: 1px solid var(--hr-border); border-radius: 12px;
+  background: var(--hr-bg); color: var(--hr-fg); font-family: var(--hr-sans);
+}
+.hr-ad:hover { color: var(--hr-fg); }
+.hr-ad-copy { display: flex; flex-direction: column; min-width: 0; }
+.hr-ad-brand { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 18px; line-height: 1.2; font-weight: 700; }
+.hr-ad-headline { font-size: 22px; line-height: 1.2; font-weight: 800; letter-spacing: -0.02em; }
+.hr-ad-sub { margin-top: 8px; font-size: 13px; line-height: 1.4; font-weight: 700; color: var(--hr-sub); }
+.hr-ad-rows { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.hr-ad-row {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  border: 1px solid var(--hr-row-border); border-radius: 8px; background: var(--hr-tint);
+}
+.hr-ad-num { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--hr-accent-on-tint); }
+.hr-ad-bar { display: block; height: 8px; border-radius: 8px; background: #C6DCE2; }
+.hr-ad-bar-light { background: #FFFFFF; }
+.hr-ad-cta {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 18px; border-radius: 8px;
+  background: var(--hr-accent); color: #FFFFFF;
+  font-size: 15px; font-weight: 700; white-space: nowrap;
+}
+
+/* Row layouts once the slot is near its full 720px. */
+@media (min-width: 760px) {
+  .ks-ad { flex-direction: row; align-items: center; gap: 24px; padding: 22px 24px 27px; }
+  .ks-ad-logo { height: 56px; }
+  .ks-ad-divider { display: block; }
+  .ks-ad-copy { flex: 1; }
+
+  .hr-ad { flex-direction: row; align-items: center; gap: 24px; padding: 22px 24px; }
+  .hr-ad-copy { flex: 0 0 280px; }
+  .hr-ad-rows { flex: 1; }
+}

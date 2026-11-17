@@ -119,6 +119,43 @@ nav: about
       <p>Built by <a href="https://rachelsprague.com">Rachel Sprague</a>. The code is public: <a href="{{ site.github }}">{{ site.github | remove_first: "https://" }}</a>.</p>
       <p>Spot an error? <a href="{{ site.github }}/issues">Open an issue on GitHub</a>.</p>
       <p>The site counts visits with cookieless analytics. See <a href="/privacy/">Privacy</a> for what is recorded and how to opt out.</p>
+      {%- assign utm = "utm_source=yeasandnays&amp;utm_medium=house-ad&amp;utm_content=about" %}
+      <div class="credit">
+        <p class="credit-h" id="credit-h">Other projects by Rachel</p>
+        <ul aria-labelledby="credit-h">
+          <li><a class="credit-row" href="https://rachelsprague.com/?{{ utm }}" target="_blank" rel="noopener" data-umami-event="house-ad-click" data-umami-event-unit="rs-build-log">
+            <svg class="credit-mark" viewBox="0 0 256 256" width="40" height="40" aria-hidden="true">
+              <rect width="256" height="256" rx="56" fill="#1f1f1f"/>
+              <g transform="translate(57.6 80.11) scale(0.95782)">
+                <rect x="0" y="75" width="30" height="25" fill="#ffffff"/>
+                <rect x="39" y="50" width="30" height="50" fill="#ffffff"/>
+                <rect x="78" y="0" width="30" height="100" fill="#c6f24e"/>
+                <rect x="117" y="25" width="30" height="75" fill="#ffffff"/>
+              </g>
+            </svg>
+            <span class="credit-text"><span class="credit-name">rachelsprague.com</span><span class="credit-line">Rachel's site and build logs: how these projects get made.</span></span>
+            <span class="credit-arrow" aria-hidden="true">&rarr;</span>
+          </a></li>
+          <li><a class="credit-row" href="https://keepscorebaseball.com/?{{ utm }}" target="_blank" rel="noopener" data-umami-event="house-ad-click" data-umami-event-unit="keepscore">
+            <img class="credit-mark" src="/assets/house-ads/keepscore-mark.png" alt="" width="40" height="40" loading="lazy">
+            <span class="credit-text"><span class="credit-name">KeepScore</span><span class="credit-line">The Women's Pro Baseball League, scored pitch by pitch.</span></span>
+            <span class="credit-arrow" aria-hidden="true">&rarr;</span>
+          </a></li>
+          <li><a class="credit-row" href="https://hiringradarjobs.com/?{{ utm }}" target="_blank" rel="noopener" data-umami-event="house-ad-click" data-umami-event-unit="hiringradar">
+            <svg class="credit-mark credit-mark-white" viewBox="0 0 48 48" width="40" height="40" aria-hidden="true">
+              <rect width="48" height="48" rx="10.5" fill="#ffffff"/>
+              <g transform="translate(6 6) scale(0.75)">
+                <circle cx="24" cy="24" r="21" fill="none" stroke="#0EA47A" stroke-width="2.5"/>
+                <circle cx="24" cy="24" r="11" fill="none" stroke="#0EA47A" stroke-width="1.5"/>
+                <circle cx="24" cy="24" r="3.5" fill="#0EA47A"/>
+                <line x1="24" y1="24" x2="36" y2="11" stroke="#0EA47A" stroke-width="2.5" stroke-linecap="round"/>
+              </g>
+            </svg>
+            <span class="credit-text"><span class="credit-name">HiringRadar</span><span class="credit-line">Three jobs worth applying to, every day.</span></span>
+            <span class="credit-arrow" aria-hidden="true">&rarr;</span>
+          </a></li>
+        </ul>
+      </div>
     </section>
   </div>
 </main>

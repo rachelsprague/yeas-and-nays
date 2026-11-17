@@ -1856,3 +1856,85 @@ class HomeModulesTest < Minitest::Test
     assert_equal [["Energy", 100.0], ["Taxation", 25.0]], Yan.home_areas(pv, 6).map { |r| [r["area"], r["pct"]] }
   end
 end
+
+# House ads (the maker's other projects) go on explainer pages only, never on
+# vote, member, bill or other data pages; /about has a credit card instead.
+class HouseAdTest < Minitest::Test
+  include SiteBuild
+
+  EXPLAINERS = ["/how/bills/index.html", "/how/expulsion/index.html"].freeze
+
+  def pages
+    @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
+  end
+
+  def links(html)
+    html.scan(/<a [^>]*>/)
+  end
+
+  def test_explainer_pages_end_main_with_one_slot_of_both_units_the_first_shown
+    EXPLAINERS.each do |path|
+      html = pages.fetch(path)
+      assert_equal 1, html.scan('<aside class="house-ad-slot"').size, path
+      assert_includes html, '<link rel="stylesheet" href="/assets/css/house-ads.css">', path
+      slot = html[%r{<aside class="house-ad-slot".*?</aside>}m]
+      assert html.index(slot) < html.index("</main>"), "#{path}: the slot sits inside <main>"
+      assert_match(%r{</aside>\s*</main>}, html, "#{path}: the slot ends <main>")
+      assert_includes slot, "data-pagefind-ignore"
+      assert_includes slot, "From the maker of Yeas &amp; Nays"
+      assert_equal ['<div data-house-ad="keepscore">', '<div data-house-ad="hiringradar" hidden>'],
+                   slot.scan(/<div data-house-ad="[^"]*"[^>]*>/)
+      assert_includes slot, "Math.random()"
+      refute_includes slot, "<script src", "no third-party or external script"
+      slot.scan(/<img [^>]*>/).each { |img| assert_includes img, 'loading="lazy"', img }
+    end
+  end
+
+  def test_each_unit_is_one_tracked_link
+    slot = pages.fetch("/how/bills/index.html")[%r{<aside class="house-ad-slot".*?</aside>}m]
+    units = slot.split(/<div data-house-ad=/).drop(1)
+    assert_equal 2, units.size
+    { "keepscore" => "https://keepscorebaseball.com/scorebooks?", "hiringradar" => "https://hiringradarjobs.com/?" }
+      .zip(units).each do |(unit, href), html|
+        a = links(html)
+        assert_equal 1, a.size, unit
+        assert_includes a.first, %(href="#{href}utm_source=yeasandnays&amp;utm_medium=house-ad&amp;utm_content=how-bills")
+        assert_includes a.first, 'data-umami-event="house-ad-click"'
+        assert_includes a.first, %(data-umami-event-unit="#{unit}")
+        assert_includes a.first, 'target="_blank" rel="noopener"'
+        assert_match(/aria-label="[^"]+"/, a.first)
+      end
+  end
+
+  def test_no_other_page_has_a_house_ad
+    assert_includes pages.keys, "/votes/119/house/1/1/index.html"
+    assert pages.keys.any? { |p| p.start_with?("/members/") && p != "/members/index.html" }, "a member page"
+    (pages.keys - EXPLAINERS).each do |path|
+      refute_includes pages[path], "house-ad-slot", path
+      refute_includes pages[path], "house-ads.css", path
+    end
+  end
+
+  # Only the default layout includes the slot, and only explainer pages opt in.
+  def test_only_explainer_sources_opt_in
+    sources = Dir[File.join(SOURCE, "{_layouts,_includes,**}", "*.html")].reject { |f| f.match?(%r{/(_site|vendor|node_modules)/}) }
+    including = sources.select { |f| File.read(f).include?("house-ad.html") }.map { |f| f.delete_prefix(SOURCE) }
+    assert_equal ["/_layouts/default.html"], including.uniq
+    opted_in = sources.select { |f| File.read(f) =~ /\A---\n(?:.*\n)*?house_ad: true\n/ }.map { |f| f.delete_prefix(SOURCE) }
+    assert_equal EXPLAINERS.sort, opted_in.uniq.sort
+  end
+
+  def test_about_has_three_credit_rows_and_no_rotating_ad
+    about = pages.fetch("/about/index.html")
+    refute_includes about, "house-ad-slot"
+    refute_includes about, "data-house-ad"
+    card = about[%r{<div class="credit">.*?</ul>\s*</div>}m]
+    rows = links(card)
+    assert_equal 3, rows.size
+    %w[rachelsprague.com keepscorebaseball.com hiringradarjobs.com].zip(rows).each do |host, a|
+      assert_includes a, %(href="https://#{host}/?utm_source=yeasandnays&amp;utm_medium=house-ad&amp;utm_content=about")
+      assert_includes a, 'data-umami-event="house-ad-click"'
+    end
+    assert_equal ["rachelsprague.com", "KeepScore", "HiringRadar"], card.scan(%r{<span class="credit-name">([^<]*)</span>}).flatten
+  end
+end
