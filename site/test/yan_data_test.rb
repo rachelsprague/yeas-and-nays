@@ -972,6 +972,18 @@ class VotePageTest < Minitest::Test
     assert_includes built.fetch("/how/expulsion/index.html"), "<h1 class=\"vote-h\">How expulsion works</h1>"
   end
 
+  # A vote on a measure links How a bill becomes law; a vote with no measure doesn't.
+  def test_a_vote_on_a_measure_links_how_a_bill_becomes_law
+    built = build_site([member("A000001", "AL", 1)],
+                       [[vote(1, "On Passage").merge("bill_type" => "hr"), doc({ "A000001" => "Yea" }, { "yes" => 1 })],
+                        [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
+    link = '<a class="link small" href="/how/bills/">How a bill becomes law</a>'
+    assert_includes built.fetch("/votes/119/house/1/1/index.html"), link
+    refute_includes built.fetch("/votes/119/house/1/2/index.html"), "/how/bills/"
+    assert_includes built.fetch("/about/index.html"), '<a href="/how/bills/">How a bill becomes law</a>'
+    assert_includes built.fetch("/how/bills/index.html"), "<h1 class=\"vote-h\">How a bill becomes law</h1>"
+  end
+
   def path_doc
     doc({ "A000001" => "Yea" }, { "yes" => 1 }).merge("path" => { "track" => "law", "steps" => [
       { "key" => "introduced", "label" => "Introduced", "status" => "done", "date" => "2025-01-03",
