@@ -214,23 +214,24 @@ class EscapingTest < Minitest::Test
   end
 
   # A summary with no usable text reads as none, without the CRS credit line.
+  # Each entity and character gets its own summary, so one the check misses
+  # fails here instead of hiding behind another that it matches.
   def test_a_summary_without_text_reads_as_no_summary
     base = { "version" => "Introduced", "version_date" => "2025-01-03" }
-    votes = [base.merge("html" => 1), "<p>a</p>", base.merge("html" => ""), base.merge("html" => " <p> </p><br>\n"),
-             base.merge("html" => "<p>\0</p>"), base.merge("html" => "<p>&nbsp;</p>"),
-             base.merge("html" => "<p>&NBSP;&#160;&#xA0;&#32;&#x0a; </p>"),
-             base.merge("html" => "<p>&ensp;&EMSP;&thinsp;&#8194;&#08195;&#8201;&#8203;</p>"),
-             base.merge("html" => "<p>&#x2002;&#X2003;&#x2009;&#x200B;&#x0200b;</p>"),
-             base.merge("html" => "<p>&zwnj;&ZWJ;&shy;&#173;&#8204;&#08205;&#8288;&#65279;</p>"),
-             base.merge("html" => "<p>&#xAD;&#x200c;&#X200D;&#x2060;&#xFEFF;&#x0feff;</p>"),
-             base.merge("html" => "<p>&lrm;&RLM;&#8206;&#08207;&#8232;&#8233;</p>"),
-             base.merge("html" => "<p>&#x200E;&#x200f;&#x2028;&#X02029;</p>"),
-             base.merge("html" => "<p>\u00AD\u200B\u200C\u200D\u200E\u200F\u2028\u2029\u2060\uFEFF</p>")]
-            .each_with_index.map do |summary, i|
+    entities = %w[&nbsp; &NBSP; &ensp; &EMSP; &thinsp; &zwnj; &ZWJ; &shy; &lrm; &RLM;
+                  &#9; &#10; &#13; &#32; &#160; &#173; &#8194; &#08195; &#8201; &#8203; &#8204; &#08205;
+                  &#8206; &#08207; &#8232; &#8233; &#8288; &#65279;
+                  &#x9; &#x0a; &#xD; &#x20; &#xA0; &#xAD; &#x2002; &#X2003; &#x2009; &#x200B; &#x0200b; &#x200c;
+                  &#X200D; &#x200E; &#x200f; &#x2028; &#X02029; &#x2060; &#xFEFF; &#x0feff;]
+    characters = [0xAD, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x2028, 0x2029, 0x2060, 0xFEFF]
+                 .map { |c| c.chr(Encoding::UTF_8) }
+    blanks = ["", " <p> </p><br>\n", "<p>\0</p>"] + (entities + characters).map { |e| "<p>#{e}</p>" }
+    summaries = [base.merge("html" => 1), "<p>a</p>"] + blanks.map { |html| base.merge("html" => html) }
+    votes = summaries.each_with_index.map do |summary, i|
       [VOTE.merge("vote_id" => format("h119-1-%04d", i + 1), "roll_number" => i + 1), DOC.merge("summary" => summary)]
     end
     built = build_site([MEMBER], votes)
-    (1..14).each do |roll|
+    (1..summaries.size).each do |roll|
       page = built.fetch("/votes/119/house/1/#{roll}/index.html")
       assert_includes page, "No Congressional Research Service summary of", roll
       refute_includes page, "By the Congressional Research Service", roll
