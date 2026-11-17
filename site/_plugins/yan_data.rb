@@ -699,18 +699,23 @@ module Yan
   end
 
   # Entities that only make whitespace or nothing visible: &nbsp;, &ensp;,
-  # &emsp;, &thinsp;, &zwnj;, &zwj;, &shy; and the tab, line break, carriage
-  # return, space, no-break space, soft hyphen, en space, em space, thin
-  # space, zero-width space, zero-width non-joiner, zero-width joiner, word
-  # joiner and byte order mark as numbers.
+  # &emsp;, &thinsp;, &zwnj;, &zwj;, &shy;, &lrm;, &rlm; and the tab, line
+  # break, carriage return, space, no-break space, soft hyphen, en space, em
+  # space, thin space, zero-width space, zero-width non-joiner, zero-width
+  # joiner, left-to-right and right-to-left marks, line and paragraph
+  # separators, word joiner and byte order mark as numbers. Also those
+  # characters written out that [[:space:]] doesn't match: soft hyphen,
+  # zero-width space, non-joiner and joiner, the two marks, word joiner and
+  # byte order mark.
   BLANK_ENTITY = Regexp.union(
-    /&(?:nbsp|ensp|emsp|thinsp|zwnj|zwj|shy);/i,
-    /&#0*(?:9|10|13|32|160|173|8194|8195|8201|8203|8204|8205|8288|65279);/,
-    /&#x0*(?:9|a|d|20|a0|ad|2002|2003|2009|200b|200c|200d|2060|feff);/i
+    /&(?:nbsp|ensp|emsp|thinsp|zwnj|zwj|shy|lrm|rlm);/i,
+    /&#0*(?:9|10|13|32|160|173|8194|8195|8201|8203|8204|8205|8206|8207|8232|8233|8288|65279);/,
+    /&#x0*(?:9|a|d|20|a0|ad|2002|2003|2009|200b|200c|200d|200e|200f|2028|2029|2060|feff);/i,
+    /[\u00AD\u200B-\u200F\u2060\uFEFF]/
   )
 
   # A CRS summary as the vote page shows it, or nil when it has no text
-  # (only tags, whitespace or whitespace entities), which reads as no
+  # (only tags, whitespace or the invisible text above), which reads as no
   # summary. A version date that isn't an ISO date, or a blank version
   # label, is left out rather than stopping the build.
   def self.summary_view(s)
