@@ -92,6 +92,8 @@ def test_polygons_keeps_only_polygon_parts():
     assert dm.polygons(a) == [a]
     assert dm.polygons(MultiPolygon([a, b])) == [a, b]
     assert dm.polygons(GeometryCollection([a, LineString([(0, 0), (1, 1)]), Point(5, 5)])) == [a]
+    # A clip can return a collection holding a multipolygon.
+    assert dm.polygons(GeometryCollection([MultiPolygon([a, b]), LineString([(0, 0), (1, 1)])])) == [a, b]
 
 
 def test_tidy_drops_small_islands_and_puts_the_largest_part_first():
@@ -218,6 +220,17 @@ def test_load_districts_clips_a_later_congress_to_the_shoreline(monkeypatch):
     assert rows[0][2].area == 60
 
 
+def test_load_districts_clips_to_the_whole_shoreline_not_the_states_own_outline(monkeypatch):
+    # The state file draws the Texas line a little west of TIGER/Line's; the
+    # district keeps TIGER/Line's edge, so it meets its neighbor with no gap.
+    monkeypatch.setattr(dm, "DISTRICT_FILES", {119: ["cd119"], 120: ["tx120"]})
+    monkeypatch.setattr(dm, "read_shapes", _shapes({"tx120": [
+        ({"STATEFP": "48", "CD120FP": "01"}, box(0, 0, 10, 10)),
+    ]}))
+    rows = dm.load_districts(120, states={"TX": box(0, 0, 9, 12), "OK": box(9, 0, 20, 12)})
+    assert rows[0][2].area == 100
+
+
 def test_load_districts_takes_a_kept_state_from_the_119th_file(monkeypatch):
     monkeypatch.setattr(dm, "DISTRICT_FILES", {119: ["cd119"], 120: ["mo120", "tx120"]})
     monkeypatch.setattr(dm, "KEEP_119", {120: {"MO"}})
@@ -234,10 +247,14 @@ def test_load_districts_takes_a_kept_state_from_the_119th_file(monkeypatch):
 
 # build
 
+# The Texas-New Mexico line, jagged (as real borders are) by about the
+# simplification tolerance, so simplifying each district on its own would keep
+# different points on each side of it.
+SHARED_EDGE = [(-106 + 0.002 * ((i * 7919) % 101 / 50 - 1), 31 + i * 0.01) for i in range(501)]
 STATES = {
     "WA": box(-125, 45, -117, 49),  # widens the lower 48, so the insets are clear of Texas
-    "TX": box(-106, 26, -94, 36),
-    "NM": box(-109, 31, -106, 37),  # shares Texas's western edge
+    "TX": Polygon([(-106, 26), (-94, 26), (-94, 36), *reversed(SHARED_EDGE), (-106, 31)]),
+    "NM": Polygon([(-109, 31), *SHARED_EDGE, (-106, 37), (-109, 37)]),
     "ME": box(-71, 43, -67, 47),
     # Alaska and Hawaii centered on their projections' central meridians (154°W, 157°W),
     # so each one's top corners are level when drawn in its own projection.
@@ -251,10 +268,14 @@ PLACES = [
 ]
 
 
-def build_doc(monkeypatch, tmp_path):
-    """Runs build() on STATES (one district each) and PLACES, and returns the written map."""
+def one_district_each(congress, states):
+    return [(st, 1, g) for st, g in sorted(states.items())]
+
+
+def build_doc(monkeypatch, tmp_path, load_districts=one_district_each):
+    """Runs build() on STATES (one district each by default) and PLACES, and returns the written map."""
     monkeypatch.setattr(dm, "load_states", lambda: STATES)
-    monkeypatch.setattr(dm, "load_districts", lambda congress, s: [(st, 1, g) for st, g in sorted(s.items())])
+    monkeypatch.setattr(dm, "load_districts", load_districts)
     monkeypatch.setattr(dm, "load_places", lambda: PLACES)
     monkeypatch.setattr(dm, "OUT", tmp_path)
     monkeypatch.setattr(dm, "ROOT", tmp_path)
@@ -305,6 +326,27 @@ def test_build_draws_state_borders_but_not_coastlines(monkeypatch, tmp_path):
     ys = [p.y for p in border]
     tx = path_bounds(next(d["d"] for d in doc["districts"] if d["state"] == "TX"))
     assert max(ys) - min(ys) > 0.4 * (tx[3] - tx[1])
+
+
+def test_build_draws_a_shared_state_border_once(monkeypatch, tmp_path):
+    def split_tx_and_nm(congress, states):
+        # Each state's districts meet partway along the line, at different points on each side.
+        rows = [r for r in one_district_each(congress, states) if r[0] not in ("TX", "NM")]
+        for st, y in (("TX", 33.27), ("NM", 34.61)):
+            south = box(-110, 25, -93, y)
+            rows += [(st, 1, states[st].intersection(south)), (st, 2, states[st].difference(south))]
+        return rows
+
+    doc = build_doc(monkeypatch, tmp_path, split_tx_and_nm)
+    points = {}
+    for d in doc["districts"]:
+        points.setdefault(d["state"], set()).update(
+            (round(x, 1), round(y, 1)) for ring in path_points(d["d"]) for x, y in ring)
+    # Both states keep the same points along the line, so it's drawn as one line, not two side by side.
+    [line] = path_points(doc["borders"])
+    assert len(line) > 10
+    # (Its ends are cut where it meets the coast, so they aren't vertices.)
+    assert {(round(x, 1), round(y, 1)) for x, y in line[1:-1]} <= points["TX"] & points["NM"]
 
 
 def test_build_writes_city_labels_and_each_districts_places(monkeypatch, tmp_path):
