@@ -71,7 +71,7 @@ nav: about
       <dl>
         {%- for q in site.data.procedures.questions %}
         <dt>{{ q.term }}</dt>
-        <dd>{{ q.definition }}</dd>
+        <dd>{{ q.definition }}{% if q.more %} <a href="{{ q.more.url | escape }}">{{ q.more.label | escape }}</a>.{% endif %}</dd>
         {%- endfor %}
       </dl>
       <h3 class="kicker soft" style="margin-top: 8px">Kinds of measures</h3>
