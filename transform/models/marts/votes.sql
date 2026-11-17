@@ -55,22 +55,48 @@ votes_counted as (
                     and votes.measure_title ilike 'Proposing an amendment to the Constitution%')
                 then '2/3'
             else '1/2'
-        end as required_share
+        end as required_share,
+        {#- Whether the question carried, from the official result ("Bill
+            Passed", "Decision of Chair Not Sustained"); any "Not" reads as
+            not carried. Null for a result that isn't a yes or no (a Speaker
+            election's winner). #}
+        case
+            when regexp_matches(votes.result, '(Rejected|Failed|Defeated)$|\bNot\b') then false
+            when regexp_matches(votes.result, '(Agreed to|Passed|Confirmed|Sustained|Well Taken)$') then true
+        end as carried
     from votes
     left join position_summary on position_summary.vote_id = votes.vote_id
+),
+
+votes_needed as (
+    select
+        votes.*,
+        {#- The fewest Yeas that carry the question. A majority or two-thirds is
+            of those voting yea or nay; three-fifths (Senate cloture and waivers)
+            is of senators duly chosen and sworn, counted here as the senators on
+            the roll call (null with no roll). A Vice President's tie-breaking
+            vote isn't counted. #}
+        case votes.required_share
+            when '1/2' then (votes.yea_count + votes.nay_count) // 2 + 1
+            when '2/3' then cast(ceil(2 * (votes.yea_count + votes.nay_count) / 3) as integer)
+            when '3/5' then cast(ceil(3 * nullif(votes.member_count, 0) / 5) as integer)
+        end as share_yeas
+    from votes_counted as votes
 )
 
 select
-    votes.*,
-    {#- The fewest Yeas that carry the question. A majority or two-thirds is
-        of those voting yea or nay; three-fifths (Senate cloture and waivers)
-        is of senators duly chosen and sworn, counted here as the senators on
-        the roll call (null with no roll). A Vice President's tie-breaking
-        vote isn't counted. #}
-    case votes.required_share
-        when '1/2' then (votes.yea_count + votes.nay_count) // 2 + 1
-        when '2/3' then cast(ceil(2 * (votes.yea_count + votes.nay_count) / 3) as integer)
-        when '3/5' then cast(ceil(3 * nullif(votes.member_count, 0) / 5) as integer)
+    votes.* exclude (share_yeas),
+    {#- Null when it disagrees with the official result, so the site never
+        shows a vote as carried short of the Yeas it needed, or failed with
+        them: the Senate recorded a 3/5 waiver as agreed to 51-48
+        (s119-1-0334). A tie the Vice President broke is the expected
+        exception (50-50 carried without the 51st Yea). #}
+    case
+        when votes.carried is not null
+            and votes.tie_breaker_by is null
+            and (votes.yea_count >= votes.share_yeas) != votes.carried
+            then null
+        else votes.share_yeas
     end as yeas_needed,
     {{ congress_gov_url('votes.congress', 'votes.bill_type', 'votes.bill_number') }} as congress_gov_url,
     bills.sponsor_bioguide_id,
@@ -78,7 +104,7 @@ select
     bills.policy_area,
     bills.introduced_date,
     result_candidate.result_bioguide_id
-from votes_counted as votes
+from votes_needed as votes
 left join bills
     on bills.congress = votes.congress
     and bills.bill_type = votes.bill_type
