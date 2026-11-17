@@ -1680,6 +1680,7 @@ class LiveFloorTest < Minitest::Test
     assert_includes band, '<p class="live-line small" data-row data-chamber="senate" data-live-from="2026-11-16T15:00:00-05:00">'
     assert_includes band, '<p class="live-line small" data-row data-chamber="house" data-live-from="2026-11-17T12:00:04-05:00">'
     assert_includes band, "Scheduled to convene at 3 p.m. ET"
+    assert_equal 2, band.scan('<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>In session</span>').size
     assert_includes band, '<a class="link" href="https://clerk.house.gov/FloorSummary">Floor summary</a>'
     refute_includes band, "is-live"
     assert_includes html, '<script src="/assets/js/live-floor.js" defer></script>'
