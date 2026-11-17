@@ -522,12 +522,14 @@ def test_publish_waits_for_a_vote_page_that_is_not_live_and_keeps_order(out_dir,
     ]
 
 
-def test_is_live_only_for_a_200(monkeypatch):
+def test_is_live_only_for_a_200_and_logs_why_not(monkeypatch, capsys):
     import httpx
 
     responses = {"https://a.test/": 200, "https://b.test/": 404}
+    calls = []
 
     def fake_get(url, **kwargs):
+        calls.append(kwargs)
         if url not in responses:
             raise httpx.ConnectError("down")
         return httpx.Response(responses[url])
@@ -536,6 +538,10 @@ def test_is_live_only_for_a_200(monkeypatch):
     assert bot.is_live("https://a.test/")
     assert not bot.is_live("https://b.test/")
     assert not bot.is_live("https://c.test/")
+    assert all(kwargs["follow_redirects"] for kwargs in calls)
+    out = capsys.readouterr().out
+    assert "https://b.test/: HTTP 404" in out
+    assert "https://c.test/: ConnectError" in out
 
 
 def test_publish_stops_at_post_limit_and_leaves_rest_for_next_run(out_dir, tmp_path, monkeypatch):

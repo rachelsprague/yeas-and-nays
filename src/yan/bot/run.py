@@ -90,10 +90,14 @@ def is_live(url: str) -> bool:
 
     from yan.http import USER_AGENT
 
+    # Follows redirects so a change of domain or scheme doesn't read as "not live".
     try:
-        resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0)
-    except httpx.HTTPError:
+        resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0, follow_redirects=True)
+    except httpx.HTTPError as exc:
+        print(f"Page check failed for {url}: {type(exc).__name__}")
         return False
+    if resp.status_code != 200:
+        print(f"Page check for {url}: HTTP {resp.status_code}")
     return resp.status_code == 200
 
 
