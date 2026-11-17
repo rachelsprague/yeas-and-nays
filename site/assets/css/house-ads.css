@@ -4,7 +4,7 @@
    class so they never leak into the page's. Only the slot label uses this
    site's tokens. */
 
-.house-ad-slot { max-width: 720px; margin-top: var(--space-12); }
+.house-ad-slot { margin-top: var(--space-12); }
 .house-ad-label {
   margin-bottom: 8px;
   font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em;
@@ -93,12 +93,16 @@
   font-size: 15px; font-weight: 700; white-space: nowrap;
 }
 
-/* Row layouts once the slot is near its full 720px. */
+/* Row layouts once the slot (the full main column) is 720px or wider. The
+   KeepScore copy and the HiringRadar rows take the spare width, so each CTA
+   sits at the card's right edge; the KeepScore headline wraps at 24em rather
+   than running up to its CTA. */
 @media (min-width: 760px) {
   .ks-ad { flex-direction: row; align-items: center; gap: 24px; padding: 22px 24px 27px; }
   .ks-ad-logo { height: 56px; }
   .ks-ad-divider { display: block; }
   .ks-ad-copy { flex: 1; }
+  .ks-ad-headline { max-width: 24em; }
 
   .hr-ad { flex-direction: row; align-items: center; gap: 24px; padding: 22px 24px; }
   .hr-ad-copy { flex: 0 0 280px; }
