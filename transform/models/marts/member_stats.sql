@@ -1,7 +1,8 @@
 {#-
-  One row per member with a recorded position this Congress: how often they
-  voted, and how often their yes/no matched their caucus majority. Matches the
-  definitions on the site's methodology page.
+  One row per member per Congress in which they have a recorded position: how
+  often they voted, and how often their yes/no matched their caucus majority.
+  Matches the definitions on the site's methodology page. Each Congress is
+  counted on its own, so rates never mix Congresses.
 
   The official record lists every sitting member on every roll call in their
   chamber (as Not Voting when absent), so a member's position rows are the
@@ -21,6 +22,7 @@ with positions as (
 counts as (
     select
         bioguide_id,
+        congress,
         count(*) as roll_calls,
         count(*) filter (where position <> 'not_voting') as votes_cast,
         count(*) filter (where position = 'not_voting') as missed_votes,
@@ -28,7 +30,7 @@ counts as (
         count(*) filter (where voted_against_party_majority = false) as with_party_majority_votes,
         count(*) filter (where voted_against_party_majority) as against_party_majority_votes
     from positions
-    group by bioguide_id
+    group by bioguide_id, congress
 )
 
 select

@@ -163,7 +163,7 @@ def test_bills_are_fetched_under_their_own_congress(monkeypatch, tmp_path):
     monkeypatch.setattr(congress_gov, "RAW_DIR", tmp_path)
     monkeypatch.setattr(congress_gov, "CONGRESS", 120)
     monkeypatch.setattr(congress_gov, "CONGRESSES", {119: {1: 2025, 2: 2026}, 120: {1: 2027, 2: 2028}})
-    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: [])
+    monkeypatch.setattr(congress_gov, "members_by_congress", lambda: {})
     old = dt.date(2025, 3, 1)
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {
         (119, "hr", "1"): old, (119, "hr", "2"): old, (120, "hr", "1"): old,
@@ -201,7 +201,7 @@ def test_a_bill_from_an_unlisted_congress_is_fetched_only_when_missing(monkeypat
 
     monkeypatch.setenv("CONGRESS_API_KEY", "k")
     monkeypatch.setattr(congress_gov, "RAW_DIR", tmp_path)
-    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: [])
+    monkeypatch.setattr(congress_gov, "members_by_congress", lambda: {})
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {(118, "hr", "1"): JUST_ENDED})
     path = congress_gov.raw_path(118, "hr", "1", "bills")
     path.parent.mkdir(parents=True)

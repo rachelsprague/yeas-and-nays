@@ -32,17 +32,18 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 
 | Model | Grain | Key |
 | --- | --- | --- |
-| `members` | one row per member who served in the 119th Congress | `bioguide_id` |
+| `members` | one row per member who served in a Congress on the site (`seeds/congresses.csv`), with their last one | `bioguide_id` |
 | `votes` | one row per roll call vote | `vote_id`, e.g. `h119-1-0042`, `s119-2-0107` |
 | `positions` | one row per member per vote | `vote_id` + `bioguide_id` |
 | `bills` | one row per bill or resolution with a recorded vote: sponsor, introduced date, cosponsor count | `bill_id`, e.g. `119-hr-1013` |
-| `sponsored_bills` | one row per bill or resolution a member introduced this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
-| `sponsored_lists` | one row per member whose sponsored list has been fetched (a failed fetch leaves none) | `bioguide_id` |
-| `cosponsored_bills` | one row per bill or resolution a member cosponsored this Congress, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
-| `cosponsored_lists` | one row per member whose cosponsored list has been fetched (lists fill in over several runs) | `bioguide_id` |
+| `sponsored_bills` | one row per bill or resolution a member introduced in a Congress on the site, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
+| `sponsored_lists` | one row per member per Congress whose sponsored list has been fetched (a failed fetch leaves none) | `bioguide_id` + `congress` |
+| `cosponsored_bills` | one row per bill or resolution a member cosponsored in a Congress on the site, with its latest action and latest roll call | `bioguide_id` + `bill_id` |
+| `cosponsored_lists` | one row per member per Congress whose cosponsored list has been fetched (lists fill in over several runs) | `bioguide_id` + `congress` |
 | `vote_summaries` | one row per vote on a bill with a CRS summary: the summary of the version in effect on the vote date | `vote_id` |
 | `bill_milestones` | one row per bill or resolution with a recorded vote per step it has reached toward law (introduced, committee, passed or failed in each chamber, differences, President, veto, override, law), with its dates, from Congress.gov actions and this site's roll calls | `milestone_id`, e.g. `119-hr-1:passed_house` |
-| `member_stats` | one row per member with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` |
+| `member_stats` | one row per member per Congress with a recorded position: roll calls, votes cast, missed votes %, voted with party majority % | `bioguide_id` + `congress` |
+| `member_congresses` | one row per member per Congress on the site they served in or voted in: dates of service and `member_stats` | `bioguide_id` + `congress` |
 | `floor_schedule` | one row per item that may come up for a vote: House weekly schedule items (removed items dropped) and Senate cloture motions filed but not yet voted on, each with the roll call that followed, if any | `item_id`, e.g. `h-2026-11-16-409831`, `s-pn1272-3`, `s-h-r-2347-measure` |
 | `senate_sessions` | one row per time the Senate convened this session, with when it's set to convene next and whether that's a pro forma session | `convene_time_et` |
 | `house_floor_days` | the House's latest legislative day: when it convened, whether it has adjourned, and when it next convenes | `legislative_day` |
@@ -55,9 +56,9 @@ Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make t
 
 | File | Contents |
 | --- | --- |
-| `meta.json` | Vote and member counts, latest roll number per chamber and session |
-| `members.json` | All members, with their `member_stats` |
-| `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored this Congress (each list is null until it is first fetched) |
+| `meta.json` | Vote and member counts, latest roll number per chamber, Congress and session |
+| `members.json` | All members, with their stats for their last Congress and `congresses`: dates and stats for each Congress, newest first |
+| `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored, one group per Congress, newest first (each is null until a list is first fetched) |
 | `floor_schedule.json` | `floor_schedule` items with display labels, when the Senate next convenes, and each chamber's floor status (when it convened if it hadn't adjourned, else when it next convenes), for the home page's floor band |
 | `votes.json` | All votes: metadata, official tallies, source links, newest first |
 | `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded, and the CRS summary of the measure (HTML reduced to formatting tags), or null |

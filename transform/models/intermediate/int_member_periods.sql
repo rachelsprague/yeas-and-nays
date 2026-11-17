@@ -1,7 +1,7 @@
 {#-
   One row per member per party-affiliation period, for every term on record.
-  overlaps_congress marks periods served during the 119th Congress; earlier
-  periods are kept so a vote record can still be matched when the official
+  overlaps_site_congress marks periods served during any Congress on the site
+  (the congresses seed); earlier periods are kept so a vote record can still be matched when the official
   record and congress-legislators disagree on dates (see
   int_positions_resolved). Usually one row per term; a member who changed party
   mid-term gets one row per affiliation period, from the term's
@@ -22,6 +22,10 @@ affiliations as (
 
 people as (
     select * from {{ ref('stg_legislators__people') }}
+),
+
+congresses as (
+    select * from {{ ref('congresses') }}
 ),
 
 periods as (
@@ -57,8 +61,10 @@ select
     periods.term_start,
     periods.period_start,
     periods.period_end,
-    periods.period_end > cast('{{ var("congress_start") }}' as date)
-        and periods.period_start < cast('{{ var("congress_end") }}' as date) as overlaps_congress,
+    exists (
+        select 1 from congresses
+        where periods.period_end > congresses.start_date and periods.period_start < congresses.end_date
+    ) as overlaps_site_congress,
     -- Display label per STYLE.md: Murkowski (R-AK), Lawler (R-NY-17).
     -- At-large House seats and delegates (district 0) show the state only.
     people.last_name || ' (' || periods.party || '-' || periods.state

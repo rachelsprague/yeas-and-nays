@@ -1,0 +1,19 @@
+version: 2
+
+seeds:
+  - name: congresses
+    description: >
+      Every Congress on the site, with its start and end dates (Jan. 3). Kept in step with
+      CONGRESSES in src/yan/config.py (tests/test_congresses_seed.py).
+    config:
+      column_types:
+        congress: integer
+        start_date: date
+        end_date: date
+    columns:
+      - name: congress
+        data_tests: [unique, not_null]
+      - name: start_date
+        data_tests: [not_null]
+      - name: end_date
+        data_tests: [not_null]

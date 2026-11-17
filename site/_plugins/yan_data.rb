@@ -262,6 +262,17 @@ module Yan
     "/members/#{id}/"
   end
 
+  # One Congress's bills from a member's sponsored or cosponsored lists (one group per
+  # fetched Congress), or nil when that Congress's list hasn't been fetched. Files exported
+  # before the lists were grouped hold one Congress's bills as a plain list, returned as is,
+  # so a site build between this change and the next export still shows them.
+  def self.congress_bills(lists, congress)
+    return lists unless lists&.first&.key?("bills")
+
+    group = lists.find { |l| l["congress"].to_i == congress.to_i }
+    group && group["bills"]
+  end
+
   def self.member_name(m)
     m["official_full_name"] || [m["first_name"], m["last_name"]].compact.join(" ")
   end
@@ -933,9 +944,10 @@ module Yan
           p.merge("recent" => i < RECENT_VOTES)
         end
         bills = read_optional.call("members/#{m["bioguide_id"]}.json") || {}
-        # Each nil until the member's list is first fetched; the page leaves that section out.
-        sponsored = bills["sponsored"]
-        cosponsored = bills["cosponsored"]
+        # Each nil until the member's list for their last Congress is first fetched; the page
+        # leaves that section out.
+        sponsored = Yan.congress_bills(bills["sponsored"], m["last_congress"])
+        cosponsored = Yan.congress_bills(bills["cosponsored"], m["last_congress"])
         [*sponsored, *cosponsored].each do |b|
           b["congress_gov_url"] = Yan.web_url(b["congress_gov_url"])
           vote = b["latest_vote_id"] && votes_by_id[b["latest_vote_id"]]

@@ -8,7 +8,8 @@ CONGRESS = 119
 # Every Congress on the site, each session -> its calendar year. House Clerk files are
 # organized by calendar year; Senate files by session number. Past Congresses stay on
 # the site; once REFRESH_AFTER_END has passed since one ended, ingest re-fetches its
-# files only when they're missing (a lost cache).
+# files only when they're missing (a lost cache). Keep transform/seeds/congresses.csv
+# (and dbt's `congress` var, for CONGRESS) in step; tests/test_congresses_seed.py checks.
 CONGRESSES = {119: {1: 2025, 2: 2026}}
 SESSIONS = CONGRESSES[CONGRESS]
 # A Congress that just ended is still refreshed like the one in session for this long:

@@ -42,14 +42,22 @@ def test_vote_document_lists_only_members_against_majority():
 
 def test_meta_tracks_latest_roll_per_chamber_and_session():
     votes = [
-        {"chamber": "house", "session": 1, "roll_number": 362, "vote_date": dt.date(2025, 12, 18)},
-        {"chamber": "house", "session": 2, "roll_number": 5, "vote_date": dt.date(2026, 1, 7)},
-        {"chamber": "senate", "session": 1, "roll_number": 659, "vote_date": dt.date(2025, 12, 18)},
+        {"chamber": "house", "congress": 119, "session": 1, "roll_number": 362, "vote_date": dt.date(2025, 12, 18)},
+        {"chamber": "house", "congress": 119, "session": 2, "roll_number": 5, "vote_date": dt.date(2026, 1, 7)},
+        {"chamber": "senate", "congress": 119, "session": 1, "roll_number": 659, "vote_date": dt.date(2025, 12, 18)},
     ]
     meta = meta_document(votes, members=[{}, {}])
-    assert meta["latest_roll_number"] == {"house": {"1": 362, "2": 5}, "senate": {"1": 659}}
+    assert meta["latest_roll_number"] == {"house": {"119": {"1": 362, "2": 5}}, "senate": {"119": {"1": 659}}}
     assert meta["latest_vote_date"] == dt.date(2026, 1, 7)
     assert meta["member_count"] == 2
+
+
+def test_meta_keeps_each_congress_roll_numbers_apart():
+    votes = [
+        {"chamber": "house", "congress": 119, "session": 1, "roll_number": 362, "vote_date": dt.date(2025, 12, 18)},
+        {"chamber": "house", "congress": 120, "session": 1, "roll_number": 4, "vote_date": dt.date(2027, 1, 7)},
+    ]
+    assert meta_document(votes, members=[])["latest_roll_number"] == {"house": {"119": {"1": 362}, "120": {"1": 4}}}
 
 
 def test_votes_carry_measure_number_in_citation_form():
@@ -82,8 +90,13 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
     import duckdb
 
     con = duckdb.connect(str(path))
-    con.execute("create table members as select * from (values ('A000001'), ('B000002')) t(bioguide_id)")
-    con.execute("create table member_stats as select 'A000001' as bioguide_id, 1 as votes_cast")
+    con.execute("""create table members as select * from (values ('A000001', 120), ('B000002', 119))
+                   t(bioguide_id, last_congress)""")
+    con.execute("""create table member_congresses as select * from (values
+                   ('A000001', 119, true, date '2025-01-03', date '2027-01-03', 10),
+                   ('A000001', 120, true, date '2027-01-03', date '2029-01-03', 1),
+                   ('B000002', 119, true, date '2025-01-03', date '2025-06-01', null))
+                   t(bioguide_id, congress, served_in_congress, served_from, served_to, votes_cast)""")
     con.execute("""create table votes as select 'h119-1-0001' as vote_id, 'house' as chamber, 1 as session,
                    1 as roll_number, date '2025-01-03' as vote_date, timestamp '2025-01-03 12:00' as vote_time_et,
                    'H R 1' as measure_number, 'On Passage' as question, 'Passed' as result,
@@ -95,17 +108,19 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
                    'A (R-TX-1)' as member_label, 'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
                    'yes' as position, 'yes' as caucus_majority_position, false as voted_against_party_majority""")
     for table, rows in (("sponsored_bills", sponsored_rows), ("cosponsored_bills", cosponsored_rows)):
-        con.execute(f"""create table {table} (bioguide_id varchar, bill_id varchar, bill_type varchar,
+        con.execute(f"""create table {table} (bioguide_id varchar, congress varchar, bill_id varchar, bill_type varchar,
                        bill_number varchar, title varchar, introduced_date date, latest_action_date date,
                        latest_action_text varchar, policy_area varchar, congress_gov_url varchar,
                        latest_vote_id varchar)""")
         for row in rows:
-            con.execute(f"insert into {table} (bioguide_id, bill_type, bill_number, introduced_date) "
-                        "values (?, ?, ?, ?)", row)
+            con.execute(f"insert into {table} (bioguide_id, congress, bill_type, bill_number, introduced_date) "
+                        "values (?, ?, ?, ?, ?)", row if len(row) == 5 else (row[0], "120", *row[1:]))
     for table, ids in (("sponsored_lists", sponsored_lists), ("cosponsored_lists", cosponsored_lists)):
         con.execute(f"create table {table} (bioguide_id varchar, congress integer, bill_count integer)")
         for bioguide_id in ids:
-            con.execute(f"insert into {table} values (?, 119, 0)", [bioguide_id])
+            # A bare ID is a list fetched for the 120th; (ID, congress) names the Congress.
+            bioguide_id, congress = (bioguide_id, 120) if isinstance(bioguide_id, str) else bioguide_id
+            con.execute(f"insert into {table} values (?, ?, 0)", [bioguide_id, congress])
     con.execute("""create table vote_summaries (vote_id varchar, version_code varchar, action_date date,
                    action_desc varchar, summary_html varchar)""")
     con.execute("""create table floor_schedule (chamber varchar, item_id varchar, week_date date, filed_date date,
@@ -135,12 +150,46 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
     run(warehouse, out)
 
     a = json.loads((out / "members" / "A000001.json").read_text())
-    assert [b["measure_label"] for b in a["sponsored"]] == ["H.Res. 2", "H.R. 10", "H.R. 9"]
+    assert [g["congress"] for g in a["sponsored"]] == [120]
+    assert [b["measure_label"] for b in a["sponsored"][0]["bills"]] == ["H.Res. 2", "H.R. 10", "H.R. 9"]
     assert json.loads((out / "members" / "B000002.json").read_text()) == {
         "bioguide_id": "B000002", "sponsored": None, "cosponsored": None,
     }
     assert sorted(p.name for p in (out / "members").iterdir()) == ["A000001.json", "B000002.json"]
     assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True
+
+
+def test_run_groups_a_member_bills_by_congress_newest_first(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [
+        ("A000001", "119", "hr", "9", dt.date(2025, 3, 1)),
+        ("A000001", "120", "hr", "9", dt.date(2027, 3, 1)),
+    ], sponsored_lists=[("A000001", 119), ("A000001", 120)])
+    out = tmp_path / "out"
+    run(warehouse, out)
+
+    a = json.loads((out / "members" / "A000001.json").read_text())
+    assert [(g["congress"], [b["introduced_date"] for b in g["bills"]]) for g in a["sponsored"]] == [
+        (120, ["2027-03-01"]), (119, ["2025-03-01"])]
+
+
+def test_run_gives_each_member_stats_for_their_last_congress_and_every_congress(tmp_path):
+    from yan.export.json_export import run
+
+    warehouse = tmp_path / "warehouse.duckdb"
+    _warehouse(warehouse, [])
+    out = tmp_path / "out"
+    run(warehouse, out)
+
+    members = {m["bioguide_id"]: m for m in json.loads((out / "members.json").read_text())["members"]}
+    a = members["A000001"]
+    assert a["votes_cast"] == 1  # the 120th's, not the 119th's
+    assert [(c["congress"], c["served_from"], c["votes_cast"]) for c in a["congresses"]] == [
+        (120, "2027-01-03", 1), (119, "2025-01-03", 10)]
+    assert members["B000002"]["votes_cast"] is None
+    assert [c["congress"] for c in members["B000002"]["congresses"]] == [119]
 
 
 def test_run_writes_each_vote_with_its_measures_path(tmp_path):
@@ -188,7 +237,7 @@ def test_run_writes_cosponsored_bills_and_null_until_a_list_is_fetched(tmp_path)
     run(warehouse, out)
 
     a = json.loads((out / "members" / "A000001.json").read_text())
-    assert [b["measure_label"] for b in a["cosponsored"]] == ["S.Res. 3", "S. 7"]
+    assert [b["measure_label"] for b in a["cosponsored"][0]["bills"]] == ["S.Res. 3", "S. 7"]
     # B000002's list hasn't been fetched yet: null, not an empty list.
     assert json.loads((out / "members" / "B000002.json").read_text())["cosponsored"] is None
 
@@ -199,7 +248,8 @@ def test_run_writes_an_empty_cosponsored_list_once_fetched(tmp_path):
     warehouse = tmp_path / "warehouse.duckdb"
     _warehouse(warehouse, [], cosponsored_lists=["B000002"])
     run(warehouse, tmp_path / "out")
-    assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["cosponsored"] == []
+    assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["cosponsored"] == [
+        {"congress": 120, "bills": []}]
 
 
 def test_run_writes_an_empty_sponsored_list_once_fetched(tmp_path):
@@ -209,7 +259,8 @@ def test_run_writes_an_empty_sponsored_list_once_fetched(tmp_path):
     _warehouse(warehouse, [], sponsored_lists=["B000002"])
     run(warehouse, tmp_path / "out")
     # B000002's list was fetched and is empty; A000001's wasn't (a failed fetch): null.
-    assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["sponsored"] == []
+    assert json.loads((tmp_path / "out" / "members" / "B000002.json").read_text())["sponsored"] == [
+        {"congress": 120, "bills": []}]
     assert json.loads((tmp_path / "out" / "members" / "A000001.json").read_text())["sponsored"] is None
     # A fetched list counts even with no bills on it, so the section shows "none".
     assert json.loads((tmp_path / "out" / "meta.json").read_text())["has_sponsored_bills"] is True

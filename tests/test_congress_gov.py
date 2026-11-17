@@ -9,6 +9,10 @@ from yan.ingest.congress_gov import needs_fetch
 TODAY = dt.date(2026, 11, 12)
 
 
+# A fetched member list with nothing on it, of either kind.
+EMPTY_LISTS = {"bioguideId": "A1", "sponsoredLegislation": [], "cosponsoredLegislation": []}
+
+
 def test_fetches_missing_files(tmp_path):
     assert needs_fetch(tmp_path / "hr1.json", last_vote=dt.date(2025, 3, 1), today=TODAY)
 
@@ -41,7 +45,7 @@ def test_missing_actions_files_are_backfilled_a_few_per_run(monkeypatch, tmp_pat
     monkeypatch.setenv("CONGRESS_API_KEY", "k")
     monkeypatch.setattr(congress_gov, "RAW_DIR", tmp_path)
     monkeypatch.setattr(congress_gov, "ACTIONS_BACKFILL_PER_RUN", 2)
-    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: [])
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda congress=119: [])
     old, recent = dt.date(2025, 3, 1), TODAY - dt.timedelta(days=1)
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {
         (119, "hr", "1"): old, (119, "hr", "2"): old, (119, "hr", "3"): old, (119, "hr", "4"): recent,
@@ -238,10 +242,10 @@ def test_ingest_fetches_stalest_cosponsored_lists_within_the_budget(monkeypatch,
 
     monkeypatch.setenv("CONGRESS_API_KEY", "k")
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
-    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1", "B2", "C3", "D4"])
-    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
-    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: ({}, 1))
-    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / "cosponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda congress=119: ["A1", "B2", "C3", "D4"])
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m, congress=119: tmp_path / "sponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: (EMPTY_LISTS, 1))
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m, congress=119: tmp_path / "cosponsored" / f"{m}.json")
     monkeypatch.setattr(congress_gov, "COSPONSORED_REQUEST_BUDGET", 3)
 
     # B2 is fresh (skipped); D4's list is older than C3's, and A1 has never been fetched.
@@ -270,7 +274,7 @@ def _cosponsored_setup(monkeypatch, tmp_path, fetch):
 
     clock = {"now": 1000.0}
     monkeypatch.setattr(congress_gov.time, "monotonic", lambda: clock["now"])
-    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m, congress=119: tmp_path / f"{m}.json")
     monkeypatch.setattr(congress_gov, "fetch_cosponsored", fetch)
     return congress_gov, clock
 
@@ -308,7 +312,7 @@ def test_a_list_bigger_than_the_request_budget_is_still_fetched(monkeypatch, tmp
 def test_cosponsored_lists_are_skipped_after_a_long_sponsored_refresh(monkeypatch, tmp_path):
     fetched = []
     congress_gov, clock = _cosponsored_setup(
-        monkeypatch, tmp_path, lambda c, k, m: fetched.append(m) or ({}, 1))
+        monkeypatch, tmp_path, lambda c, k, m: fetched.append(m) or (EMPTY_LISTS, 1))
     started = clock["now"] - 31 * 60  # the step has already run 31 minutes
     congress_gov.ingest_cosponsored(None, "k", ["A1"], TODAY, started=started)
     assert fetched == []
@@ -403,7 +407,7 @@ def test_a_rate_limited_page_from_the_api_stops_the_lists(monkeypatch, tmp_path)
             self.calls += 1
             return httpx.Response(429, request=httpx.Request("GET", url))
 
-    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m, congress=119: tmp_path / f"{m}.json")
     client = _RateLimited()
     congress_gov.ingest_cosponsored(client, "k", ["A1", "B2"], TODAY, started=congress_gov.time.monotonic())
     assert client.calls == 1
@@ -475,12 +479,12 @@ def test_ingest_skips_cosponsored_lists_by_the_process_start(monkeypatch, tmp_pa
 
     fetched = []
     congress_gov, clock = _cosponsored_setup(
-        monkeypatch, tmp_path, lambda c, k, m: fetched.append(m) or ({}, 1))
+        monkeypatch, tmp_path, lambda c, k, m: fetched.append(m) or (EMPTY_LISTS, 1))
     monkeypatch.setenv("CONGRESS_API_KEY", "k")
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
-    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1"])
-    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
-    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: ({}, 1))
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda congress=119: ["A1"])
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m, congress=119: tmp_path / "sponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "fetch_sponsored", lambda *a: (EMPTY_LISTS, 1))
     monkeypatch.setattr(yan, "STARTED", clock["now"] - 31 * 60)  # earlier ingest steps took 31 minutes
     congress_gov.ingest(client=None)
     assert fetched == []
@@ -500,9 +504,9 @@ def test_ingest_fetches_sponsored_lists_then_cosponsored(monkeypatch, tmp_path):
 
     monkeypatch.setenv("CONGRESS_API_KEY", "k")
     monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
-    monkeypatch.setattr(congress_gov, "members_in_congress", lambda: ["A1", "B2"])
-    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / "sponsored" / f"{m}.json")
-    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / "cosponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda congress=119: ["A1", "B2"])
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m, congress=119: tmp_path / "sponsored" / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m, congress=119: tmp_path / "cosponsored" / f"{m}.json")
     monkeypatch.setattr(congress_gov, "fetch_sponsored", fetch("sponsored"))
     monkeypatch.setattr(congress_gov, "fetch_cosponsored", fetch("cosponsored"))
     monkeypatch.setattr(yan, "STARTED", congress_gov.time.monotonic())
@@ -510,7 +514,7 @@ def test_ingest_fetches_sponsored_lists_then_cosponsored(monkeypatch, tmp_path):
     assert calls == [("sponsored", "A1"), ("sponsored", "B2"), ("cosponsored", "A1"), ("cosponsored", "B2")]
     for kind in ["sponsored", "cosponsored"]:
         assert json.loads((tmp_path / kind / "B2.json").read_text()) == {
-            "bioguideId": "B2", f"{kind}Legislation": []}
+            "bioguideId": "B2", "congress": 119, f"{kind}Legislation": []}
 
 
 class _ShapeClient:
@@ -703,7 +707,7 @@ def test_a_rate_limit_on_a_later_page_saves_nothing_and_stops_the_lists(monkeypa
     from yan.ingest import congress_gov
 
     monkeypatch.setattr(congress_gov, "PAGE_SIZE", 1)
-    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m: tmp_path / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "cosponsored_path", lambda m, congress=119: tmp_path / f"{m}.json")
     client = _FailingLaterPage(429)
     congress_gov.ingest_cosponsored(client, "k", ["A1", "B2"], TODAY, started=congress_gov.time.monotonic())
     assert client.calls == 2  # B2 never started
@@ -720,7 +724,7 @@ def _sponsored_setup(monkeypatch, tmp_path, errors, fetched):
             raise errors[bioguide_id]
         return {"bioguideId": bioguide_id, "sponsoredLegislation": []}, 1
 
-    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m: tmp_path / f"{m}.json")
+    monkeypatch.setattr(congress_gov, "sponsored_path", lambda m, congress=119: tmp_path / f"{m}.json")
     monkeypatch.setattr(congress_gov, "fetch_sponsored", fetch)
     return congress_gov
 
@@ -964,3 +968,110 @@ def test_parse_cosponsored_dir_records_every_fetched_list_even_when_empty(tmp_pa
         {"source_file": "119/cosponsored/A1.json", "bioguide_id": "A1", "congress": "119", "bill_count": "1"},
         {"source_file": "119/cosponsored/B2.json", "bioguide_id": "B2", "congress": "119", "bill_count": "0"},
     ]
+
+
+def test_parse_member_lists_dir_keeps_each_congress_list_of_a_member(tmp_path):
+    from yan.stage.congress_gov import parse_sponsored_dir
+
+    for congress in (119, 120):
+        folder = tmp_path / str(congress) / "sponsored"
+        folder.mkdir(parents=True)
+        (folder / "A1.json").write_text(json.dumps({"bioguideId": "A1", "congress": congress, "sponsoredLegislation": [
+            {"congress": congress, "type": "HR", "number": 1, "title": "A title"},
+        ]}))
+
+    rows, lists = parse_sponsored_dir(tmp_path)
+    assert [(r["congress"], r["bill_number"]) for r in rows] == [("119", "1"), ("120", "1")]
+    assert [(l["bioguide_id"], l["congress"]) for l in lists] == [("A1", "119"), ("A1", "120")]
+
+
+def _two_congresses(monkeypatch):
+    """The 120th in session, with the 119th on the site too."""
+    from yan.ingest import congress_gov
+
+    monkeypatch.setattr(congress_gov, "CONGRESS", 120)
+    monkeypatch.setattr(congress_gov, "CONGRESSES", {119: {1: 2025, 2: 2026}, 120: {1: 2027, 2: 2028}})
+    return congress_gov
+
+
+def test_fetch_keeps_every_site_congress_bills(monkeypatch):
+    congress_gov = _two_congresses(monkeypatch)
+    items = [
+        {"congress": 120, "type": "S", "number": "5"},
+        {"congress": 119, "type": "S", "number": "5"},  # same bill number, another Congress: not a repeat
+        {"congress": 118, "type": "S", "number": "9"},  # not on the site
+    ]
+    doc, _ = congress_gov.fetch_sponsored(_StubClient(items, page_size=250), "k", "M001184")
+    assert [(i["congress"], i["number"]) for i in doc["sponsoredLegislation"]] == [(120, "5"), (119, "5")]
+
+
+def test_split_lists_gives_each_congress_its_own_list():
+    from yan.ingest.congress_gov import split_lists
+
+    doc = {"bioguideId": "A1", "cosponsoredLegislation": [
+        {"congress": 120, "type": "S", "number": "5"}, {"congress": 119, "type": "S", "number": "4"}]}
+    assert split_lists(doc, "cosponsored", [119, 120]) == {
+        119: {"bioguideId": "A1", "congress": 119, "cosponsoredLegislation": [{"congress": 119, "type": "S", "number": "4"}]},
+        120: {"bioguideId": "A1", "congress": 120, "cosponsoredLegislation": [{"congress": 120, "type": "S", "number": "5"}]},
+    }
+    # A Congress with nothing on the list still gets one, so it reads as fetched.
+    assert split_lists(doc, "cosponsored", [118])[118]["cosponsoredLegislation"] == []
+
+
+def test_members_by_congress_lists_each_congress_a_member_served_in(monkeypatch):
+    congress_gov = _two_congresses(monkeypatch)
+    served = {119: ["A1", "B2"], 120: ["B2", "C3"]}
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda congress: served[congress])
+    assert congress_gov.members_by_congress() == {"A1": [119], "B2": [119, 120], "C3": [120]}
+
+
+def test_a_past_congress_list_is_fetched_only_when_missing(monkeypatch, tmp_path):
+    congress_gov = _two_congresses(monkeypatch)
+    path = tmp_path / "A1.json"
+    path.write_text("{}")
+    os.utime(path, (0, 0))  # years old
+    # Within REFRESH_AFTER_END of the 119th's end: refreshed like the Congress in session.
+    assert congress_gov.list_needs_fetch(path, 119, dt.date(2027, 2, 1))
+    # Long after: only when missing.
+    assert not congress_gov.list_needs_fetch(path, 119, dt.date(2027, 6, 1))
+    assert congress_gov.list_needs_fetch(tmp_path / "B2.json", 119, dt.date(2027, 6, 1))
+    assert congress_gov.list_needs_fetch(path, 120, dt.date(2027, 6, 1))
+
+
+def test_ingest_saves_a_member_list_for_each_congress_they_served_in(monkeypatch, tmp_path):
+    import yan
+
+    congress_gov = _two_congresses(monkeypatch)
+    today = dt.date(2027, 6, 1)  # the 119th ended long enough ago to be fetched only when missing
+    served = {119: ["A1", "B2"], 120: ["B2"]}
+    fetched = []
+
+    def fetch(kind):
+        def stub(client, key, bioguide_id):
+            fetched.append((kind, bioguide_id))
+            return {"bioguideId": bioguide_id, f"{kind}Legislation": [
+                {"congress": 120, "type": "HR", "number": "2"}, {"congress": 119, "type": "HR", "number": "1"}]}, 1
+        return stub
+
+    def path(kind):
+        return lambda m, congress=120: tmp_path / str(congress) / kind / f"{m}.json"
+
+    for kind in ("sponsored", "cosponsored"):
+        # A1 (119th only) already has its lists; B2 has none yet.
+        path(kind)("A1", 119).parent.mkdir(parents=True)
+        path(kind)("A1", 119).write_text("{}")
+        monkeypatch.setattr(congress_gov, f"{kind}_path", path(kind))
+        monkeypatch.setattr(congress_gov, f"fetch_{kind}", fetch(kind))
+    monkeypatch.setenv("CONGRESS_API_KEY", "k")
+    monkeypatch.setattr(congress_gov, "voted_bills", lambda: {})
+    monkeypatch.setattr(congress_gov, "members_in_congress", lambda congress: served[congress])
+    monkeypatch.setattr(yan, "STARTED", congress_gov.time.monotonic())
+
+    congress_gov.ingest(client=None, today=today)
+    assert fetched == [("sponsored", "B2"), ("cosponsored", "B2")]
+    for kind in ("sponsored", "cosponsored"):
+        for congress, number in ((119, "1"), (120, "2")):
+            doc = json.loads(path(kind)("B2", congress).read_text())
+            assert doc["congress"] == congress
+            assert [i["number"] for i in doc[f"{kind}Legislation"]] == [number]
+        assert path(kind)("A1", 119).read_text() == "{}"

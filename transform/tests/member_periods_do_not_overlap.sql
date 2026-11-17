@@ -7,4 +7,4 @@ inner join {{ ref('int_member_periods') }} as b
     and a.chamber = b.chamber
     and a.period_start < b.period_start
     and b.period_start < a.period_end
-where a.overlaps_congress and b.overlaps_congress
+where a.overlaps_site_congress and b.overlaps_site_congress

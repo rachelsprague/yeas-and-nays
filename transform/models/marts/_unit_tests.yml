@@ -68,7 +68,7 @@ unit_tests:
     description: >
       An independent caucusing with Democrats is grouped with D. A member who
       changed party mid-term gets one period per affiliation. A term that ended
-      when the 119th began is kept but doesn't overlap it.
+      when the 119th began is kept but doesn't overlap a Congress on the site.
     model: int_member_periods
     given:
       - input: ref('stg_legislators__terms')
@@ -90,13 +90,16 @@ unit_tests:
           - {bioguide_id: S1, last_name: Senator}
           - {bioguide_id: H1, last_name: Member}
           - {bioguide_id: H2, last_name: Atlarge}
+      - input: ref('congresses')
+        rows:
+          - {congress: 119, start_date: "2025-01-03", end_date: "2027-01-03"}
     expect:
       rows:
-        - {bioguide_id: S1, period_start: "2025-01-03", party: I, caucus_party: D, overlaps_congress: true, member_label: "Senator (I-VT)"}
-        - {bioguide_id: S1, period_start: "2019-01-03", party: I, caucus_party: D, overlaps_congress: false, member_label: "Senator (I-VT)"}
-        - {bioguide_id: H1, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_congress: true, member_label: "Member (R-CA-3)"}
-        - {bioguide_id: H1, period_start: "2026-03-09", party: I, caucus_party: R, overlaps_congress: true, member_label: "Member (I-CA-3)"}
-        - {bioguide_id: H2, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_congress: true, member_label: "Atlarge (R-WY)"}
+        - {bioguide_id: S1, period_start: "2025-01-03", party: I, caucus_party: D, overlaps_site_congress: true, member_label: "Senator (I-VT)"}
+        - {bioguide_id: S1, period_start: "2019-01-03", party: I, caucus_party: D, overlaps_site_congress: false, member_label: "Senator (I-VT)"}
+        - {bioguide_id: H1, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_site_congress: true, member_label: "Member (R-CA-3)"}
+        - {bioguide_id: H1, period_start: "2026-03-09", party: I, caucus_party: R, overlaps_site_congress: true, member_label: "Member (I-CA-3)"}
+        - {bioguide_id: H2, period_start: "2025-01-03", party: R, caucus_party: R, overlaps_site_congress: true, member_label: "Atlarge (R-WY)"}
 
   - name: member_stats_count_missed_votes_and_party_agreement
     description: >
@@ -106,23 +109,92 @@ unit_tests:
     given:
       - input: ref('positions')
         rows:
-          - {vote_id: v1, bioguide_id: A1, position: "yes", voted_against_party_majority: false}
-          - {vote_id: v2, bioguide_id: A1, position: "no", voted_against_party_majority: true}
-          - {vote_id: v3, bioguide_id: A1, position: "yes", voted_against_party_majority: false}
-          - {vote_id: v4, bioguide_id: A1, position: present, voted_against_party_majority: null}
-          - {vote_id: v5, bioguide_id: A1, position: not_voting, voted_against_party_majority: null}
+          - {vote_id: v1, bioguide_id: A1, congress: 119, position: "yes", voted_against_party_majority: false}
+          - {vote_id: v2, bioguide_id: A1, congress: 119, position: "no", voted_against_party_majority: true}
+          - {vote_id: v3, bioguide_id: A1, congress: 119, position: "yes", voted_against_party_majority: false}
+          - {vote_id: v4, bioguide_id: A1, congress: 119, position: present, voted_against_party_majority: null}
+          - {vote_id: v5, bioguide_id: A1, congress: 119, position: not_voting, voted_against_party_majority: null}
           # Tie in the caucus: no majority, so excluded from agreement
-          - {vote_id: v6, bioguide_id: A1, position: "yes", voted_against_party_majority: null}
+          - {vote_id: v6, bioguide_id: A1, congress: 119, position: "yes", voted_against_party_majority: null}
           # Only ever absent
-          - {vote_id: v1, bioguide_id: A2, position: not_voting, voted_against_party_majority: null}
+          - {vote_id: v1, bioguide_id: A2, congress: 119, position: not_voting, voted_against_party_majority: null}
+          # The next Congress is counted on its own
+          - {vote_id: v7, bioguide_id: A1, congress: 120, position: not_voting, voted_against_party_majority: null}
     expect:
       rows:
-        - {bioguide_id: A1, roll_calls: 6, votes_cast: 5, missed_votes: 1, party_majority_votes: 3,
-           with_party_majority_votes: 2, against_party_majority_votes: 1,
-           missed_votes_pct: 16.7, with_party_majority_pct: 66.7}
-        - {bioguide_id: A2, roll_calls: 1, votes_cast: 0, missed_votes: 1, party_majority_votes: 0,
+        - {bioguide_id: A1, congress: 120, roll_calls: 1, votes_cast: 0, missed_votes: 1, party_majority_votes: 0,
            with_party_majority_votes: 0, against_party_majority_votes: 0,
            missed_votes_pct: 100.0, with_party_majority_pct: null}
+        - {bioguide_id: A1, congress: 119, roll_calls: 6, votes_cast: 5, missed_votes: 1, party_majority_votes: 3,
+           with_party_majority_votes: 2, against_party_majority_votes: 1,
+           missed_votes_pct: 16.7, with_party_majority_pct: 66.7}
+        - {bioguide_id: A2, congress: 119, roll_calls: 1, votes_cast: 0, missed_votes: 1, party_majority_votes: 0,
+           with_party_majority_votes: 0, against_party_majority_votes: 0,
+           missed_votes_pct: 100.0, with_party_majority_pct: null}
+
+  - name: member_congresses_clip_service_to_each_congress
+    description: >
+      A term spanning two Congresses gives a row for each, clipped to its dates.
+      Periods in both chambers in one Congress give one row from the first start
+      to the last end. A member recorded on a roll call without a term in that
+      Congress has stats but no dates; a term outside every Congress on the site
+      gives no row.
+    model: member_congresses
+    given:
+      - input: ref('int_member_periods')
+        rows:
+          # Senator, term spanning the 119th and 120th
+          - {bioguide_id: S1, chamber: senate, period_start: "2025-01-03", period_end: "2031-01-03"}
+          # Representative who moved to the Senate mid-119th
+          - {bioguide_id: M1, chamber: house, period_start: "2025-01-03", period_end: "2025-12-01"}
+          - {bioguide_id: M1, chamber: senate, period_start: "2025-12-02", period_end: "2027-01-03"}
+          # Left before the 119th: no row
+          - {bioguide_id: P1, chamber: house, period_start: "2021-01-03", period_end: "2023-01-03"}
+      - input: ref('congresses')
+        rows:
+          - {congress: 119, start_date: "2025-01-03", end_date: "2027-01-03"}
+          - {congress: 120, start_date: "2027-01-03", end_date: "2029-01-03"}
+      - input: ref('member_stats')
+        rows:
+          - {bioguide_id: S1, congress: 119, roll_calls: 10, missed_votes_pct: 0.0}
+          # On a 120th roll call with no 120th term
+          - {bioguide_id: M1, congress: 120, roll_calls: 1, missed_votes_pct: 100.0}
+    expect:
+      rows:
+        - {bioguide_id: S1, congress: 119, served_in_congress: true, served_from: "2025-01-03", served_to: "2027-01-03", roll_calls: 10}
+        - {bioguide_id: S1, congress: 120, served_in_congress: true, served_from: "2027-01-03", served_to: "2029-01-03", roll_calls: null}
+        - {bioguide_id: M1, congress: 119, served_in_congress: true, served_from: "2025-01-03", served_to: "2027-01-03", roll_calls: null}
+        - {bioguide_id: M1, congress: 120, served_in_congress: false, served_from: null, served_to: null, roll_calls: 1}
+
+  - name: members_take_dates_from_the_last_congress
+    description: >
+      last_congress is the member's latest Congress on the site, and served_from
+      and served_to are their dates in it.
+    model: members
+    given:
+      - input: ref('int_member_periods')
+        rows:
+          - {bioguide_id: S1, chamber: senate, state: VT, party: D, caucus_party: D, member_label: "One (D-VT)", period_start: "2025-01-03", period_end: "2031-01-03", overlaps_site_congress: true}
+          - {bioguide_id: F1, chamber: house, state: TX, district: 9, party: D, caucus_party: D, member_label: "Former (D-TX-9)", period_start: "2025-01-03", period_end: "2027-01-03", overlaps_site_congress: true}
+      - input: ref('int_positions_resolved')
+        rows: []
+      - input: ref('stg_legislators__people')
+        rows:
+          - {bioguide_id: S1, last_name: One, is_current: true}
+          - {bioguide_id: F1, last_name: Former, is_current: false}
+      - input: ref('member_congresses')
+        rows:
+          - {bioguide_id: S1, congress: 119, served_in_congress: true, served_from: "2025-01-03", served_to: "2027-01-03"}
+          - {bioguide_id: S1, congress: 120, served_in_congress: true, served_from: "2027-01-03", served_to: "2029-01-03"}
+          - {bioguide_id: F1, congress: 119, served_in_congress: true, served_from: "2025-01-03", served_to: "2027-01-03"}
+      - input: ref('stg_legislators__terms')
+        rows: []
+      - input: ref('stg_legislators__social_media')
+        rows: []
+    expect:
+      rows:
+        - {bioguide_id: S1, last_congress: 120, served_from: "2027-01-03", served_to: "2029-01-03"}
+        - {bioguide_id: F1, last_congress: 119, served_from: "2025-01-03", served_to: "2027-01-03"}
 
   - name: vote_summaries_use_the_version_in_effect_on_the_vote_date
     model: vote_summaries
@@ -307,9 +379,9 @@ unit_tests:
     given:
       - input: ref('int_member_periods')
         rows:
-          - {bioguide_id: C1, chamber: senate, state: VT, party: D, caucus_party: D, member_label: "One (D-VT)", period_start: "2025-01-03", period_end: "2031-01-03", overlaps_congress: true}
-          - {bioguide_id: C2, chamber: house, state: CA, district: 3, party: R, caucus_party: R, member_label: "Two (R-CA-3)", period_start: "2025-01-03", period_end: "2027-01-03", overlaps_congress: true}
-          - {bioguide_id: F1, chamber: house, state: TX, district: 9, party: D, caucus_party: D, member_label: "Former (D-TX-9)", period_start: "2025-01-03", period_end: "2025-06-01", overlaps_congress: true}
+          - {bioguide_id: C1, chamber: senate, state: VT, party: D, caucus_party: D, member_label: "One (D-VT)", period_start: "2025-01-03", period_end: "2031-01-03", overlaps_site_congress: true}
+          - {bioguide_id: C2, chamber: house, state: CA, district: 3, party: R, caucus_party: R, member_label: "Two (R-CA-3)", period_start: "2025-01-03", period_end: "2027-01-03", overlaps_site_congress: true}
+          - {bioguide_id: F1, chamber: house, state: TX, district: 9, party: D, caucus_party: D, member_label: "Former (D-TX-9)", period_start: "2025-01-03", period_end: "2025-06-01", overlaps_site_congress: true}
       - input: ref('int_positions_resolved')
         rows: []
       - input: ref('stg_legislators__people')
@@ -317,6 +389,11 @@ unit_tests:
           - {bioguide_id: C1, last_name: One, is_current: true}
           - {bioguide_id: C2, last_name: Two, is_current: true}
           - {bioguide_id: F1, last_name: Former, is_current: false}
+      - input: ref('member_congresses')
+        rows:
+          - {bioguide_id: C1, congress: 119}
+          - {bioguide_id: C2, congress: 119}
+          - {bioguide_id: F1, congress: 119}
       - input: ref('stg_legislators__terms')
         rows:
           - {bioguide_id: C1, term_start: "2019-01-03", website_url: "https://old.example.gov", phone: "202-224-0000"}
