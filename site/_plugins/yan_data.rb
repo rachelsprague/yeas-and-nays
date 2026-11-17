@@ -698,19 +698,25 @@ module Yan
     out + open.reverse.map { |o| "</#{o}>" }.join
   end
 
+  # Entities that only make whitespace: &nbsp; and the tab, line break,
+  # carriage return, space and no-break space as numbers.
+  BLANK_ENTITY = /&(?:nbsp|#0*(?:9|10|13|32|160)|#x0*(?:9|a|d|20|a0));/i
+
   # A CRS summary as the vote page shows it, or nil when it has no text
-  # (only tags or whitespace), which reads as no summary. A version date
-  # that isn't an ISO date is left out rather than stopping the build.
+  # (only tags, whitespace or whitespace entities), which reads as no
+  # summary. A version date that isn't an ISO date, or a blank version
+  # label, is left out rather than stopping the build.
   def self.summary_view(s)
     return nil unless s.is_a?(Hash) && (html = summary_html(s["html"]))
-    return nil if html.match?(%r{\A(?:[\s\0]|</?\w+>)*\z})
+    return nil if html.match?(%r{\A(?:[[:space:]\0]|</?\w+>|#{BLANK_ENTITY})*\z})
 
     date = begin
       Date.iso8601(s["version_date"]) if s["version_date"].is_a?(String)
     rescue Date::Error
       nil
     end
-    s.merge("html" => html, "version_date" => date)
+    version = s["version"].gsub(/\A[[:space:]]+|[[:space:]]+\z/, "") if s["version"].is_a?(String)
+    s.merge("html" => html, "version" => (version unless version.to_s.empty?), "version_date" => date)
   end
 
   # Everything the tally, by-party and against-majority blocks need for one vote.

@@ -217,12 +217,13 @@ class EscapingTest < Minitest::Test
   def test_a_summary_without_text_reads_as_no_summary
     base = { "version" => "Introduced", "version_date" => "2025-01-03" }
     votes = [base.merge("html" => 1), "<p>a</p>", base.merge("html" => ""), base.merge("html" => " <p> </p><br>\n"),
-             base.merge("html" => "<p>\0</p>")]
+             base.merge("html" => "<p>\0</p>"), base.merge("html" => "<p>&nbsp;</p>"),
+             base.merge("html" => "<p>&NBSP;&#160;&#xA0;&#32;&#x0a; </p>")]
             .each_with_index.map do |summary, i|
       [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
     end
     built = build_site([MEMBER], votes)
-    (1..5).each do |roll|
+    (1..7).each do |roll|
       page = built.fetch("/votes/119/house/1/#{roll}/index.html")
       assert_includes page, "No Congressional Research Service summary of", roll
       refute_includes page, "By the Congressional Research Service", roll
@@ -239,6 +240,24 @@ class EscapingTest < Minitest::Test
     (1..3).each do |roll|
       assert_includes built.fetch("/votes/119/house/1/#{roll}/index.html"), "Version: Introduced.", roll
     end
+  end
+
+  # Other text, even an entity, is a summary; a missing or blank version label
+  # is left out of the credit line, keeping the date when there is one.
+  def test_a_summary_without_a_version_label
+    summaries = [{ "html" => "<p>&nbsp;a</p>" }, { "html" => "<p>&amp;</p>", "version" => " ", "version_date" => "2025-01-03" },
+                 { "html" => "<p>a</p>", "version" => 1, "version_date" => "Jan. 3" },
+                 { "html" => "<p>a</p>", "version" => " \t" }]
+    votes = summaries.each_with_index.map do |summary, i|
+      [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
+    end
+    built = build_site([MEMBER], votes)
+    pages = (1..4).map { |roll| built.fetch("/votes/119/house/1/#{roll}/index.html") }
+    pages.each { |page| refute_includes page, "Version:" }
+    assert_includes pages[0], "Library of Congress, as published.<"
+    assert_includes pages[1], "as published. Version dated Jan. 3, 2025."
+    assert_includes pages[2], "Library of Congress, as published.<"
+    assert_includes pages[3], "Library of Congress, as published.<"
   end
 
   def test_summary_tags_match_the_pipeline_allowlist
