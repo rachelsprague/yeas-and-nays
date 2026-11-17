@@ -273,6 +273,14 @@ module Yan
     group && group["bills"]
   end
 
+  # The other Congresses' groups ({ "congress", "bills" }), newest first; none for an
+  # ungrouped list.
+  def self.earlier_congress_bills(lists, congress)
+    return [] unless lists&.first&.key?("bills")
+
+    lists.reject { |l| l["congress"].to_i == congress.to_i }.sort_by { |l| -l["congress"].to_i }
+  end
+
   def self.member_name(m)
     m["official_full_name"] || [m["first_name"], m["last_name"]].compact.join(" ")
   end
@@ -843,10 +851,9 @@ module Yan
   end
 
   class MemberPage < Jekyll::PageWithoutAFile
-    def initialize(site, member, recent, sponsored, cosponsored)
+    def initialize(site, member, recent, bills)
       super(site, site.source, member["url"], "index.html")
-      data["sponsored"] = sponsored
-      data["cosponsored"] = cosponsored
+      data.merge!(bills)
       data["layout"] = "member"
       data["title"] = member["name"]
       data["nav"] = "members"
@@ -894,6 +901,11 @@ module Yan
         m["where"] = Yan.where(m)
         m["accounts"] = Yan.accounts(m)
         m["website_label"] = Yan.website_label(m["website_url"])
+        # Exports before per-Congress stats had neither field: their stats are meta's Congress.
+        m["last_congress"] ||= meta["congress"]
+        m["earlier_congresses"] = (m["congresses"] || []).select do |c|
+          c["congress"].to_i != m["last_congress"].to_i && c["roll_calls"]
+        end
       end
       members.sort_by! { |m| [m["last_name"].to_s, m["first_name"].to_s, m["bioguide_id"]] }
       by_id = members.to_h { |m| [m["bioguide_id"], m] }
@@ -944,16 +956,20 @@ module Yan
           p.merge("recent" => i < RECENT_VOTES)
         end
         bills = read_optional.call("members/#{m["bioguide_id"]}.json") || {}
-        # Each nil until the member's list for their last Congress is first fetched; the page
-        # leaves that section out.
-        sponsored = Yan.congress_bills(bills["sponsored"], m["last_congress"])
-        cosponsored = Yan.congress_bills(bills["cosponsored"], m["last_congress"])
-        [*sponsored, *cosponsored].each do |b|
+        # The last Congress's list is nil until first fetched; the page leaves it out, and
+        # shows only earlier Congresses' lists, if any.
+        lists = %w[sponsored cosponsored].each_with_object({}) do |kind, h|
+          h[kind] = Yan.congress_bills(bills[kind], m["last_congress"])
+          h["#{kind}_earlier"] = Yan.earlier_congress_bills(bills[kind], m["last_congress"])
+        end
+        [*lists["sponsored"], *lists["cosponsored"],
+         *(lists["sponsored_earlier"] + lists["cosponsored_earlier"]).flat_map { |g| g["bills"] }].each do |b|
           b["congress_gov_url"] = Yan.web_url(b["congress_gov_url"])
           vote = b["latest_vote_id"] && votes_by_id[b["latest_vote_id"]]
           b["vote_url"] = vote && vote["url"]
         end
-        site.pages << MemberPage.new(site, m, recent, sponsored, cosponsored)
+        m["has_page"] = true
+        site.pages << MemberPage.new(site, m, recent, lists)
       end
 
       # Absent until the pipeline first ingests the floor schedules.

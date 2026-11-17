@@ -4,6 +4,7 @@ title: Members of Congress
 nav: members
 ---
 {%- assign members = site.data.members | where: "is_current", true | where: "is_voting_member", true -%}
+{%- assign former = site.data.members | where: "is_current", false | where: "is_voting_member", true | where: "has_page", true -%}
 <main id="main" class="wrap" data-filter-scope>
   <section class="vote-head">
     <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
@@ -28,8 +29,9 @@ nav: members
       <label for="m-state" class="kicker">State</label>
       <select id="m-state" class="field" name="state" data-filter="state">
         <option value="">All</option>
-        {%- assign states = members | map: "state" | uniq | sort -%}
-        {%- for s in states %}{% assign m0 = members | where: "state", s | first %}<option value="{{ s | escape }}">{{ m0.state_name | escape }}</option>{% endfor %}
+        {%- assign listed = members | concat: former -%}
+        {%- assign states = listed | map: "state" | uniq | sort -%}
+        {%- for s in states %}{% assign m0 = listed | where: "state", s | first %}<option value="{{ s | escape }}">{{ m0.state_name | escape }}</option>{% endfor %}
       </select>
     </div>
     <div>
@@ -38,23 +40,22 @@ nav: members
         <option value="">All</option><option value="D">D · Democrat</option><option value="I">I · Independent</option><option value="R">R · Republican</option>
       </select>
     </div>
+    {%- if former.size > 0 %}
+    <div class="js-only">
+      <label for="m-status" class="kicker">Show</label>
+      <select id="m-status" class="field" name="status" data-filter="status">
+        <option value="current" selected>Current members</option><option value="former">Former members</option>
+      </select>
+    </div>
+    {%- endif %}
   </section>
 
   <section style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
-    <p class="small muted nums" data-count data-noun="members" aria-live="polite">{{ members.size }} members</p>
+    <p class="small muted nums" data-count data-noun="members" data-count-of="status" aria-live="polite">{{ members.size }} members</p>
     <ul class="member-list">
-      {%- for m in members %}
-      <li data-row data-chamber="{{ m.chamber | escape }}" data-state="{{ m.state | escape }}" data-party="{{ m.party | escape }}" data-search="{{ m.name | downcase | escape }} {{ m.state | downcase | escape }} {{ m.state_name | downcase | escape }}">
-        <a class="headline-link" href="{{ m.url }}">
-          {% include portrait.html member=m size="sm" %}
-          <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
-            <span class="kicker muted">{{ m.chamber_name }}</span>
-            <span class="n">{{ m.name | escape }}</span>
-            <span class="d">{{ m.party | escape }} · {{ m.where | escape }}</span>
-          </span>
-        </a>
-      </li>
-      {%- endfor %}
+      {%- for m in members %}{% include member_row.html member=m status="current" %}{% endfor %}
+      {%- comment %}Former members show only from the Show select (filters.js); hidden without JS.{% endcomment %}
+      {%- for m in former %}{% include member_row.html member=m status="former" %}{% endfor %}
     </ul>
     <p class="empty" data-empty hidden>No members match. Try a state name or clear the filters.</p>
   </section>

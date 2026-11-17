@@ -1,0 +1,18 @@
+{%- comment -%}
+  One /members/ list row. include.status: "current", or "former" (hidden until
+  the Show select picks it, with the member's last day in office).
+{%- endcomment -%}
+{%- assign m = include.member -%}
+<li data-row data-status="{{ include.status }}" data-chamber="{{ m.chamber | escape }}" data-state="{{ m.state | escape }}" data-party="{{ m.party | escape }}" data-search="{{ m.name | downcase | escape }} {{ m.state | downcase | escape }} {{ m.state_name | downcase | escape }}"{% if include.status == "former" %} hidden{% endif %}>
+  <a class="headline-link" href="{{ m.url }}">
+    {% include portrait.html member=m size="sm" %}
+    <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+      <span class="kicker muted">{{ m.chamber_name }}</span>
+      <span class="n">{{ m.name | escape }}</span>
+      <span class="d">{{ m.party | escape }} · {{ m.where | escape }}</span>
+      {%- if include.status == "former" and m.served_to %}
+      <span class="d nums">Served until {{ m.served_to | ap_date }}</span>
+      {%- endif %}
+    </span>
+  </a>
+</li>
