@@ -218,12 +218,14 @@ class EscapingTest < Minitest::Test
     base = { "version" => "Introduced", "version_date" => "2025-01-03" }
     votes = [base.merge("html" => 1), "<p>a</p>", base.merge("html" => ""), base.merge("html" => " <p> </p><br>\n"),
              base.merge("html" => "<p>\0</p>"), base.merge("html" => "<p>&nbsp;</p>"),
-             base.merge("html" => "<p>&NBSP;&#160;&#xA0;&#32;&#x0a; </p>")]
+             base.merge("html" => "<p>&NBSP;&#160;&#xA0;&#32;&#x0a; </p>"),
+             base.merge("html" => "<p>&ensp;&EMSP;&thinsp;&#8194;&#08195;&#8201;&#8203;</p>"),
+             base.merge("html" => "<p>&#x2002;&#X2003;&#x2009;&#x200B;&#x0200b;</p>")]
             .each_with_index.map do |summary, i|
       [VOTE.merge("vote_id" => "h119-1-000#{i + 1}", "roll_number" => i + 1), DOC.merge("summary" => summary)]
     end
     built = build_site([MEMBER], votes)
-    (1..7).each do |roll|
+    (1..9).each do |roll|
       page = built.fetch("/votes/119/house/1/#{roll}/index.html")
       assert_includes page, "No Congressional Research Service summary of", roll
       refute_includes page, "By the Congressional Research Service", roll
@@ -245,7 +247,7 @@ class EscapingTest < Minitest::Test
   # Other text, even an entity, is a summary; a missing or blank version label
   # is left out of the credit line, keeping the date when there is one.
   def test_a_summary_without_a_version_label
-    summaries = [{ "html" => "<p>&nbsp;a</p>" }, { "html" => "<p>&amp;</p>", "version" => " ", "version_date" => "2025-01-03" },
+    summaries = [{ "html" => "<p>&nbsp;&#8203;a&ensp;</p>" }, { "html" => "<p>&amp;</p>", "version" => " ", "version_date" => "2025-01-03" },
                  { "html" => "<p>a</p>", "version" => 1, "version_date" => "Jan. 3" },
                  { "html" => "<p>a</p>", "version" => " \t" }]
     votes = summaries.each_with_index.map do |summary, i|
