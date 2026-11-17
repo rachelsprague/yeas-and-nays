@@ -171,6 +171,16 @@ main.home { gap: 20px; padding-top: 20px; }
 .live-band:not(:has(.live-line.is-live:not([hidden]))) { display: none; }
 .live-line { display: none; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; }
 .live-line.is-live:not([hidden]) { display: flex; }
+/* "In session" (convened, per the data) gets a pulsing accent dot; "Convening"
+   (past its scheduled time) a still one. The pulse stops for reduced motion. */
+.live-flag { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
+.live-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.live-dot.pulse::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--accent);
+  animation: live-pulse 2s ease-out infinite;
+}
+@keyframes live-pulse { from { transform: scale(1); opacity: 0.6; } to { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .live-dot.pulse::after { animation: none; opacity: 0; } }
 
 .back { font-size: 14px; line-height: 20px; padding: 12px 0; align-self: flex-start; margin-bottom: -24px; }
 .section { display: flex; flex-direction: column; gap: 12px; border-top: 1.5px solid var(--ink); padding-top: 12px; }

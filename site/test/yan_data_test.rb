@@ -1649,6 +1649,7 @@ class LiveFloorTest < Minitest::Test
                            "house" => status(convened: "2026-11-17T12:00:04-05:00"))
     assert_equal %w[senate house], lines.map { |l| l["chamber"] }
     assert_equal ["Scheduled to convene at 3 p.m. ET", "Convened at noon ET"], lines.map { |l| l["label"] }
+    assert_equal [false, true], lines.map { |l| l["in_session"] }
     assert_equal ["2026-11-16T15:00:00-05:00", "2026-11-17T12:00:04-05:00"], lines.map { |l| l["from"] }
     assert_equal ["https://www.senate.gov/floor/", "https://live.house.gov/"], lines.map { |l| l["watch_url"] }
   end
@@ -1680,6 +1681,11 @@ class LiveFloorTest < Minitest::Test
     assert_includes band, '<p class="live-line small" data-row data-chamber="senate" data-live-from="2026-11-16T15:00:00-05:00">'
     assert_includes band, '<p class="live-line small" data-row data-chamber="house" data-live-from="2026-11-17T12:00:04-05:00">'
     assert_includes band, "Scheduled to convene at 3 p.m. ET"
+    senate, house = band.split('data-chamber="house"')
+    assert_includes senate, '<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Convening</span>'
+    refute_includes senate, "In session"
+    assert_includes house, '<span class="live-flag kicker"><span class="live-dot pulse" aria-hidden="true"></span>In session</span>'
+    refute_includes house, "Convening"
     assert_includes band, '<a class="link" href="https://clerk.house.gov/FloorSummary">Floor summary</a>'
     refute_includes band, "is-live"
     assert_includes html, '<script src="/assets/js/live-floor.js" defer></script>'
