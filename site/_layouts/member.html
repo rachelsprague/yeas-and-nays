@@ -9,7 +9,7 @@ layout: default
     <div>
       <span class="kicker muted">{{ m.chamber_name }}</span>
       <h1 class="name-h">{{ m.name | escape }}</h1>
-      <p class="meta">{{ m.party }} · {{ m.party_name }} · {{ m.where }}</p>
+      <p class="meta">{{ m.party | escape }} · {{ m.party_name | escape }} · {{ m.where | escape }}</p>
       {%- if m.served_from %}
       <p class="term nums">{% if m.is_current %}In office this Congress since {{ m.served_from | ap_date }}{% else %}Served this Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
       {%- endif %}
@@ -65,7 +65,7 @@ layout: default
       <div>
         <span class="fig">{% if m.with_party_majority_pct %}{{ m.with_party_majority_pct }}%{% else %}—{% endif %}</span>
         <span class="what">Voted with party majority</span>
-        <span class="of">of {{ m.party_majority_votes }} Yea or Nay votes where {% if m.party == "I" %}the {{ m.caucus_party }} caucus{% else %}the party{% endif %} had a majority</span>
+        <span class="of">of {{ m.party_majority_votes }} Yea or Nay votes where {% if m.party == "I" %}the {{ m.caucus_party | escape }} caucus{% else %}the party{% endif %} had a majority</span>
       </div>
     </div>
   </section>
@@ -140,8 +140,8 @@ layout: default
             <span class="t">{% include vote_title.html vote=v %}</span>
           </span>
           <span class="how">
-            <span>Voted <strong>{{ p.position }}</strong></span>
-            {%- if p.majority %}<span class="muted">{{ p.caucus }} majority voted {{ p.majority }}</span>{% endif %}
+            <span>Voted <strong>{{ p.position | escape }}</strong></span>
+            {%- if p.majority %}<span class="muted">{{ p.caucus | escape }} majority voted {{ p.majority | escape }}</span>{% endif %}
             {%- if p.against %}<span class="kicker tag">Against majority</span>{% endif %}
           </span>
         </a>

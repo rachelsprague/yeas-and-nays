@@ -29,7 +29,7 @@ nav: members
       <select id="m-state" class="field" name="state" data-filter="state">
         <option value="">All</option>
         {%- assign states = members | map: "state" | uniq | sort -%}
-        {%- for s in states %}{% assign m0 = members | where: "state", s | first %}<option value="{{ s }}">{{ m0.state_name }}</option>{% endfor %}
+        {%- for s in states %}{% assign m0 = members | where: "state", s | first %}<option value="{{ s | escape }}">{{ m0.state_name | escape }}</option>{% endfor %}
       </select>
     </div>
     <div>
@@ -44,13 +44,13 @@ nav: members
     <p class="small muted nums" data-count data-noun="members" aria-live="polite">{{ members.size }} members</p>
     <ul class="member-list">
       {%- for m in members %}
-      <li data-row data-chamber="{{ m.chamber }}" data-state="{{ m.state }}" data-party="{{ m.party }}" data-search="{{ m.name | downcase | escape }} {{ m.state | downcase }} {{ m.state_name | downcase }}">
+      <li data-row data-chamber="{{ m.chamber | escape }}" data-state="{{ m.state | escape }}" data-party="{{ m.party | escape }}" data-search="{{ m.name | downcase | escape }} {{ m.state | downcase | escape }} {{ m.state_name | downcase | escape }}">
         <a class="headline-link" href="{{ m.url }}">
           {% include portrait.html member=m size="sm" %}
           <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
             <span class="kicker muted">{{ m.chamber_name }}</span>
             <span class="n">{{ m.name | escape }}</span>
-            <span class="d">{{ m.party }} · {{ m.where }}</span>
+            <span class="d">{{ m.party | escape }} · {{ m.where | escape }}</span>
           </span>
         </a>
       </li>
