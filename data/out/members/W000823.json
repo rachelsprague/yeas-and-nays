@@ -1,5 +1,9 @@
 {
   "bioguide_id": "W000823",
-  "cosponsored": [],
-  "sponsored": []
+  "cosponsored": [
+    {"bills":[],"congress":119}
+  ],
+  "sponsored": [
+    {"bills":[],"congress":119}
+  ]
 }
