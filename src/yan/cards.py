@@ -38,6 +38,9 @@ PAPER, INK, AUBERGINE, MUTED, RULE = "#F2EFE6", "#1C1C1C", "#5A3463", "#5B5752",
 TITLE_SIZES = (78, 68, 58, 50)
 TITLE_LINES = 3
 TITLE_TOP = 194  # below the measure label
+RESULT_SIZES = (58, 50, 42, 36, 30)
+TALLY_SIZES = (30, 26, 22, 18)
+RESULT_GAP = 28
 ELLIPSIS = "…"
 
 AP_MONTHS = ["Jan.", "Feb.", "March", "April", "May", "June", "July", "Aug.", "Sept.", "Oct.", "Nov.", "Dec."]
@@ -149,6 +152,28 @@ def fit_title(title: str, measure, width: int, height: int) -> tuple[int, list[s
     return size, lines
 
 
+def shorten(text: str, fits) -> str:
+    """`text`, or as many of its words as fit followed by an ellipsis."""
+    if fits(text):
+        return text
+    while " " in text and not fits(text + ELLIPSIS):
+        text = text.rsplit(" ", 1)[0]
+    return text.rstrip(",;:") + ELLIPSIS
+
+
+def line_sizes(result_width, tally_width, width: int) -> tuple[int, int]:
+    """Sizes for the result and the tally beside it: the largest that fit the
+    line, the result at most 60% of it while the tally still fits that way."""
+    pairs = [(r, t) for r in RESULT_SIZES for t in TALLY_SIZES]
+    for capped in (True, False):
+        for r, t in pairs:
+            if capped and result_width(r) > width * 0.6:
+                continue
+            if result_width(r) + RESULT_GAP + tally_width(t) <= width:
+                return r, t
+    return RESULT_SIZES[-1], TALLY_SIZES[-1]
+
+
 def render(card: Card) -> Image.Image:
     img = Image.new("RGB", (WIDTH, HEIGHT), PAPER)
     d = ImageDraw.Draw(img)
@@ -166,14 +191,14 @@ def render(card: Card) -> Image.Image:
     bar_top, bar_height = 550, 14
     baseline = bar_top - 30
     question_baseline = baseline - 70
-    result_font = next((serif(s, 600) for s in (58, 50, 42)
-                        if d.textlength(card.result, font=serif(s, 600)) <= (right - MARGIN) * 0.6), serif(36, 600))
-    d.text((MARGIN, baseline), card.result, font=result_font, fill=AUBERGINE, anchor="ls")
-    tally_x = MARGIN + d.textlength(card.result, font=result_font) + 28
-    tally_font = next((sans(s, 500) for s in (30, 26, 22, 18)
-                       if tally_x + d.textlength(card.tally, font=sans(s, 500)) <= right), sans(18, 500))
-    d.text((tally_x, baseline), card.tally, font=tally_font, fill=INK, anchor="ls")
-    d.text((MARGIN, question_baseline), card.question, font=sans(22, 400), fill=MUTED, anchor="ls")
+    result_size, tally_size = line_sizes(lambda s: d.textlength(card.result, font=serif(s, 600)),
+                                         lambda s: d.textlength(card.tally, font=sans(s, 500)), right - MARGIN)
+    d.text((MARGIN, baseline), card.result, font=serif(result_size, 600), fill=AUBERGINE, anchor="ls")
+    tally_x = MARGIN + d.textlength(card.result, font=serif(result_size, 600)) + RESULT_GAP
+    d.text((tally_x, baseline), card.tally, font=sans(tally_size, 500), fill=INK, anchor="ls")
+    # Some Senate questions list dozens of nominations.
+    question = shorten(card.question, lambda t: d.textlength(t, font=sans(22, 400)) <= right - MARGIN)
+    d.text((MARGIN, question_baseline), question, font=sans(22, 400), fill=MUTED, anchor="ls")
 
     total = sum(card.counts)
     x = MARGIN
@@ -197,19 +222,25 @@ def render(card: Card) -> Image.Image:
 
 
 def run(out_dir: Path = CARDS_DIR) -> int:
-    """Write a card for every vote that gets one; returns how many were written."""
+    """Write a card for every vote that gets one, and remove any other card;
+    returns how many were written. A vote whose card can't be drawn is logged
+    and skipped, so its page keeps the brand card and the deploy goes on."""
     out_dir.mkdir(parents=True, exist_ok=True)
     votes = json.loads((OUT_DIR / "votes.json").read_text())["votes"]
-    written = 0
+    written = set()
     for vote in votes:
-        doc = json.loads((OUT_DIR / "votes" / f"{vote['vote_id']}.json").read_text())
-        dest = out_dir / f"{vote['vote_id']}.png"
-        card = card_text(vote, doc)
-        if card is None:
-            dest.unlink(missing_ok=True)
-            continue
-        # 32 colors keep the text smooth at about a third of the full-color size.
-        render(card).quantize(32, method=Image.Quantize.FASTOCTREE).save(dest)
-        written += 1
-    log.info("wrote %d link cards to %s", written, out_dir)
-    return written
+        try:
+            doc = json.loads((OUT_DIR / "votes" / f"{vote['vote_id']}.json").read_text())
+            card = card_text(vote, doc)
+            if card is None:
+                continue
+            # 32 colors keep the text smooth at about a third of the full-color size.
+            render(card).quantize(32, method=Image.Quantize.FASTOCTREE).save(out_dir / f"{vote['vote_id']}.png")
+            written.add(f"{vote['vote_id']}.png")
+        except (OSError, KeyError, ValueError) as e:
+            log.warning("no link card for %s: %r", vote.get("vote_id"), e)
+    for old in out_dir.glob("*.png"):
+        if old.name not in written:
+            old.unlink()
+    log.info("wrote %d link cards to %s", len(written), out_dir)
+    return len(written)
