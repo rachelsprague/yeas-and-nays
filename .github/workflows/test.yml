@@ -1,6 +1,6 @@
 name: Tests
 
-# Python and site plugin tests (`make test`). dbt tests run in the hourly
+# Python, site plugin and site JS tests (`make test`). dbt tests run in the hourly
 # data job instead, since they test the data. Data commits pushed by that job
 # use GITHUB_TOKEN, so they don't start this workflow.
 on:
@@ -53,3 +53,24 @@ jobs:
       - name: Site plugin tests
         working-directory: site
         run: bundle exec ruby test/yan_data_test.rb
+
+  jstest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # jsdom needs Node 22.22 or later; the runner's own Node may be older.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        working-directory: site
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Site JS tests
+        working-directory: site
+        run: node --test "test/*.test.js"
