@@ -588,6 +588,20 @@ class MemberCongressesTest < Minitest::Test
     refute_includes html, "this Congress"
   end
 
+  # A returning member on a 120th roll call before congress-legislators lists their new term.
+  def test_a_last_congress_with_roll_calls_but_no_term_dates
+    html = page(STATS_119.merge("last_congress" => 120, "served_in_congress" => false,
+                                "served_from" => nil, "served_to" => nil,
+                                "congresses" => [STATS_119.merge("congress" => 120), CONGRESS_119]))
+    s = section(html, "stats-h")
+    assert_includes s, ">120th Congress</h2>"
+    assert_includes s, '<div class="tiles'
+    assert_includes s, "<th scope=\"row\">119th</th>"
+    refute_includes s, "<th scope=\"row\">120th</th>"
+    refute_includes html, "In office in the"
+    refute_includes html, "Former member"
+  end
+
   def test_a_member_with_one_congress_has_tiles_and_no_table
     s = section(page(STATS_119.merge("congresses" => [CONGRESS_119])), "stats-h")
     assert_includes s, ">119th Congress</h2>"

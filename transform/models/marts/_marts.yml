@@ -49,7 +49,9 @@ models:
       - name: served_in_congress
         description: >
           True when congress-legislators has a term overlapping last_congress. False for someone
-          listed on a roll call in it without one (e.g. a member-elect who never took the seat).
+          listed on a roll call in it without one (e.g. a member-elect who never took the seat,
+          or a returning member before congress-legislators adds their new term; chamber, state
+          and party then come from their latest listed term).
         data_tests: [not_null]
       - name: served_from
         description: First day of service in last_congress. Null when served_in_congress is false.
