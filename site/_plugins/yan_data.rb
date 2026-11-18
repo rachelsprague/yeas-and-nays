@@ -389,7 +389,7 @@ module Yan
 
   TERRITORIES = %w[AS DC GU MP PR VI].freeze
 
-  # The By state map and table for one vote. "seats" is what the map draws
+  # The vote page map and by-state table for one vote. "seats" is what the map draws
   # (site/assets/js/vote-map.js): for each House seat ("KY-4", "WY") or Senate
   # state ("KY"), its members' marks in last-name order and a hover title. DC
   # and the territories aren't on the map (their delegates can't vote on the
@@ -923,7 +923,7 @@ module Yan
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
         doc = read.call("votes/#{v["vote_id"]}.json")
         view = Yan.vote_view(v, doc, by_id)
-        # The By state map's shapes (scripts/build_vote_map.py); the table shows either way.
+        # The vote page map's shapes (scripts/build_vote_map.py); the table shows either way.
         # Members' districts are as of meta's Congress, so only its votes get a map.
         map_src = "/assets/maps/#{v["congress"].to_i}.json"
         if view["state_map"] && v["congress"].to_i == meta["congress"].to_i && File.exist?(File.join(site.source, map_src))
