@@ -93,14 +93,15 @@
   font-size: 15px; font-weight: 700; white-space: nowrap;
 }
 
-/* Row layouts once the slot (the full main column) is 740px or wider: an
-   820px viewport, less the 40px page gutters that start at 760px (site.css).
-   Narrower, the KeepScore headline wraps to three lines between logo and CTA
-   (in Georgia, the widest of its serifs).
+/* Row layouts once the slot (the full main column) is 760px or wider: an
+   840px viewport, less the 40px page gutters that start at 760px (site.css),
+   or about 745px where a classic scrollbar takes 15px of it. Narrower, the
+   KeepScore headline wraps to three lines between logo and CTA (in Georgia,
+   the widest of its serifs, below a 740px slot).
    The KeepScore copy and the HiringRadar rows take the spare width, so each
    CTA sits at the card's right edge; the KeepScore headline wraps at 24em
    rather than running up to its CTA. */
-@media (min-width: 820px) {
+@media (min-width: 840px) {
   .ks-ad { flex-direction: row; align-items: center; gap: 24px; padding: 22px 24px 27px; }
   .ks-ad-logo { height: 56px; }
   .ks-ad-divider { display: block; }
