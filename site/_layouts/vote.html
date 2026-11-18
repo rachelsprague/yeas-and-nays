@@ -3,25 +3,29 @@ layout: default
 ---
 {%- assign v = page.vote -%}
 <main id="main" class="wrap">
-  <section class="vote-head">
-    <a class="back" href="/votes/" data-pagefind-ignore>← All votes</a>
-    {%- comment -%}
-      Search results title: the question first, so several votes on one measure
-      read apart; the question alone when it is the title (a Speaker election).
-      Built from raw values (vote_title.html escapes) and escaped once.
-    {%- endcomment -%}
-    {%- assign raw_title = v.measure_title | default: v.vote_title | default: v.question | strip -%}
-    {%- capture search_title %}{{ v.question | strip }}{% if raw_title != "" and raw_title != v.question %}: {{ raw_title }}{% endif %} ({{ v.chamber_name }}, {{ v.vote_date | ap_date }}){% endcapture %}
-    <span hidden data-pagefind-meta="title[data-title]" data-title="{{ search_title | strip | escape }}"></span>
-    {% include vote_kicker.html vote=v %}
-    <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
-    {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number | escape }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
-    <span class="kicker result">{{ v.result_label | escape }}</span>
-    {%- include procedure.html vote=v %}
-  </section>
+  {%- comment -%}
+    The heading and tally on the left, By party down the right beside both
+    (one column on phones: heading, tally, By party).
+  {%- endcomment %}
+  <div class="vote-top">
+    <section class="vote-head">
+      <a class="back" href="/votes/" data-pagefind-ignore>← All votes</a>
+      {%- comment -%}
+        Search results title: the question first, so several votes on one measure
+        read apart; the question alone when it is the title (a Speaker election).
+        Built from raw values (vote_title.html escapes) and escaped once.
+      {%- endcomment -%}
+      {%- assign raw_title = v.measure_title | default: v.vote_title | default: v.question | strip -%}
+      {%- capture search_title %}{{ v.question | strip }}{% if raw_title != "" and raw_title != v.question %}: {{ raw_title }}{% endif %} ({{ v.chamber_name }}, {{ v.vote_date | ap_date }}){% endcapture %}
+      <span hidden data-pagefind-meta="title[data-title]" data-title="{{ search_title | strip | escape }}"></span>
+      {% include vote_kicker.html vote=v %}
+      <h1 class="vote-h">{% include vote_title.html vote=v %}</h1>
+      {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number | escape }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
+      <span class="kicker result">{{ v.result_label | escape }}</span>
+      {%- include procedure.html vote=v %}
+    </section>
 
-  <div class="twocol" data-pagefind-ignore>
-    <section class="tally" aria-labelledby="tally-h">
+    <section class="tally" aria-labelledby="tally-h" data-pagefind-ignore>
       <h2 id="tally-h" class="kicker soft">Tally</h2>
       {% include tally.html view=page %}
       <p class="small muted nums">
@@ -31,7 +35,7 @@ layout: default
       </p>
     </section>
 
-    <section class="tally" aria-labelledby="party-h">
+    <section class="tally by-party" aria-labelledby="party-h" data-pagefind-ignore>
       <h2 id="party-h" class="kicker soft">By party</h2>
       {%- include party_grid.html view=page %}
       <div class="scroll">

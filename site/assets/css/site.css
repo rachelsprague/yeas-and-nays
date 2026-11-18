@@ -218,16 +218,19 @@ main.home { gap: 20px; padding-top: 20px; }
 .bill-path .step:not(:last-child)::before {
   content: ""; position: absolute; left: 7px; top: 18px; bottom: 0; width: 1.5px; background: var(--line);
 }
-.bill-path .step.done:not(:last-child)::before { background: var(--ink); }
+/* The reached part of the path is in the accent (brand, not a party or
+   position color); steps not reached stay in line gray. */
+.bill-path .step.done:not(:last-child)::before { background: var(--accent); width: 2.5px; left: 6.75px; }
 .bill-path .pip {
   flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: var(--radius-full);
   border: 1.5px solid var(--ink); background: var(--surface); box-sizing: border-box;
 }
-.bill-path .done .pip { background: var(--ink); }
-.bill-path .in_progress .pip { background: linear-gradient(90deg, var(--ink) 50%, var(--surface) 50%); }
+.bill-path :is(.done, .in_progress, .failed) .pip { border-color: var(--accent); }
+.bill-path .done .pip { background: var(--accent); }
+.bill-path .in_progress .pip { background: linear-gradient(90deg, var(--accent) 50%, var(--surface) 50%); }
 .bill-path .failed .pip {
-  background: linear-gradient(135deg, var(--surface) calc(50% - 1px), var(--ink) calc(50% - 1px),
-                              var(--ink) calc(50% + 1px), var(--surface) calc(50% + 1px));
+  background: linear-gradient(135deg, var(--surface) calc(50% - 1px), var(--accent) calc(50% - 1px),
+                              var(--accent) calc(50% + 1px), var(--surface) calc(50% + 1px));
 }
 .bill-path .skipped .pip { border-style: dotted; }
 .bill-path .upcoming .pip { border-color: var(--line); }
@@ -241,8 +244,11 @@ main.home { gap: 20px; padding-top: 20px; }
   .bill-path { flex-direction: row; }
   .bill-path .step { flex: 1 1 0; flex-direction: column; gap: 8px; padding-bottom: 0; padding-right: 8px; }
   .bill-path .step:not(:last-child)::before { left: 18px; right: 2px; top: 9px; bottom: auto; width: auto; height: 1.5px; }
+  .bill-path .step.done:not(:last-child)::before { left: 18px; top: 8.75px; width: auto; height: 2.5px; }
 }
 
+/* Vote page top: heading, tally, By party in one column; side by side from 960px. */
+.vote-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; }
 .vote-head { display: flex; flex-direction: column; gap: 12px; max-width: 860px; }
 .vote-head .back { margin-bottom: -8px; }
 .question { font-size: 16px; line-height: 22px; color: var(--ink-soft); }
@@ -423,7 +429,6 @@ table.roll { border-collapse: collapse; width: 100%; }
 
 /* ---- Home -------------------------------------------------------------- */
 
-.twocol { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .front { display: grid; grid-template-columns: minmax(0, 1fr); }
 .lead { display: flex; flex-direction: column; gap: 14px; }
 .side { display: flex; flex-direction: column; gap: 28px; border-top: 1.5px solid var(--ink); margin-top: 28px; padding-top: 4px; }
@@ -619,10 +624,6 @@ footer.wrap { padding-bottom: 28px; }
   .boxscore > div + div { border-left: 1px solid var(--line); }
   .boxscore > div:nth-child(n+3) { border-top: 0; }
 
-  .twocol { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 0; }
-  .twocol > :first-child { padding-right: 36px; border-right: 1px solid var(--ink); }
-  .twocol > :last-child { padding-left: 28px; }
-
   .filters { grid-template-columns: 2fr 1fr 1fr 1fr; }
   .filters .q { grid-column: auto; }
 
@@ -673,6 +674,15 @@ footer.wrap { padding-bottom: 28px; }
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
+}
+
+/* Vote page: By party runs down the right beside the heading and tally; extra
+   height goes below the tally rather than between it and the heading. From
+   960px, so the tally's four figures have room beside it. */
+@media (min-width: 960px) {
+  .vote-top { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: auto 1fr; gap: 36px 0; }
+  .vote-top > :not(.by-party) { grid-column: 1; align-self: start; padding-right: 36px; }
+  .vote-top > .by-party { grid-column: 2; grid-row: 1 / span 2; padding-left: 28px; border-left: 1px solid var(--ink); }
 }
 
 /* District map: the map on the left, the chosen district's members beside it. */
