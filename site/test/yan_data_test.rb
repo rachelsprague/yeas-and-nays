@@ -714,6 +714,14 @@ class VoteUrlTest < Minitest::Test
     assert_equal "/votes/119/senate/2/334/", Yan.vote_url(VOTE.merge("chamber" => "senate", "session" => 2, "roll_number" => 334))
   end
 
+  # The bot's vote_page_url is checked against the same cases (tests/test_bot.py),
+  # so its posts link the paths this builds.
+  def test_the_paths_the_bot_links
+    cases = JSON.parse(File.read(File.expand_path("../../tests/fixtures/vote_urls.json", __dir__)))
+    refute_empty cases
+    cases.each { |c| assert_equal c["path"], Yan.vote_url(c["vote"]) }
+  end
+
   def test_other_values_stop_the_build
     [["roll_number", "1/../../x"], ["roll_number", "1"], ["roll_number", 0], ["roll_number", nil],
      ["session", 1.5], ["congress", -119], ["chamber", "joint"], ["chamber", nil]].each do |field, value|

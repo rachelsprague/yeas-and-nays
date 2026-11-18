@@ -1,0 +1,10 @@
+[
+  {"vote": {"vote_id": "h119-1-0001", "congress": 119, "chamber": "house", "session": 1, "roll_number": 1},
+   "path": "/votes/119/house/1/1/"},
+  {"vote": {"vote_id": "h119-2-0317", "congress": 119, "chamber": "house", "session": 2, "roll_number": 317},
+   "path": "/votes/119/house/2/317/"},
+  {"vote": {"vote_id": "s119-2-0334", "congress": 119, "chamber": "senate", "session": 2, "roll_number": 334},
+   "path": "/votes/119/senate/2/334/"},
+  {"vote": {"vote_id": "s120-1-0001", "congress": 120, "chamber": "senate", "session": 1, "roll_number": 1},
+   "path": "/votes/120/senate/1/1/"}
+]
