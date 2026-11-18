@@ -189,3 +189,157 @@ test("an upgraded bar filters rows like a tab and opens details", async () => {
   assert.equal(taxation.getAttribute("aria-pressed"), "false");
   assert.equal(all.getAttribute("aria-pressed"), "true");
 });
+
+// The home page: chamber tabs over every module. Each lead vote shows only
+// for its tab, lists show their first n rows for the chosen chamber, and a
+// "More recent votes" row skips the tab whose lead vote it already is.
+const HOME = `
+<main data-filter-scope>
+  <button type="button" data-tab="chamber" data-value="all" aria-pressed="true">All</button>
+  <button type="button" data-tab="chamber" data-value="house" aria-pressed="false">House</button>
+  <button type="button" data-tab="chamber" data-value="senate" aria-pressed="false">Senate</button>
+  <div id="lead-all" data-show-when="chamber:all"></div>
+  <div id="lead-house" data-show-when="chamber:house" hidden></div>
+  <div id="lead-senate" data-show-when="chamber:senate" hidden></div>
+  <ul id="close" data-limit="2">
+    <li data-row id="c1" data-chamber="house"></li>
+    <li data-row id="c2" data-chamber="senate"></li>
+    <li data-row id="c3" data-chamber="house" hidden></li>
+    <li data-row id="c4" data-chamber="house" hidden></li>
+  </ul>
+  <ul id="more" data-limit="2">
+    <li data-row id="m1" data-chamber="house" data-skip-when="chamber:all chamber:house" hidden></li>
+    <li data-row id="m2" data-chamber="senate" data-skip-when="chamber:senate"></li>
+    <li data-row id="m3" data-chamber="house"></li>
+    <li data-row id="m4" data-chamber="senate" hidden></li>
+  </ul>
+  <section id="soon" data-row data-chamber="senate">
+    <ul data-limit="1">
+      <li data-row id="s1" data-chamber="senate"></li>
+      <li data-row id="s2" data-chamber="senate" hidden></li>
+    </ul>
+  </section>
+</main>`;
+
+function tab(document, value) {
+  document.querySelector(`[data-tab="chamber"][data-value="${value}"]`).click();
+}
+
+function shown(document, selector) {
+  return [...document.querySelectorAll(selector)].filter((el) => !el.hidden).map((el) => el.id);
+}
+
+test("data-limit shows at most n matching rows in each list", async () => {
+  const { document } = await load(HOME);
+  assert.deepEqual(shown(document, "#close [data-row]"), ["c1", "c2"]);
+
+  // Rows past the limit for "all" fill in once the other chamber's rows drop out.
+  tab(document, "house");
+  assert.deepEqual(shown(document, "#close [data-row]"), ["c1", "c3"]);
+
+  tab(document, "senate");
+  assert.deepEqual(shown(document, "#close [data-row]"), ["c2"]);
+});
+
+test("data-limit counts each list on its own", async () => {
+  const { document } = await load(HOME);
+  // Two rows shown in #close don't use up #more's limit.
+  assert.deepEqual(shown(document, "#more [data-row]"), ["m2", "m3"]);
+});
+
+test("a module that is a row itself hides with its tab, and its list keeps its limit", async () => {
+  const { document } = await load(HOME);
+  // The module isn't inside a limited list, so it doesn't count toward one.
+  assert.deepEqual(shown(document, "#soon, #soon [data-row]"), ["soon", "s1"]);
+
+  tab(document, "house");
+  assert.equal(document.querySelector("#soon").hidden, true);
+
+  tab(document, "senate");
+  assert.deepEqual(shown(document, "#soon, #soon [data-row]"), ["soon", "s1"]);
+});
+
+test("data-show-when shows an element only while its tab is selected", async () => {
+  const { document } = await load(HOME);
+  assert.deepEqual(shown(document, "[data-show-when]"), ["lead-all"]);
+
+  tab(document, "senate");
+  assert.deepEqual(shown(document, "[data-show-when]"), ["lead-senate"]);
+
+  tab(document, "all");
+  assert.deepEqual(shown(document, "[data-show-when]"), ["lead-all"]);
+});
+
+test("data-skip-when hides a row for each tab it names, without using up the limit", async () => {
+  const { document } = await load(HOME);
+  // m1 skips "all": the next two rows fill the list.
+  assert.deepEqual(shown(document, "#more [data-row]"), ["m2", "m3"]);
+
+  // m1 skips "house" too, so m3 is the only House row left.
+  tab(document, "house");
+  assert.deepEqual(shown(document, "#more [data-row]"), ["m3"]);
+
+  // m2 skips "senate": m4 takes its place.
+  tab(document, "senate");
+  assert.deepEqual(shown(document, "#more [data-row]"), ["m4"]);
+});
+
+// A vote page's full roll call: a name search box beside exact-match selects.
+// The page writes data-name lowercased; names here are made up.
+const ROLL_CALL = `
+<section data-filter-scope>
+  <p data-count data-noun="members">4 members</p>
+  <input type="search" data-filter="name">
+  <select data-filter="position">
+    <option value="">All</option><option>Yea</option><option>Not Voting</option>
+  </select>
+  <table><tbody>
+    <tr data-row id="r1" data-name="adams, pat" data-position="Yea"></tr>
+    <tr data-row id="r2" data-name="mcadams, lee" data-position="Not Voting"></tr>
+    <tr data-row id="r3" data-name="smith, jo" data-position="Yea"></tr>
+    <tr data-row id="r4" data-position="Yea"></tr>
+  </tbody></table>
+</section>`;
+
+function type(window, input, value) {
+  input.value = value;
+  input.dispatchEvent(new window.Event("input"));
+}
+
+test("search box matches a case-insensitive substring of the row's value", async () => {
+  const window = await load(ROLL_CALL);
+  const { document } = window;
+  const q = document.querySelector('[data-filter="name"]');
+
+  // Anywhere in the value, in any case; r4 has no data-name, so it hides.
+  type(window, q, "ADAMS");
+  assert.deepEqual(visible(document), ["r1", "r2"]);
+  assert.equal(document.querySelector("[data-count]").textContent, "Showing 2 of 4 members");
+
+  // Spaces around the query are ignored.
+  type(window, q, "  Smith, J ");
+  assert.deepEqual(visible(document), ["r3"]);
+
+  // Cleared, every row is back and the count drops "Showing".
+  type(window, q, "");
+  assert.deepEqual(visible(document), ["r1", "r2", "r3", "r4"]);
+  assert.equal(document.querySelector("[data-count]").textContent, "4 members");
+});
+
+test("a select matches the whole value, unlike the search box", async () => {
+  const window = await load(ROLL_CALL);
+  const { document } = window;
+  const position = document.querySelector('[data-filter="position"]');
+  position.insertAdjacentHTML("beforeend", "<option>Not</option>");
+
+  choose(window, position, "Not");
+  assert.deepEqual(visible(document), []);
+
+  choose(window, position, "Not Voting");
+  assert.deepEqual(visible(document), ["r2"]);
+
+  // Search box and select together: both have to match.
+  type(window, document.querySelector('[data-filter="name"]'), "adams");
+  choose(window, position, "Yea");
+  assert.deepEqual(visible(document), ["r1"]);
+});
