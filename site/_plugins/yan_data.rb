@@ -351,6 +351,12 @@ module Yan
     url if url.is_a?(String) && url.match?(%r{\Ahttps?://}i)
   end
 
+  # A Congress.gov bill page's text tab: "/text" ends the path, ahead of any
+  # query or fragment ("…/house-bill/1?s=1" -> "…/house-bill/1/text?s=1").
+  def self.text_url(url)
+    url && url.sub(%r{/?(?=[?#]|\z)}, "/text")
+  end
+
   # Member fields that hold links, website first (website_label reads it).
   MEMBER_LINKS = ["website_url", "contact_form_url", *ACCOUNTS.map(&:first)].freeze
 
@@ -923,6 +929,7 @@ module Yan
         v["url"] = Yan.vote_url(v)
         v["source_url"] = Yan.web_url(v["source_url"])
         v["congress_gov_url"] = Yan.web_url(v["congress_gov_url"])
+        v["congress_gov_text_url"] = Yan.text_url(v["congress_gov_url"])
         v["chamber_name"] = CHAMBER_NAMES[v["chamber"]]
         v["result_label"] = Yan.result_label(v, by_id)
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
