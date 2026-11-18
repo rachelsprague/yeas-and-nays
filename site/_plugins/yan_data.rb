@@ -1001,8 +1001,8 @@ module Yan
       data["layout"] = "vote"
       data["title"] = "#{CHAMBER_NAMES[vote["chamber"]]} roll call #{vote["roll_number"]}, #{vote["vote_date"]}"
       # Link cards lead with the official title, as the page's heading does (vote_title.html).
-      # Same fallback as Liquid's `default` there: only nil and "" are skipped.
-      data["og_title"] = [vote["measure_title"], vote["vote_title"], vote["question"]].find { |t| !t.to_s.empty? }
+      # Same fallback as there: blank and whitespace-only titles are skipped.
+      data["og_title"] = [vote["measure_title"], vote["vote_title"], vote["question"]].map { |t| t.to_s.strip }.find { |t| !t.empty? }
       data["description"] = Yan.vote_description(view)
       card = "#{site.config.fetch("yan_cards", "assets/cards")}/#{vote["vote_id"]}.png"
       if File.exist?(File.join(site.source, card))

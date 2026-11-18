@@ -26,7 +26,6 @@ search: false
   (function () {
     "use strict";
     if (typeof PagefindUI === "undefined") return;
-    document.querySelector("[data-search-fallback]").remove();
     var ui = new PagefindUI({
       element: "#search",
       showImages: false,
@@ -39,6 +38,8 @@ search: false
         zero_results: "Nothing matches [SEARCH_TERM]. Try a bill number, a name or a state."
       }
     });
+    // Only once the UI is in place: if the constructor throws, the fallback stays.
+    document.querySelector("[data-search-fallback]").remove();
     var q = new URLSearchParams(location.search).get("q");
     if (q) ui.triggerSearch(q);
   })();
