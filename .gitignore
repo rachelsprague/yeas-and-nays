@@ -236,6 +236,8 @@ site/.jekyll-cache/
 site/.bundle/
 site/vendor/
 site/node_modules/
+# Vote pages' link card images, drawn for each deploy (`yan cards`).
+site/assets/cards/
 
 # Local backlog (this repo is public; see CLAUDE.md).
 /BOARD.md

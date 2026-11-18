@@ -5,6 +5,9 @@ timezone: America/New_York
 
 # The pipeline's JSON export, read by _plugins/yan_data.rb.
 yan_data: ../data/out
+# Vote pages' link card images, {vote_id}.png, from `yan cards` (src/yan/cards.py).
+# A vote page without one uses the brand card.
+yan_cards: assets/cards
 
 bluesky: https://bsky.app/profile/yeasandnaysdata.com
 github: https://github.com/rachelsprague/yeas-and-nays

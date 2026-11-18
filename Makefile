@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: all ingest stage model export bot-preview site site-search site-serve test pytest sitetest clean
+.PHONY: all ingest stage model export cards bot-preview site site-search site-serve test pytest sitetest clean
 
 all: ingest stage model export
 
@@ -17,16 +17,19 @@ model:           ## build and test dbt models (unit tests, models, data tests)
 export:          ## write JSON for the bot and site into data/out/
 	uv run yan export
 
+cards:           ## draw vote pages' link card images into site/assets/cards/
+	uv run yan cards
+
 bot-preview:     ## print the 10 most recent postable votes (dry run, never publishes)
 	uv run yan bot preview -n 10
 
-site:            ## build the Jekyll site from data/out/ into site/_site/
+site: cards      ## build the Jekyll site from data/out/ into site/_site/
 	cd site && bundle install --quiet && bundle exec jekyll build
 
-site-search:     ## build the site and its Pagefind search index, then serve both (Pagefind prints the address)
+site-search: cards  ## build the site and its Pagefind search index, then serve both (Pagefind prints the address)
 	cd site && bundle install --quiet && npm ci --ignore-scripts --no-audit --no-fund && bundle exec jekyll build && npx --no-install pagefind --site _site --serve
 
-site-serve:      ## build and serve the site at http://localhost:4000
+site-serve: cards  ## build and serve the site at http://localhost:4000
 	cd site && bundle install --quiet && bundle exec jekyll serve
 
 test: pytest sitetest  ## Python and site plugin tests (dbt tests run as part of `make model`)
@@ -38,4 +41,4 @@ sitetest:        ## tests for the site's Jekyll plugin
 	cd site && bundle install --quiet && bundle exec ruby test/yan_data_test.rb
 
 clean:           ## remove local intermediate files (keeps raw downloads)
-	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache
+	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache site/assets/cards

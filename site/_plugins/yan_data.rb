@@ -870,6 +870,11 @@ module Yan
       # Same fallback as Liquid's `default` there: only nil and "" are skipped.
       data["og_title"] = [vote["measure_title"], vote["vote_title"], vote["question"]].find { |t| !t.to_s.empty? }
       data["description"] = Yan.vote_description(view)
+      card = "#{site.config.fetch("yan_cards", "assets/cards")}/#{vote["vote_id"]}.png"
+      if File.exist?(File.join(site.source, card))
+        data["og_image"] = "/#{card}"
+        data["og_image_alt"] = "#{data["og_title"]}: #{data["description"]}"
+      end
       data["nav"] = "votes"
       data["rows"] = rows
       data["states"] = rows.map { |r| r["state"] }.uniq.sort
