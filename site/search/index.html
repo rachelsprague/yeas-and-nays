@@ -40,7 +40,7 @@ search: false
     });
     // Only once the UI is in place: if the constructor throws, the fallback stays.
     document.querySelector("[data-search-fallback]").remove();
-    var q =new URLSearchParams(location.search).get("q");
+    var q = new URLSearchParams(location.search).get("q");
     if (q) ui.triggerSearch(q);
   })();
 </script>

@@ -845,7 +845,7 @@ class LayoutTest < Minitest::Test
   end
 
   # A blank or whitespace-only title falls through to the next one, in the
-  # heading, the link card and the search title alike; a question that is the
+  # heading, vote lists, the link card and the search title alike; a question that is the
   # title but for whitespace is named once in the search title, not "Q: Q".
   def test_whitespace_titles_fall_back_and_the_question_is_not_repeated
     base = EscapingTest::VOTE.merge("measure_title" => nil, "bill_type" => nil, "congress_gov_url" => nil)
@@ -864,6 +864,9 @@ class LayoutTest < Minitest::Test
     assert_equal "On Passage", h1.(2)
     assert_equal "On Passage", og.(2)
     assert_equal "On Passage (House, Jan. 3, 2025)", search.(2)
+    list = pages.fetch("/votes/index.html")
+    assert_includes list, %(<span class="t">A joint resolution providing for a vote</span>)
+    assert_includes list, %(<span class="t">On Passage</span>)
   end
 
   # The search page keeps its fallback text until Pagefind's UI is built, so
