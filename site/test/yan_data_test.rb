@@ -693,6 +693,24 @@ class WebUrlTest < Minitest::Test
   end
 end
 
+# A vote's page path takes only integer fields and a known chamber.
+class VoteUrlTest < Minitest::Test
+  VOTE = { "vote_id" => "h119-1-0001", "congress" => 119, "chamber" => "house", "session" => 1, "roll_number" => 1 }.freeze
+
+  def test_a_vote_url_from_its_fields
+    assert_equal "/votes/119/house/1/1/", Yan.vote_url(VOTE)
+    assert_equal "/votes/119/senate/2/334/", Yan.vote_url(VOTE.merge("chamber" => "senate", "session" => 2, "roll_number" => 334))
+  end
+
+  def test_other_values_stop_the_build
+    [["roll_number", "1/../../x"], ["roll_number", "1"], ["roll_number", 0], ["roll_number", nil],
+     ["session", 1.5], ["congress", -119], ["chamber", "joint"], ["chamber", nil]].each do |field, value|
+      error = assert_raises(ArgumentError, "#{field}: #{value.inspect}") { Yan.vote_url(VOTE.merge(field => value)) }
+      assert_includes error.message, '"h119-1-0001"'
+    end
+  end
+end
+
 # The masthead, footer and analytics tag that every page shares.
 class LayoutTest < Minitest::Test
   include SiteBuild
@@ -1824,6 +1842,15 @@ class LiveFloorTest < Minitest::Test
     assert_equal [], Yan.live_floor("house" => status(convened: "not a time"))
   end
 
+  # The convening wins: a pro forma next session doesn't hide a chamber in session.
+  def test_a_convening_shows_even_with_a_pro_forma_next_session
+    lines = Yan.live_floor("senate" => status(convened: "2026-11-17T10:00:00-05:00",
+                                              next_at: "2026-11-20T11:00:00-05:00", pro_forma: true))
+    assert_equal ["Convened at 10 a.m. ET"], lines.map { |l| l["label"] }
+    assert_equal [true], lines.map { |l| l["in_session"] }
+    assert_equal ["2026-11-17T10:00:00-05:00"], lines.map { |l| l["from"] }
+  end
+
   def build(floor_status)
     schedule = { "items" => [], "floor_status" => floor_status }
     build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]], files: "index.html",
@@ -1846,6 +1873,17 @@ class LiveFloorTest < Minitest::Test
     assert_includes band, '<a class="link" href="https://clerk.house.gov/FloorSummary">Floor summary</a>'
     refute_includes band, "is-live"
     assert_includes html, '<script src="/assets/js/live-floor.js" defer></script>'
+  end
+
+  # A House line from a scheduled time only reads "Convening", like the Senate's.
+  def test_a_house_line_from_a_scheduled_time_reads_convening
+    html = build("house" => status(next_at: "2026-11-18T10:00:00-05:00", pro_forma: false))
+    band = html[%r{<section class="live-band".*?</section>}m]
+    assert_includes band, 'data-chamber="house" data-live-from="2026-11-18T10:00:00-05:00"'
+    assert_includes band, "Scheduled to convene at 10 a.m. ET"
+    assert_includes band, '<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Convening</span>'
+    refute_includes band, "In session"
+    refute_includes band, 'data-chamber="senate"'
   end
 
   def test_no_band_or_script_without_a_line

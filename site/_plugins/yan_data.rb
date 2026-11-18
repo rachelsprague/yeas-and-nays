@@ -256,7 +256,12 @@ module Yan
     { "weeks" => weeks, "default_week" => default.to_s }
   end
 
+  # Stops the build on a field that isn't a positive integer or a known
+  # chamber, rather than writing it into the page's path.
   def self.vote_url(v)
+    ok = %w[congress session roll_number].all? { |k| v[k].is_a?(Integer) && v[k].positive? }
+    raise ArgumentError, "vote #{v["vote_id"].inspect}: bad URL fields" unless ok && CHAMBER_NAMES.key?(v["chamber"])
+
     "/votes/#{v["congress"]}/#{v["chamber"]}/#{v["session"]}/#{v["roll_number"]}/"
   end
 
