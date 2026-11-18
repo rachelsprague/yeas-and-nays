@@ -31,7 +31,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 
 Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item, 150 characters or fewer as filed, before any claim or PR note) and `backlog/<slug>.md` for details. Both are gitignored because this repo is public. Don't create GitHub issues for this project.
 
-Start every open item with its priority, `P0` (highest) to `P5`, as in `- P3 Dictionary page: ...`; the board dashboard shows it as a badge. The prefix doesn't count toward the 150 characters. Done items don't need one.
+Start every open item with its priority, `P0` (highest) to `P5`, as in `- P3 Dictionary page: ...`; the board dashboard shows it as a badge. The prefix doesn't count toward the 150 characters. Drop it when an item moves to Done.
 
 Being gitignored, they exist only in the main checkout, and a session isolated in a worktree can't edit them. So board edits bracket worktree work: claim from the main checkout before entering the worktree, and update the board after leaving it.
 
