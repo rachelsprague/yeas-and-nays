@@ -867,7 +867,8 @@ module Yan
       data["layout"] = "vote"
       data["title"] = "#{CHAMBER_NAMES[vote["chamber"]]} roll call #{vote["roll_number"]}, #{vote["vote_date"]}"
       # Link cards lead with the official title, as the page's heading does (vote_title.html).
-      data["og_title"] = [vote["measure_title"], vote["vote_title"], vote["question"]].find { |t| !t.to_s.strip.empty? }
+      # Same fallback as Liquid's `default` there: only nil and "" are skipped.
+      data["og_title"] = [vote["measure_title"], vote["vote_title"], vote["question"]].find { |t| !t.to_s.empty? }
       data["description"] = Yan.vote_description(view)
       data["nav"] = "votes"
       data["rows"] = rows

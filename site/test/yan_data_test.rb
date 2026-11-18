@@ -804,6 +804,18 @@ class LayoutTest < Minitest::Test
                  meta.(pages.fetch("/index.html"), "og:description")
   end
 
+  # With no measure title the card falls back as the heading does: the
+  # Senate's vote title, then the question.
+  def test_link_card_title_falls_back_like_the_heading
+    base = EscapingTest::VOTE.merge("measure_title" => nil, "bill_type" => nil, "congress_gov_url" => nil)
+    votes = [base.merge("vote_title" => "A joint resolution providing for a vote"),
+             base.merge("vote_id" => "h119-1-0002", "roll_number" => 2, "vote_title" => "")]
+    pages = build_site([EscapingTest::MEMBER], votes.map { |v| [v, EscapingTest::DOC] })
+    og = ->(roll) { pages.fetch("/votes/119/house/1/#{roll}/index.html")[/<meta property="og:title" content="([^"]*)">/, 1] }
+    assert_equal "A joint resolution providing for a vote", og.(1)
+    assert_equal "On Passage", og.(2)
+  end
+
   # Present and Not Voting are left out of a vote's description when zero;
   # a Speaker election lists its candidates.
   def test_vote_description_tally
@@ -813,6 +825,11 @@ class LayoutTest < Minitest::Test
     assert_equal "Senate roll call 257, Nov. 9, 2026. Nomination Confirmed, 211 Yea · 204 Nay · 18 Not Voting.",
                  Yan.vote_description(view.({ "chamber" => "senate", "roll_number" => 257, "vote_date" => "2026-11-09",
                                               "result_label" => "Nomination Confirmed" }, yn))
+    # The vote's own words; Aye and No show even at zero, Present when nonzero.
+    aye_no = [{ "label" => "Aye", "count" => 400, "mark" => "yea" }, { "label" => "No", "count" => 0, "mark" => "nay" },
+              { "label" => "Present", "count" => 1, "mark" => "present" }, { "label" => "Not Voting", "count" => 0, "mark" => "nv" }]
+    assert_equal "House roll call 1, Jan. 3, 2025. Passage: Passed, 400 Aye · 0 No · 1 Present.",
+                 Yan.vote_description(view.({ "result_label" => "Passage: Passed" }, aye_no))
     speaker = [{ "label" => "Johnson", "count" => 216 }, { "label" => "Jeffries", "count" => 215 },
                { "label" => "Present", "count" => 0, "mark" => "present" }, { "label" => "Not Voting", "count" => 1, "mark" => "nv" }]
     assert_equal "House roll call 2, Jan. 3, 2025. Most votes: Mike Johnson (R-LA-4), 216 Johnson · 215 Jeffries · 1 Not Voting.",
