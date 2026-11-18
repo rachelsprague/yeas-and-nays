@@ -153,6 +153,29 @@ test("stays while focus is in it, though the list ended under it", async () => {
   assert.equal(bar(document).hidden, true);
 });
 
+test("stays while its panel is open, though nothing in it has focus", async () => {
+  const window = await load(ROLL);
+  const b = bar(window.document);
+  await at(window, -1, 2000);
+  b.querySelector(".pinbar-toggle").click();
+  await at(window, 200, 2000);
+  assert.equal(b.hidden, false);
+  b.querySelector(".pinbar-toggle").click();
+  await new Promise((resolve) => window.requestAnimationFrame(() => resolve()));
+  assert.equal(b.hidden, true);
+});
+
+test("scroll padding matches the bar while shown, so focus doesn't land under it", async () => {
+  const window = await load(ROLL);
+  const b = bar(window.document);
+  const html = window.document.documentElement;
+  Object.defineProperty(b, "offsetHeight", { get: () => (b.hidden ? 0 : 60) });
+  await at(window, -1, 2000);
+  assert.equal(html.style.scrollPaddingTop, "60px");
+  await at(window, 200, 2000);
+  assert.equal(html.style.scrollPaddingTop, "");
+});
+
 test("typing in the bar's search filters rows and fills the original box", async () => {
   const window = await load(ROLL);
   const { document } = window;
@@ -228,6 +251,37 @@ test("the bar's tabs click the original tabs and follow their state", async () =
   document.querySelector('[data-value="all"]').click();
   assert.equal(copies[0].getAttribute("aria-pressed"), "true");
   assert.equal(b.querySelector(".pinbar-toggle").textContent, "Filters");
+});
+
+test("the copied tab group is named in text, not by the original's id", async () => {
+  const { document } = await load(`
+<main data-filter-scope>
+  <div data-pinbar>
+    <input data-filter="search">
+    <span id="m-ch">Chamber</span>
+    <div class="tabs" role="group" aria-labelledby="m-ch">
+      <button type="button" data-tab="chamber" data-value="all" aria-pressed="true">All</button>
+    </div>
+  </div>
+</main>`);
+  const g = bar(document).querySelector(".pinbar-more .tabs");
+  assert.equal(g.getAttribute("aria-labelledby"), null);
+  assert.equal(g.getAttribute("aria-label"), "Chamber");
+});
+
+test("works without a count: the line names only what's set", async () => {
+  const window = await load(`
+<section data-filter-scope>
+  <div data-pinbar>
+    <input data-filter="name">
+    <select data-filter="party"><option value="">All</option><option>D</option></select>
+  </div>
+  <ul><li data-row data-name="a" data-party="D"></li></ul>
+</section>`);
+  const b = bar(window.document);
+  assert.equal(b.querySelector(".pinbar-count").textContent, "");
+  choose(window, b.querySelector(".pinbar-more select"), "D");
+  assert.equal(b.querySelector(".pinbar-count").textContent, "D");
 });
 
 test("a select left at its default isn't counted as set", async () => {

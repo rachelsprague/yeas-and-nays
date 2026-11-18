@@ -4,9 +4,10 @@
 // where they are; the bar holds copies kept in step with them, so filters.js
 // sees every change on the originals. Without JS there's no bar.
 //
-// Phones: the name search, a "Filters" button (with the number of filters
-// set) that opens the other controls, and a "Showing x of n" line. From 760px
-// every control shows in one row and the button is hidden (site.css).
+// Up to 960px: the name search, a "Filters" button (with the number of
+// filters set) that opens the other controls, and a "Showing x of n" line.
+// From 960px every control shows in one row and the button is hidden
+// (site.css).
 //
 // The bar is fixed rather than sticky, so showing or hiding it never moves
 // the list under the reader. Load after filters.js: its listeners must run
@@ -44,11 +45,18 @@
     return k;
   }
 
-  // A copy of a tab group whose buttons click the originals.
+  // A copy of a tab group whose buttons click the originals. Its name is
+  // copied as text, so it doesn't depend on the original's label by id.
   function copyTabs(group) {
     var g = group.cloneNode(true);
     g.removeAttribute("id");
     g.classList.remove("js-only");
+    var by = group.getAttribute("aria-labelledby");
+    var named = by && document.getElementById(by);
+    if (named) {
+      g.removeAttribute("aria-labelledby");
+      g.setAttribute("aria-label", named.textContent.trim());
+    }
     var originals = group.querySelectorAll("button[data-tab]");
     g.querySelectorAll("button[data-tab]").forEach(function (b, i) {
       b.removeAttribute("data-tab");
@@ -96,8 +104,9 @@
       toggle.addEventListener("click", function () {
         var open = toggle.getAttribute("aria-expanded") !== "true";
         toggle.setAttribute("aria-expanded", String(open));
+        queue();
         // A class, not [hidden]: site.css hides [hidden] with !important,
-        // and from 760px these controls always show.
+        // and from 960px these controls always show.
         more.classList.toggle("is-open", open);
       });
       inner.appendChild(toggle);
@@ -157,19 +166,23 @@
 
     // Shown once the filters are above the top of the screen; as the list's
     // end comes up, the bar slides up with it, as a sticky one would, and
-    // hides once the end is past. Kept in full while focus is in the bar: a
-    // search that leaves a few rows shortens the page, and hiding the box
-    // being typed in would close a phone's keyboard.
+    // hides once the end is past. Kept in full while focus is in the bar or
+    // its panel is open: a search that leaves a few rows shortens the page,
+    // hiding the box being typed in would close a phone's keyboard, and
+    // Safari doesn't focus a clicked button. While shown, the page's scroll
+    // padding keeps focused rows and in-page jumps from landing under it.
     var queued = false;
     function place() {
       queued = false;
       var above = source.getBoundingClientRect().bottom < 0;
       var end = scope.getBoundingClientRect().bottom;
-      var focused = !bar.hidden && bar.contains(document.activeElement);
-      var show = (above && end > 0) || focused;
+      var open = toggle !== null && toggle.getAttribute("aria-expanded") === "true";
+      var kept = !bar.hidden && (bar.contains(document.activeElement) || open);
+      var show = (above && end > 0) || kept;
       if (bar.hidden === show) bar.hidden = !show;
       var h = bar.offsetHeight;
-      bar.style.transform = show && !focused && end < h ? "translateY(" + (end - h) + "px)" : "";
+      bar.style.transform = show && !kept && end < h ? "translateY(" + (end - h) + "px)" : "";
+      document.documentElement.style.scrollPaddingTop = show ? h + "px" : "";
     }
     function queue() {
       if (!queued) { queued = true; window.requestAnimationFrame(place); }

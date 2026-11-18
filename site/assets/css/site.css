@@ -170,10 +170,12 @@ select.field { padding: 0 8px; }
 .filters label { color: var(--ink-soft); }
 
 /* Pinned filter bar (pinbar.js): fixed, not sticky, so it never moves the
-   list. Phones show the search, a Filters button and the count; from 760px
-   every control shows in one row. */
+   list. Up to 960px it shows the search, a Filters button and the count; from
+   960px every control shows in one row. Scrolls within itself if the open
+   panel is taller than the screen (a landscape phone, the keyboard up). */
 .pinbar {
   position: fixed; z-index: 6; top: 0; left: 0; right: 0;
+  max-height: 100vh; max-height: 100dvh; overflow-y: auto;
   background: var(--surface); border-bottom: 1px solid var(--ink);
   padding-top: env(safe-area-inset-top);
 }
@@ -700,12 +702,6 @@ footer.wrap { padding-bottom: 76px; }
   .filters { grid-template-columns: 2fr 1fr 1fr 1fr; }
   .filters .q { grid-column: auto; }
 
-  .pinbar-toggle { display: none; }
-  .pinbar-q { flex: 2 1 0; }
-  .pinbar-inner { align-items: flex-end; }
-  .pinbar-more, .pinbar-more.is-open { display: flex; flex: 3 1 0; align-items: flex-end; gap: 12px; padding: 0; }
-  .pinbar-more label { flex: 1 1 0; }
-
   .findrow { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
   .findctl { flex: 0 1 420px; }
 
@@ -764,6 +760,16 @@ footer.wrap { padding-bottom: 76px; }
   .vote-top { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); grid-template-rows: auto 1fr; gap: 36px 0; }
   .vote-top > :not(.by-party) { grid-column: 1; align-self: start; padding-right: 36px; }
   .vote-top > .by-party { grid-column: 2; grid-row: 1 / span 2; padding-left: 28px; border-left: 1px solid var(--ink); }
+}
+
+/* Pinned filter bar: every control in one row. From 960px, since /members/
+   (search, chamber tabs, three selects) leaves each select too narrow at 760. */
+@media (min-width: 960px) {
+  .pinbar-toggle { display: none; }
+  .pinbar-q { flex: 2 1 0; }
+  .pinbar-inner { align-items: flex-end; }
+  .pinbar-more, .pinbar-more.is-open { display: flex; flex: 3 1 0; align-items: flex-end; gap: 12px; padding: 0; }
+  .pinbar-more label { flex: 1 1 0; }
 }
 
 /* District map: the map on the left, the chosen district's members beside it. */
