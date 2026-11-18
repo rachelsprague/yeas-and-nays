@@ -169,6 +169,33 @@ select.field { padding: 0 8px; }
 .filters > div { display: flex; flex-direction: column; gap: 6px; }
 .filters label { color: var(--ink-soft); }
 
+/* Pinned filter bar (pinbar.js): fixed, not sticky, so it never moves the
+   list. Phones show the search, a Filters button and the count; from 760px
+   every control shows in one row. */
+.pinbar {
+  position: fixed; z-index: 6; top: 0; left: 0; right: 0;
+  background: var(--surface); border-bottom: 1px solid var(--ink);
+  padding-top: env(safe-area-inset-top);
+}
+.pinbar-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding-top: 6px; padding-bottom: 6px; }
+.pinbar .field { height: 40px; }
+.pinbar-q { flex: 1 1 0; min-width: 0; }
+.pinbar-toggle {
+  height: 40px; padding: 0 12px; flex: none;
+  font: inherit; font-size: 15px; font-weight: 600;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--ink); border-radius: 0; cursor: pointer;
+}
+.pinbar-toggle[aria-expanded="true"] { background: var(--ink); color: var(--surface); }
+.pinbar-more { display: none; }
+.pinbar-more.is-open { flex: 1 1 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding: 6px 0; }
+.pinbar-more .tabs { grid-column: 1 / -1; }
+.pinbar-more .tabs button { min-height: 40px; }
+.pinbar-more label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pinbar-more .kicker { color: var(--ink-soft); }
+.pinbar-count { flex: 1 1 100%; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media print { .pinbar { display: none; } }
+
 .findrow { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; padding-bottom: 16px; }
 .findrow label { font-family: var(--font-display); font-size: 18px; font-weight: 600; white-space: nowrap; }
 .findctl { display: flex; gap: 8px; min-width: 0; }
@@ -672,6 +699,12 @@ footer.wrap { padding-bottom: 76px; }
 
   .filters { grid-template-columns: 2fr 1fr 1fr 1fr; }
   .filters .q { grid-column: auto; }
+
+  .pinbar-toggle { display: none; }
+  .pinbar-q { flex: 2 1 0; }
+  .pinbar-inner { align-items: flex-end; }
+  .pinbar-more, .pinbar-more.is-open { display: flex; flex: 3 1 0; align-items: flex-end; gap: 12px; padding: 0; }
+  .pinbar-more label { flex: 1 1 0; }
 
   .findrow { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
   .findctl { flex: 0 1 420px; }
