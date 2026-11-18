@@ -138,6 +138,19 @@ select.field { padding: 0 8px; }
 }
 .button:hover { color: var(--surface); background: var(--ink-soft); }
 
+/* Back-to-top link, bottom right on long pages (totop.js shows it). Clear of
+   the iPhone home indicator. .button sets display, so [hidden] needs its own
+   rule. */
+.totop {
+  position: fixed; z-index: 5;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 44px; padding: 0;
+}
+.totop, .totop:visited { color: var(--surface); }
+.totop[hidden] { display: none; }
+@media print { .totop { display: none; } }
+
 .tabs { display: flex; gap: 18px; }
 .tabs button {
   min-height: 44px; padding: 0 2px;
@@ -632,7 +645,9 @@ table.roll { border-collapse: collapse; width: 100%; }
 
 /* ---- Footer ------------------------------------------------------------ */
 
-footer.wrap { padding-bottom: 28px; }
+/* Room below the last line for the back-to-top link (16px + 44px + 16px), so
+   it never covers a footer link at the end of the page. */
+footer.wrap { padding-bottom: 76px; }
 .footline { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; padding-top: 14px; font-size: 13px; line-height: 20px; color: var(--ink-muted); text-align: center; }
 .footline .social { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 20px; }
 .footline .social:hover { color: var(--accent); }
