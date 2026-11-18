@@ -90,6 +90,8 @@ Explainer pages (How things work) can end with a house ad for one of the maker's
 
 Each vote page's map (By district on House votes, By state on Senate votes; each House district, or each senator's half of a state, filled with their vote) draws from a lighter copy of those shapes: `uv run scripts/build_vote_map.py` simplifies `site/_maps/{congress}.json` into `site/assets/maps/{congress}.json`, which the browser fetches once and caches. Run it after `build_district_map.py`. Only votes in the Congress of `data/out/meta.json` get the map, since members' districts are as of that Congress; every vote keeps the by-state table.
 
+Every page has Open Graph and Twitter card tags for link previews. A vote page's card image shows its official title, result and tally, drawn by `yan cards` (`src/yan/cards.py`, with Pillow and the brand fonts in `src/yan/fonts/`) into `site/assets/cards/{vote_id}.png` before each build; the cards aren't committed. Quorum calls and Speaker elections, which have no Yea or Nay, use the brand card `brand/social/og-card-1200x630.png`, as every other page does.
+
 ```
 make site-serve   # build and serve at http://localhost:4000 (needs Ruby and Bundler)
 make site-search  # same, plus the search index, so /search/ works (also needs Node)

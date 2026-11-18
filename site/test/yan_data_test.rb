@@ -101,8 +101,9 @@ module SiteBuild
   # Returns { "/path/index.html" => html } for every page built from these
   # members and [vote, vote file] pairs, plus a floor schedule export, a build
   # time (Eastern) and members' bill files ({ bioguide_id => file }) when given.
-  # `pages` adds pages the source doesn't have, as [[dir, name]] pairs.
-  def build_site(members, votes, files: "*.html", schedule: nil, time: nil, member_files: {}, pages: [])
+  # `pages` adds pages the source doesn't have, as [[dir, name]] pairs; `cards`
+  # is the link card folder, relative to the source (none by default).
+  def build_site(members, votes, files: "*.html", schedule: nil, time: nil, member_files: {}, pages: [], cards: nil)
     Dir.mktmpdir do |tmp|
       data = File.join(tmp, "data")
       FileUtils.mkdir_p([File.join(data, "votes"), File.join(data, "members")])
@@ -126,6 +127,8 @@ module SiteBuild
         "quiet" => true
       }
       config["time"] = time if time
+      # Never the real assets/cards/, which `yan cards` fills with cards for real vote IDs.
+      config["yan_cards"] = cards || "assets/no-cards"
       config["test_pages"] = pages
       site = Jekyll::Site.new(Jekyll.configuration(config))
       site.process
@@ -825,6 +828,24 @@ class LayoutTest < Minitest::Test
     og = ->(roll) { pages.fetch("/votes/119/house/1/#{roll}/index.html")[/<meta property="og:title" content="([^"]*)">/, 1] }
     assert_equal "A joint resolution providing for a vote", og.(1)
     assert_equal "On Passage", og.(2)
+  end
+
+  # A vote with a card from `yan cards` points og:image at it, with the title
+  # and description as alt text; a vote without one keeps the brand card.
+  def test_link_card_image_per_vote
+    other = EscapingTest::VOTE.merge("vote_id" => "h119-1-0002", "roll_number" => 2)
+    Dir.mktmpdir("cards", File.join(SOURCE, "assets")) do |dir|
+      File.write(File.join(dir, "h119-1-0001.png"), "png")
+      cards = "assets/#{File.basename(dir)}"
+      pages = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC], [other, EscapingTest::DOC]],
+                         cards: cards)
+      meta = ->(roll, prop) { pages.fetch("/votes/119/house/1/#{roll}/index.html")[/<meta property="#{prop}" content="([^"]*)">/, 1] }
+      assert_equal "https://yeasandnaysdata.com/#{cards}/h119-1-0001.png", meta.(1, "og:image")
+      assert_equal "A bill to name the &quot;KK&quot; &lt;kk&gt; O&#39;Kay &amp; Co Post Office: " \
+                   "House roll call 1, Jan. 3, 2025. Passage: Passed, 0 Yea · 1 Nay.", meta.(1, "og:image:alt")
+      assert_equal "https://yeasandnaysdata.com/assets/brand/social/og-card-1200x630.png", meta.(2, "og:image")
+      assert_equal "Yeas &amp; Nays: Recorded votes from the House and Senate.", meta.(2, "og:image:alt")
+    end
   end
 
   # Present and Not Voting are left out of a vote's description when zero;

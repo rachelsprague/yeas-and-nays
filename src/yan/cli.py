@@ -1,4 +1,4 @@
-"""Command-line entry point: `yan ingest | stage | export | bot`."""
+"""Command-line entry point: `yan ingest | stage | export | cards | bot`."""
 
 import argparse
 import logging
@@ -19,6 +19,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     sub.add_parser("stage", help="parse data/raw/ into Parquet under data/staged/")
     sub.add_parser("export", help="write JSON from the dbt marts into data/out/")
+    sub.add_parser("cards", help="draw vote pages' link card images into site/assets/cards/")
 
     bot = sub.add_parser("bot", help="Bluesky bot (dry run unless `bot run --publish`)")
     bot_sub = bot.add_subparsers(dest="bot_command", required=True)
@@ -51,6 +52,10 @@ def main(argv: list[str] | None = None) -> None:
         run()
     elif args.command == "export":
         from yan.export.json_export import run
+
+        run()
+    elif args.command == "cards":
+        from yan.cards import run
 
         run()
     elif args.command == "bot":
