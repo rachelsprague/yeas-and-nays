@@ -2496,6 +2496,11 @@ class MissedVotesPageTest < Minitest::Test
     assert html.index("<dt>House</dt>") < html.index("<dt>Senate</dt>")
   end
 
+  def test_even_count_median_is_the_mean_of_the_middle_two_and_ten_percent_is_not_over
+    html = page([member("A000001", "house", 2.0), member("A000002", "house", 10.0)])
+    assert_includes html, "The median member missed 6.0% of roll calls, among 2 members. 0 members missed more than 10%."
+  end
+
   def test_one_member_over_ten_percent_is_singular
     assert_includes page([member("A000001", "house", 11.0)]), "1 member missed more than 10%."
   end
