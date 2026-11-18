@@ -18,6 +18,9 @@ layout: default
       {%- else %}
       <p class="term nums">Former member{% if m.served_from %} · Served in the {{ congress }} Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
       {%- endif %}
+      {%- if m.service_line %}
+      <p class="term nums">{{ m.service_line }}</p>
+      {%- endif %}
     </div>
   </section>
 
@@ -47,6 +50,21 @@ layout: default
       {%- endif %}
     </dl>
     {%- endif %}
+  </section>
+  {%- endif %}
+
+  {%- if page.bio %}
+  <section aria-labelledby="bio-h" class="facts">
+    <h2 id="bio-h" class="kicker soft">Before Congress</h2>
+    <p>{{ page.bio.opening | escape }}</p>
+    {%- if page.bio.rows.size > 0 %}
+    <dl>
+      {%- for row in page.bio.rows %}
+      <div><dt>{{ row.label }}</dt><dd>{{ row.text | escape }}</dd></div>
+      {%- endfor %}
+    </dl>
+    {%- endif %}
+    <p class="small soft" data-pagefind-ignore>From the <a class="link" href="{{ page.bio.source_url | escape }}">Congressional Directory</a>, {{ page.bio.date_issued | ap_date }} edition. Biographies are furnished or authorized by each member's office.</p>
   </section>
   {%- endif %}
 

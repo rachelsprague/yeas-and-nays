@@ -72,3 +72,8 @@ sources:
         description: >
           One row per current member in congress-legislators' social media file: official
           account names on X (recorded as twitter), Facebook, Instagram, YouTube, and Mastodon.
+      - name: directory_bios
+        description: >
+          One row per biography in the newest Congressional Directory (GovInfo collection
+          CDIR): the seat it's printed under, the name as printed, the opening ("of Oakland,
+          CA; born in ...") and the labeled fields, as written. Empty until an edition is saved.

@@ -4,7 +4,8 @@
     data/out/members.json         one entry per member, with their stats this Congress
     data/out/members/{bioguide}.json  one member: bills and resolutions they introduced
                                   and cosponsored this Congress, newest first
-                                  (each list is null until first fetched)
+                                  (each list is null until first fetched), and their
+                                  Congressional Directory biography (null if none)
     data/out/floor_schedule.json  what may come up for a vote: the House's weekly
                                   floor schedule and pending Senate cloture motions,
                                   plus when the Senate next convenes and each
@@ -132,6 +133,14 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             from cosponsored_bills
             order by bioguide_id, introduced_date desc, bill_type, try_cast(bill_number as integer) desc
         """)
+        bios = {
+            row.pop("bioguide_id"): row
+            for row in _rows(con, """
+                select bioguide_id, edition, date_issued, opening, education, professional_history,
+                       military_service
+                from member_bios
+            """)
+        }
         sponsored_fetched = _fetched_lists(con, "sponsored_lists")
         cosponsored_fetched = _fetched_lists(con, "cosponsored_lists")
         floor_items = _rows(con, """
@@ -222,6 +231,8 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
             # several runs), so the site can leave the section out rather than show none.
             "sponsored": member_lists(bioguide_id, sponsored_fetched, sponsored_by),
             "cosponsored": member_lists(bioguide_id, cosponsored_fetched, cosponsored_by),
+            # From the newest Congressional Directory, as printed; null when it has none.
+            "bio": bios.get(bioguide_id),
         }
         changed += write_if_changed(member_dir / name, dumps(doc))
     for path in member_dir.glob("*.json"):

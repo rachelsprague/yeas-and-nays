@@ -7,7 +7,7 @@ import pyarrow.parquet as pq
 
 from yan.config import RAW_DIR, STAGED_DIR
 from yan.measures import parse_measure
-from yan.stage import congress_gov, floor, house, legislators, senate
+from yan.stage import congress_gov, directory, floor, house, legislators, senate
 
 log = logging.getLogger(__name__)
 
@@ -83,9 +83,14 @@ STRING_COLUMNS = {
     "house_floor_days": [
         "source_file", "legislative_day", "convene_time", "finished", "next_convene_time",
     ],
+    "directory_bios": [
+        "source_file", "edition", "date_issued", "state", "chamber", "printed_name", "opening",
+        "education", "professional_history", "military_service", "election_history",
+    ],
 }
 SCHEMAS = {name: pa.schema([(c, pa.string()) for c in cols]) for name, cols in STRING_COLUMNS.items()}
 SCHEMAS["legislator_terms"] = SCHEMAS["legislator_terms"].append(pa.field("district", pa.int64()))
+SCHEMAS["directory_bios"] = SCHEMAS["directory_bios"].append(pa.field("district", pa.int64()))
 SCHEMAS["legislators"] = pa.schema([
     ("bioguide_id", pa.string()), ("lis_id", pa.string()), ("first_name", pa.string()),
     ("last_name", pa.string()), ("official_full_name", pa.string()), ("is_current", pa.bool_()),
@@ -138,3 +143,5 @@ def run() -> None:
     write("legislator_terms", terms)
     write("legislator_party_affiliations", affiliations)
     write("legislator_social_media", legislators.parse_social_dir(RAW_DIR / "legislators"))
+
+    write("directory_bios", directory.parse_dir(RAW_DIR / "directory"))
