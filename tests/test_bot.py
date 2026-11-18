@@ -1,11 +1,16 @@
 import json
+from pathlib import Path
 
 import pytest
 
 from yan.bot import run as bot
 from yan.bot import state as bot_state
-from yan.bot.format import PostTooLong, closing_marks, format_post, party_break_line, party_line, tally_line
+from yan.bot.format import (PostTooLong, closing_marks, format_post, party_break_line, party_line, tally_line,
+                            vote_page_url)
 from yan.bot.rules import decide, measure_label
+from yan.config import SITE_URL
+
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def house_vote(**overrides):
@@ -522,25 +527,83 @@ def test_publish_waits_for_a_vote_page_that_is_not_live_and_keeps_order(out_dir,
     ]
 
 
-def test_is_live_only_for_a_200_and_logs_why_not(monkeypatch, capsys):
+def test_a_house_page_not_live_holds_back_a_later_senate_vote(out_dir, tmp_path, capsys):
+    senate = senate_vote(vote_id="s119-2-0258", session=2, roll_number=258, vote_date="2026-11-10",
+                         vote_time_et="2026-11-10T16:00:00")
+    votes = json.loads((out_dir / "votes.json").read_text())["votes"] + [senate]
+    (out_dir / "votes.json").write_text(json.dumps({"votes": votes}))
+    (out_dir / "votes" / "s119-2-0258.json").write_text(json.dumps(doc(senate)))
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher, checked = FakePublisher(), []
+
+    def page_live(url):
+        checked.append(url)
+        return "/house/" not in url
+
+    publish_run(out_dir, state_path, publisher, page_live=page_live)
+
+    # Posts stay in order across chambers: the Senate vote's page is live but
+    # it came after h119-2-0317, so it waits too, and neither chamber's state moves.
+    assert publisher.posts == []
+    assert checked == ["https://yeasandnaysdata.com/votes/119/house/2/317/"]
+    assert bot_state.load(state_path) == {"house": "h119-2-0316", "senate": "s119-2-0257"}
+
+
+def test_a_vote_page_that_never_goes_live_stalls_the_bot_until_the_backlog_is_too_old(out_dir, tmp_path):
+    # Known gap (BOARD.md Later): the wait has no bound of its own, so the bot
+    # holds every later vote until MAX_BACKLOG_AGE stops it. h119-2-0317 is
+    # from 2026-11-10.
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher()
+    for today in ["2026-11-11", "2026-11-12", "2026-11-13"]:
+        publish_run(out_dir, state_path, publisher, today=today, page_live=lambda url: False)
+    assert publisher.posts == []
+    assert bot_state.load(state_path)["house"] == "h119-2-0316"
+
+    with pytest.raises(SystemExit, match="older than 3 days"):
+        publish_run(out_dir, state_path, publisher, today="2026-11-14", page_live=lambda url: False)
+
+
+def test_vote_page_url_matches_the_site_route():
+    # The same cases are checked against the site's Yan.vote_url in
+    # site/test/yan_data_test.rb, so the bot never links a path the site doesn't build.
+    cases = json.loads((FIXTURES / "vote_urls.json").read_text())
+    assert cases
+    for case in cases:
+        assert vote_page_url(case["vote"]) == SITE_URL + case["path"]
+
+
+def test_is_live_only_for_a_200_on_the_same_host_and_logs_why_not(monkeypatch, capsys):
     import httpx
 
-    responses = {"https://a.test/": 200, "https://b.test/": 404}
+    # Requested URL -> (status, URL it ended at after redirects).
+    responses = {
+        "https://a.test/": (200, "https://a.test/"),
+        "http://a.test/old/": (200, "https://a.test/new/"),
+        "https://b.test/": (404, "https://b.test/"),
+        "https://lapsed.test/": (200, "https://parked.test/lander"),
+    }
     calls = []
 
     def fake_get(url, **kwargs):
         calls.append(kwargs)
         if url not in responses:
             raise httpx.ConnectError("down")
-        return httpx.Response(responses[url])
+        status, final = responses[url]
+        return httpx.Response(status, request=httpx.Request("GET", final))
 
     monkeypatch.setattr(httpx, "get", fake_get)
     assert bot.is_live("https://a.test/")
+    assert bot.is_live("http://a.test/old/")
     assert not bot.is_live("https://b.test/")
     assert not bot.is_live("https://c.test/")
+    assert not bot.is_live("https://lapsed.test/")
     assert all(kwargs["follow_redirects"] for kwargs in calls)
     out = capsys.readouterr().out
     assert "https://b.test/: HTTP 404" in out
+    assert "https://lapsed.test/: redirected to another host (parked.test)" in out
     assert "https://c.test/: ConnectError" in out
 
 

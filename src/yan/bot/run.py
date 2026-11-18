@@ -90,7 +90,9 @@ def is_live(url: str) -> bool:
 
     from yan.http import USER_AGENT
 
-    # Follows redirects so a change of domain or scheme doesn't read as "not live".
+    # Follows redirects so a change of scheme or path doesn't read as "not
+    # live", but only a page on the same host counts: a lapsed domain can
+    # redirect to a parking page that answers 200.
     try:
         resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0, follow_redirects=True)
     except httpx.HTTPError as exc:
@@ -98,7 +100,11 @@ def is_live(url: str) -> bool:
         return False
     if resp.status_code != 200:
         print(f"Page check for {url}: HTTP {resp.status_code}")
-    return resp.status_code == 200
+        return False
+    if resp.url.host != httpx.URL(url).host:
+        print(f"Page check for {url}: redirected to another host ({resp.url.host})")
+        return False
+    return True
 
 
 def pending(state: dict, out_dir: Path = OUT_DIR) -> list[dict]:
