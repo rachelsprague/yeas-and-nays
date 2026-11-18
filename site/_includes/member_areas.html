@@ -1,7 +1,8 @@
 {%- comment -%}
   A member's bill list by CRS policy area (Yan.member_areas): one bar per area,
-  most first, the rest under "more". With JS each bar is a filter button for the
-  list below it (filters.js tab "area"); without JS the bars still show the counts.
+  most first, the rest under "more". With JS each bar becomes a filter button for
+  the list below it (filters.js, data-button, tab "area"); without JS the bars are
+  plain text showing the counts, not buttons that do nothing.
   include.areas: Yan.member_areas for one list.
 {%- endcomment -%}
 {%- assign areas = include.areas -%}

@@ -322,6 +322,46 @@ module Yan
     d.positive? ? "#{state}, #{Filters.ordinal(d)} District" : "#{state}, At Large"
   end
 
+  ORDINAL_WORDS = %w[first second third fourth fifth sixth seventh eighth ninth].freeze
+
+  # The member page's service line, from every term congress-legislators lists:
+  # "Serving a third term in the House; first term began in 2021." or, for a
+  # former member, "Served 3 terms in the House; ...", plus "Also served in the Senate,
+  # 2013–2019." Nil without term data. Ordinals are spelled out through ninth (AP style).
+  def self.service_line(m)
+    terms = m["chamber_terms"].to_i
+    return nil unless terms.positive? && m["chamber_first_term_start"]
+
+    chamber, other = m["chamber"] == "senate" ? %w[Senate House] : %w[House Senate]
+    line = if m["is_current"]
+             nth = ORDINAL_WORDS[terms - 1] || Filters.ordinal(terms)
+             article = nth.start_with?("eighth", "8", "11", "18") ? "an" : "a"
+             "Serving #{article} #{nth} term in the #{chamber}"
+           else
+             "Served #{terms} #{terms == 1 ? "term" : "terms"} in the #{chamber}"
+           end
+    # The year only: a term filled by special election starts with its Congress, before
+    # the member took office.
+    line += "; first term began in #{m["chamber_first_term_start"].to_s[0, 4]}."
+    from, to = m["other_chamber_from_year"], m["other_chamber_to_year"]
+    line += " Also served in the #{other}, #{from == to ? from : "#{from}–#{to}"}." if from && to
+    line
+  end
+
+  # A Congressional Directory biography for the member page: the opening as a sentence
+  # ("Of Oakland, CA; born in ..."), the labeled fields as rows, and the edition's GovInfo
+  # page for the credit line. Nil without one.
+  def self.member_bio(bio)
+    return nil unless bio && bio["opening"]
+
+    rows = [["Education", bio["education"]], ["Career", bio["professional_history"]],
+            ["Military service", bio["military_service"]]].select { |_, text| text }
+    { "opening" => "#{bio["opening"][0].upcase}#{bio["opening"][1..]}.",
+      "rows" => rows.map { |label, text| { "label" => label, "text" => text } },
+      "date_issued" => bio["date_issued"],
+      "source_url" => "https://www.govinfo.gov/app/details/#{bio["edition"]}" }
+  end
+
   # The /find/ district map: shapes from site/_maps/{congress}.json
   # (scripts/build_district_map.py), each paired with the district's current
   # representative. "people" holds what the map's card shows for each seat,
@@ -1026,6 +1066,7 @@ module Yan
         m["initials"] = "#{m["first_name"].to_s[0]}#{m["last_name"].to_s[0]}"
         m["chamber_name"] = m["chamber"] == "senate" ? "U.S. Senate" : "U.S. House"
         m["where"] = Yan.where(m)
+        m["service_line"] = Yan.service_line(m)
         m["accounts"] = Yan.accounts(m)
         m["website_label"] = Yan.website_label(m["website_url"])
         # Exports before per-Congress stats had neither field: their stats are meta's Congress.
@@ -1101,6 +1142,7 @@ module Yan
         end
         lists["sponsored_areas"] = Yan.member_areas(lists["sponsored"])
         lists["cosponsored_areas"] = Yan.member_areas(lists["cosponsored"])
+        lists["bio"] = Yan.member_bio(bills["bio"])
         congress = m["last_congress"].to_i
         lists["months"] = Yan.member_months(list.select { |p| p["vote"]["congress"].to_i == congress && p["vote"]["chamber"] == m["chamber"] },
                                             chamber_months[[m["chamber"], congress]])

@@ -131,6 +131,10 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
                    next_convene_time_et timestamp, next_convene_pro_forma boolean)""")
     con.execute("""create table house_floor_days (legislative_day date, convene_time_et timestamp,
                    adjourned boolean, next_convene_time_et timestamp)""")
+    con.execute("""create table member_bios as select 'A000001' as bioguide_id, 'CDIR-2026-02-20' as edition,
+                   date '2026-02-20' as date_issued, 'of Town, AL; born in Town, AL' as opening,
+                   'B.A., Example College' as education, 'teacher' as professional_history,
+                   null::varchar as military_service""")
     con.close()
 
 
@@ -152,8 +156,12 @@ def test_run_writes_one_file_per_member_with_their_bills_newest_first(tmp_path):
     a = json.loads((out / "members" / "A000001.json").read_text())
     assert [g["congress"] for g in a["sponsored"]] == [120]
     assert [b["measure_label"] for b in a["sponsored"][0]["bills"]] == ["H.Res. 2", "H.R. 10", "H.R. 9"]
+    assert a["bio"] == {
+        "edition": "CDIR-2026-02-20", "date_issued": "2026-02-20", "opening": "of Town, AL; born in Town, AL",
+        "education": "B.A., Example College", "professional_history": "teacher", "military_service": None,
+    }
     assert json.loads((out / "members" / "B000002.json").read_text()) == {
-        "bioguide_id": "B000002", "sponsored": None, "cosponsored": None,
+        "bioguide_id": "B000002", "sponsored": None, "cosponsored": None, "bio": None,
     }
     assert sorted(p.name for p in (out / "members").iterdir()) == ["A000001.json", "B000002.json"]
     assert json.loads((out / "meta.json").read_text())["has_sponsored_bills"] is True

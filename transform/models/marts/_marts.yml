@@ -63,6 +63,25 @@ models:
           - not_null:
               config:
                 where: served_in_congress
+      - name: chamber_terms
+        description: >
+          Terms begun so far in the member's latest chamber, every Congress included, from
+          congress-legislators. A partial term after an appointment or special election counts
+          as one. Null for someone with no term (served_in_congress false).
+        data_tests:
+          - not_null:
+              config:
+                where: served_in_congress
+      - name: chamber_first_term_start
+        description: Start of the member's first term in their latest chamber.
+        data_tests:
+          - not_null:
+              config:
+                where: served_in_congress
+      - name: other_chamber_from_year
+        description: >
+          First and last year (other_chamber_to_year) of the member's service in the other
+          chamber, before or after; null if none.
       - name: website_url
         description: >
           Official website from congress-legislators. This and the other official links below
@@ -90,6 +109,34 @@ models:
           Official account links built from the account names in congress-legislators' social
           media file (x_url, facebook_url, instagram_url, youtube_url, mastodon_url). The file
           has no Bluesky field.
+
+  - name: member_bios
+    description: >
+      One row per member with a biography in the newest Congressional Directory (GovInfo),
+      matched by chamber, state and last name. Text is as printed: furnished or authorized
+      by the member's office, per the directory.
+    columns:
+      - name: bioguide_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('members')
+                field: bioguide_id
+      - name: edition
+        description: GovInfo package ID of the directory edition, e.g. "CDIR-2026-02-20".
+        data_tests: [not_null]
+      - name: date_issued
+        data_tests: [not_null]
+      - name: opening
+        description: >
+          The biography's first part after the name and party, as printed, e.g. "of Oakland,
+          CA; born in San Francisco, CA, January 29, 1977".
+        data_tests: [not_null]
+      - name: education
+      - name: professional_history
+      - name: military_service
 
   - name: member_stats
     description: >

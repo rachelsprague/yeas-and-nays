@@ -538,3 +538,37 @@ unit_tests:
         - {vote_id: h1, carried: true, yeas_needed: 213}
         - {vote_id: h2, carried: false, yeas_needed: 211}
         - {vote_id: h3, carried: null, yeas_needed: 1}
+
+  - name: member_bios_match_by_name_and_seat
+    description: >
+      Biographies match by chamber, state and last name as whole words, accents and
+      punctuation aside; on the member's own seat the first word of a two-word last name
+      will do. A member whose first term in the chamber began after the edition can't take
+      a predecessor's biography through a shared surname, and a redistricted member keeps
+      theirs.
+    model: member_bios
+    given:
+      - input: ref('stg_directory__bios')
+        rows:
+          - {edition: CDIR-2026-02-20, date_issued: 2026-02-20, state: SC, chamber: senate, district: null, printed_name: "PAT GREY", opening: "of Town, SC"}
+          - {edition: CDIR-2026-02-20, date_issued: 2026-02-20, state: CA, chamber: house, district: 5, printed_name: "LINDA T. SÁNCHEZ", opening: "of Whittier, CA"}
+          - {edition: CDIR-2026-02-20, date_issued: 2026-02-20, state: PR, chamber: house, district: 0, printed_name: "PABLO JOSE HERNANDEZ", opening: "Resident Commissioner of Puerto Rico"}
+          - {edition: CDIR-2026-02-20, date_issued: 2026-02-20, state: CA, chamber: house, district: 9, printed_name: "SAM KAMLAGER-DOVE", opening: "of Los Angeles, CA"}
+          - {edition: CDIR-2026-02-20, date_issued: 2026-02-20, state: CA, chamber: house, district: 7, printed_name: "JO GREYSON", opening: "of Fresno, CA"}
+      - input: ref('members')
+        rows:
+          - {bioguide_id: S1, state: SC, chamber: senate, district: null, last_name: Grey, chamber_first_term_start: 2015-01-03}
+          # Took the seat after the edition; a shared surname doesn't give her his biography.
+          - {bioguide_id: S2, state: SC, chamber: senate, district: null, last_name: Grey Nordone, chamber_first_term_start: 2026-07-14}
+          - {bioguide_id: H1, state: CA, chamber: house, district: 5, last_name: Sánchez, chamber_first_term_start: 2003-01-07}
+          - {bioguide_id: H2, state: PR, chamber: house, district: 0, last_name: Hernández Rivera, chamber_first_term_start: 2025-01-03}
+          # Redistricted from the 9th to the 11th: the name still matches.
+          - {bioguide_id: H3, state: CA, chamber: house, district: 11, last_name: Kamlager-Dove, chamber_first_term_start: 2023-01-03}
+          # "GREYSON" isn't "Grey" as a whole word.
+          - {bioguide_id: H4, state: CA, chamber: house, district: 8, last_name: Grey, chamber_first_term_start: 2021-01-03}
+    expect:
+      rows:
+        - {bioguide_id: S1, printed_name: "PAT GREY"}
+        - {bioguide_id: H1, printed_name: "LINDA T. SÁNCHEZ"}
+        - {bioguide_id: H2, printed_name: "PABLO JOSE HERNANDEZ"}
+        - {bioguide_id: H3, printed_name: "SAM KAMLAGER-DOVE"}

@@ -55,8 +55,9 @@ jobs:
           key: raw-${{ github.run_id }}
           restore-keys: raw-
 
-      # The Congress.gov key (CRS bill summaries) is passed to this step only,
-      # and sent only as a request header.
+      # The Congress.gov key (CRS bill summaries; also accepted by GovInfo, for the
+      # Congressional Directory) is passed to this step only, and sent only as a
+      # request header.
       - name: Ingest
         id: ingest
         env:

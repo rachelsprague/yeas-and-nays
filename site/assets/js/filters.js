@@ -7,6 +7,9 @@
 //   button[data-tab=key][data-value=v]   tab group; "all" matches every row.
 //                              A row matches if any of its space-separated
 //                              data-{key} values equals v.
+//   span[data-button]          becomes a button (not pressed) with the same
+//                              attributes and content, so a tab that only
+//                              works with JS is plain text without it.
 //   [data-row]                 a filterable row, carrying data-{key} attributes.
 //                              Without a tab's data-{key}, a row ignores that
 //                              tab; without a select's or search box's, it
@@ -24,7 +27,19 @@
 (function () {
   "use strict";
 
+  function upgrade(span) {
+    var b = document.createElement("button");
+    b.type = "button";
+    Array.prototype.forEach.call(span.attributes, function (a) {
+      if (a.name !== "data-button") b.setAttribute(a.name, a.value);
+    });
+    b.setAttribute("aria-pressed", "false");
+    while (span.firstChild) b.appendChild(span.firstChild);
+    span.replaceWith(b);
+  }
+
   function setUp(scope) {
+    scope.querySelectorAll("span[data-button]").forEach(upgrade);
     var controls = scope.querySelectorAll("[data-filter]");
     var tabs = scope.querySelectorAll("button[data-tab]");
     var rows = scope.querySelectorAll("[data-row]");

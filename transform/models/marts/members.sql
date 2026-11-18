@@ -6,7 +6,9 @@
   caucus reflect the member's most recent period of service; positions carry
   the values in effect on each vote's date. last_congress is the latest
   Congress the member served in or is recorded in, and served_from/served_to
-  are their dates in it (member_congresses has every Congress). Official links (website, contact form,
+  are their dates in it (member_congresses has every Congress). chamber_terms and
+  chamber_first_term_start count every term in the member's latest chamber, on the
+  site or not; other_chamber_* give years in the other chamber. Official links (website, contact form,
   phone, office, social media) are filled only for members in office now:
   former members' records keep links that no longer work.
 -#}
@@ -65,6 +67,20 @@ latest_term as (
     qualify row_number() over (partition by bioguide_id order by term_start desc) = 1
 ),
 
+-- Every term begun so far in each chamber (a partial term after an appointment or special
+-- election counts as one), for the service line on member pages.
+chamber_service as (
+    select
+        bioguide_id,
+        chamber,
+        count(*) as terms,
+        min(term_start) as first_term_start,
+        max(term_end) as last_term_end
+    from {{ ref('stg_legislators__terms') }}
+    where term_start <= current_date
+    group by bioguide_id, chamber
+),
+
 -- One row per member, so a repeated entry in the source can't duplicate a member.
 social as (
     select *
@@ -90,6 +106,11 @@ select
     service.served_in_congress,
     service.served_from,
     service.served_to,
+    this_chamber.terms as chamber_terms,
+    this_chamber.first_term_start as chamber_first_term_start,
+    -- Service in the other chamber, before or after: first and last year.
+    year(other_chamber.first_term_start) as other_chamber_from_year,
+    year(other_chamber.last_term_end) as other_chamber_to_year,
     people.is_current,
     latest_term.website_url,
     latest_term.contact_form_url,
@@ -106,5 +127,9 @@ select
 from latest
 inner join people on people.bioguide_id = latest.bioguide_id
 left join service on service.bioguide_id = latest.bioguide_id
+left join chamber_service as this_chamber
+    on this_chamber.bioguide_id = latest.bioguide_id and this_chamber.chamber = latest.chamber
+left join chamber_service as other_chamber
+    on other_chamber.bioguide_id = latest.bioguide_id and other_chamber.chamber != latest.chamber
 left join latest_term on latest_term.bioguide_id = latest.bioguide_id and people.is_current
 left join social on social.bioguide_id = latest.bioguide_id and people.is_current

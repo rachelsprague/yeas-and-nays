@@ -2336,12 +2336,75 @@ class MemberChartsTest < Minitest::Test
                .fetch("/members/Z000001/index.html")
     assert_includes html, %(<span class="med">House median: 0.0%</span>)
     assert_includes html, %(<span class="m-month" title="Jan. 2025: 1 cast, 0 missed">)
-    assert_includes html, %(data-tab="area" data-value="arts-culture-x" aria-pressed="false")
+    # Plain text until filters.js makes it a button, so it's no dead control without JS.
+    assert_includes html, %(<span class="m-area" data-button data-tab="area" data-value="arts-culture-x">)
+    refute_includes html, %(<button type="button" data-tab="area" data-value="arts)
     assert_includes html, "<span>Arts &amp; &quot;Culture&quot; &lt;x&gt;</span>"
     assert_includes html, %(<li class="vrow" data-row data-area="arts-culture-x">)
     assert_includes html, %(<li class="vrow" data-row data-area="not-yet-assigned">)
     assert_includes html, %(data-count data-noun="in the 119th Congress")
     # No cosponsored bills: no chart for them.
     assert_equal 1, html.scan('<div class="m-areas">').size
+  end
+end
+
+# The service line and Congressional Directory biography on member pages.
+class MemberBioTest < Minitest::Test
+  include SiteBuild
+
+  BIO = {
+    "edition" => "CDIR-2026-02-20", "date_issued" => "2026-02-20",
+    "opening" => %q(of "Oak" <town>, CA; born in O'Fallon & Co, MO, May 1, 1970),
+    "education" => "B.A., Example College, 1992", "professional_history" => "teacher, 1992-2000",
+    "military_service" => nil
+  }.freeze
+
+  def service(fields) = Yan.service_line({ "chamber" => "house", "is_current" => true,
+                                           "chamber_first_term_start" => "2021-01-03" }.merge(fields))
+
+  def test_service_line_counts_terms_in_words_through_ninth
+    assert_equal "Serving a third term in the House; first term began in 2021.", service("chamber_terms" => 3)
+    assert_equal "Serving an eighth term in the House; first term began in 2021.", service("chamber_terms" => 8)
+    assert_equal "Serving a 10th term in the House; first term began in 2021.", service("chamber_terms" => 10)
+    assert_equal "Serving an 11th term in the House; first term began in 2021.", service("chamber_terms" => 11)
+    assert_equal "Serving an 18th term in the House; first term began in 2021.", service("chamber_terms" => 18)
+    assert_equal "Serving a 21st term in the House; first term began in 2021.", service("chamber_terms" => 21)
+  end
+
+  def test_service_line_for_former_members_and_the_other_chamber
+    assert_equal "Served 1 term in the House; first term began in 2021.",
+                 service("chamber_terms" => 1, "is_current" => false)
+    assert_equal "Serving a second term in the Senate; first term began in 2021. Also served in the House, 2013–2019.",
+                 service("chamber" => "senate", "chamber_terms" => 2, "other_chamber_from_year" => 2013, "other_chamber_to_year" => 2019)
+    assert_includes service("chamber_terms" => 2, "other_chamber_from_year" => 2019, "other_chamber_to_year" => 2019),
+                    "Also served in the Senate, 2019."
+    assert_nil service("chamber_terms" => nil)
+  end
+
+  def test_bio_keeps_fields_it_has_and_links_the_edition
+    bio = Yan.member_bio(BIO)
+    assert_equal %q(Of "Oak" <town>, CA; born in O'Fallon & Co, MO, May 1, 1970.), bio["opening"]
+    assert_equal %w[Education Career], bio["rows"].map { |r| r["label"] }
+    assert_equal "https://www.govinfo.gov/app/details/CDIR-2026-02-20", bio["source_url"]
+    assert_nil Yan.member_bio(nil)
+  end
+
+  def test_member_page_shows_service_line_and_escaped_bio
+    member = EscapingTest::MEMBER.merge("chamber_terms" => 3, "chamber_first_term_start" => "2021-01-03")
+    pages = build_site([member], [[EscapingTest::VOTE, EscapingTest::DOC]],
+                       member_files: { "Z000001" => { "sponsored" => nil, "cosponsored" => nil, "bio" => BIO } })
+    html = pages.fetch("/members/Z000001/index.html")
+    assert_includes html, "Serving a third term in the House; first term began in 2021."
+    assert_includes html, %(<h2 id="bio-h" class="kicker soft">Before Congress</h2>)
+    assert_includes html, "<p>Of &quot;Oak&quot; &lt;town&gt;, CA; born in O&#39;Fallon &amp; Co, MO, May 1, 1970.</p>"
+    assert_includes html, "<div><dt>Career</dt><dd>teacher, 1992-2000</dd></div>"
+    refute_includes html, "<dt>Military service</dt>"
+    assert_includes html, %(<a class="link" href="https://www.govinfo.gov/app/details/CDIR-2026-02-20">Congressional Directory</a>, Feb. 20, 2026 edition.)
+  end
+
+  def test_member_page_without_a_bio_has_no_section
+    pages = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]],
+                       member_files: { "Z000001" => { "sponsored" => nil, "cosponsored" => nil, "bio" => nil } })
+    refute_includes pages.fetch("/members/Z000001/index.html"), "Before Congress"
   end
 end
