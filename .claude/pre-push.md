@@ -46,12 +46,12 @@ Changes under `data/out/` from a local export are safe to restore
 
 ## Backlog and board
 
-Findings that aren't fixed before the push go in `BOARD.md` as one-line
-items (Later, or Next if they matter soon), with any detail in
-`backlog/<slug>.md`. Once the PR is open, leave the worktree (keep it) and
-in the main checkout's `BOARD.md` add ` — PR #N, awaiting merge` to the
-item's line in Now, and to each bundled item still in the PR, keeping the
-claims (`CLAUDE.md` > Claiming items).
+Filed findings go in `BOARD.md`, one per line, each line 150 characters or
+fewer (Later, or Next if it matters soon), with any detail in
+`backlog/<slug>.md` linked from the line. Once the PR is open, leave the
+worktree (keep it) and in the main checkout's `BOARD.md` add
+` — PR #N, awaiting merge` to the item's line in Now, and to each bundled
+item still in the PR, keeping the claims (`CLAUDE.md` > Claiming items).
 
 ## After merge
 
