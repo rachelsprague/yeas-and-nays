@@ -518,10 +518,12 @@ class FakePublisher:
         self.posts.append((text, url))
 
 
-def publish_run(out_dir, state_path, publisher, today="2026-11-11", sleeps=None, page_live=lambda url: True):
+def publish_run(out_dir, state_path, publisher, today="2026-11-11", sleeps=None, page_live=lambda url: True,
+                page_missing=lambda url: False):
     bot.run(state_path, out_dir, publish=True, publisher=publisher,
             sleep=(sleeps.append if sleeps is not None else lambda s: None),
-            today=__import__("datetime").date.fromisoformat(today), page_live=page_live)
+            today=__import__("datetime").date.fromisoformat(today), page_live=page_live,
+            page_missing=page_missing)
 
 
 def test_publish_posts_in_order_and_advances_state(out_dir, tmp_path):
@@ -569,13 +571,17 @@ def test_publish_waits_for_a_vote_page_that_is_not_live_and_keeps_order(out_dir,
 
     def page_live(url):
         checked.append(url)
-        return not url.endswith("/house/2/316/")
+        return "/house/" not in url
 
     publish_run(out_dir, state_path, publisher, page_live=page_live)
 
-    # The senate vote posts; h119-2-0316's page isn't up, so it and the vote after it wait.
+    # The senate vote posts; the House pages aren't deployed yet, so
+    # h119-2-0316 and the vote after it wait.
     assert [url for _, url in publisher.posts] == ["https://yeasandnaysdata.com/votes/119/senate/2/257/"]
-    assert checked[-1] == "https://yeasandnaysdata.com/votes/119/house/2/316/"
+    assert checked[-2:] == [
+        "https://yeasandnaysdata.com/votes/119/house/2/316/",
+        "https://yeasandnaysdata.com/votes/119/house/2/317/",
+    ]
     assert bot_state.load(state_path) == {"house": "h119-2-0300", "senate": "s119-2-0257"}
     assert "page not live yet" in capsys.readouterr().out
 
@@ -588,33 +594,80 @@ def test_publish_waits_for_a_vote_page_that_is_not_live_and_keeps_order(out_dir,
     ]
 
 
-def test_a_house_page_not_live_holds_back_a_later_senate_vote(out_dir, tmp_path, capsys):
+def add_later_senate_vote(out_dir):
     senate = senate_vote(vote_id="s119-2-0258", session=2, roll_number=258, vote_date="2026-11-10",
                          vote_time_et="2026-11-10T16:00:00")
     votes = json.loads((out_dir / "votes.json").read_text())["votes"] + [senate]
     (out_dir / "votes.json").write_text(json.dumps({"votes": votes}))
     (out_dir / "votes" / "s119-2-0258.json").write_text(json.dumps(doc(senate)))
+
+
+def test_a_house_page_not_live_holds_back_a_later_senate_vote_not_yet_deployed(out_dir, tmp_path):
+    add_later_senate_vote(out_dir)
     state_path = tmp_path / "state.json"
     bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
     publisher, checked = FakePublisher(), []
 
     def page_live(url):
         checked.append(url)
-        return "/house/" not in url
+        return False
 
     publish_run(out_dir, state_path, publisher, page_live=page_live)
 
-    # Posts stay in order across chambers: the Senate vote's page is live but
-    # it came after h119-2-0317, so it waits too, and neither chamber's state moves.
+    # Posts stay in order across chambers: the Senate vote came after
+    # h119-2-0317, so it waits too, and neither chamber's state moves.
     assert publisher.posts == []
-    assert checked == ["https://yeasandnaysdata.com/votes/119/house/2/317/"]
+    assert checked == [
+        "https://yeasandnaysdata.com/votes/119/house/2/317/",
+        "https://yeasandnaysdata.com/votes/119/senate/2/258/",
+    ]
     assert bot_state.load(state_path) == {"house": "h119-2-0316", "senate": "s119-2-0257"}
 
 
-def test_a_vote_page_that_never_goes_live_stalls_the_bot_until_the_backlog_is_too_old(out_dir, tmp_path):
-    # Known gap (BOARD.md Later): the wait has no bound of its own, so the bot
-    # holds every later vote until MAX_BACKLOG_AGE stops it. h119-2-0317 is
-    # from 2026-11-10.
+def test_a_page_missing_after_a_later_vote_deployed_is_skipped(out_dir, tmp_path, capsys):
+    # The site is up with a later vote's page, so h119-2-0317's page isn't
+    # waiting on a deploy; holding it would stall every later post.
+    add_later_senate_vote(out_dir)
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher, checked = FakePublisher(), []
+
+    def page_missing(url):
+        checked.append(url)
+        return "/house/" in url
+
+    publish_run(out_dir, state_path, publisher, page_live=lambda url: "/house/" not in url,
+                page_missing=page_missing)
+
+    assert [url for _, url in publisher.posts] == ["https://yeasandnaysdata.com/votes/119/senate/2/258/"]
+    assert checked == ["https://yeasandnaysdata.com/votes/119/house/2/317/"]
+    assert bot_state.load(state_path) == {"house": "h119-2-0317", "senate": "s119-2-0258"}
+    out = capsys.readouterr().out
+    assert "h119-2-0317  page missing" in out
+    assert "::warning::Bot skipped h119-2-0317" in out
+
+
+def test_a_page_check_that_fails_without_a_404_is_held_not_skipped(out_dir, tmp_path):
+    # A later vote's page is live, but this page's check failed for another
+    # reason (timeout, server error), so the vote waits for the next run
+    # instead of being dropped.
+    add_later_senate_vote(out_dir)
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher()
+
+    publish_run(out_dir, state_path, publisher, page_live=lambda url: "/house/" not in url,
+                page_missing=lambda url: False)
+
+    assert publisher.posts == []
+    assert bot_state.load(state_path) == {"house": "h119-2-0316", "senate": "s119-2-0257"}
+
+
+def test_the_newest_vote_page_never_going_live_stalls_the_bot_until_the_backlog_is_too_old(out_dir, tmp_path):
+    # No later vote's page shows the site has deployed, so the bot can't tell
+    # a missing page from a deploy that hasn't happened, and holds it. If the
+    # site never comes back, MAX_BACKLOG_AGE fails the run, which is the alert.
+    # h119-2-0317 is from 2026-11-10.
     state_path = tmp_path / "state.json"
     bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
     publisher = FakePublisher()
@@ -636,7 +689,7 @@ def test_vote_page_url_matches_the_site_route():
         assert vote_page_url(case["vote"]) == SITE_URL + case["path"]
 
 
-def test_is_live_only_for_a_200_on_the_same_host_and_logs_why_not(monkeypatch, capsys):
+def test_is_live_only_for_a_200_and_is_missing_only_for_a_404_on_the_same_host(monkeypatch, capsys):
     import httpx
 
     # Requested URL -> (status, URL it ended at after redirects).
@@ -645,6 +698,8 @@ def test_is_live_only_for_a_200_on_the_same_host_and_logs_why_not(monkeypatch, c
         "http://a.test/old/": (200, "https://a.test/new/"),
         "https://b.test/": (404, "https://b.test/"),
         "https://lapsed.test/": (200, "https://parked.test/lander"),
+        "https://gone.test/": (404, "https://parked.test/404"),
+        "https://busy.test/": (503, "https://busy.test/"),
     }
     calls = []
 
@@ -661,6 +716,13 @@ def test_is_live_only_for_a_200_on_the_same_host_and_logs_why_not(monkeypatch, c
     assert not bot.is_live("https://b.test/")
     assert not bot.is_live("https://c.test/")
     assert not bot.is_live("https://lapsed.test/")
+    # Only a 404 on the same host reads as missing.
+    assert bot.is_missing("https://b.test/")
+    assert not bot.is_missing("https://a.test/")
+    assert not bot.is_missing("https://c.test/")
+    assert not bot.is_missing("https://lapsed.test/")
+    assert not bot.is_missing("https://gone.test/")
+    assert not bot.is_missing("https://busy.test/")
     assert all(kwargs["follow_redirects"] for kwargs in calls)
     out = capsys.readouterr().out
     assert "https://b.test/: HTTP 404" in out

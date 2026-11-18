@@ -86,6 +86,17 @@ def preview(n: int = 10, extra: list[str] | None = None, out_dir: Path = OUT_DIR
 
 def is_live(url: str) -> bool:
     """Whether the page is up on the site, so a post never links a 404."""
+    return _page_status(url) == 200
+
+
+def is_missing(url: str) -> bool:
+    """Whether the site answers that the page doesn't exist. A failed request,
+    a server error or a redirect off the site doesn't count."""
+    return _page_status(url) == 404
+
+
+def _page_status(url: str) -> int | None:
+    """The page's HTTP status, or None if the request failed or left the site's host."""
     import httpx
 
     from yan.http import USER_AGENT
@@ -97,14 +108,13 @@ def is_live(url: str) -> bool:
         resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0, follow_redirects=True)
     except httpx.HTTPError as exc:
         print(f"Page check failed for {url}: {type(exc).__name__}")
-        return False
+        return None
     if resp.status_code != 200:
         print(f"Page check for {url}: HTTP {resp.status_code}")
-        return False
     if resp.url.host != httpx.URL(url).host:
         print(f"Page check for {url}: redirected to another host ({resp.url.host})")
-        return False
-    return True
+        return None
+    return resp.status_code
 
 
 def pending(state: dict, out_dir: Path = OUT_DIR) -> list[dict]:
@@ -112,7 +122,8 @@ def pending(state: dict, out_dir: Path = OUT_DIR) -> list[dict]:
 
 
 def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publish: bool = False,
-        publisher=None, sleep=time.sleep, today: dt.date | None = None, page_live=None) -> None:
+        publisher=None, sleep=time.sleep, today: dt.date | None = None, page_live=None,
+        page_missing=None) -> None:
     state = bot_state.load(state_path)
     missing = [c for c, last in state.items() if last is None]
     if missing:
@@ -138,6 +149,7 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
 
         publisher = BlueskyPublisher()
     page_live = page_live or is_live
+    page_missing = page_missing or is_missing
     already_posted = publisher.recent_links()
     print(f"PUBLISHING: {len(queue)} new votes since last run (at most {MAX_POSTS_PER_RUN} posts).\n")
     posts = 0
@@ -155,11 +167,22 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
             if {text.rsplit("\n", 1)[-1], display_url(vote["source_url"])} & already_posted:
                 print(f"--- {vote['vote_id']}  already on Bluesky; not posting again\n")
             elif not page_live(url):
-                # The site deploys after this run commits its data, so a new
-                # vote's page isn't up yet. Stop here, keeping posts in order;
-                # the next run posts it once the page is live.
-                print(f"--- {vote['vote_id']}  page not live yet ({url}); it and later votes wait for the next run")
-                break
+                # The newest pending vote, posted or not: every vote has a page.
+                newest = queue[-1]
+                if newest is not vote and page_live(vote_page_url(newest)) and page_missing(url):
+                    # The site has deployed a later vote's page, so this one
+                    # isn't waiting on a deploy: it's missing. Skip it rather
+                    # than hold every later post. Only a 404 counts, so a
+                    # failed request or server error doesn't drop a post.
+                    print(f"--- {vote['vote_id']}  page missing ({url}) though a later vote's page is live; skipped\n")
+                    # Shows on the Actions run page, without failing the run.
+                    print(f"::warning::Bot skipped {vote['vote_id']}: its page {url} is missing")
+                else:
+                    # The site deploys after this run commits its data, so a new
+                    # vote's page isn't up yet. Stop here, keeping posts in order;
+                    # the next run posts it once the page is live.
+                    print(f"--- {vote['vote_id']}  page not live yet ({url}); it and later votes wait for the next run")
+                    break
             else:
                 if posts:
                     sleep(POST_INTERVAL_SECONDS)
