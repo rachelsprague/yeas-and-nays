@@ -1,2 +1,9 @@
-{%- comment -%} The official title: the measure title, else the Senate's vote title, else the question. {%- endcomment -%}
-{{- include.vote.measure_title | default: include.vote.vote_title | default: include.vote.question | escape -}}
+{%- comment -%}
+  The official title: the measure title, else the Senate's vote title, else
+  the question, skipping any that is blank or only whitespace. Escaped unless
+  raw=true (for callers that escape the result themselves).
+{%- endcomment -%}
+{%- assign official_title = include.vote.measure_title | strip -%}
+{%- if official_title == "" %}{% assign official_title = include.vote.vote_title | strip %}{% endif -%}
+{%- if official_title == "" %}{% assign official_title = include.vote.question | strip %}{% endif -%}
+{%- if include.raw %}{{ official_title }}{% else %}{{ official_title | escape }}{% endif -%}

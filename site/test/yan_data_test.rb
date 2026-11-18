@@ -844,6 +844,39 @@ class LayoutTest < Minitest::Test
     assert_equal "On Passage", og.(2)
   end
 
+  # A blank or whitespace-only title falls through to the next one, in the
+  # heading, the link card and the search title alike; a question that is the
+  # title but for whitespace is named once in the search title, not "Q: Q".
+  def test_whitespace_titles_fall_back_and_the_question_is_not_repeated
+    base = EscapingTest::VOTE.merge("measure_title" => nil, "bill_type" => nil, "congress_gov_url" => nil)
+    votes = [base.merge("measure_title" => "  ", "vote_title" => " A joint resolution providing for a vote\n"),
+             base.merge("vote_id" => "h119-1-0002", "roll_number" => 2, "measure_title" => " ", "vote_title" => "\t",
+                        "question" => "On Passage ")]
+    pages = build_site([EscapingTest::MEMBER], votes.map { |v| [v, EscapingTest::DOC] })
+    page = ->(roll) { pages.fetch("/votes/119/house/1/#{roll}/index.html") }
+    h1 = ->(roll) { page.(roll)[%r{<h1 class="vote-h">(.*?)</h1>}m, 1] }
+    og = ->(roll) { page.(roll)[/<meta property="og:title" content="([^"]*)">/, 1] }
+    search = ->(roll) { page.(roll)[/data-title="([^"]*)"/, 1] }
+
+    assert_equal "A joint resolution providing for a vote", h1.(1)
+    assert_equal "A joint resolution providing for a vote", og.(1)
+    assert_equal "On Passage: A joint resolution providing for a vote (House, Jan. 3, 2025)", search.(1)
+    assert_equal "On Passage", h1.(2)
+    assert_equal "On Passage", og.(2)
+    assert_equal "On Passage (House, Jan. 3, 2025)", search.(2)
+  end
+
+  # The search page keeps its fallback text until Pagefind's UI is built, so
+  # a missing index or a failed constructor never leaves the area blank.
+  def test_search_fallback_is_removed_only_after_the_ui_is_built
+    html = build.fetch("/search/index.html")
+    assert_match(%r{<div id="search" class="sitesearch-results">\s*<p class="soft" data-search-fallback>.*?<a class="link" href="/votes/">}m, html)
+    built = html.index("new PagefindUI(")
+    removed = html.index(%(document.querySelector("[data-search-fallback]").remove()))
+    assert built && removed && built < removed, "fallback removed before new PagefindUI"
+    assert_operator html.index(%(if (typeof PagefindUI === "undefined") return;)), :<, built
+  end
+
   # A vote with a card from `yan cards` points og:image at it, with the title
   # and description as alt text; a vote without one keeps the brand card.
   def test_link_card_image_per_vote
