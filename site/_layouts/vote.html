@@ -31,7 +31,7 @@ layout: default
       <p class="small muted nums">
         {{ page.total }} members recorded.
         {%- if page.share %} {% if v.yeas_needed %}{{ v.yeas_needed | escape }} needed to carry, {{ page.share | escape }}{% else %}Needed to carry: {{ page.share | escape }}{% endif %}.{% endif %}
-        {%- if v.tie_breaker_by %} The {{ v.tie_breaker_by | escape }} voted {{ v.tie_breaker_vote | escape }} to break the tie.{% endif %}
+        {%- if v.tie_breaker_by and v.tie_breaker_vote %} The {{ v.tie_breaker_by | escape }} voted {{ v.tie_breaker_vote | escape }} to break the tie.{% endif %}
       </p>
     </section>
 

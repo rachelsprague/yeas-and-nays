@@ -70,11 +70,16 @@ module Yan
 
   # A vote page's description (meta and link-card text): "House roll call
   # 317, Nov. 10, 2026. Motion to Refer: Passed, 211 Yea · 204 Nay · 18 Not
-  # Voting." Present and Not Voting only when nonzero, as in bot posts.
+  # Voting." Present and Not Voting only when nonzero, and a tie the Vice
+  # President broke named after the tally, as in bot posts.
   def self.vote_description(view)
     v = view["vote"]
     tally = view["tally"].select { |t| t["count"].positive? || %w[yea nay].include?(t["mark"]) }
-                         .map { |t| "#{t["count"]} #{t["label"]}" }.join(" · ")
+                         .map { |t| "#{t["count"]} #{t["label"]}" }
+    unless v["tie_breaker_by"].to_s.empty? || v["tie_breaker_vote"].to_s.empty?
+      tally << "Vice President voted #{v["tie_breaker_vote"]} to break the tie"
+    end
+    tally = tally.join(" · ")
     "#{CHAMBER_NAMES[v["chamber"]]} roll call #{v["roll_number"]}, #{Filters.ap_date(v["vote_date"])}. " \
       "#{v["result_label"]}, #{tally}."
   end

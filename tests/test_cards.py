@@ -39,6 +39,23 @@ def test_card_text_uses_the_words_recorded():
     assert card_text(vote(), doc("Guilty", "Not Guilty")).tally == "1 Guilty  ·  1 Not Guilty"
 
 
+def test_card_text_names_a_vice_president_tie_break():
+    # As in bot posts; the Vice President isn't among the positions, so the bar stays 50/50.
+    tie = vote(chamber="senate", result="Bill Passed",
+               tie_breaker_by="Vice President of the United States", tie_breaker_vote="Yea")
+    card = card_text(tie, doc("Yea", "Nay"))
+    assert card.note == "Vice President voted Yea to break the tie"
+    assert card.tally == "1 Yea  ·  1 Nay"
+    assert card.counts == (1, 1, 0)
+    assert card_text({**tie, "tie_breaker_vote": "Nay"}, doc("Yea", "Nay")).note == \
+        "Vice President voted Nay to break the tie"
+    # Both fields or no note, as in bot posts and the vote page.
+    assert card_text(vote(tie_breaker_by=None, tie_breaker_vote=None), doc("Yea", "Nay")).note is None
+    assert card_text({**tie, "tie_breaker_vote": None}, doc("Yea", "Nay")).note is None
+    # The note takes its own line; the question moves up for it.
+    assert render(card).size == (1200, 630)
+
+
 def test_card_text_title_falls_back_like_the_heading():
     # The Senate's vote title, then the question; only the measure title is quoted.
     senate = vote(chamber="senate", vote_date="2025-09-02", measure_title=None, measure_label=None,
