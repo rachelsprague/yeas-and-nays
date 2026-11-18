@@ -47,7 +47,8 @@ Changes under `data/out/` from a local export are safe to restore
 ## Backlog and board
 
 Filed findings go in `BOARD.md` from the main checkout, after leaving the
-worktree (neither file exists in a worktree): one per line, each line 150
+worktree (neither file exists in a worktree): one per line, starting with
+a `P0`-`P5` priority (`CLAUDE.md` > Backlog), each line 150
 characters or fewer as filed, before any claim or PR note (Later, or Next
 if it matters soon), with any detail in `backlog/<slug>.md` linked from
 the line. Once the PR is open, leave the
