@@ -17,7 +17,7 @@ make all      # ingest -> stage -> model -> export
 | Model | `make model` | `dbt build` in `transform/`: builds DuckDB models and runs unit and data tests. |
 | Export | `make export` | Writes JSON from the marts into `data/out/` (committed). |
 
-Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make test` (CI runs them on every PR and push to `main`). `make hooks` installs a git pre-push hook that refuses commits without a recorded pre-push review (`.claude/skills/pre-push/`).
+Requires [uv](https://docs.astral.sh/uv/). Python and site plugin tests: `make test` (CI runs them on every PR and push to `main`). Changes land through pull requests after a pre-push review; `.claude/pre-push.md` sets this repo's review focus.
 
 ## Sources
 

@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: hooks all ingest stage model export bot-preview site site-search site-serve test pytest sitetest clean
+.PHONY: all ingest stage model export bot-preview site site-search site-serve test pytest sitetest clean
 
 all: ingest stage model export
 
@@ -36,9 +36,6 @@ pytest:
 
 sitetest:        ## tests for the site's Jekyll plugin
 	cd site && bundle install --quiet && bundle exec ruby test/yan_data_test.rb
-
-hooks:           ## install the git pre-push hook (refuses pushes without a /pre-push review)
-	git config core.hooksPath .githooks
 
 clean:           ## remove local intermediate files (keeps raw downloads)
 	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache
