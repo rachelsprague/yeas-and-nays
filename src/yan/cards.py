@@ -7,6 +7,7 @@ site/assets/cards/{vote_id}.png, which the vote page's og:image points to.
     “Common Sense 250 Act”
 
     Motion to Suspend the Rules and Pass
+    (Vice President voted Yea to break the tie, on a vote where that happened)
     Passed   365 Yea · 36 Nay · 32 Not Voting
     ███████████████████████████████████████████████████████████▓▓▓▓▓▓░░░░░
 
@@ -56,6 +57,7 @@ class Card:
     result: str  # "Passed"
     tally: str  # "365 Yea · 36 Nay · 32 Not Voting"
     counts: tuple[int, int, int]  # yes, no, and present + not voting, for the bar
+    note: str | None = None  # "Vice President voted Yea to break the tie"
 
 
 def position_kind(raw: str) -> str:
@@ -92,6 +94,11 @@ def card_text(vote: dict, doc: dict) -> Card | None:
         tally.append(f"{counts['present']} Present")
     if counts["not_voting"]:
         tally.append(f"{counts['not_voting']} Not Voting")
+    # A tie the Vice President broke, in bot posts' words (tally_line); its own
+    # line, since it doesn't fit beside a long result.
+    note = None
+    if vote.get("tie_breaker_by") and vote.get("tie_breaker_vote"):
+        note = f"Vice President voted {vote['tie_breaker_vote']} to break the tie"
 
     question = vote["question"]
     title = vote.get("measure_title") or vote.get("vote_title") or question
@@ -106,6 +113,7 @@ def card_text(vote: dict, doc: dict) -> Card | None:
         result=vote["result"],
         tally="  ·  ".join(tally),
         counts=(counts["yes"], counts["no"], counts["present"] + counts["not_voting"]),
+        note=note,
     )
 
 
@@ -187,10 +195,14 @@ def render(card: Card) -> Image.Image:
     d.text((right, 90), card.meta, font=sans(21, 500), fill=MUTED, anchor="rs")
     d.line((MARGIN, 116, right, 116), fill=RULE, width=2)
 
-    # Bottom block, from the bar up: result and tally on one baseline, the question above.
+    # Bottom block, from the bar up: result and tally on one baseline, any
+    # tie-break note above, the question above that.
     bar_top, bar_height = 550, 14
     baseline = bar_top - 30
     question_baseline = baseline - 70
+    if card.note:
+        d.text((MARGIN, question_baseline), card.note, font=sans(22, 500), fill=INK, anchor="ls")
+        question_baseline -= 34
     result_size, tally_size = line_sizes(lambda s: d.textlength(card.result, font=serif(s, 600)),
                                          lambda s: d.textlength(card.tally, font=sans(s, 500)), right - MARGIN)
     d.text((MARGIN, baseline), card.result, font=serif(result_size, 600), fill=AUBERGINE, anchor="ls")

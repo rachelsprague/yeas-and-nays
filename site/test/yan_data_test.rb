@@ -849,7 +849,8 @@ class LayoutTest < Minitest::Test
   end
 
   # Present and Not Voting are left out of a vote's description when zero;
-  # a Speaker election lists its candidates.
+  # a Speaker election lists its candidates; a Vice President's tie-break is
+  # named as in bot posts.
   def test_vote_description_tally
     view = ->(vote, tally) { { "vote" => EscapingTest::VOTE.merge(vote), "tally" => tally } }
     yn = [{ "label" => "Yea", "count" => 211, "mark" => "yea" }, { "label" => "Nay", "count" => 204, "mark" => "nay" },
@@ -866,6 +867,11 @@ class LayoutTest < Minitest::Test
                { "label" => "Present", "count" => 0, "mark" => "present" }, { "label" => "Not Voting", "count" => 1, "mark" => "nv" }]
     assert_equal "House roll call 2, Jan. 3, 2025. Most votes: Mike Johnson (R-LA-4), 216 Johnson · 215 Jeffries · 1 Not Voting.",
                  Yan.vote_description(view.({ "roll_number" => 2, "result_label" => "Most votes: Mike Johnson (R-LA-4)" }, speaker))
+    tie = [{ "label" => "Yea", "count" => 50, "mark" => "yea" }, { "label" => "Nay", "count" => 50, "mark" => "nay" }]
+    assert_equal "Senate roll call 372, Oct. 1, 2025. Bill Passed, 50 Yea · 50 Nay · Vice President voted Yea to break the tie.",
+                 Yan.vote_description(view.({ "chamber" => "senate", "roll_number" => 372, "vote_date" => "2025-10-01",
+                                              "result_label" => "Bill Passed", "tie_breaker_by" => "Vice President of the United States",
+                                              "tie_breaker_vote" => "Yea" }, tie))
   end
 
   # GitHub Pages serves /404.html for a missing address at any depth, so its
