@@ -1,0 +1,26 @@
+{%- comment -%}
+  A member's bill list by CRS policy area (Yan.member_areas): one bar per area,
+  most first, the rest under "more". With JS each bar is a filter button for the
+  list below it (filters.js tab "area"); without JS the bars still show the counts.
+  include.areas: Yan.member_areas for one list.
+{%- endcomment -%}
+{%- assign areas = include.areas -%}
+<div class="m-areas">
+  <div class="head-row">
+    <h3 class="kicker soft">By policy area</h3>
+    <button type="button" class="linkish small js-only" data-tab="area" data-value="all" aria-pressed="true">All areas</button>
+  </div>
+  <ul class="m-area-list">
+    {%- for a in areas.shown %}{% include member_area.html area=a %}{% endfor %}
+  </ul>
+  {%- if areas.more.size > 0 %}
+  <details class="crs">
+    <summary class="small">{{ areas.more.size }} more {% if areas.more.size == 1 %}area{% else %}areas{% endif %}</summary>
+    <ul class="m-area-list">
+      {%- for a in areas.more %}{% include member_area.html area=a %}{% endfor %}
+    </ul>
+  </details>
+  {%- endif %}
+  <p class="small soft">The Congressional Research Service assigns each bill one policy area.</p>
+  <p class="small soft js-only">Select an area to list only its bills.</p>
+</div>

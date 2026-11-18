@@ -2,19 +2,21 @@
   A member's bill list for their last Congress (include.bills: nil until first
   fetched, which leaves it out), then each earlier Congress's list collapsed
   (include.earlier: [{ congress, bills }]). include.verb: "introduced" or
-  "cosponsored"; include.congress: the last Congress, e.g. "120th".
+  "cosponsored"; include.congress: the last Congress, e.g. "120th". The last
+  Congress's rows filter by policy area (member_areas.html); selecting an area
+  opens "Show all" so all of its bills show.
 {%- endcomment -%}
 {%- assign bills = include.bills -%}
 {%- if bills %}
 {%- if bills.size > 0 %}
 <ul class="ruled">
-  {%- for b in bills limit: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
+  {%- for b in bills limit: 5 %}{% include sponsored_bill.html bill=b filter=true %}{% endfor %}
 </ul>
 {%- if bills.size > 5 %}
-<details class="crs">
+<details class="crs" data-open-on-filter>
   <summary class="small">Show all {{ bills.size }}</summary>
   <ul class="ruled thin">
-    {%- for b in bills offset: 5 %}{% include sponsored_bill.html bill=b %}{% endfor %}
+    {%- for b in bills offset: 5 %}{% include sponsored_bill.html bill=b filter=true %}{% endfor %}
   </ul>
 </details>
 {%- endif %}

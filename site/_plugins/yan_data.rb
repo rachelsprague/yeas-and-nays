@@ -726,6 +726,95 @@ module Yan
     rows.map { |r| r.merge("pct" => (100.0 * r["total"] / top).round(1)) }
   end
 
+  MEMBER_AREAS = 8
+
+  # "Health" -> "health", "Armed Forces and National Security" -> "armed-forces-and-national-security".
+  def self.area_slug(area) = area.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-\z/, "")
+
+  # A member's bill list by CRS policy area, most first (ties by name), with bills
+  # CRS hasn't assigned an area yet last. The first n rows show; the rest sit under
+  # "more", unless that's only one or two. Each row's slug is the filter value its bills carry (b["area_slug"]),
+  # and pct sizes its bar against the largest area.
+  def self.member_areas(bills, n = MEMBER_AREAS)
+    return nil if bills.nil? || bills.empty?
+
+    counts = Hash.new(0)
+    bills.each do |b|
+      b["area"] = b["policy_area"].to_s.empty? ? "Not yet assigned" : b["policy_area"]
+      b["area_slug"] = area_slug(b["area"])
+      counts[b["area"]] += 1
+    end
+    unassigned = counts.delete("Not yet assigned")
+    rows = counts.sort_by { |a, c| [-c, a] }
+    rows << ["Not yet assigned", unassigned] if unassigned
+    top = rows.map(&:last).max
+    rows = rows.map { |a, c| { "area" => a, "slug" => area_slug(a), "count" => c, "pct" => (100.0 * c / top).round(1) } }
+    # Folding away one or two areas saves no room.
+    n = rows.size if rows.size <= n + 2
+    { "shown" => rows.first(n), "more" => rows.drop(n), "area_count" => counts.size }
+  end
+
+  # "2026-03" for a vote.
+  def self.month_of(v) = v["vote_date"].to_s[0, 7]
+
+  # Each chamber and Congress's months, first roll call to last, as "YYYY-MM",
+  # including months with none (an August recess).
+  def self.chamber_months(votes)
+    votes.group_by { |v| [v["chamber"], v["congress"].to_i] }.transform_values do |vs|
+      first, last = vs.map { |v| Date.parse("#{month_of(v)}-01") }.minmax
+      months = []
+      while first <= last
+        months << first.strftime("%Y-%m")
+        first = first.next_month
+      end
+      months
+    end
+  end
+
+  # A member's roll calls per month in one Congress: cast (any response but Not
+  # Voting) and missed, over all of the chamber's months, so a month before they took
+  # office or with no roll calls shows none. Heights are percent of the chamber's
+  # busiest month for this member; labels name January and the first month's year.
+  def self.member_months(list, months)
+    return nil if months.nil? || list.empty?
+
+    counts = Hash.new { |h, k| h[k] = { "cast" => 0, "missed" => 0 } }
+    list.each { |p| counts[month_of(p["vote"])][p["position"] == "Not Voting" ? "missed" : "cast"] += 1 }
+    top = [counts.values.map { |c| c["cast"] + c["missed"] }.max.to_i, 1].max
+    rows = months.each_with_index.map do |ym, i|
+      c = counts.fetch(ym, { "cast" => 0, "missed" => 0 })
+      year, month = ym.split("-").map(&:to_i)
+      name = Filters::AP_MONTHS[month - 1]
+      { "month" => ym, "name" => "#{name} #{year}", "cast" => c["cast"], "missed" => c["missed"],
+        "total" => c["cast"] + c["missed"],
+        "cast_pct" => (100.0 * c["cast"] / top).round(1), "missed_pct" => (100.0 * c["missed"] / top).round(1),
+        "initial" => name[0], "year" => (month == 1 || i.zero?) ? year : nil }
+    end
+    { "months" => rows, "max" => top, "first" => rows.first["name"], "last" => rows.last["name"] }
+  end
+
+  # The median of a list of numbers, to one decimal; nil for none.
+  def self.median(xs)
+    return nil if xs.empty?
+
+    s = xs.sort
+    mid = s.size / 2
+    (s.size.odd? ? s[mid] : (s[mid - 1] + s[mid]) / 2.0).round(1)
+  end
+
+  # Per chamber, the median missed-votes and with-party-majority rates of members
+  # with roll calls in the given Congress (their last), so a profile can show one
+  # beside the member's own.
+  def self.chamber_medians(members, congress)
+    in_congress = members.select { |m| m["roll_calls"].to_i.positive? && m["last_congress"].to_i == congress.to_i }
+    CHAMBER_NAMES.to_h do |chamber, name|
+      ms = in_congress.select { |m| m["chamber"] == chamber }
+      [chamber, { "name" => name, "members" => ms.size,
+                  "missed_votes_pct" => median(ms.map { |m| m["missed_votes_pct"].to_f }),
+                  "with_party_majority_pct" => median(ms.filter_map { |m| m["with_party_majority_pct"]&.to_f }) }]
+    end
+  end
+
   # The tags src/yan/export/summary_html.py keeps, always bare (no attributes).
   SUMMARY_TAGS = %w[p ul ol li strong em b i br sub sup].freeze
   SUMMARY_TOKEN = %r{</?(?:#{SUMMARY_TAGS.join("|")})>|[<>]}
@@ -945,6 +1034,8 @@ module Yan
           c["congress"].to_i != m["last_congress"].to_i && c["roll_calls"]
         end
       end
+      medians = Yan.chamber_medians(members, meta["congress"])
+      members.each { |m| m["median"] = medians[m["chamber"]] if m["last_congress"].to_i == meta["congress"].to_i }
       members.sort_by! { |m| [m["last_name"].to_s, m["first_name"].to_s, m["bioguide_id"]] }
       by_id = members.to_h { |m| [m["bioguide_id"], m] }
 
@@ -985,6 +1076,7 @@ module Yan
       end
 
       votes_by_id = votes.to_h { |v| [v["vote_id"], v] }
+      chamber_months = Yan.chamber_months(votes)
 
       # Newest first already (votes.json order), so each member's list is too.
       members.each do |m|
@@ -1007,6 +1099,11 @@ module Yan
           vote = b["latest_vote_id"] && votes_by_id[b["latest_vote_id"]]
           b["vote_url"] = vote && vote["url"]
         end
+        lists["sponsored_areas"] = Yan.member_areas(lists["sponsored"])
+        lists["cosponsored_areas"] = Yan.member_areas(lists["cosponsored"])
+        congress = m["last_congress"].to_i
+        lists["months"] = Yan.member_months(list.select { |p| p["vote"]["congress"].to_i == congress && p["vote"]["chamber"] == m["chamber"] },
+                                            chamber_months[[m["chamber"], congress]])
         m["has_page"] = true
         site.pages << MemberPage.new(site, m, recent, lists)
       end

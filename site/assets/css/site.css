@@ -511,6 +511,37 @@ table.roll { border-collapse: collapse; width: 100%; }
 .tiles .fig { font-size: 36px; }
 .tiles .what { font-size: 15px; font-weight: 600; }
 .tiles .of { font-size: 13px; line-height: 18px; color: var(--ink-muted); }
+.tiles .med { font-size: 13px; line-height: 18px; color: var(--ink-soft); font-weight: 600; margin-top: 2px; }
+
+/* Roll calls by month: votes cast solid, missed votes an open box on top. */
+.m-months { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.m-months-plot { display: flex; align-items: flex-end; gap: 2px; height: 120px; border-bottom: 1px solid var(--ink); }
+.m-month { flex: 1 1 0; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+.m-month .cast { display: block; background: var(--accent); min-height: 1px; }
+.m-month .missed { display: block; box-sizing: border-box; border: 1px solid var(--ink); border-bottom: 0; min-height: 2px; }
+.m-months-x { display: flex; gap: 2px; }
+.m-months-x > span { flex: 1 1 0; min-width: 0; text-align: center; overflow: visible; white-space: nowrap; }
+.m-months-x b { font-weight: 600; }
+/* Month initials only where columns are wide enough; phones show the years alone. */
+.m-months-x .ini { display: none; }
+.m-months-key { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.m-months-key .sw { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: -1px; box-sizing: border-box; }
+.m-months-key .sw.cast { background: var(--accent); }
+.m-months-key .sw.missed { border: 1px solid var(--ink); }
+
+/* A member's bills by policy area; with JS each bar filters the list below. */
+.m-areas { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.m-area-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px 32px; }
+.m-area-list button {
+  display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 6px 0;
+  font: inherit; color: var(--ink); text-align: left; background: none; border: 0; cursor: default;
+}
+.m-area-list button > .small { display: flex; justify-content: space-between; gap: 12px; }
+.has-js .m-area-list button { cursor: pointer; }
+.has-js .m-area-list button:hover > .small > span:first-child { text-decoration: underline; text-decoration-color: var(--accent); }
+.m-area-list button[aria-pressed="true"] > .small { font-weight: 600; }
+.m-area-list button[aria-pressed="true"] .area-top-bar { outline: 2px solid var(--ink); outline-offset: 1px; }
+.m-areas .linkish[aria-pressed="true"] { text-decoration: none; color: var(--ink-muted); cursor: default; }
 
 .vrow { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; text-decoration: none; }
 .vrow .q { font-size: 14px; line-height: 20px; color: var(--ink-soft); }
@@ -649,6 +680,8 @@ footer.wrap { padding-bottom: 28px; }
   .facts dl > div { flex-direction: row; gap: 16px; }
   .facts dt { flex: 0 0 170px; }
   .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .m-area-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .m-months-x .ini { display: inline; }
   .tiles .fig { font-size: 56px; line-height: 56px; }
   .tiles > div + div { border-top: 0; border-left: 1px solid var(--line); padding-left: 20px; }
   .vrow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 260px; gap: 24px; align-items: baseline; }

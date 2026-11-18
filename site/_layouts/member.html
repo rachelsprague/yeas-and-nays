@@ -67,13 +67,19 @@ layout: default
         <span class="fig">{{ m.missed_votes_pct }}%</span>
         <span class="what">Missed votes</span>
         <span class="of">{{ m.missed_votes }} not voting</span>
+        {%- if m.median.missed_votes_pct %}<span class="med">{{ m.median.name }} median: {{ m.median.missed_votes_pct }}%</span>{% endif %}
       </div>
       <div>
         <span class="fig">{% if m.with_party_majority_pct %}{{ m.with_party_majority_pct }}%{% else %}—{% endif %}</span>
         <span class="what">Voted with party majority</span>
         <span class="of">of {{ m.party_majority_votes }} Yea or Nay votes where {% if m.party == "I" %}the {{ m.caucus_party | escape }} caucus{% else %}the party{% endif %} had a majority</span>
+        {%- if m.median.with_party_majority_pct %}<span class="med">{{ m.median.name }} median: {{ m.median.with_party_majority_pct }}%</span>{% endif %}
       </div>
     </div>
+    {%- if page.months %}
+    <h3 class="kicker soft">Roll calls by month</h3>
+    {%- include member_months.html months=page.months %}
+    {%- endif %}
     {%- else %}
     <p class="empty">No roll calls {% if m.is_current %}yet {% endif %}in the {{ congress }} Congress.</p>
     {%- endif %}
@@ -92,23 +98,25 @@ layout: default
   {%- endif %}
 
   {%- if site.data.meta.has_sponsored_bills and page.sponsored or page.sponsored_earlier.size > 0 %}
-  <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
+  <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>
     <div class="head-row">
       <h2 id="bills-h" class="section-h">Bills introduced</h2>
-      {%- if page.sponsored %}<span class="small muted nums">{{ page.sponsored.size }} in the {{ congress }} Congress</span>{% endif %}
+      {%- if page.sponsored %}<span class="small muted nums" data-count data-noun="in the {{ congress }} Congress">{{ page.sponsored.size }} in the {{ congress }} Congress</span>{% endif %}
     </div>
     <p class="small soft">Bills and resolutions {{ m.name | escape }} introduced as the sponsor, with the latest action on each as Congress.gov records it.</p>
+    {%- if page.sponsored_areas %}{% include member_areas.html areas=page.sponsored_areas %}{% endif %}
     {%- include member_bills.html bills=page.sponsored earlier=page.sponsored_earlier verb="introduced" congress=congress %}
   </section>
   {%- endif %}
 
   {%- if page.cosponsored or page.cosponsored_earlier.size > 0 %}
-  <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px" data-pagefind-ignore>
+  <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>
     <div class="head-row">
       <h2 id="cosponsored-h" class="section-h">Bills cosponsored</h2>
-      {%- if page.cosponsored %}<span class="small muted nums">{{ page.cosponsored.size }} in the {{ congress }} Congress</span>{% endif %}
+      {%- if page.cosponsored %}<span class="small muted nums" data-count data-noun="in the {{ congress }} Congress">{{ page.cosponsored.size }} in the {{ congress }} Congress</span>{% endif %}
     </div>
     <p class="small soft">Bills and resolutions {{ m.name | escape }} cosponsored, with the latest action on each as Congress.gov records it. A cosponsor is a member who adds their name as a supporter of a bill or resolution another member introduced.</p>
+    {%- if page.cosponsored_areas %}{% include member_areas.html areas=page.cosponsored_areas %}{% endif %}
     {%- include member_bills.html bills=page.cosponsored earlier=page.cosponsored_earlier verb="cosponsored" congress=congress %}
   </section>
   {%- endif %}

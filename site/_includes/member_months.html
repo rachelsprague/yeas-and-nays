@@ -1,0 +1,37 @@
+{%- comment -%}
+  A member's roll calls per month in their last Congress (Yan.member_months):
+  each column is that month's roll calls, votes cast solid and missed votes as an
+  open box on top. The table under the chart is its text version.
+{%- endcomment -%}
+{%- assign mo = include.months -%}
+<figure class="m-months">
+  <div class="m-months-plot" role="img"
+       aria-label="Roll calls per month, {{ mo.first }} through {{ mo.last }}: votes cast and missed votes. The table below lists each month.">
+    {%- for r in mo.months %}
+    <span class="m-month" title="{{ r.name }}: {% if r.total > 0 %}{{ r.cast }} cast, {{ r.missed }} missed{% else %}no roll calls{% endif %}">
+      {%- if r.missed > 0 %}<span class="missed" style="height: {{ r.missed_pct }}%"></span>{% endif %}
+      {%- if r.cast > 0 %}<span class="cast" style="height: {{ r.cast_pct }}%"></span>{% endif %}
+    </span>
+    {%- endfor %}
+  </div>
+  <div class="m-months-x small muted nums" aria-hidden="true">
+    {%- for r in mo.months %}<span>{% if r.year %}<b>{{ r.year }}</b>{% else %}<span class="ini">{{ r.initial }}</span>{% endif %}</span>{% endfor %}
+  </div>
+  <figcaption class="m-months-key small soft">
+    <span><i class="sw cast" aria-hidden="true"></i>Votes cast</span>
+    <span><i class="sw missed" aria-hidden="true"></i>Missed (Not Voting)</span>
+  </figcaption>
+</figure>
+<details class="crs">
+  <summary class="small">Show the table by month</summary>
+  <div class="scroll">
+    <table class="roll nums">
+      <thead><tr><th scope="col">Month</th><th scope="col" class="r">Roll calls</th><th scope="col" class="r">Votes cast</th><th scope="col" class="r">Missed</th></tr></thead>
+      <tbody>
+        {%- for r in mo.months reversed %}
+        <tr><th scope="row">{{ r.name }}</th><td class="r">{{ r.total }}</td><td class="r">{{ r.cast }}</td><td class="r">{{ r.missed }}</td></tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>

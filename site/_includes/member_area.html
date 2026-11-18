@@ -1,0 +1,7 @@
+{%- assign a = include.area -%}
+<li>
+  <button type="button" data-tab="area" data-value="{{ a.slug | escape }}" aria-pressed="false">
+    <span class="small nums"><span>{{ a.area | escape }}</span><span>{{ a.count }}</span></span>
+    <span class="area-top-bar" aria-hidden="true"><span style="width: {{ a.pct | escape }}%"></span></span>
+  </button>
+</li>

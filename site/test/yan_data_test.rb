@@ -2250,3 +2250,89 @@ class HouseAdTest < Minitest::Test
     assert_equal ["rachelsprague.com", "KeepScore", "HiringRadar"], card.scan(%r{<span class="credit-name">([^<]*)</span>}).flatten
   end
 end
+
+class MemberChartsTest < Minitest::Test
+  include SiteBuild
+
+  def bill(area, n = 1) = { "bill_id" => "119-hr-#{n}", "measure_label" => "H.R. #{n}", "title" => "Bill #{n}", "policy_area" => area }
+
+  def test_areas_sort_most_first_with_unassigned_last
+    bills = [bill("Health"), bill("Taxation"), bill(nil), bill("Health"), bill(""), bill("Agriculture and Food")]
+    areas = Yan.member_areas(bills)
+    assert_equal ["Health", "Agriculture and Food", "Taxation", "Not yet assigned"], areas["shown"].map { |a| a["area"] }
+    assert_equal [2, 1, 1, 2], areas["shown"].map { |a| a["count"] }
+    assert_equal [100.0, 50.0, 50.0, 100.0], areas["shown"].map { |a| a["pct"] }
+    assert_equal 3, areas["area_count"]
+    assert_empty areas["more"]
+    # Each bill carries its row's filter value.
+    assert_equal %w[health taxation not-yet-assigned health not-yet-assigned agriculture-and-food], bills.map { |b| b["area_slug"] }
+    assert_nil Yan.member_areas([])
+    assert_nil Yan.member_areas(nil)
+  end
+
+  def test_areas_fold_only_when_more_than_two_are_left
+    ten = (1..10).map { |i| bill("Area #{format("%02d", i)}") }
+    assert_equal [10, 0], Yan.member_areas(ten, 8).values_at("shown", "more").map(&:size)
+    eleven = ten + [bill("Area 11")]
+    assert_equal [8, 3], Yan.member_areas(eleven, 8).values_at("shown", "more").map(&:size)
+  end
+
+  def test_area_slug
+    assert_equal "armed-forces-and-national-security", Yan.area_slug("Armed Forces and National Security")
+    assert_equal "a-b-c", Yan.area_slug(%(A & "B" <c>))
+  end
+
+  def test_months_span_the_chamber_and_count_cast_and_missed
+    votes = [
+      { "chamber" => "house", "congress" => 119, "vote_date" => "2025-07-30" },
+      { "chamber" => "house", "congress" => 119, "vote_date" => "2025-10-01" },
+      { "chamber" => "senate", "congress" => 119, "vote_date" => "2025-09-02" }
+    ]
+    months = Yan.chamber_months(votes)
+    assert_equal %w[2025-07 2025-08 2025-09 2025-10], months[["house", 119]]
+    assert_equal %w[2025-09], months[["senate", 119]]
+
+    list = [{ "vote" => votes[0], "position" => "Yea" }, { "vote" => votes[0], "position" => "Not Voting" },
+            { "vote" => votes[0], "position" => "Present" }, { "vote" => votes[1], "position" => "Nay" }]
+    mo = Yan.member_months(list, months[["house", 119]])
+    assert_equal [[2, 1], [0, 0], [0, 0], [1, 0]], mo["months"].map { |r| [r["cast"], r["missed"]] }
+    assert_equal [66.7, 33.3], mo["months"].first.values_at("cast_pct", "missed_pct")
+    assert_equal ["July 2025", "Oct. 2025"], mo.values_at("first", "last")
+    # The first month names its year; the rest show an initial.
+    assert_equal [2025, nil, nil, nil], mo["months"].map { |r| r["year"] }
+    assert_equal %w[J A S O], mo["months"].map { |r| r["initial"] }
+    assert_nil Yan.member_months([], months[["house", 119]])
+    assert_nil Yan.member_months(list, nil)
+  end
+
+  def test_medians_count_only_members_with_roll_calls_in_that_congress
+    members = [
+      { "chamber" => "house", "last_congress" => 119, "roll_calls" => 10, "missed_votes_pct" => 1.0, "with_party_majority_pct" => 90.0 },
+      { "chamber" => "house", "last_congress" => 119, "roll_calls" => 10, "missed_votes_pct" => 2.0, "with_party_majority_pct" => nil },
+      { "chamber" => "house", "last_congress" => 119, "roll_calls" => 10, "missed_votes_pct" => 5.5, "with_party_majority_pct" => 95.0 },
+      { "chamber" => "house", "last_congress" => 119, "roll_calls" => 0, "missed_votes_pct" => 0.0 },
+      { "chamber" => "house", "last_congress" => 118, "roll_calls" => 10, "missed_votes_pct" => 50.0 }
+    ]
+    m = Yan.chamber_medians(members, 119)
+    assert_equal({ "name" => "House", "members" => 3, "missed_votes_pct" => 2.0, "with_party_majority_pct" => 92.5 }, m["house"])
+    assert_nil m["senate"]["missed_votes_pct"]
+  end
+
+  def test_member_page_shows_medians_months_and_area_filters
+    member = EscapingTest::MEMBER.merge("roll_calls" => 1, "votes_cast" => 1, "missed_votes" => 0, "missed_votes_pct" => 0.0,
+                                        "party_majority_votes" => 1, "with_party_majority_pct" => 0.0)
+    bills = [bill(%(Arts & "Culture" <x>), 1), bill(nil, 2)]
+    html = build_site([member], [[EscapingTest::VOTE, EscapingTest::DOC]],
+                      member_files: { "Z000001" => { "sponsored" => bills, "cosponsored" => [] } })
+               .fetch("/members/Z000001/index.html")
+    assert_includes html, %(<span class="med">House median: 0.0%</span>)
+    assert_includes html, %(<span class="m-month" title="Jan. 2025: 1 cast, 0 missed">)
+    assert_includes html, %(data-tab="area" data-value="arts-culture-x" aria-pressed="false")
+    assert_includes html, "<span>Arts &amp; &quot;Culture&quot; &lt;x&gt;</span>"
+    assert_includes html, %(<li class="vrow" data-row data-area="arts-culture-x">)
+    assert_includes html, %(<li class="vrow" data-row data-area="not-yet-assigned">)
+    assert_includes html, %(data-count data-noun="in the 119th Congress")
+    # No cosponsored bills: no chart for them.
+    assert_equal 1, html.scan('<div class="m-areas">').size
+  end
+end
