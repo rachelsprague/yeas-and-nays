@@ -868,10 +868,14 @@ class LayoutTest < Minitest::Test
     assert_equal "House roll call 2, Jan. 3, 2025. Most votes: Mike Johnson (R-LA-4), 216 Johnson · 215 Jeffries · 1 Not Voting.",
                  Yan.vote_description(view.({ "roll_number" => 2, "result_label" => "Most votes: Mike Johnson (R-LA-4)" }, speaker))
     tie = [{ "label" => "Yea", "count" => 50, "mark" => "yea" }, { "label" => "Nay", "count" => 50, "mark" => "nay" }]
-    assert_equal "Senate roll call 372, Oct. 1, 2025. Bill Passed, 50 Yea · 50 Nay · Vice President voted Yea to break the tie.",
-                 Yan.vote_description(view.({ "chamber" => "senate", "roll_number" => 372, "vote_date" => "2025-10-01",
+    assert_equal "Senate roll call 372, July 1, 2025. Bill Passed, 50 Yea · 50 Nay · Vice President voted Yea to break the tie.",
+                 Yan.vote_description(view.({ "chamber" => "senate", "roll_number" => 372, "vote_date" => "2025-07-01",
                                               "result_label" => "Bill Passed", "tie_breaker_by" => "Vice President of the United States",
                                               "tie_breaker_vote" => "Yea" }, tie))
+    # Both fields or no tie-break, as on the vote page.
+    assert_equal "House roll call 1, Jan. 3, 2025. Bill Passed, 50 Yea · 50 Nay.",
+                 Yan.vote_description(view.({ "result_label" => "Bill Passed", "tie_breaker_by" => "Vice President of the United States",
+                                              "tie_breaker_vote" => nil }, tie))
   end
 
   # GitHub Pages serves /404.html for a missing address at any depth, so its

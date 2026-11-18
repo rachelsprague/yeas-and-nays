@@ -77,7 +77,7 @@ module Yan
     tally = view["tally"].select { |t| t["count"].positive? || %w[yea nay].include?(t["mark"]) }
                          .map { |t| "#{t["count"]} #{t["label"]}" }
     unless v["tie_breaker_by"].to_s.empty? || v["tie_breaker_vote"].to_s.empty?
-      tally <<"Vice President voted #{v["tie_breaker_vote"]} to break the tie"
+      tally << "Vice President voted #{v["tie_breaker_vote"]} to break the tie"
     end
     tally = tally.join(" · ")
     "#{CHAMBER_NAMES[v["chamber"]]} roll call #{v["roll_number"]}, #{Filters.ap_date(v["vote_date"])}. " \
