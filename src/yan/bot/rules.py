@@ -94,9 +94,16 @@ def _decide_house(vote, question, measure, passed) -> Decision:
 
 def _decide_senate(vote, question, measure, passed) -> Decision:
     vote_title = vote.get("vote_title") or ""
+    # Cloture and nomination headlines name only the title, or the measure
+    # without one; with neither, the post would have no subject.
+    cited = (vote.get("measure_title") or "").strip() or measure.strip()
     if question.startswith(("On the Cloture Motion", "On Cloture on")):
+        if not (cited or vote_title.strip()):
+            return skip("cloture vote with no title or measure to cite")
         return Decision(True, "cloture", "cloture")
     if question.startswith("On the Nomination"):
+        if not cited:
+            return skip("nomination with no title or number to cite")
         return Decision(True, "nomination", "nomination")
     if re.match(r"On (Overriding the Veto|the Veto Message)|.*Objections of the President", question):
         return Decision(True, "veto_override", "veto override")

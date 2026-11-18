@@ -57,7 +57,8 @@ def headline_title(vote: dict, decision: Decision) -> str:
     if decision.kind == "nomination":
         # Official form: "Peter Hegseth, of Tennessee, to be Secretary of Defense"
         m = re.fullmatch(r"(.+?), of [^,]+, to be (.+)", title)
-        return f"{m.group(1)} as {m.group(2)}" if m else title
+        # No official title: cite the nomination number (rules.decide skips a vote with neither).
+        return f"{m.group(1)} as {m.group(2)}" if m else title or (measure_label(vote) or "").strip()
     if decision.kind == "cloture":
         # Official forms vary: "Motion to Invoke Cloture: Motion to Proceed to S. 5",
         # "... Cloture on the Motion to Proceed: H.R. 7008", "... Cloture Re: Amdt. No. 4308",
@@ -75,7 +76,7 @@ def headline_title(vote: dict, decision: Decision) -> str:
                           flags=re.IGNORECASE)
         if reconsidered and not re.search(RECONSIDERED + "$", stripped, flags=re.IGNORECASE):
             stripped += RECONSIDERED
-        return stripped or title
+        return stripped or title or (measure_label(vote) or "").strip()
     return title
 
 
