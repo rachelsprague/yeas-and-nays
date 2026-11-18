@@ -101,7 +101,8 @@ def card_text(vote: dict, doc: dict) -> Card | None:
         note = f"Vice President voted {vote['tie_breaker_vote']} to break the tie"
 
     question = vote["question"]
-    # A whitespace-only title falls through, as in the page heading.
+    # A blank or whitespace-only title falls through to the next, in the page
+    # heading's order.
     measure_title = (vote.get("measure_title") or "").strip()
     title = measure_title or (vote.get("vote_title") or "").strip() or question.strip()
     if measure_title:
