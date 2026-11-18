@@ -73,4 +73,4 @@ jobs:
 
       - name: Site JS tests
         working-directory: site
-        run: node --test test/
+        run: node --test "test/*.test.js"

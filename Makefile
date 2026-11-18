@@ -41,7 +41,7 @@ sitetest:        ## tests for the site's Jekyll plugin
 	cd site && bundle install --quiet && bundle exec ruby test/yan_data_test.rb
 
 jstest:          ## tests for the site's JS (Node and jsdom, pinned in site/package-lock.json)
-	cd site && npm ci --ignore-scripts --no-audit --no-fund && node --test test/
+	cd site && npm ci --ignore-scripts --no-audit --no-fund && node --test "test/*.test.js"
 
 clean:           ## remove local intermediate files (keeps raw downloads)
 	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache site/assets/cards
