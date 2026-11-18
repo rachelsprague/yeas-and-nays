@@ -68,6 +68,17 @@ module Yan
     "#{v["question"].sub(/\AOn (the )?/, "")}: #{v["result"]}"
   end
 
+  # A vote page's description (meta and link-card text): "House roll call
+  # 317, Nov. 10, 2026. Motion to Refer: Passed, 211 Yea · 204 Nay · 18 Not
+  # Voting." Present and Not Voting only when nonzero, as in bot posts.
+  def self.vote_description(view)
+    v = view["vote"]
+    tally = view["tally"].select { |t| t["count"].positive? || %w[yea nay].include?(t["mark"]) }
+                         .map { |t| "#{t["count"]} #{t["label"]}" }.join(" · ")
+    "#{CHAMBER_NAMES[v["chamber"]]} roll call #{v["roll_number"]}, #{Filters.ap_date(v["vote_date"])}. " \
+      "#{v["result_label"]}, #{tally}."
+  end
+
   # The plain-language definition for a vote's question, from _data/procedures.yml.
   # Measure-type notes ("Bills become law if…") go with passage votes.
   def self.procedure(v, procedures)
@@ -855,6 +866,10 @@ module Yan
       data.merge!(view)
       data["layout"] = "vote"
       data["title"] = "#{CHAMBER_NAMES[vote["chamber"]]} roll call #{vote["roll_number"]}, #{vote["vote_date"]}"
+      # Link cards lead with the official title, as the page's heading does (vote_title.html).
+      # Same fallback as Liquid's `default` there: only nil and "" are skipped.
+      data["og_title"] = [vote["measure_title"], vote["vote_title"], vote["question"]].find { |t| !t.to_s.empty? }
+      data["description"] = Yan.vote_description(view)
       data["nav"] = "votes"
       data["rows"] = rows
       data["states"] = rows.map { |r| r["state"] }.uniq.sort

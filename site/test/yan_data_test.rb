@@ -787,6 +787,63 @@ class LayoutTest < Minitest::Test
     end
   end
 
+  # Link cards: every page has Open Graph tags and the brand card image; a
+  # vote page's card leads with its official title (escaped once) and its
+  # description gives the chamber, roll call, date, result and tally.
+  def test_link_card_tags
+    pages = build
+    meta = ->(html, prop) { html[/<meta (?:property|name)="#{Regexp.escape(prop)}" content="([^"]*)">/, 1] }
+    pages.each do |path, html|
+      next unless html.include?("<head>")
+
+      assert_equal "https://yeasandnaysdata.com/assets/brand/social/og-card-1200x630.png", meta.(html, "og:image"), path
+      assert_equal "summary_large_image", meta.(html, "twitter:card"), path
+      refute_nil meta.(html, "og:title"), path
+      assert_equal meta.(html, "description"), meta.(html, "og:description"), path
+    end
+    assert File.exist?(File.join(SOURCE, "assets/brand/social/og-card-1200x630.png"))
+
+    vote = pages.fetch("/votes/119/house/1/1/index.html")
+    assert_equal "A bill to name the &quot;KK&quot; &lt;kk&gt; O&#39;Kay &amp; Co Post Office", meta.(vote, "og:title")
+    assert_equal "House roll call 1, Jan. 3, 2025. Passage: Passed, 0 Yea · 1 Nay.", meta.(vote, "og:description")
+    assert_equal "https://yeasandnaysdata.com/votes/119/house/1/1/", meta.(vote, "og:url")
+    assert_equal "About &amp; methodology", meta.(pages.fetch("/about/index.html"), "og:title")
+    assert_equal "Every recorded vote in the U.S. House and Senate, from the official record.",
+                 meta.(pages.fetch("/index.html"), "og:description")
+  end
+
+  # With no measure title the card falls back as the heading does: the
+  # Senate's vote title, then the question.
+  def test_link_card_title_falls_back_like_the_heading
+    base = EscapingTest::VOTE.merge("measure_title" => nil, "bill_type" => nil, "congress_gov_url" => nil)
+    votes = [base.merge("vote_title" => "A joint resolution providing for a vote"),
+             base.merge("vote_id" => "h119-1-0002", "roll_number" => 2, "vote_title" => "")]
+    pages = build_site([EscapingTest::MEMBER], votes.map { |v| [v, EscapingTest::DOC] })
+    og = ->(roll) { pages.fetch("/votes/119/house/1/#{roll}/index.html")[/<meta property="og:title" content="([^"]*)">/, 1] }
+    assert_equal "A joint resolution providing for a vote", og.(1)
+    assert_equal "On Passage", og.(2)
+  end
+
+  # Present and Not Voting are left out of a vote's description when zero;
+  # a Speaker election lists its candidates.
+  def test_vote_description_tally
+    view = ->(vote, tally) { { "vote" => EscapingTest::VOTE.merge(vote), "tally" => tally } }
+    yn = [{ "label" => "Yea", "count" => 211, "mark" => "yea" }, { "label" => "Nay", "count" => 204, "mark" => "nay" },
+          { "label" => "Present", "count" => 0, "mark" => "present" }, { "label" => "Not Voting", "count" => 18, "mark" => "nv" }]
+    assert_equal "Senate roll call 257, Nov. 9, 2026. Nomination Confirmed, 211 Yea · 204 Nay · 18 Not Voting.",
+                 Yan.vote_description(view.({ "chamber" => "senate", "roll_number" => 257, "vote_date" => "2026-11-09",
+                                              "result_label" => "Nomination Confirmed" }, yn))
+    # The vote's own words; Aye and No show even at zero, Present when nonzero.
+    aye_no = [{ "label" => "Aye", "count" => 400, "mark" => "yea" }, { "label" => "No", "count" => 0, "mark" => "nay" },
+              { "label" => "Present", "count" => 1, "mark" => "present" }, { "label" => "Not Voting", "count" => 0, "mark" => "nv" }]
+    assert_equal "House roll call 1, Jan. 3, 2025. Passage: Passed, 400 Aye · 0 No · 1 Present.",
+                 Yan.vote_description(view.({ "result_label" => "Passage: Passed" }, aye_no))
+    speaker = [{ "label" => "Johnson", "count" => 216 }, { "label" => "Jeffries", "count" => 215 },
+               { "label" => "Present", "count" => 0, "mark" => "present" }, { "label" => "Not Voting", "count" => 1, "mark" => "nv" }]
+    assert_equal "House roll call 2, Jan. 3, 2025. Most votes: Mike Johnson (R-LA-4), 216 Johnson · 215 Jeffries · 1 Not Voting.",
+                 Yan.vote_description(view.({ "roll_number" => 2, "result_label" => "Most votes: Mike Johnson (R-LA-4)" }, speaker))
+  end
+
   # GitHub Pages serves /404.html for a missing address at any depth, so its
   # links and assets are root-relative. It's kept out of search engines and
   # the search index, and offers a search box and the main sections.
