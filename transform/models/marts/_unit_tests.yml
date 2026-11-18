@@ -222,7 +222,7 @@ unit_tests:
         rows: []
     expect:
       rows:
-        - {bioguide_id: M1, last_congress: 120, served_in_congress: false, served_from: null, served_to: null, party: R, state: OH, district: 3}
+        - {bioguide_id: M1, last_congress: 120, served_in_congress: false, served_from: null, served_to: null, chamber: house, party: R, state: OH, district: 3}
 
   - name: vote_summaries_use_the_version_in_effect_on_the_vote_date
     model: vote_summaries

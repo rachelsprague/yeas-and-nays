@@ -2341,6 +2341,18 @@ class MemberChartsTest < Minitest::Test
     assert_nil m["senate"]["missed_votes_pct"]
   end
 
+  # A returning member on 120th roll calls before congress-legislators lists their new term.
+  def test_medians_count_a_member_with_roll_calls_but_no_term_dates
+    members = [
+      { "chamber" => "house", "last_congress" => 120, "served_in_congress" => true, "roll_calls" => 4, "missed_votes_pct" => 0.0 },
+      { "chamber" => "house", "last_congress" => 120, "served_in_congress" => false, "served_from" => nil,
+        "roll_calls" => 4, "missed_votes_pct" => 50.0 }
+    ]
+    m = Yan.chamber_medians(members, 120)
+    assert_equal 2, m["house"]["members"]
+    assert_equal 25.0, m["house"]["missed_votes_pct"]
+  end
+
   def test_member_page_shows_medians_months_and_area_filters
     member = EscapingTest::MEMBER.merge("roll_calls" => 1, "votes_cast" => 1, "missed_votes" => 0, "missed_votes_pct" => 0.0,
                                         "party_majority_votes" => 1, "with_party_majority_pct" => 0.0)
