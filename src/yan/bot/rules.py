@@ -23,6 +23,8 @@ _HOUSE_MEASURE_PREFIXES = {
     "S CON RES": "S.Con.Res.",
 }
 
+RECONSIDERED = ", Upon Reconsideration"
+
 
 def measure_label(vote: dict) -> str | None:
     """Measure number in the conventional citation form, e.g. "H RES 1655" -> "H.Res. 1655"."""
@@ -94,17 +96,10 @@ def _decide_house(vote, question, measure, passed) -> Decision:
 
 def _decide_senate(vote, question, measure, passed) -> Decision:
     vote_title = vote.get("vote_title") or ""
-    # Cloture and nomination headlines name only the title, or the measure
-    # without one; with neither, the post would have no subject.
-    cited = (vote.get("measure_title") or "").strip() or measure.strip()
     if question.startswith(("On the Cloture Motion", "On Cloture on")):
-        if not (cited or vote_title.strip()):
-            return skip("cloture vote with no title or measure to cite")
-        return Decision(True, "cloture", "cloture")
+        return _with_subject(vote, Decision(True, "cloture", "cloture"))
     if question.startswith("On the Nomination"):
-        if not cited:
-            return skip("nomination with no title or number to cite")
-        return Decision(True, "nomination", "nomination")
+        return _with_subject(vote, Decision(True, "nomination", "nomination"))
     if re.match(r"On (Overriding the Veto|the Veto Message)|.*Objections of the President", question):
         return Decision(True, "veto_override", "veto override")
     if question.startswith("On the Conference Report"):
@@ -133,3 +128,40 @@ def _disposing_motion(vote, motion, measure, passed) -> Decision:
     if not passed:
         return skip(f"motion to {motion} {measure} not agreed to (measure still pending)")
     return Decision(True, "disposing_motion", f"motion to {motion} that disposes of {measure}", motion=motion)
+
+
+def _with_subject(vote, decision) -> Decision:
+    """Cloture and nomination headlines name only the title, or the measure
+    without one; with neither, the post would have no subject."""
+    if not headline_title(vote, decision):
+        return skip(f"{decision.reason} vote with no title or number to cite")
+    return decision
+
+
+def headline_title(vote: dict, decision: Decision) -> str:
+    """The official title or nominee + position that goes in the headline."""
+    title = (vote.get("measure_title") or "").strip()
+    if decision.kind == "nomination":
+        # Official form: "Peter Hegseth, of Tennessee, to be Secretary of Defense"
+        m = re.fullmatch(r"(.+?), of [^,]+, to be (.+)", title)
+        # No official title: cite the nomination number (decide skips a vote with neither).
+        return f"{m.group(1)} as {m.group(2)}" if m else title or (measure_label(vote) or "").strip()
+    if decision.kind == "cloture":
+        # Official forms vary: "Motion to Invoke Cloture: Motion to Proceed to S. 5",
+        # "... Cloture on the Motion to Proceed: H.R. 7008", "... Cloture Re: Amdt. No. 4308",
+        # "Upon Reconsideration, Motion to Invoke Cloture ...". All become the most
+        # common form, "Motion to Proceed to {measure}", with reconsideration last
+        # as the Senate also writes it ("..., Upon Reconsideration").
+        # The Senate's capitalization varies too, so match ignoring case.
+        stripped = (vote.get("vote_title") or "").strip()
+        reconsidered = re.match(r"^Upon Reconsideration[,:]\s*", stripped, flags=re.IGNORECASE)
+        if reconsidered:
+            stripped = stripped[reconsidered.end():]
+        stripped = re.sub(r"^Motion to Invoke Cloture(?::\s*|\s+Re:\s*|\s+on\s+)(?:the\s+)?", "", stripped,
+                          flags=re.IGNORECASE)
+        stripped = re.sub(r"^Motion to Proceed(?::\s*|\s+to\s+)", "Motion to Proceed to ", stripped,
+                          flags=re.IGNORECASE)
+        if reconsidered and stripped and not re.search(RECONSIDERED + "$", stripped, flags=re.IGNORECASE):
+            stripped += RECONSIDERED
+        return stripped or title or (measure_label(vote) or "").strip()
+    return title

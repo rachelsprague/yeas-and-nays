@@ -213,6 +213,10 @@ def test_cloture_headline_cites_the_measure_without_a_title():
     senate_vote(measure_title=None, measure_number="  ", vote_title="On the Nomination: Peter Hegseth"),
     senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
                 vote_title=None, measure_title=" ", measure_number=None),
+    senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                vote_title="Motion to Invoke Cloture: ", measure_title=None, measure_number=None),
+    senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                vote_title="Upon Reconsideration, Motion to Invoke Cloture:", measure_title=None, measure_number=None),
 ])
 def test_nomination_or_cloture_with_nothing_to_cite_is_skipped(vote):
     decision = decide(vote)
