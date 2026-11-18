@@ -776,7 +776,10 @@ class LayoutTest < Minitest::Test
 
     vote = body.("/votes/119/house/1/1/index.html")
     assert_includes vote, %(aria-labelledby="roll-h" data-filter-scope data-pagefind-ignore>)
-    assert_includes vote, %(<div class="twocol" data-pagefind-ignore>)
+    # Tally and By party stay out of the index; the heading beside them is indexed.
+    assert_includes vote, %(<section class="tally" aria-labelledby="tally-h" data-pagefind-ignore>)
+    assert_includes vote, %(<section class="tally by-party" aria-labelledby="party-h" data-pagefind-ignore>)
+    assert_includes vote, %(<div class="vote-top">\n    <section class="vote-head">)
     # The result title, escaped once (the measure title holds " < > ' &).
     assert_includes vote, 'data-title="On Passage: A bill to name the &quot;KK&quot; &lt;kk&gt; O&#39;Kay &amp; Co Post Office (House, Jan. 3, 2025)"'
     assert_includes body.("/members/Z000001/index.html"), %(aria-labelledby="recent-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>)
