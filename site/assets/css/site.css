@@ -247,7 +247,7 @@ main.home { gap: 20px; padding-top: 20px; }
   .bill-path .step.done:not(:last-child)::before { left: 18px; top: 8.75px; width: auto; height: 2.5px; }
 }
 
-/* Vote page top: heading, tally, By party in one column; side by side from 760px. */
+/* Vote page top: heading, tally, By party in one column; side by side from 960px. */
 .vote-top { display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; }
 .vote-head { display: flex; flex-direction: column; gap: 12px; max-width: 860px; }
 .vote-head .back { margin-bottom: -8px; }
