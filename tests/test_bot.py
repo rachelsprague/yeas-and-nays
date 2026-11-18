@@ -163,6 +163,39 @@ def test_cloture_headline_uses_one_form(vote_title, expected):
     assert format_post(doc(vote), decide(vote)).splitlines()[0] == expected
 
 
+@pytest.mark.parametrize("measure_title, expected", [
+    ("  An Act  ", 'House passes H.R. 1, "An Act"'),
+    ("   ", "House passes H.R. 1"),
+    ("", "House passes H.R. 1"),
+    (None, "House passes H.R. 1"),
+])
+def test_passage_headline_trims_title_and_cites_measure_alone_without_one(measure_title, expected):
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=measure_title)
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == expected
+
+
+def test_cloture_headline_falls_back_to_measure_title_when_vote_title_is_blank():
+    vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to", vote_title="   ",
+                       measure_title=" Peter Hegseth, of Tennessee, to be Secretary of Defense ",
+                       tie_breaker_by=None, tie_breaker_vote=None)
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == (
+        "Senate invokes cloture on Peter Hegseth, of Tennessee, to be Secretary of Defense")
+
+
+def test_cloture_headline_trims_a_padded_vote_title():
+    vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                       vote_title="  Motion to Invoke Cloture: Motion to Proceed to S. 5  ",
+                       tie_breaker_by=None, tie_breaker_vote=None)
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == (
+        "Senate invokes cloture on Motion to Proceed to S. 5")
+
+
+def test_nomination_headline_trims_a_padded_title():
+    vote = senate_vote(measure_title="  Peter Hegseth, of Tennessee, to be Secretary of Defense  ")
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == (
+        "Senate confirms Peter Hegseth as Secretary of Defense")
+
+
 def test_no_party_break_line_when_nobody_broke():
     vote = senate_vote(tie_breaker_by=None, tie_breaker_vote=None, yea_count=51, nay_count=49)
     assert "Voted against" not in format_post(doc(vote), decide(vote))
