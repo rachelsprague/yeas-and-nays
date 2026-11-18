@@ -751,7 +751,7 @@ module Yan
     rows = rows.map { |a, c| { "area" => a, "slug" => area_slug(a), "count" => c, "pct" => (100.0 * c / top).round(1) } }
     # Folding away one or two areas saves no room.
     n = rows.size if rows.size <= n + 2
-    { "shown" => rows.first(n), "more" => rows.drop(n), "area_count" => counts.size }
+    { "shown" => rows.first(n), "more" => rows.drop(n) }
   end
 
   # "2026-03" for a vote.

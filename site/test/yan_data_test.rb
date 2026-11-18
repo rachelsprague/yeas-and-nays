@@ -2262,7 +2262,6 @@ class MemberChartsTest < Minitest::Test
     assert_equal ["Health", "Agriculture and Food", "Taxation", "Not yet assigned"], areas["shown"].map { |a| a["area"] }
     assert_equal [2, 1, 1, 2], areas["shown"].map { |a| a["count"] }
     assert_equal [100.0, 50.0, 50.0, 100.0], areas["shown"].map { |a| a["pct"] }
-    assert_equal 3, areas["area_count"]
     assert_empty areas["more"]
     # Each bill carries its row's filter value.
     assert_equal %w[health taxation not-yet-assigned health not-yet-assigned agriculture-and-food], bills.map { |b| b["area_slug"] }
@@ -2303,6 +2302,16 @@ class MemberChartsTest < Minitest::Test
     assert_equal %w[J A S O], mo["months"].map { |r| r["initial"] }
     assert_nil Yan.member_months([], months[["house", 119]])
     assert_nil Yan.member_months(list, nil)
+  end
+
+  def test_months_cross_a_new_year_and_label_january
+    votes = [{ "chamber" => "senate", "congress" => 119, "vote_date" => "2025-12-18" },
+             { "chamber" => "senate", "congress" => 119, "vote_date" => "2026-02-02" }]
+    months = Yan.chamber_months(votes)[["senate", 119]]
+    assert_equal %w[2025-12 2026-01 2026-02], months
+    mo = Yan.member_months(votes.map { |v| { "vote" => v, "position" => "Yea" } }, months)
+    assert_equal [2025, 2026, nil], mo["months"].map { |r| r["year"] }
+    assert_equal ["Dec. 2025", "Feb. 2026"], mo.values_at("first", "last")
   end
 
   def test_medians_count_only_members_with_roll_calls_in_that_congress

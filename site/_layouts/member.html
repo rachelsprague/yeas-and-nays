@@ -101,7 +101,7 @@ layout: default
   <section aria-labelledby="bills-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>
     <div class="head-row">
       <h2 id="bills-h" class="section-h">Bills introduced</h2>
-      {%- if page.sponsored %}<span class="small muted nums" data-count data-noun="in the {{ congress }} Congress">{{ page.sponsored.size }} in the {{ congress }} Congress</span>{% endif %}
+      {%- if page.sponsored %}<span class="small muted nums" data-count data-noun="in the {{ congress }} Congress" aria-live="polite">{{ page.sponsored.size }} in the {{ congress }} Congress</span>{% endif %}
     </div>
     <p class="small soft">Bills and resolutions {{ m.name | escape }} introduced as the sponsor, with the latest action on each as Congress.gov records it.</p>
     {%- if page.sponsored_areas %}{% include member_areas.html areas=page.sponsored_areas %}{% endif %}
@@ -113,7 +113,7 @@ layout: default
   <section aria-labelledby="cosponsored-h" style="display: flex; flex-direction: column; gap: 12px" data-filter-scope data-pagefind-ignore>
     <div class="head-row">
       <h2 id="cosponsored-h" class="section-h">Bills cosponsored</h2>
-      {%- if page.cosponsored %}<span class="small muted nums" data-count data-noun="in the {{ congress }} Congress">{{ page.cosponsored.size }} in the {{ congress }} Congress</span>{% endif %}
+      {%- if page.cosponsored %}<span class="small muted nums" data-count data-noun="in the {{ congress }} Congress" aria-live="polite">{{ page.cosponsored.size }} in the {{ congress }} Congress</span>{% endif %}
     </div>
     <p class="small soft">Bills and resolutions {{ m.name | escape }} cosponsored, with the latest action on each as Congress.gov records it. A cosponsor is a member who adds their name as a supporter of a bill or resolution another member introduced.</p>
     {%- if page.cosponsored_areas %}{% include member_areas.html areas=page.cosponsored_areas %}{% endif %}
