@@ -101,8 +101,11 @@ def card_text(vote: dict, doc: dict) -> Card | None:
         note = f"Vice President voted {vote['tie_breaker_vote']} to break the tie"
 
     question = vote["question"]
-    title = vote.get("measure_title") or vote.get("vote_title") or question
-    if vote.get("measure_title"):
+    # A blank or whitespace-only title falls through to the next, in the page
+    # heading's order.
+    measure_title = (vote.get("measure_title") or "").strip()
+    title = measure_title or (vote.get("vote_title") or "").strip() or question.strip()
+    if measure_title:
         title = f"“{title}”"
     meta = "  ·  ".join([CHAMBERS[vote["chamber"]], f"Roll call {vote['roll_number']}", ap_date(vote["vote_date"])])
     return Card(

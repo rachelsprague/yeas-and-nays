@@ -69,6 +69,15 @@ def test_card_text_title_falls_back_like_the_heading():
     assert card_text(vote(measure_title="", vote_title=""), doc("Yea")).title == "On Motion to Suspend the Rules and Pass"
 
 
+def test_card_text_title_skips_whitespace_only_titles():
+    # Same order as the page heading, which strips each title (PR #125).
+    card = card_text(vote(measure_title=" \n", vote_title="  Vote Title  "), doc("Yea"))
+    assert card.title == "Vote Title"
+    card = card_text(vote(measure_title="\t", vote_title=" "), doc("Yea"))
+    assert card.title == "On Motion to Suspend the Rules and Pass"
+    assert card_text(vote(measure_title="  Example Act "), doc("Yea")).title == "“Example Act”"
+
+
 def test_no_card_without_yea_or_nay():
     # A quorum call has no Yea or Nay; a Speaker election is tallied by candidate.
     assert card_text(vote(question="Call by States"), doc("Present", "Not Voting")) is None
