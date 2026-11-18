@@ -80,9 +80,12 @@ class ProcedureTest < Minitest::Test
   end
 
   # Keys are the dictionary page's anchors, so each is unique across all
-  # three lists, and none is an id the page already uses.
+  # three lists, and none is an id the page already uses; each has a term and
+  # a definition, so no entry renders empty.
   def test_every_entry_has_a_unique_key
-    keys = %w[questions measures terms].flat_map { |list| PROCEDURES[list].map { |e| e["key"] } }
+    entries = %w[questions measures terms].flat_map { |list| PROCEDURES[list] }
+    assert_empty entries.reject { |e| e["term"].to_s.strip != "" && e["definition"].to_s.strip != "" }
+    keys = entries.map { |e| e["key"] }
     assert_empty keys.select { |k| k.nil? || k !~ /\A[a-z][a-z_]*\z/ }
     assert_equal keys.uniq, keys
     refute_includes keys, "main"

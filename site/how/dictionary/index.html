@@ -16,9 +16,9 @@ description: Plain-language definitions of the motions, votes and other terms us
     <section id="terms">
       <dl>
         {%- for e in site.data.dictionary %}
-        <dt id="{{ e.key }}">{{ e.term }}</dt>
+        <dt id="{{ e.key | escape }}">{{ e.term | escape }}</dt>
         <dd>{{ e.definition }}{% if e.more %} <a href="{{ e.more.url | escape }}">{{ e.more.label | escape }}</a>.{% endif %}
-          {%- if e.see.size > 0 %} See also: {% for s in e.see %}<a href="#{{ s.key }}">{{ s.term }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %}</dd>
+          {%- if e.see.size > 0 %} See also: {% for s in e.see %}<a href="#{{ s.key | escape }}">{{ s.term | escape }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %}</dd>
         {%- endfor %}
       </dl>
       <p>How each kind of measure moves from introduction to law is described in <a href="/how/bills/">How a bill becomes law</a>. How this site shows votes and results is explained in <a href="/about/#procedural-votes">How votes work</a>.</p>

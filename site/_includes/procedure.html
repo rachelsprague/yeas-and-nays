@@ -6,7 +6,7 @@
   {%- if p.more %}
   <a class="link small" href="{{ p.more.url | escape }}" data-pagefind-ignore>{{ p.more.label | escape }}</a>
   {%- endif %}
-  <a class="link small" href="/how/dictionary/#{{ p.key }}" data-pagefind-ignore>{{ p.term }} in the dictionary</a>
+  <a class="link small" href="/how/dictionary/#{{ p.key | escape }}" data-pagefind-ignore>{{ p.term | escape }} in the dictionary</a>
   <a class="link small" href="/about/#procedural-votes" data-pagefind-ignore>How votes work</a>
   {%- if include.vote.bill_type %}
   <a class="link small" href="/how/bills/" data-pagefind-ignore>How a bill becomes law</a>
