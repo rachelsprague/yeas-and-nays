@@ -1,0 +1,28 @@
+---
+search_type: How it works
+house_ad: true
+layout: default
+title: Dictionary of floor terms
+description: Plain-language definitions of the motions, votes and other terms used on the House and Senate floor, such as cloture, motion to table and filibuster.
+---
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <span class="kicker muted">How things work</span>
+    <h1 class="vote-h">Dictionary of floor terms</h1>
+    <p class="soft intro">The words the House and Senate use for their votes and procedures, in plain language. Each vote page defines the kind of vote it records and links to its entry here.</p>
+  </section>
+
+  <div class="prose">
+    <section id="terms">
+      <dl>
+        {%- for e in site.data.dictionary %}
+        <dt id="{{ e.key }}">{{ e.term }}</dt>
+        <dd>{{ e.definition }}{% if e.more %} <a href="{{ e.more.url | escape }}">{{ e.more.label | escape }}</a>.{% endif %}
+          {%- if e.see.size > 0 %} See also: {% for s in e.see %}<a href="#{{ s.key }}">{{ s.term }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}.{% endif %}</dd>
+        {%- endfor %}
+      </dl>
+      <p>How each kind of measure moves from introduction to law is described in <a href="/how/bills/">How a bill becomes law</a>. How this site shows votes and results is explained in <a href="/about/#procedural-votes">How votes work</a>.</p>
+      <p class="small soft">Definitions follow the House and Senate's own glossaries and rules. For more, see the <a href="https://www.congress.gov/help/legislative-glossary">Congress.gov legislative glossary</a>.</p>
+    </section>
+  </div>
+</main>

@@ -1,5 +1,6 @@
 # Plain-language definitions of the questions the House and Senate vote on,
-# shown on vote pages ("About this vote") and in About > Procedural votes.
+# shown on vote pages ("About this vote"), in About > Procedural votes and on
+# the dictionary page (/how/dictionary/, one entry per key, all three lists).
 #
 # Wording rules (STYLE.md): describe how the procedure works, the same way
 # every time. Never refer to a specific measure, outcome, party, or motive.
@@ -251,27 +252,98 @@ questions:
 # What happens to each kind of measure after it passes. Shown with passage
 # votes, keyed by Congress.gov bill type.
 measures:
-  - types: [hr, s]
+  - key: bill
+    types: [hr, s]
     term: Bill
     definition: >-
       Bills become law if both chambers pass them in identical form and the
       President signs them or does not return them within ten days (Sundays
       excepted), unless Congress's adjournment prevents their return. A vetoed
       bill becomes law if both chambers override the veto.
-  - types: [hjres, sjres]
+  - key: joint_resolution
+    types: [hjres, sjres]
     term: Joint resolution
     definition: >-
       Joint resolutions go through the same process as bills and can become
       law. Those proposing a constitutional amendment instead need two-thirds
       of each chamber and then go to the states for ratification.
-  - types: [hconres, sconres]
+  - key: concurrent_resolution
+    types: [hconres, sconres]
     term: Concurrent resolution
     definition: >-
       Concurrent resolutions must be adopted by both chambers but do not go to
       the President and do not become law. They are used for matters such as
       the congressional budget and joint rules.
-  - types: [hres, sres]
+  - key: simple_resolution
+    types: [hres, sres]
     term: Simple resolution
     definition: >-
       Simple resolutions concern only the chamber that adopts them. They do not
       go to the other chamber or the President and do not become law.
+
+# Floor terms that are never the question voted on, for the dictionary page
+# only. `see` lists related entries by key (from any list in this file).
+terms:
+  - key: filibuster
+    term: Filibuster (Senate)
+    definition: >-
+      An informal term, not a formal procedure, for trying to block or delay
+      Senate action on a measure or nomination by debating it at length,
+      offering many procedural motions, or other delaying actions. No vote is
+      called a filibuster. The Senate can limit debate by invoking cloture.
+    see: [cloture]
+
+  - key: unanimous_consent
+    term: Unanimous consent
+    definition: >-
+      Agreement by every member on the floor to set aside the usual rules, for
+      example to schedule a vote or limit debate. A single member's objection
+      blocks it. Many actions in both chambers are taken this way, without a
+      recorded vote.
+
+  - key: en_bloc
+    term: En bloc
+    definition: >-
+      As a group. Several amendments or nominations considered en bloc are
+      decided together, by one vote, instead of one at a time.
+    see: [amendment, nomination]
+
+  - key: voice_vote
+    term: Voice vote
+    definition: >-
+      A vote in which members call out "aye" or "no" together and the
+      presiding officer judges which side has more. No record is kept of how
+      each member voted, so voice votes are not on this site.
+    see: [recorded_vote]
+
+  - key: recorded_vote
+    term: Recorded vote (roll call vote)
+    definition: >-
+      A vote in which each member's position is recorded by name. The House
+      usually votes by electronic device; in the Senate, the clerk calls each
+      senator's name. The Constitution requires one when one-fifth of the
+      members present ask for it. This site covers every recorded vote.
+    see: [voice_vote, yea_nay]
+
+  - key: yea_nay
+    term: Yea and Nay (Aye and No)
+    definition: >-
+      Votes for and against the question. The House records most electronic
+      votes as Aye and No, and votes ordered by "the yeas and nays" as Yea and
+      Nay. Each vote page uses the words the vote recorded.
+    see: [present, not_voting]
+
+  - key: present
+    term: Present
+    definition: >-
+      A member who answers "present" is recorded as taking part in the vote
+      without voting for or against the question. It counts toward a quorum
+      but not toward either side.
+    see: [yea_nay, quorum]
+
+  - key: not_voting
+    term: Not Voting
+    definition: >-
+      The member is recorded as casting no vote on the question. The roll call
+      record does not give a reason.
+    see: [yea_nay, present]
