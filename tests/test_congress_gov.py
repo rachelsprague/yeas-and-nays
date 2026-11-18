@@ -112,7 +112,9 @@ def test_fetch_actions_reads_every_page():
     assert doc["request"]["billNumber"] == "1"
 
 
-def test_fetch_actions_raises_on_a_later_page_without_a_count():
+# A bool is an int in Python, so a count of true would otherwise pass as 1.
+@pytest.mark.parametrize("later", [{}, {"pagination": {"count": True}}])
+def test_fetch_actions_raises_on_a_later_page_without_a_count(later):
     import httpx
 
     from yan.ingest.congress_gov import fetch_actions
@@ -121,12 +123,34 @@ def test_fetch_actions_raises_on_a_later_page_without_a_count():
         def get(self, url, headers=None):
             first = url.endswith("offset=0")
             doc = {"request": {}, "actions": [{"text": "a"}] * (250 if first else 1)}
-            if first:
-                doc["pagination"] = {"count": 300}
+            doc.update({"pagination": {"count": 300}} if first else later)
             return httpx.Response(200, json=doc, request=httpx.Request("GET", url))
 
     with pytest.raises(ValueError, match="no pagination count"):
         fetch_actions(Client(), "k", 119, "hr", "1")
+
+
+@pytest.mark.parametrize("first", [{}, {"pagination": {}}, {"pagination": {"count": None}},
+                                   {"pagination": {"count": True}}])
+def test_fetch_actions_takes_a_first_page_without_a_count_as_the_whole_list(first):
+    import httpx
+
+    from yan.ingest.congress_gov import fetch_actions
+
+    class Client:
+        def __init__(self):
+            self.urls = []
+
+        def get(self, url, headers=None):
+            self.urls.append(url)
+            doc = {"request": {"billNumber": "1"}, "actions": [{"text": "a"}] * 250, **first}
+            return httpx.Response(200, json=doc, request=httpx.Request("GET", url))
+
+    client = Client()
+    doc = json.loads(fetch_actions(client, "k", 119, "hr", "1"))
+    # A full page, but with no count to say more follow, so no second request.
+    assert len(client.urls) == 1
+    assert len(doc["actions"]) == 250
 
 
 def test_fetch_actions_raises_on_a_response_without_actions(monkeypatch):
