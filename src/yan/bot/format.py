@@ -9,7 +9,7 @@
 
 import re
 
-from yan.bot.rules import Decision, measure_label, outcome
+from yan.bot.rules import RECONSIDERED, Decision, headline_title, measure_label, outcome
 from yan.config import SITE_URL
 
 MAX_GRAPHEMES = 300
@@ -17,7 +17,6 @@ MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
 CLOSERS = {"(": ")", "“": "”", "‘": "’"}
-RECONSIDERED = ", Upon Reconsideration"
 SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for)$", flags=re.IGNORECASE)
 
 
@@ -49,34 +48,6 @@ def headline(vote: dict, decision: Decision, title: str) -> str:
     if decision.kind == "cloture":
         return f"{chamber} {'invokes cloture on' if passed else 'fails to invoke cloture on'} {title}"
     raise ValueError(f"no headline for vote kind {decision.kind!r}")
-
-
-def headline_title(vote: dict, decision: Decision) -> str:
-    """The official title or nominee + position that goes in the headline."""
-    title = (vote.get("measure_title") or "").strip()
-    if decision.kind == "nomination":
-        # Official form: "Peter Hegseth, of Tennessee, to be Secretary of Defense"
-        m = re.fullmatch(r"(.+?), of [^,]+, to be (.+)", title)
-        return f"{m.group(1)} as {m.group(2)}" if m else title
-    if decision.kind == "cloture":
-        # Official forms vary: "Motion to Invoke Cloture: Motion to Proceed to S. 5",
-        # "... Cloture on the Motion to Proceed: H.R. 7008", "... Cloture Re: Amdt. No. 4308",
-        # "Upon Reconsideration, Motion to Invoke Cloture ...". All become the most
-        # common form, "Motion to Proceed to {measure}", with reconsideration last
-        # as the Senate also writes it ("..., Upon Reconsideration").
-        # The Senate's capitalization varies too, so match ignoring case.
-        stripped = (vote.get("vote_title") or "").strip()
-        reconsidered = re.match(r"^Upon Reconsideration[,:]\s*", stripped, flags=re.IGNORECASE)
-        if reconsidered:
-            stripped = stripped[reconsidered.end():]
-        stripped = re.sub(r"^Motion to Invoke Cloture(?::\s*|\s+Re:\s*|\s+on\s+)(?:the\s+)?", "", stripped,
-                          flags=re.IGNORECASE)
-        stripped = re.sub(r"^Motion to Proceed(?::\s*|\s+to\s+)", "Motion to Proceed to ", stripped,
-                          flags=re.IGNORECASE)
-        if reconsidered and not re.search(RECONSIDERED + "$", stripped, flags=re.IGNORECASE):
-            stripped += RECONSIDERED
-        return stripped or title
-    return title
 
 
 def tally_line(vote: dict, positions: dict[str, str]) -> str:

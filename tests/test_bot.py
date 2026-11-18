@@ -196,6 +196,34 @@ def test_nomination_headline_trims_a_padded_title():
         "Senate confirms Peter Hegseth as Secretary of Defense")
 
 
+@pytest.mark.parametrize("measure_title", ["", "   ", None])
+def test_nomination_headline_cites_the_number_without_a_title(measure_title):
+    vote = senate_vote(measure_title=measure_title, measure_number=" PN11-7 ")
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == "Senate confirms PN11-7"
+
+
+def test_cloture_headline_cites_the_measure_without_a_title():
+    vote = senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to", vote_title=" ",
+                       measure_title=None, measure_number="PN11-7", tie_breaker_by=None, tie_breaker_vote=None)
+    assert format_post(doc(vote), decide(vote)).splitlines()[0] == "Senate invokes cloture on PN11-7"
+
+
+@pytest.mark.parametrize("vote", [
+    senate_vote(measure_title="  ", measure_number=None),
+    senate_vote(measure_title=None, measure_number="  ", vote_title="On the Nomination: Peter Hegseth"),
+    senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                vote_title=None, measure_title=" ", measure_number=None),
+    senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                vote_title="Motion to Invoke Cloture: ", measure_title=None, measure_number=None),
+    senate_vote(question="On the Cloture Motion", result="Cloture Motion Agreed to",
+                vote_title="Upon Reconsideration, Motion to Invoke Cloture:", measure_title=None, measure_number=None),
+])
+def test_nomination_or_cloture_with_nothing_to_cite_is_skipped(vote):
+    decision = decide(vote)
+    assert not decision.post
+    assert decision.reason.endswith("to cite")
+
+
 def test_no_party_break_line_when_nobody_broke():
     vote = senate_vote(tie_breaker_by=None, tie_breaker_vote=None, yea_count=51, nay_count=49)
     assert "Voted against" not in format_post(doc(vote), decide(vote))
