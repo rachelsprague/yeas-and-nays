@@ -29,7 +29,11 @@ def headline(vote: dict, decision: Decision, title: str) -> str:
     chamber = vote["chamber"].capitalize()
     passed = outcome(vote)
     measure = measure_label(vote)
-    cited = f'{measure}, "{title}"' if measure else f'"{title}"'
+    # No official title: cite the measure alone, not an empty pair of quotes.
+    if measure and not title:
+        cited = measure
+    else:
+        cited = f'{measure}, "{title}"' if measure else f'"{title}"'
 
     if decision.kind == "passage":
         return f"{chamber} {'passes' if passed else 'fails'} {cited}"
@@ -49,7 +53,7 @@ def headline(vote: dict, decision: Decision, title: str) -> str:
 
 def headline_title(vote: dict, decision: Decision) -> str:
     """The official title or nominee + position that goes in the headline."""
-    title = vote.get("measure_title") or ""
+    title = (vote.get("measure_title") or "").strip()
     if decision.kind == "nomination":
         # Official form: "Peter Hegseth, of Tennessee, to be Secretary of Defense"
         m = re.fullmatch(r"(.+?), of [^,]+, to be (.+)", title)
@@ -61,7 +65,7 @@ def headline_title(vote: dict, decision: Decision) -> str:
         # common form, "Motion to Proceed to {measure}", with reconsideration last
         # as the Senate also writes it ("..., Upon Reconsideration").
         # The Senate's capitalization varies too, so match ignoring case.
-        stripped = vote.get("vote_title") or ""
+        stripped = (vote.get("vote_title") or "").strip()
         reconsidered = re.match(r"^Upon Reconsideration[,:]\s*", stripped, flags=re.IGNORECASE)
         if reconsidered:
             stripped = stripped[reconsidered.end():]
