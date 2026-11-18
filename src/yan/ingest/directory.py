@@ -71,7 +71,8 @@ def fetch(client: Client, key: str, today: dt.date) -> None:
     if not path.exists():
         resp = client.get(TEXT_URL.format(package_id=newest), headers={"X-Api-Key": key})
         resp.raise_for_status()
-        if (n := len(directory.parse(resp.text))) < MIN_BIOS:
+        # Decoded the way stage reads the saved file.
+        if (n := len(directory.parse(resp.content.decode("utf-8")))) < MIN_BIOS:
             raise ValueError(f"{newest} has {n} biographies (expected at least {MIN_BIOS})")
         write_atomic(path, resp.content)
         log.info("directory: saved %s (%d bytes)", path.name, len(resp.content))

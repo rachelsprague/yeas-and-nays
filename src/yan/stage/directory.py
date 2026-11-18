@@ -18,7 +18,8 @@ the name as printed, the opening after the name and party ("of Oakland, CA;
 born in ...") as printed, and the text of each labeled field. The opening
 isn't split further: its wording varies from member to member ("born in",
 "born on", "raised in", or no birthplace). A paragraph under no seat heading,
-or outside a state's section, is skipped.
+or outside a state's section, is skipped, as is one with nothing after the
+name and party.
 """
 
 import re
@@ -53,8 +54,8 @@ for _n, (_tens, _tenth) in enumerate([("TWENTY", "TWENTIETH"), ("THIRTY", "THIRT
 DISTRICT_HEADING = re.compile(r"([A-Z-]+) DISTRICT")
 FIELDS = {"education": "education", "professional history": "professional_history",
           "military service": "military_service", "election history": "election_history"}
-# A label follows a semicolon, or now and then a comma.
-FIELD_LABEL = re.compile(r"[;,]\s*(" + "|".join(FIELDS) + r"):\s*")
+# A label follows a semicolon, now and then a comma, or starts the text (no opening).
+FIELD_LABEL = re.compile(r"(?:^|[;,])\s*(" + "|".join(FIELDS) + r"):\s*")
 # Names are in capitals, but with a lowercase letter here and there ("SARAH McBRIDE",
 # "DONALD S. BEYER, Jr."). The party is followed by a comma, or now and then by more words
 # ("Democrat Delegate,", "Democratic-Farmer-Labor Party,") or no comma ("Republican of Austin").
@@ -93,6 +94,8 @@ def parse(text: str) -> list[dict]:
         if not (state and chamber and lines) or not (bio := BIO.fullmatch(_join(lines))):
             continue
         opening, *rest = FIELD_LABEL.split(bio["opening"])
+        if not _clean(opening):
+            continue  # nothing after the name and party: not a biography to show
         fields = dict.fromkeys(FIELDS.values())
         for label, value in zip(rest[::2], rest[1::2]):
             fields[FIELDS[label]] = _clean(value)

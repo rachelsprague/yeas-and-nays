@@ -19,7 +19,7 @@ layout: default
       <p class="term nums">Former member{% if m.served_from %} · Served in the {{ congress }} Congress {{ m.served_from | ap_date }}–{{ m.served_to | ap_date }}{% endif %}</p>
       {%- endif %}
       {%- if m.service_line %}
-      <p class="term nums">{{ m.service_line }}</p>
+      <p class="term nums">{{ m.service_line | escape }}</p>
       {%- endif %}
     </div>
   </section>

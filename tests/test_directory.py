@@ -97,6 +97,11 @@ def test_parse_takes_openings_as_printed():
     assert rows["JO EXAMPLE"]["opening"] == "of Washington, DC; born in Washington, DC"
 
 
+def test_parse_skips_a_biography_with_nothing_after_the_party():
+    text = "<DOC>\n.\n   OHIO\n\n SENATORS\n\nPAT EXAMPLE, Republican, education: B.A., Example College.\n"
+    assert directory.parse(text) == []
+
+
 def test_district_ordinals():
     assert directory.ORDINALS["FIRST"] == 1
     assert directory.ORDINALS["NINETEENTH"] == directory.ORDINALS["NINTEENTH"] == 19

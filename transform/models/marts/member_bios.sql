@@ -6,10 +6,12 @@
   When a member matches more than one biography, or a biography more than one
   member (two members of a state's delegation with one last name), only a match
   on the member's own seat counts: district for the House, the state for the
-  Senate. Matching by name rather than seat alone keeps a biography off a
-  member who took the seat after the edition went to print, and keeps a
+  Senate. A member whose first term in the chamber began after the edition was
+  issued can't match. Matching by name rather than seat alone keeps a
   continuing member's biography when redistricting moves them to a new
-  district. A member with two matches on their own seat gets none. Members who
+  district. A member with two matches on their own seat gets none, and a
+  biography goes to one member at most
+  (tests/member_bios_one_member_per_bio.sql). Members who
   joined after the edition, or left before it, have none
   (tests/members_without_bios.sql lists those in office when it was issued).
 -#}
@@ -31,6 +33,9 @@ matches as (
     inner join bios
         on bios.state = members.state
         and bios.chamber = members.chamber
+        -- A member whose first term in the chamber began after the edition was issued isn't
+        -- in it, even with a shared surname (Graham Nordone, who took Graham's Senate seat).
+        and members.chamber_first_term_start <= bios.date_issued
         and (
             contains({{ name_words('bios.printed_name') }}, {{ name_words('members.last_name') }})
             -- On the member's own seat, the first word of the last name will do: the 2026
