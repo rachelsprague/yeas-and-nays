@@ -196,6 +196,34 @@ unit_tests:
         - {bioguide_id: S1, last_congress: 120, served_from: "2027-01-03", served_to: "2029-01-03"}
         - {bioguide_id: F1, last_congress: 119, served_from: "2025-01-03", served_to: "2027-01-03"}
 
+  - name: members_on_a_roll_call_before_their_new_term_is_listed
+    description: >
+      A returning member on a 120th roll call before congress-legislators lists
+      their 120th term keeps last_congress 120 (so their new roll calls are the
+      main stats, not an "earlier Congress"), with no dates in it and party and
+      state from their 119th term.
+    model: members
+    given:
+      - input: ref('int_member_periods')
+        rows:
+          - {bioguide_id: M1, chamber: house, state: OH, district: 3, party: R, caucus_party: R, member_label: "Lag (R-OH-3)", period_start: "2025-01-03", period_end: "2027-01-03", overlaps_site_congress: true}
+      - input: ref('int_positions_resolved')
+        rows: []
+      - input: ref('stg_legislators__people')
+        rows:
+          - {bioguide_id: M1, last_name: Lag, is_current: true}
+      - input: ref('member_congresses')
+        rows:
+          - {bioguide_id: M1, congress: 119, served_in_congress: true, served_from: "2025-01-03", served_to: "2027-01-03"}
+          - {bioguide_id: M1, congress: 120, served_in_congress: false, served_from: null, served_to: null}
+      - input: ref('stg_legislators__terms')
+        rows: []
+      - input: ref('stg_legislators__social_media')
+        rows: []
+    expect:
+      rows:
+        - {bioguide_id: M1, last_congress: 120, served_in_congress: false, served_from: null, served_to: null, chamber: house, party: R, state: OH, district: 3}
+
   - name: vote_summaries_use_the_version_in_effect_on_the_vote_date
     model: vote_summaries
     given:
