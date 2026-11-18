@@ -19,6 +19,8 @@
 //                              data-{key} matches that select (current or
 //                              former members), so it's not "x of all".
 //   [data-empty]               shown when nothing matches
+//   details[data-open-on-filter]  opened when a tab other than "all" is
+//                              selected, so matching rows inside it show
 (function () {
   "use strict";
 
@@ -106,6 +108,9 @@
           if (o.dataset.tab === b.dataset.tab) o.setAttribute("aria-pressed", String(o === b));
         });
         tabState[b.dataset.tab] = b.dataset.value;
+        if (b.dataset.value !== "all") {
+          scope.querySelectorAll("details[data-open-on-filter]").forEach(function (d) { d.open = true; });
+        }
         apply();
       });
     });

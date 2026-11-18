@@ -1,5 +1,5 @@
 {%- assign b = include.bill -%}
-<li class="vrow">
+<li class="vrow"{% if include.filter %} data-row data-area="{{ b.area_slug | escape }}"{% endif %}>
   <span class="kicker muted nums">{{ b.measure_label | escape }}{% if b.introduced_date %} · Introduced {{ b.introduced_date | ap_date }}{% endif %}</span>
   <span class="stack">
     {%- if b.congress_gov_url %}
