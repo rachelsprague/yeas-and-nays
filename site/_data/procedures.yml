@@ -58,9 +58,10 @@ questions:
     term: Suspension of the rules (House)
     match: 'Motion to Suspend the Rules'
     definition: >-
-      A faster procedure for measures expected to draw broad support. Debate is
-      limited to 40 minutes, no amendments may be offered from the floor, and
-      the motion needs a two-thirds majority of those voting to pass.
+      A faster procedure for considering measures. Debate is limited to 40
+      minutes, no amendments may be offered from the floor (any changes must
+      be included in the motion itself), and the motion needs a two-thirds
+      majority of those voting to pass.
 
   - key: refer
     term: Motion to refer
