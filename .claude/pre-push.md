@@ -46,9 +46,11 @@ Changes under `data/out/` from a local export are safe to restore
 
 ## Backlog and board
 
-Filed findings go in `BOARD.md`, one per line, each line 150 characters or
-fewer (Later, or Next if it matters soon), with any detail in
-`backlog/<slug>.md` linked from the line. Once the PR is open, leave the
+Filed findings go in `BOARD.md` from the main checkout, after leaving the
+worktree (neither file exists in a worktree): one per line, each line 150
+characters or fewer as filed, before any claim or PR note (Later, or Next
+if it matters soon), with any detail in `backlog/<slug>.md` linked from
+the line. Once the PR is open, leave the
 worktree (keep it) and in the main checkout's `BOARD.md` add
 ` — PR #N, awaiting merge` to the item's line in Now, and to each bundled
 item still in the PR, keeping the claims (`CLAUDE.md` > Claiming items).

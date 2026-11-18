@@ -29,7 +29,7 @@ Nonpartisan data project that tracks recorded (roll call) votes in the U.S. Hous
 
 ## Backlog
 
-Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item, 150 characters or fewer) and `backlog/<slug>.md` for details. Both are gitignored because this repo is public. Don't create GitHub issues for this project.
+Tracked locally, not in GitHub Issues: `BOARD.md` (one line per item, 150 characters or fewer as filed, before any claim or PR note) and `backlog/<slug>.md` for details. Both are gitignored because this repo is public. Don't create GitHub issues for this project.
 
 Being gitignored, they exist only in the main checkout, and a session isolated in a worktree can't edit them. So board edits bracket worktree work: claim from the main checkout before entering the worktree, and update the board after leaving it.
 
@@ -67,7 +67,7 @@ Each review has its own job, so the second finds different things instead of rep
 - **`/pre-push` (before the push, Sonnet):** the public-repo checklist (secrets, personal info, neutrality) and per-commit correctness and security. It must come first: once a branch is pushed, it's public.
 - **PR review (`.github/workflows/pr-review.yml`, Sonnet):** runs once per PR from this repo, when it is opened, reopened or marked ready (drafts and forks skipped; later pushes aren't re-reviewed, to limit usage). It reviews the squashed change merged into the current `main` (collisions with other sessions' merged work), using CLAUDE.md and STYLE.md as the rubric, plus missing tests and stale docs. It posts only findings it's confident about, as inline comments; it can't push, approve, or edit. Its run summary is on the Actions run page, with the run's token usage (it runs on the Claude subscription, so reviews count against plan limits).
 
-Handle PR review findings like pre-push ones: fix small, in-scope ones on the branch, and add the rest to `BOARD.md`, one line per finding.
+Handle PR review findings like pre-push ones (`/pre-push` step 3): propose fixing, filing or dropping each, and act once the user agrees.
 
 ## Model choice
 
