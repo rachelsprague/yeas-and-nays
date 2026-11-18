@@ -98,6 +98,19 @@ module Yan
       "measure_note" => (%w[passage suspend].include?(q["key"]) && note) ? note["definition"] : nil }
   end
 
+  # The dictionary page's entries: every question, kind of measure and other
+  # floor term in procedures.yml, in A-Z order by term, each with its `see`
+  # keys resolved to [{ "key", "term" }] (an unknown key raises, so a typo
+  # stops the build rather than linking nowhere).
+  def self.dictionary(procedures)
+    entries = %w[questions measures terms].flat_map { |list| procedures[list] || [] }
+    by_key = entries.to_h { |e| [e["key"], e] }
+    entries.sort_by { |e| e["term"].downcase }.map do |e|
+      see = (e["see"] || []).map { |k| { "key" => k, "term" => by_key.fetch(k)["term"] } }
+      e.slice("key", "term", "definition", "more").merge("see" => see)
+    end
+  end
+
   # The House schedule's heading without its "Items that may be considered"
   # lead-in: "Under suspension of the rules", "Pursuant to a rule", or nil.
   def self.schedule_category(category)
@@ -1160,6 +1173,7 @@ module Yan
                                                              schedule["senate_next_convene_et"])
 
       site.data["meta"] = meta
+      site.data["dictionary"] = Yan.dictionary(site.data["procedures"] || {})
       site.data["members"] = members
       map_file = File.join(site.source, "_maps", "#{meta["congress"]}.json")
       site.data["district_map"] = Yan.district_map(File.exist?(map_file) && JSON.parse(File.read(map_file)), members)

@@ -79,6 +79,36 @@ class ProcedureTest < Minitest::Test
     assert_nil Yan.procedure({ "question" => "On Passage" }, {})
   end
 
+  # Keys are the dictionary page's anchors, so each is unique across all
+  # three lists, and none is an id the page already uses; each has a term and
+  # a definition, so no entry renders empty.
+  def test_every_entry_has_a_unique_key
+    entries = %w[questions measures terms].flat_map { |list| PROCEDURES[list] }
+    assert_empty entries.reject { |e| e["term"].to_s.strip != "" && e["definition"].to_s.strip != "" }
+    keys = entries.map { |e| e["key"] }
+    assert_empty keys.select { |k| k.nil? || k !~ /\A[a-z][a-z_]*\z/ }
+    assert_equal keys.uniq, keys
+    refute_includes keys, "main"
+    refute_includes keys, "terms"
+  end
+
+  def test_dictionary_sorts_every_entry_and_resolves_see_also
+    entries = Yan.dictionary(PROCEDURES)
+    assert_equal %w[questions measures terms].sum { |list| PROCEDURES[list].size }, entries.size
+    terms = entries.map { |e| e["term"] }
+    assert_equal terms.sort_by(&:downcase), terms
+    filibuster = entries.find { |e| e["key"] == "filibuster" }
+    assert_equal [{ "key" => "cloture", "term" => "Cloture (Senate)" }], filibuster["see"]
+    assert_equal({ "url" => "/how/expulsion/", "label" => "How expulsion works" },
+                 entries.find { |e| e["key"] == "expel" }["more"])
+    assert_equal [], entries.find { |e| e["key"] == "bill" }["see"]
+  end
+
+  def test_dictionary_stops_on_an_unknown_see_also_key
+    procedures = { "terms" => [{ "key" => "a", "term" => "A", "definition" => "x", "see" => ["nope"] }] }
+    assert_raises(KeyError) { Yan.dictionary(procedures) }
+  end
+
   # Every question in the exported votes has a definition, so a new kind of
   # vote gets one in procedures.yml rather than showing none.
   def test_every_exported_question_has_a_definition
@@ -1350,6 +1380,25 @@ class VotePageTest < Minitest::Test
     assert_includes built.fetch("/how/bills/index.html"), "<h1 class=\"vote-h\">How a bill becomes law</h1>"
   end
 
+  # A vote page links its kind of vote's dictionary entry, which the
+  # dictionary page has as an anchor, alongside every other entry; About and
+  # the 404 page link the dictionary.
+  def test_a_vote_links_its_dictionary_entry
+    built = build_site([member("A000001", "AL", 1)],
+                       [[vote(1, "On Motion to Table"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
+    assert_includes built.fetch("/votes/119/house/1/1/index.html"),
+                    '<a class="link small" href="/how/dictionary/#table" data-pagefind-ignore>Motion to table in the dictionary</a>'
+    page = built.fetch("/how/dictionary/index.html")
+    ids = page.scan(/<dt id="([^"]*)">/).flatten
+    assert_equal Yan.dictionary(ProcedureTest::PROCEDURES).map { |e| e["key"] }, ids
+    assert_includes page, '<dt id="filibuster">Filibuster (Senate)</dt>'
+    assert_includes page, 'See also: <a href="#cloture">Cloture (Senate)</a>.</dd>'
+    assert_includes page, '<a href="/how/expulsion/">How expulsion works</a>.'
+    page[%r{<dl>.*</dl>}m].scan(/href="#([^"]*)"/).flatten.each { |id| assert_includes ids, id }
+    assert_includes built.fetch("/about/index.html"), '<a href="/how/dictionary/">dictionary of floor terms</a>'
+    assert_includes built.fetch("/404.html"), 'href="/how/dictionary/"'
+  end
+
   def path_doc
     doc({ "A000001" => "Yea" }, { "yes" => 1 }).merge("path" => { "track" => "law", "steps" => [
       { "key" => "introduced", "label" => "Introduced", "status" => "done", "date" => "2025-01-03",
@@ -2224,7 +2273,7 @@ end
 class HouseAdTest < Minitest::Test
   include SiteBuild
 
-  EXPLAINERS = ["/how/bills/index.html", "/how/expulsion/index.html"].freeze
+  EXPLAINERS = ["/how/bills/index.html", "/how/dictionary/index.html", "/how/expulsion/index.html"].freeze
 
   def pages
     @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
