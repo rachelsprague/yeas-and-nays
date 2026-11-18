@@ -95,7 +95,8 @@ layout: default
   {% include bill_path.html vote=v steps=page.bill_path %}
   {%- endif %}
 
-  {%- if v.congress_gov_url %}
+  {%- comment -%} On a bill, whether or not its Congress.gov link passed the http(s) check. {%- endcomment %}
+  {%- if v.bill_type %}
   <section class="section" aria-labelledby="summary-h">
     <h2 id="summary-h" class="section-h sm">Summary of {{ v.measure_label | escape }}</h2>
     {%- if page.sponsor %}
@@ -115,7 +116,9 @@ layout: default
     {%- else %}
     <p class="small soft">No Congressional Research Service summary of {{ v.measure_label | escape }} is available.</p>
     {%- endif %}
-    <a class="more" href="{{ v.congress_gov_url | escape }}/text">Full text on Congress.gov →</a>
+    {%- if v.congress_gov_text_url %}
+    <a class="more" href="{{ v.congress_gov_text_url | escape }}">Full text on Congress.gov →</a>
+    {%- endif %}
   </section>
   {%- endif %}
 

@@ -238,7 +238,7 @@ class EscapingTest < Minitest::Test
     amendment_page = built.fetch("/votes/119/house/1/3/index.html")
     assert_includes amendment_page, "Amendment &quot;VQ&quot; &lt;vq&gt; 1:"
     assert_includes amendment_page, %(href="https://clerk.house.gov/?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;")
-    assert_includes amendment_page, %(href="https://www.congress.gov/?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;/text")
+    assert_includes amendment_page, %(href="https://www.congress.gov/text?q=&quot;vq&quot;&lt;vq&gt;&amp;x=&#39;vq&#39;")
     assert_includes amendment_page, %(data-party="&quot;WQ&quot; &lt;wq&gt;" data-state="&quot;WQ&quot; &lt;wq&gt;")
     assert_includes built.fetch("/members/Z000002/index.html"), %(<span class="initials" aria-hidden="true" data-pagefind-ignore>&amp;&lt;</span>)
     assert_includes built.fetch("/members/index.html"), %(<option value="&quot;WQ&quot; &lt;wq&gt;">)
@@ -659,6 +659,16 @@ class WebUrlTest < Minitest::Test
      "/members/", "www.house.gov", "https:example.com", "", nil, 7].each { |u| assert_nil Yan.web_url(u), u.inspect }
   end
 
+  def test_text_url_ends_the_path_ahead_of_a_query_or_fragment
+    base = "https://www.congress.gov/bill/119th-congress/house-bill/1"
+    assert_equal "#{base}/text", Yan.text_url(base)
+    assert_equal "#{base}/text", Yan.text_url("#{base}/")
+    assert_equal "#{base}/text?s=1&r=2", Yan.text_url("#{base}?s=1&r=2")
+    assert_equal "#{base}/text#top", Yan.text_url("#{base}/#top")
+    assert_equal "#{base}/text?a=b/c#d?e", Yan.text_url("#{base}?a=b/c#d?e")
+    assert_nil Yan.text_url(nil)
+  end
+
   # Every link field holds a script URL; none reaches a page, and the page
   # leaves out each link it dropped (an http:// one stays).
   def test_other_schemes_are_dropped_from_every_page
@@ -686,6 +696,8 @@ class WebUrlTest < Minitest::Test
     assert_equal 2, member_page.scan('<span class="t">A bill to rename a post office</span>').size
     refute_includes member_page, 'href=""'
     vote_page = built.fetch("/votes/119/house/1/1/index.html")
+    # The bill's summary section stays, without its Congress.gov link.
+    assert_includes vote_page, "No Congressional Research Service summary of"
     refute_includes vote_page, "Full text on Congress.gov"
     refute_includes vote_page, "Official sources"
     refute_includes vote_page, 'href=""'
