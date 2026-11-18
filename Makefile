@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: all ingest stage model export cards bot-preview site site-search site-serve test pytest sitetest clean
+.PHONY: all ingest stage model export cards bot-preview site site-search site-serve test pytest sitetest jstest clean
 
 all: ingest stage model export
 
@@ -32,13 +32,16 @@ site-search: cards  ## build the site and its Pagefind search index, then serve 
 site-serve: cards  ## build and serve the site at http://localhost:4000
 	cd site && bundle install --quiet && bundle exec jekyll serve
 
-test: pytest sitetest  ## Python and site plugin tests (dbt tests run as part of `make model`)
+test: pytest sitetest jstest  ## Python, site plugin and site JS tests (dbt tests run as part of `make model`)
 
 pytest:
 	uv run pytest -q
 
 sitetest:        ## tests for the site's Jekyll plugin
 	cd site && bundle install --quiet && bundle exec ruby test/yan_data_test.rb
+
+jstest:          ## tests for the site's JS (Node and jsdom, pinned in site/package-lock.json)
+	cd site && npm ci --ignore-scripts --no-audit --no-fund && node --test test/
 
 clean:           ## remove local intermediate files (keeps raw downloads)
 	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache site/assets/cards

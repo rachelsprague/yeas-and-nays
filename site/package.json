@@ -1,7 +1,8 @@
 {
   "private": true,
-  "description": "Build tools for the site. Pagefind writes the search index into _site/pagefind/ after the Jekyll build; package-lock.json pins it by hash.",
+  "description": "Build and test tools for the site. Pagefind writes the search index into _site/pagefind/ after the Jekyll build; jsdom runs the JS tests in test/ (make jstest). package-lock.json pins both by hash.",
   "devDependencies": {
+    "jsdom": "30.1.3",
     "pagefind": "1.5.2"
   }
 }
