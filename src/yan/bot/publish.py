@@ -8,6 +8,8 @@ variables (GitHub Actions secrets). They are never printed.
 
 import os
 
+from yan.bot.card import LinkCard
+
 POSTED_FEED_LIMIT = 100
 
 
@@ -48,13 +50,29 @@ class BlueskyPublisher:
             raise _failed("feed read", exc) from None
         return {item.post.record.text.rsplit("\n", 1)[-1] for item in feed.feed}
 
-    def post(self, text: str, url: str) -> None:
-        """Post text whose last line is the display form of url, linked to url."""
+    def post(self, text: str, url: str, card: LinkCard | None = None) -> None:
+        """Post text whose last line is the display form of url, linked to url,
+        with card (if any) as the post's link card."""
         from atproto import client_utils
 
         body, link_text = text.rsplit("\n", 1)
         builder = client_utils.TextBuilder().text(body + "\n").link(link_text, url)
+        extra = {"embed": self._embed(card)} if card else {}
         try:
-            self._client.send_post(builder, langs=["en"])
+            self._client.send_post(builder, langs=["en"], **extra)
         except Exception as exc:
             raise _failed("post", exc) from None
+
+    def _embed(self, card: LinkCard):
+        """An external embed for card. A thumbnail that fails to upload is
+        left off rather than holding the post."""
+        from atproto import models
+
+        thumb = None
+        if card.thumb:
+            try:
+                thumb = self._client.upload_blob(card.thumb).blob
+            except Exception as exc:
+                print(f"::warning::{_failed('thumbnail upload', exc)}; posting the card without it")
+        return models.AppBskyEmbedExternal.Main(external=models.AppBskyEmbedExternal.External(
+            uri=card.uri, title=card.title, description=card.description, thumb=thumb))

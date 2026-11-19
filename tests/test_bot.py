@@ -509,21 +509,23 @@ def test_dry_run_does_not_advance_state(out_dir, tmp_path, capsys):
 class FakePublisher:
     def __init__(self, already=()):
         self.posts = []
+        self.cards = []
         self.already = set(already)
 
     def recent_links(self):
         return self.already
 
-    def post(self, text, url):
+    def post(self, text, url, card=None):
         self.posts.append((text, url))
+        self.cards.append(card)
 
 
 def publish_run(out_dir, state_path, publisher, today="2026-11-11", sleeps=None, page_live=lambda url: True,
-                page_missing=lambda url: False):
+                page_missing=lambda url: False, link_card=lambda url: None):
     bot.run(state_path, out_dir, publish=True, publisher=publisher,
             sleep=(sleeps.append if sleeps is not None else lambda s: None),
             today=__import__("datetime").date.fromisoformat(today), page_live=page_live,
-            page_missing=page_missing)
+            page_missing=page_missing, link_card=link_card)
 
 
 def test_publish_posts_in_order_and_advances_state(out_dir, tmp_path):
@@ -844,3 +846,169 @@ def test_publisher_links_the_last_line_to_the_full_url(monkeypatch):
     assert facet.features[0].uri == "https://clerk.house.gov/Votes/2026317"
     linked = text.encode()[facet.index.byte_start:facet.index.byte_end].decode()
     assert linked == "clerk.house.gov/Votes/2026317"
+
+
+# --- link cards ------------------------------------------------------------
+
+def test_publish_attaches_the_link_card_for_each_vote_page(out_dir, tmp_path):
+    from yan.bot.card import LinkCard
+
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher()
+    publish_run(out_dir, state_path, publisher, link_card=lambda url: LinkCard(url, "Title", "Desc"))
+    assert publisher.cards == [LinkCard("https://yeasandnaysdata.com/votes/119/house/2/317/", "Title", "Desc")]
+
+
+def test_a_vote_with_no_card_still_posts(out_dir, tmp_path):
+    state_path = tmp_path / "state.json"
+    bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
+    publisher = FakePublisher()
+    publish_run(out_dir, state_path, publisher, link_card=lambda url: None)
+    assert len(publisher.posts) == 1 and publisher.cards == [None]
+
+
+def test_open_graph_reads_the_first_of_each_tag_with_entities_decoded():
+    from yan.bot.card import open_graph
+
+    html = """<head>
+      <meta property="og:site_name" content="Yeas &amp; Nays">
+      <meta property="og:title" content=" Senate roll call 257 ">
+      <meta property="og:title" content="second">
+      <meta name="description" content="not og">
+      <meta property="og:image" content="https://a.test/card.png">
+    </head>"""
+    assert open_graph(html) == {"og:site_name": "Yeas & Nays", "og:title": "Senate roll call 257",
+                                "og:image": "https://a.test/card.png"}
+
+
+PAGE = """<meta property="og:title" content="A bill to amend &quot;Title&quot;">
+<meta property="og:description" content="Senate roll call 257, Nov. 9, 2026. Agreed to, 73 Yea · 25 Nay.">
+<meta property="og:image" content="{image}">"""
+
+
+def fake_site(monkeypatch, responses):
+    """httpx.get answers from responses: URL -> (status, content type, body, URL ended at)."""
+    import httpx
+
+    def fake_get(url, **kwargs):
+        if url not in responses:
+            raise httpx.ConnectError("down")
+        status, ctype, body, final = responses[url]
+        content = body.encode() if isinstance(body, str) else body
+        return httpx.Response(status, headers={"content-type": ctype}, content=content,
+                              request=httpx.Request("GET", final or url))
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+
+def test_fetch_card_reads_the_page_tags_and_image(monkeypatch):
+    from yan.bot.card import LinkCard, fetch_card
+
+    page, image = "https://a.test/votes/1/", "https://a.test/cards/1.png"
+    fake_site(monkeypatch, {page: (200, "text/html", PAGE.format(image=image), None),
+                            image: (200, "image/png", b"\x89PNG", None)})
+    assert fetch_card(page) == LinkCard(page, 'A bill to amend "Title"',
+                                        "Senate roll call 257, Nov. 9, 2026. Agreed to, 73 Yea · 25 Nay.",
+                                        b"\x89PNG")
+
+
+@pytest.mark.parametrize("image, response, warning", [
+    ("https://other.test/1.png", None, "is not on a.test"),
+    ("/cards/1.png", None, "is not on a.test"),
+    ("https://a.test/\x00.png", None, "is malformed"),
+    ("https://a.test/1.png", (200, "text/html", "<html>", None), "is not an image"),
+    ("https://a.test/1.png", (200, "image/png", b"x" * 1_000_001, None), "over 1000000 bytes"),
+    ("https://a.test/1.png", (404, "text/html", "", None), "HTTP 404"),
+    ("https://a.test/1.png", None, "ConnectError"),
+])
+def test_fetch_card_leaves_off_a_thumbnail_it_cannot_use(monkeypatch, capsys, image, response, warning):
+    from yan.bot.card import fetch_card
+
+    page = "https://a.test/votes/1/"
+    responses = {page: (200, "text/html", PAGE.format(image=image), None)}
+    if response:
+        responses[image] = response
+    fake_site(monkeypatch, responses)
+    card = fetch_card(page)
+    assert card.title == 'A bill to amend "Title"' and card.thumb is None
+    assert "::warning::" in (out := capsys.readouterr().out) and warning in out
+
+
+def test_fetch_card_gives_no_card_without_a_page_or_a_title(monkeypatch, capsys):
+    from yan.bot.card import fetch_card
+
+    fake_site(monkeypatch, {
+        "https://a.test/untitled/": (200, "text/html", "<p>no tags</p>", None),
+        "https://a.test/moved/": (200, "text/html", PAGE, "https://parked.test/"),
+        "https://a.test/error/": (503, "text/html", "", None),
+    })
+    assert fetch_card("https://a.test/untitled/") is None
+    assert fetch_card("https://a.test/moved/") is None
+    assert fetch_card("https://a.test/error/") is None
+    assert fetch_card("https://a.test/down/") is None
+    out = capsys.readouterr().out
+    assert "no og:title" in out and "HTTP 200 from parked.test" in out and "HTTP 503" in out
+    assert "ConnectError" in out
+
+
+class CardClient:
+    """Records send_post; upload_blob returns a blob ref, or raises if fail_upload."""
+
+    def __init__(self, fail_upload=False):
+        self.fail_upload, self.uploads = fail_upload, []
+
+    def login(self, handle, password):
+        pass
+
+    def upload_blob(self, data):
+        from atproto import models
+        from atproto_client.models.blob_ref import BlobRef, IpldLink
+
+        if self.fail_upload:
+            raise ValueError("upload rejected: response body")
+        self.uploads.append(data)
+        blob = BlobRef(mime_type="image/png", size=len(data), ref=IpldLink(link="bafkreie"))
+        return models.ComAtprotoRepoUploadBlob.Response(blob=blob)
+
+    def send_post(self, builder, langs, **kwargs):
+        self.text, self.kwargs = builder.build_text(), kwargs
+
+
+def card_publisher(monkeypatch, client):
+    from yan.bot.publish import BlueskyPublisher
+
+    monkeypatch.setenv("BLUESKY_HANDLE", "example.test")
+    monkeypatch.setenv("BLUESKY_APP_PASSWORD", "x")
+    return BlueskyPublisher(client=client)
+
+
+def test_publisher_sends_the_card_as_an_external_embed_with_its_thumbnail(monkeypatch):
+    from yan.bot.card import LinkCard
+
+    client = CardClient()
+    url = "https://yeasandnaysdata.com/votes/119/house/2/317/"
+    card_publisher(monkeypatch, client).post("House passes H.R. 1\n" + url[8:], url,
+                                             LinkCard(url, "Title", "Desc", b"\x89PNG"))
+    external = client.kwargs["embed"].external
+    assert (external.uri, external.title, external.description) == (url, "Title", "Desc")
+    assert client.uploads == [b"\x89PNG"] and external.thumb.size == 4
+
+
+def test_publisher_posts_the_card_without_a_thumbnail_that_fails_to_upload(monkeypatch, capsys):
+    from yan.bot.card import LinkCard
+
+    client = CardClient(fail_upload=True)
+    url = "https://yeasandnaysdata.com/votes/119/house/2/317/"
+    card_publisher(monkeypatch, client).post("House passes H.R. 1\n" + url[8:], url,
+                                             LinkCard(url, "Title", "Desc", b"\x89PNG"))
+    assert client.kwargs["embed"].external.thumb is None
+    out = capsys.readouterr().out
+    assert "::warning::Bluesky thumbnail upload failed (ValueError)" in out and "response body" not in out
+
+
+def test_publisher_sends_no_embed_without_a_card(monkeypatch):
+    client = CardClient()
+    url = "https://yeasandnaysdata.com/votes/119/house/2/317/"
+    card_publisher(monkeypatch, client).post("House passes H.R. 1\n" + url[8:], url)
+    assert client.kwargs == {}

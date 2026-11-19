@@ -15,6 +15,7 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from yan.bot import state as bot_state
+from yan.bot.card import fetch_card
 from yan.bot.format import MAX_GRAPHEMES, PostTooLong, display_url, format_post, grapheme_length, vote_page_url
 from yan.bot.rules import Decision, decide
 from yan.config import OUT_DIR
@@ -123,7 +124,7 @@ def pending(state: dict, out_dir: Path = OUT_DIR) -> list[dict]:
 
 def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publish: bool = False,
         publisher=None, sleep=time.sleep, today: dt.date | None = None, page_live=None,
-        page_missing=None) -> None:
+        page_missing=None, link_card=None) -> None:
     state = bot_state.load(state_path)
     missing = [c for c, last in state.items() if last is None]
     if missing:
@@ -150,6 +151,7 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
         publisher = BlueskyPublisher()
     page_live = page_live or is_live
     page_missing = page_missing or is_missing
+    link_card = link_card or fetch_card
     already_posted = publisher.recent_links()
     print(f"PUBLISHING: {len(queue)} new votes since last run (at most {MAX_POSTS_PER_RUN} posts).\n")
     posts = 0
@@ -186,7 +188,7 @@ def run(state_path: Path = bot_state.STATE_PATH, out_dir: Path = OUT_DIR, publis
             else:
                 if posts:
                     sleep(POST_INTERVAL_SECONDS)
-                publisher.post(text, url)
+                publisher.post(text, url, link_card(url))
                 posts += 1
                 print_post(vote, decision, text)
         # Save after every vote handled, so a failure later in the run

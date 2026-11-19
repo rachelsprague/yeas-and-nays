@@ -78,6 +78,8 @@ uv run yan bot init                         # start from the latest vote
 
 State (`data/bot/state.json`, committed) records the last vote handled per chamber, posted or skipped, so a vote is never posted twice. A dry run never advances it. When publishing, the bot posts in order, one post every 10 minutes and at most 5 per run; skips anything its recent Bluesky posts already cover; and refuses to post a backlog older than 3 days (run `yan bot init` first).
 
+Each post ends with a link to the vote's page on the site and carries a link card for that page. The bot builds the card from the page's Open Graph title, description and image, as the Bluesky app does when you paste a URL (`src/yan/bot/card.py`). If the card or its image can't be read, the post goes out without one and the run logs a warning.
+
 ## Site
 
 `site/` is a Jekyll site that reads `data/out/` directly (`site/_plugins/yan_data.rb`) and generates a page per vote (`/votes/{congress}/{chamber}/{session}/{roll}/`) and per member (`/members/{bioguide_id}/`), plus the home page, the vote and member indexes, and About. The plugin only joins and arranges the pipeline's data; every count and definition comes from the models above. Filters are plain JavaScript over rows already in the page, so everything is readable without it. Colors come from `site/assets/css/tokens.css`; brand assets are linked from `brand/`.
