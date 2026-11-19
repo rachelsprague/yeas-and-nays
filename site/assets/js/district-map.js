@@ -1,6 +1,7 @@
-// District map on /find/: zoom (buttons, wheel, pinch), pan (drag), and a
-// card naming the chosen district's representative and senators. Without JS
-// the map still shows, and each district links to its representative.
+// District map on /find/: zoom (buttons, wheel, pinch), pan (drag), a card
+// naming the chosen district's representative and senators, and ZIP code
+// search. Without JS the map still shows, and each district links to its
+// representative.
 (function () {
   "use strict";
 
@@ -187,6 +188,110 @@
       if (cls) n.className = cls;
       if (text) n.textContent = text;
       return n;
+    }
+
+    // ZIP code search (form[data-zip] names the lookup, fetched on the first
+    // search). A ZIP code split between districts highlights them all and
+    // lets the reader choose; it never picks one.
+    var zipForm = document.querySelector("form[data-zip]");
+    if (zipForm) setUpZip(zipForm, document.querySelector("[data-zip-note]"));
+
+    function setUpZip(form, note) {
+      var input = form.querySelector("input");
+      var cardStart = card.innerHTML;
+      var bySeat = {};
+      svg.querySelectorAll("a[data-seat]").forEach(function (a) { bySeat[a.dataset.seat] = a; });
+      var lookup = null;
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var zip = input.value.trim();
+        if (!/^\d{5}$/.test(zip)) { say(["Enter a five-digit ZIP code."]); return; }
+        if (!lookup) {
+          lookup = fetch(form.dataset.zip)
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+            .then(index);
+        }
+        lookup.then(function (zips) { found(zip, zips[zip]); }, function () {
+          lookup = null; // try again on the next search
+          say(["The ZIP code lookup didn't load. Try again, or search by name or state below."]);
+        });
+      });
+
+      // {zip: [seat, ...]} from the file's {seat: "zip zip ..."}; [] where no member votes.
+      function index(doc) {
+        var zips = {};
+        Object.keys(doc.districts).forEach(function (seat) {
+          doc.districts[seat].split(" ").forEach(function (z) { (zips[z] = zips[z] || []).push(seat); });
+        });
+        doc.no_voting_member.split(" ").forEach(function (z) { if (z && !zips[z]) zips[z] = []; });
+        return zips;
+      }
+
+      function found(zip, seats) {
+        svg.querySelectorAll("a.zip").forEach(function (a) { a.classList.remove("zip"); });
+        var links = (seats || []).map(function (s) { return bySeat[s]; }).filter(Boolean);
+        if (links.length === 1) {
+          zoomTo(links);
+          choose(links[0]);
+          say(["ZIP code " + zip + " is in " + people[links[0].dataset.seat].where + "."]);
+          return;
+        }
+        // Anything else leaves no district chosen, so an earlier one's card doesn't linger.
+        if (selected) selected.classList.remove("on");
+        selected = null;
+        cities.forEach(function (c) { c.el.classList.remove("in"); });
+        card.innerHTML = cardStart;
+        if (seats && !seats.length) {
+          say(["ZIP code " + zip + " is in the District of Columbia or a U.S. territory. Its member of the House can't vote on the floor, so it isn't on this map."]);
+        } else if (!links.length) {
+          say(["No ZIP Code Tabulation Area matches " + zip + ". Some ZIP codes, such as those for PO boxes, have none. ",
+               byAddress("Find your representative by address at house.gov"), ", or search by name or state below."]);
+        } else {
+          links.forEach(function (a) { a.classList.add("zip"); });
+          zoomTo(links);
+          var choices = el("div", "zipseats");
+          links.forEach(function (a) {
+            var b = el("button", "button", people[a.dataset.seat].where);
+            b.type = "button";
+            b.addEventListener("click", function () { choose(a); });
+            choices.appendChild(b);
+          });
+          say(["ZIP code " + zip + " is split between " + links.length + " districts. Choose yours below or on the map. ",
+               byAddress("Your address at house.gov"), " shows which one is yours.", choices]);
+        }
+      }
+
+      // The note under the form, from strings (as text) and nodes.
+      function say(parts) {
+        note.textContent = "";
+        parts.forEach(function (p) { note.appendChild(typeof p === "string" ? document.createTextNode(p) : p); });
+        note.hidden = false;
+      }
+    }
+
+    function byAddress(text) {
+      var a = el("a", null, text);
+      a.href = "https://www.house.gov/representatives/find-your-representative";
+      return a;
+    }
+
+    // Fits the view to the districts' outlines, with a margin.
+    function zoomTo(links) {
+      var boxes = links.map(function (a) { return a.querySelector("path"); })
+        .filter(function (p) { return p.getBBox; })
+        .map(function (p) { return p.getBBox(); });
+      if (!boxes.length) return;
+      var x0 = Math.min.apply(null, boxes.map(function (b) { return b.x; }));
+      var y0 = Math.min.apply(null, boxes.map(function (b) { return b.y; }));
+      var x1 = Math.max.apply(null, boxes.map(function (b) { return b.x + b.width; }));
+      var y1 = Math.max.apply(null, boxes.map(function (b) { return b.y + b.height; }));
+      view.w = Math.min(W, Math.max(W / MAX_ZOOM, Math.max(x1 - x0, (y1 - y0) * W / H) * 1.5));
+      view.h = view.w * H / W;
+      view.x = (x0 + x1 - view.w) / 2;
+      view.y = (y0 + y1 - view.h) / 2;
+      clamp();
+      apply();
     }
   }
 

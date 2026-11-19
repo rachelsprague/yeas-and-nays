@@ -16,7 +16,8 @@ each district with its current member.
     uv run scripts/build_district_map.py 120
 
 Run it again only when district lines change (a new Congress or a court-ordered
-map), then run scripts/build_vote_map.py for the vote pages' smaller map.
+map), then run scripts/build_vote_map.py for the vote pages' smaller map and
+scripts/build_zip_lookup.py for the ZIP code search.
 Downloads are cached in data/raw/maps/. Library versions are pinned in
 build_district_map.py.lock (`uv lock --script --upgrade
 scripts/build_district_map.py` to update), so a rebuild of unchanged

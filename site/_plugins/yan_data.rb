@@ -9,6 +9,7 @@
 #   site.data["vote_volume"]  roll calls per week by chamber and kind of vote (Yan.vote_volume)
 #   site.data["policy_volume"]  roll calls by policy area, chamber and kind of vote (Yan.policy_volume)
 #   site.data["district_map"]  site/_maps/{congress}.json with each district's member (Yan.district_map)
+#   site.data["zip_lookup"]  the URL of that map's ZIP code lookup, or nil when there's none
 #   site.data["home"]      the home page's modules: week, closest, against, areas
 #
 # Routes: /votes/{congress}/{chamber}/{session}/{roll}/ (roll numbers restart
@@ -1177,6 +1178,9 @@ module Yan
       site.data["members"] = members
       map_file = File.join(site.source, "_maps", "#{meta["congress"]}.json")
       site.data["district_map"] = Yan.district_map(File.exist?(map_file) && JSON.parse(File.read(map_file)), members)
+      # The map's ZIP code lookup (scripts/build_zip_lookup.py), fetched by the browser on a search.
+      zip_file = "/assets/maps/zip-#{meta["congress"]}.json"
+      site.data["zip_lookup"] = zip_file if File.exist?(File.join(site.source, zip_file))
       site.data["votes"] = votes
       site.data["vote_volume"] = Yan.vote_volume(votes)
       site.data["policy_volume"] = Yan.policy_volume(votes)

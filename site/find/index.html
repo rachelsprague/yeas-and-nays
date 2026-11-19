@@ -9,11 +9,25 @@ nav: members
     <span class="kicker muted">{{ site.data.meta.congress | ordinal }} Congress</span>
     <h1 class="vote-h">Find your members of Congress</h1>
     {%- if map %}
-    <p class="soft">Every House district in the 50 states. Zoom in to where you live and choose your district to see your representative and your state's senators.</p>
+    <p class="soft">Every House district in the 50 states. {% if site.data.zip_lookup %}Search by ZIP code, or zoom{% else %}Zoom{% endif %} in to where you live and choose your district to see your representative and your state's senators.</p>
     {%- else %}
     <p class="soft">The district map for this Congress isn't available yet. Search by name or state below.</p>
     {%- endif %}
   </section>
+
+  {%- if map and site.data.zip_lookup %}
+  {%- comment -%} The lookup runs in the browser (district-map.js), so without JS there's no ZIP search. {%- endcomment %}
+  <div class="zipfind js-only" data-pagefind-ignore>
+    <form class="findrow" role="search" aria-label="ZIP code" data-zip="{{ site.data.zip_lookup | escape }}">
+      <label for="f-zip">Search by ZIP code</label>
+      <div class="findctl">
+        <input id="f-zip" class="field" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="5" placeholder="e.g. 40601">
+        <button class="button" type="submit">Find</button>
+      </div>
+    </form>
+    <div class="zipnote" data-zip-note aria-live="polite" hidden></div>
+  </div>
+  {%- endif %}
 
   {%- if map %}
   <section class="dmap" data-dmap aria-label="District map" data-pagefind-ignore>
@@ -46,7 +60,7 @@ nav: members
   </section>
   {%- endif %}
 
-  <form class="findrow" role="search" action="/members/" method="get">
+  <form class="findrow" role="search" aria-label="Name or state" action="/members/" method="get">
     <label for="f-find">Or search by name or state</label>
     <div class="findctl">
       <input id="f-find" class="field" type="search" name="q" placeholder="e.g. Massie or Kentucky">
@@ -54,6 +68,6 @@ nav: members
     </div>
   </form>
 
-  <p class="small muted">District lines from the U.S. Census Bureau. The District of Columbia and the five U.S. territories each elect one member of the House (a delegate, or for Puerto Rico a resident commissioner) who can't vote on the House floor. This site tracks floor votes, so they aren't on the map.</p>
+  <p class="small muted">District lines from the U.S. Census Bureau.{% if site.data.zip_lookup %} ZIP code search uses the Census Bureau's ZIP Code Tabulation Areas, built from census blocks to approximate ZIP codes, and its block-to-district files: a ZIP code is matched to every district it has land in, so one can be split between districts. Some ZIP codes, such as those for PO boxes, have no tabulation area.{% endif %} The District of Columbia and the five U.S. territories each elect one member of the House (a delegate, or for Puerto Rico a resident commissioner) who can't vote on the House floor. This site tracks floor votes, so they aren't on the map.</p>
 </main>
 <script src="/assets/js/district-map.js" defer></script>
