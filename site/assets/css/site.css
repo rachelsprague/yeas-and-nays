@@ -598,6 +598,10 @@ table.roll { border-collapse: collapse; width: 100%; }
 .member-list .d { font-size: 14px; color: var(--ink-soft); }
 
 .find .findrow { padding: 0; }
+/* ZIP code search above the map (district-map.js fills the note). */
+.zipfind { flex-direction: column; gap: 12px; }
+.zipnote { font-size: 15px; }
+.zipseats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 
 /* District map (find/index.html, district-map.js): every district alike, no party colors. */
 .dmap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -605,7 +609,7 @@ table.roll { border-collapse: collapse; width: 100%; }
 .dmap svg { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); touch-action: none; cursor: grab; user-select: none; }
 .dmap svg:active { cursor: grabbing; }
 .dmap .districts path { fill: var(--surface-alt); stroke: var(--ink-muted); stroke-opacity: 0.55; stroke-width: 0.6px; vector-effect: non-scaling-stroke; }
-.dmap .districts a:hover path { fill: var(--lilac); }
+.dmap .districts a:hover path, .dmap .districts a.zip path { fill: var(--lilac); }
 .dmap .districts a.on path { fill: var(--accent); }
 .dmap .borders { fill: none; stroke: var(--ink); stroke-width: 1.2px; vector-effect: non-scaling-stroke; pointer-events: none; }
 /* City labels: --u is map units per screen pixel (district-map.js); without JS
