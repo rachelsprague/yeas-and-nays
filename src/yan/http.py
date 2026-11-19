@@ -1,4 +1,5 @@
-"""HTTP client shared by the ingesters: identifies itself and paces requests."""
+"""HTTP client shared by the ingesters: identifies itself and paces requests.
+Also the bot's same-host fetch of our own pages."""
 
 import logging
 import time
@@ -62,6 +63,31 @@ class Client:
 
     def __exit__(self, *exc) -> None:
         self.close()
+
+
+MAX_REDIRECTS = 5
+
+
+def get_on_host(url: str) -> httpx.Response:
+    """GET url, following redirects only while each one stays on url's host.
+
+    A redirect to another host comes back unfollowed (its Location names where
+    it pointed), so a lapsed domain's parking page is never requested. Checking
+    only the final host would still fetch it, and any redirects it chains to.
+    Raises httpx.TooManyRedirects after MAX_REDIRECTS hops.
+    """
+    host = httpx.URL(url).host
+    for _ in range(MAX_REDIRECTS + 1):
+        resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0, follow_redirects=False)
+        if not resp.is_redirect or redirect_target(resp).host != host:
+            return resp
+        url = str(redirect_target(resp))
+    raise httpx.TooManyRedirects(f"More than {MAX_REDIRECTS} redirects", request=resp.request)
+
+
+def redirect_target(resp: httpx.Response) -> httpx.URL:
+    """Where a redirect response points, with a relative Location resolved."""
+    return resp.request.url.join(resp.headers["location"])
 
 
 def write_atomic(path, content: bytes) -> None:

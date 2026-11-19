@@ -89,15 +89,18 @@ def _get(url: str):
     """A 200 response from url on the same host, or None (with a warning)."""
     import httpx
 
-    from yan.http import USER_AGENT
+    from yan.http import get_on_host, redirect_target
 
     try:
-        resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0, follow_redirects=True)
+        resp = get_on_host(url)
     except httpx.HTTPError as exc:
         _warn(f"Link card fetch failed for {url}: {type(exc).__name__}")
         return None
-    if resp.status_code != 200 or resp.url.host != httpx.URL(url).host:
-        _warn(f"Link card fetch for {url}: HTTP {resp.status_code} from {resp.url.host}")
+    if resp.is_redirect:
+        _warn(f"Link card fetch for {url}: redirected to another host ({redirect_target(resp).host})")
+        return None
+    if resp.status_code != 200:
+        _warn(f"Link card fetch for {url}: HTTP {resp.status_code}")
         return None
     return resp
 
