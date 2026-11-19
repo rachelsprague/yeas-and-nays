@@ -2590,4 +2590,9 @@ class VotingPageTest < Minitest::Test
     refute_empty anchors
     anchors.each { |id| assert_includes ids, id }
   end
+
+  def test_definitions_link_lands_on_about
+    assert_includes pages.fetch("/how/voting/index.html"), %(href="/about/#definitions")
+    assert_includes pages.fetch("/about/index.html"), %(<section id="definitions">)
+  end
 end
