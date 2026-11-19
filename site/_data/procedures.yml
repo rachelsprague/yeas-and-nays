@@ -348,3 +348,6 @@ terms:
       The member is recorded as casting no vote on the question. The roll call
       record does not give a reason.
     see: [yea_nay, present]
+    more:
+      url: /how/missed-votes/
+      label: How missed votes work
