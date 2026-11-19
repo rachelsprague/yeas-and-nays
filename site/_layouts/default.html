@@ -35,6 +35,8 @@
   {%- endif %}
   <script>document.documentElement.classList.add("has-js")</script>
   <script src="/assets/js/filters.js" defer></script>
+  {%- comment %} After filters.js, so the count is current when the bar copies it. {%- endcomment %}
+  <script src="/assets/js/pinbar.js" defer></script>
   <script src="/assets/js/totop.js" defer></script>
   {%- if jekyll.environment == "production" %}
   <script>
