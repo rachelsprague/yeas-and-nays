@@ -1,5 +1,5 @@
 {
-  "floor_status": {"house":{"convened_at":null,"next_convene_at":"2026-11-19T09:00:00-05:00","next_convene_pro_forma":null},"senate":{"convened_at":null,"next_convene_at":"2026-11-18T10:00:00-05:00","next_convene_pro_forma":false}},
+  "floor_status": {"house":{"convened_at":null,"next_convene_at":"2026-11-19T09:00:00-05:00","next_convene_pro_forma":null},"senate":{"convened_at":null,"next_convene_at":"2026-11-19T10:00:00-05:00","next_convene_pro_forma":false}},
   "items": [
     {"amends":null,"bill_number":"7254","bill_type":"hr","category":"Items that may be considered under suspension of the rules","chamber":"house","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7254","filed_date":null,"item_id":"h-2026-11-16-409831","measure_label":"H.R. 7254","measure_number":"H.R. 7254","question":null,"title":"To amend the National Trails System Act to direct the Secretary of the Interior to conduct a study on the feasibility of designating the Bay Area Ridge National Scenic Trail, and for other purposes., as amended","vote_id":null,"week_date":"2026-11-16"},
     {"amends":null,"bill_number":"7954","bill_type":"hr","category":"Items that may be considered under suspension of the rules","chamber":"house","congress_gov_url":"https://www.congress.gov/bill/119th-congress/house-bill/7954","filed_date":null,"item_id":"h-2026-11-16-409832","measure_label":"H.R. 7954","measure_number":"H.R. 7954","question":null,"title":"Don Young Doug LaMalfa Indian Buffalo Management Act","vote_id":null,"week_date":"2026-11-16"},
@@ -23,5 +23,5 @@
     {"amends":null,"bill_number":null,"bill_type":null,"category":null,"chamber":"senate","congress_gov_url":null,"filed_date":"2026-11-11","item_id":"s-pn1272-5","measure_label":"PN1272-5","measure_number":"PN1272-5","question":"On the Cloture Motion","title":"Courtney Leigh Coker, of Texas, to be United States District Judge for the Northern District of Texas","vote_id":null,"week_date":null},
     {"amends":null,"bill_number":null,"bill_type":null,"category":null,"chamber":"senate","congress_gov_url":null,"filed_date":"2026-11-11","item_id":"s-pn1272-13","measure_label":"PN1272-13","measure_number":"PN1272-13","question":"On the Cloture Motion","title":"Kyle Frederick Reardon, of Alaska, to be United States District Judge for the District of Alaska","vote_id":null,"week_date":null}
   ],
-  "senate_next_convene_et": "2026-11-18T10:00:00"
+  "senate_next_convene_et": "2026-11-19T10:00:00"
 }
