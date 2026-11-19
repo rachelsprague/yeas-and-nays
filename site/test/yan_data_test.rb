@@ -2273,7 +2273,8 @@ end
 class HouseAdTest < Minitest::Test
   include SiteBuild
 
-  EXPLAINERS = ["/how/bills/index.html", "/how/dictionary/index.html", "/how/expulsion/index.html"].freeze
+  EXPLAINERS = ["/how/bills/index.html", "/how/dictionary/index.html", "/how/expulsion/index.html",
+                "/how/missed-votes/index.html"].freeze
 
   def pages
     @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
@@ -2517,5 +2518,52 @@ class MemberBioTest < Minitest::Test
     pages = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]],
                        member_files: { "Z000001" => { "sponsored" => nil, "cosponsored" => nil, "bio" => nil } })
     refute_includes pages.fetch("/members/Z000001/index.html"), "Before Congress"
+  end
+end
+
+# The missed votes page states each chamber's median and how many members
+# missed more than 10%, from the current Congress's members with roll calls.
+class MissedVotesPageTest < Minitest::Test
+  include SiteBuild
+
+  def member(id, chamber, pct, extra = {})
+    EscapingTest::MEMBER.merge("bioguide_id" => id, "chamber" => chamber, "roll_calls" => 100,
+                               "missed_votes_pct" => pct).merge(extra)
+  end
+
+  def page(members)
+    build_site(members, [[EscapingTest::VOTE, EscapingTest::DOC]]).fetch("/how/missed-votes/index.html")
+  end
+
+  def test_each_chamber_gives_its_median_and_members_over_ten_percent
+    html = page([member("A000001", "house", 2.0), member("A000002", "house", 12.5), member("A000003", "house", 30.0),
+                 member("S000001", "senate", 4.0),
+                 # Neither counts: no roll calls yet, or last in an earlier Congress.
+                 member("A000004", "house", 50.0, "roll_calls" => 0),
+                 member("A000005", "house", 50.0, "last_congress" => 118)])
+    assert_includes html, "The median member missed 12.5% of roll calls, among 3 members. 2 members missed more than 10%."
+    assert_includes html, "The median member missed 4.0% of roll calls, among 1 member. 0 members missed more than 10%."
+    assert html.index("<dt>House</dt>") < html.index("<dt>Senate</dt>")
+  end
+
+  def test_even_count_median_is_the_mean_of_the_middle_two_and_ten_percent_is_not_over
+    html = page([member("A000001", "house", 2.0), member("A000002", "house", 10.0)])
+    assert_includes html, "The median member missed 6.0% of roll calls, among 2 members. 0 members missed more than 10%."
+  end
+
+  def test_one_member_over_ten_percent_is_singular
+    assert_includes page([member("A000001", "house", 11.0)]), "1 member missed more than 10%."
+  end
+
+  def test_no_current_members_leaves_out_the_figures
+    html = page([member("A000001", "house", 2.0, "last_congress" => 118)])
+    refute_includes html, 'id="typical"'
+    assert_includes html, 'id="rules"'
+  end
+
+  def test_member_tile_and_about_link_here
+    pages = build_site([member("Z000001", "house", 2.0)], [[EscapingTest::VOTE, EscapingTest::DOC]])
+    assert_includes pages.fetch("/members/Z000001/index.html"), %(<a class="link" href="/how/missed-votes/">Missed votes</a>)
+    assert_includes pages.fetch("/about/index.html"), %(<a href="/how/missed-votes/">How missed votes work</a>)
   end
 end

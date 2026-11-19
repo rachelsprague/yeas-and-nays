@@ -83,7 +83,7 @@ layout: default
       </div>
       <div>
         <span class="fig">{{ m.missed_votes_pct }}%</span>
-        <span class="what">Missed votes</span>
+        <span class="what"><a class="link" href="/how/missed-votes/">Missed votes</a></span>
         <span class="of">{{ m.missed_votes }} not voting</span>
         {%- if m.median.missed_votes_pct %}<span class="med">{{ m.median.name }} median: {{ m.median.missed_votes_pct }}%</span>{% endif %}
       </div>

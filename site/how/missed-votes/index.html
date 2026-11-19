@@ -1,0 +1,69 @@
+---
+search_type: How it works
+house_ad: true
+layout: default
+title: How missed votes work
+description: The House and Senate rules on voting, what a Not Voting position records, and how many roll calls members of each chamber have missed.
+---
+{%- assign congress = site.data.meta.congress %}
+{%- assign current = site.data.members | where_exp: "m", "m.median" | where_exp: "m", "m.roll_calls > 0" %}
+{%- assign chambers = "house,senate" | split: "," %}
+<main id="main" class="wrap">
+  <section class="vote-head">
+    <span class="kicker muted">How things work</span>
+    <h1 class="vote-h">How missed votes work</h1>
+    <p class="soft intro">The rules of both chambers expect members to vote on each question. A member who does not answer a roll call is recorded as Not Voting, and the record does not say why.</p>
+  </section>
+
+  <div class="prose">
+    <section id="rules">
+      <h2>The rules</h2>
+      <p>Rule III, clause 1 of the Rules of the House of Representatives reads:</p>
+      <blockquote>"Every Member shall be present within the Hall of the House during its sittings, unless excused or necessarily prevented, and shall vote on each question put, unless having a direct personal or pecuniary interest in the event of such question."</blockquote>
+      <p>Clause 2 of the same rule says a member may not authorize any other person to cast their vote or record their presence.</p>
+      <p>Rule VI, paragraph 2 of the Standing Rules of the Senate reads:</p>
+      <blockquote>"No Senator shall absent himself from the service of the Senate without leave."</blockquote>
+      <p>Under Senate Rule XII, each senator answers the roll call "unless excused by the Senate". A senator who declines to vote gives their reasons, and the Senate decides without debate whether to excuse them. A senator may also decline to vote on a matter when they believe voting would be a conflict of interest.</p>
+    </section>
+
+    <section id="the-record">
+      <h2>What the record shows</h2>
+      <p>The roll call record lists each member's position. A member who does not answer is listed as Not Voting. The record does not give a reason, and it does not distinguish an excused absence from any other.</p>
+      <p>Not Voting is different from Present. A member who votes Present was there and answered the roll call, but took neither side. Neither position counts toward the Yeas or the Nays.</p>
+      <p>In the Senate, no senator may vote after the presiding officer announces the result (Rule XII).</p>
+    </section>
+    {%- if current.size > 0 %}
+
+    <section id="typical">
+      <h2>How many votes members miss</h2>
+      <p>Among members who have had roll calls in the {{ congress | ordinal }} Congress, from this site's data, updated hourly:</p>
+      <dl>
+        {%- for chamber in chambers %}
+        {%- assign ms = current | where: "chamber", chamber %}
+        {%- if ms.size > 0 %}
+        {%- assign med = ms.first.median %}
+        {%- assign over = ms | where_exp: "m", "m.missed_votes_pct > 10" %}
+        <dt>{{ med.name }}</dt>
+        <dd>The median member missed {{ med.missed_votes_pct }}% of roll calls, among {{ med.members }} {% if med.members == 1 %}member{% else %}members{% endif %}. {{ over.size }} {% if over.size == 1 %}member{% else %}members{% endif %} missed more than 10%.</dd>
+        {%- endif %}
+        {%- endfor %}
+      </dl>
+      <p>The median is the middle value: half of members missed more, and half fewer. Each member's profile shows their own rate beside their chamber's median.</p>
+    </section>
+    {%- endif %}
+
+    <section id="this-site">
+      <h2>How this site counts</h2>
+      <p>A member's missed votes are the roll calls where they are recorded as Not Voting, as a share of all roll calls held in their chamber while they were in office. Each Congress is counted on its own. See <a href="/about/#missed-votes">Missed votes</a> under Definitions.</p>
+    </section>
+
+    <section id="sources">
+      <h2>Sources</h2>
+      <ul>
+        <li>House Committee on Rules: <a href="https://rules.house.gov/sites/evo-subsites/rules.house.gov/files/documents/houserules119thupdated.pdf">Rules of the House of Representatives, 119th Congress</a> (Rule III), prepared by the Clerk of the House, via <a href="https://rules.house.gov/">rules.house.gov</a></li>
+        <li>U.S. Senate Committee on Rules and Administration: <a href="https://www.rules.senate.gov/rules-of-the-senate">Standing Rules of the Senate</a> (Rules VI and XII)</li>
+      </ul>
+      <p class="small soft">See also <a href="/about/#definitions">Definitions</a>.</p>
+    </section>
+  </div>
+</main>
