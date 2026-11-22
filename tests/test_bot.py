@@ -694,23 +694,27 @@ def test_vote_page_url_matches_the_site_route():
 def test_is_live_only_for_a_200_and_is_missing_only_for_a_404_on_the_same_host(monkeypatch, capsys):
     import httpx
 
-    # Requested URL -> (status, URL it ended at after redirects).
+    # Requested URL -> (status, Location of a redirect).
     responses = {
-        "https://a.test/": (200, "https://a.test/"),
-        "http://a.test/old/": (200, "https://a.test/new/"),
-        "https://b.test/": (404, "https://b.test/"),
-        "https://lapsed.test/": (200, "https://parked.test/lander"),
-        "https://gone.test/": (404, "https://parked.test/404"),
-        "https://busy.test/": (503, "https://busy.test/"),
+        "https://a.test/": (200, None),
+        "http://a.test/old/": (301, "https://a.test/new/"),
+        "https://a.test/new/": (200, None),
+        "https://b.test/": (404, None),
+        "https://lapsed.test/": (302, "https://parked.test/lander"),
+        "https://gone.test/": (302, "https://parked.test/404"),
+        "https://busy.test/": (503, None),
+        "https://bad.test/": (302, "https://bad.test:abc/"),
+        "https://nowhere.test/": (301, None),
     }
     calls = []
 
     def fake_get(url, **kwargs):
-        calls.append(kwargs)
+        calls.append((url, kwargs))
         if url not in responses:
             raise httpx.ConnectError("down")
-        status, final = responses[url]
-        return httpx.Response(status, request=httpx.Request("GET", final))
+        status, location = responses[url]
+        return httpx.Response(status, headers={"location": location} if location else {},
+                              request=httpx.Request("GET", url))
 
     monkeypatch.setattr(httpx, "get", fake_get)
     assert bot.is_live("https://a.test/")
@@ -725,11 +729,18 @@ def test_is_live_only_for_a_200_and_is_missing_only_for_a_404_on_the_same_host(m
     assert not bot.is_missing("https://lapsed.test/")
     assert not bot.is_missing("https://gone.test/")
     assert not bot.is_missing("https://busy.test/")
-    assert all(kwargs["follow_redirects"] for kwargs in calls)
+    # A malformed Location or a redirect with none is a failed check, not a crash.
+    assert not bot.is_live("https://bad.test/")
+    assert not bot.is_live("https://nowhere.test/")
+    # Redirects are followed one hop at a time, and never off the host.
+    assert not any(kwargs["follow_redirects"] for _, kwargs in calls)
+    assert not any("parked.test" in url for url, _ in calls)
     out = capsys.readouterr().out
     assert "https://b.test/: HTTP 404" in out
-    assert "https://lapsed.test/: redirected to another host (parked.test)" in out
+    assert "https://lapsed.test/: not following a redirect to https://parked.test" in out
     assert "https://c.test/: ConnectError" in out
+    assert "https://bad.test/: RemoteProtocolError" in out
+    assert "https://nowhere.test/: HTTP 301" in out
 
 
 def test_publish_stops_at_post_limit_and_leaves_rest_for_next_run(out_dir, tmp_path, monkeypatch):
@@ -888,16 +899,16 @@ PAGE = """<meta property="og:title" content="A bill to amend &quot;Title&quot;">
 
 
 def fake_site(monkeypatch, responses):
-    """httpx.get answers from responses: URL -> (status, content type, body, URL ended at)."""
+    """httpx.get answers from responses: URL -> (status, content type, body, Location)."""
     import httpx
 
     def fake_get(url, **kwargs):
         if url not in responses:
             raise httpx.ConnectError("down")
-        status, ctype, body, final = responses[url]
+        status, ctype, body, location = responses[url]
         content = body.encode() if isinstance(body, str) else body
-        return httpx.Response(status, headers={"content-type": ctype}, content=content,
-                              request=httpx.Request("GET", final or url))
+        headers = {"content-type": ctype, **({"location": location} if location else {})}
+        return httpx.Response(status, headers=headers, content=content, request=httpx.Request("GET", url))
 
     monkeypatch.setattr(httpx, "get", fake_get)
 
@@ -921,6 +932,8 @@ def test_fetch_card_reads_the_page_tags_and_image(monkeypatch):
     ("https://a.test/1.png", (200, "image/png", b"x" * 1_000_001, None), "over 1000000 bytes"),
     ("https://a.test/1.png", (404, "text/html", "", None), "HTTP 404"),
     ("https://a.test/1.png", None, "ConnectError"),
+    ("https://a.test/1.png", (302, "text/html", "", "https://other.test/1.png"),
+     "not following a redirect to https://other.test"),
 ])
 def test_fetch_card_leaves_off_a_thumbnail_it_cannot_use(monkeypatch, capsys, image, response, warning):
     from yan.bot.card import fetch_card
@@ -940,7 +953,8 @@ def test_fetch_card_gives_no_card_without_a_page_or_a_title(monkeypatch, capsys)
 
     fake_site(monkeypatch, {
         "https://a.test/untitled/": (200, "text/html", "<p>no tags</p>", None),
-        "https://a.test/moved/": (200, "text/html", PAGE, "https://parked.test/"),
+        "https://a.test/moved/": (301, "text/html", "", "https://parked.test/"),
+        "https://parked.test/": (200, "text/html", PAGE, None),
         "https://a.test/error/": (503, "text/html", "", None),
     })
     assert fetch_card("https://a.test/untitled/") is None
@@ -948,7 +962,7 @@ def test_fetch_card_gives_no_card_without_a_page_or_a_title(monkeypatch, capsys)
     assert fetch_card("https://a.test/error/") is None
     assert fetch_card("https://a.test/down/") is None
     out = capsys.readouterr().out
-    assert "no og:title" in out and "HTTP 200 from parked.test" in out and "HTTP 503" in out
+    assert "no og:title" in out and "not following a redirect to https://parked.test" in out and "HTTP 503" in out
     assert "ConnectError" in out
 
 
