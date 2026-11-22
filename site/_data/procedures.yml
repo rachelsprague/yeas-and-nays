@@ -316,6 +316,9 @@ terms:
       presiding officer judges which side has more. No record is kept of how
       each member voted, so voice votes are not on this site.
     see: [recorded_vote]
+    more:
+      url: /how/voting/
+      label: How the House and Senate vote
 
   - key: recorded_vote
     term: Recorded vote (roll call vote)
@@ -325,6 +328,9 @@ terms:
       senator's name. The Constitution requires one when one-fifth of the
       members present ask for it. This site covers every recorded vote.
     see: [voice_vote, yea_nay]
+    more:
+      url: /how/voting/
+      label: How the House and Senate vote
 
   - key: yea_nay
     term: Yea and Nay (Aye and No)
