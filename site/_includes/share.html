@@ -2,6 +2,7 @@
   Share button for pages that stand alone as a link: votes, members and the
   How things work explainers. share.js opens the share sheet or copies the
   link. Hidden without JS, since it needs it. Pass `title` (what the share
-  sheet names the page); the link is always this page's.
+  sheet names the page); the link is always this page's. The status line
+  after it announces "Link copied" to screen readers.
 {%- endcomment -%}
-<button type="button" class="share js-only" data-share data-share-title="{{ include.title | default: page.title | strip | escape }}" data-share-url="{{ page.url | absolute_url | escape }}" data-pagefind-ignore>Share</button>
+<button type="button" class="share js-only" data-share data-share-title="{{ include.title | default: page.title | strip | escape }}" data-share-url="{{ page.url | absolute_url | escape }}" data-pagefind-ignore>Share</button><span class="visually-hidden" role="status" data-share-status></span>

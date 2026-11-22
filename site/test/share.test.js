@@ -12,7 +12,7 @@ const { JSDOM } = require("jsdom");
 const SCRIPT = fs.readFileSync(path.join(__dirname, "..", "assets", "js", "share.js"), "utf8");
 
 const PAGE_URL = "https://example.test/votes/119/house/2025/1/";
-const BUTTON = `<button type="button" class="share js-only" data-share data-share-title="Example vote" data-share-url="${PAGE_URL}">Share</button>`;
+const BUTTON = `<button type="button" class="share js-only" data-share data-share-title="Example vote" data-share-url="${PAGE_URL}">Share</button><span class="visually-hidden" role="status" data-share-status></span>`;
 
 function load({ share, clipboard } = {}) {
   const dom = new JSDOM(`<!doctype html><title>Page · Yeas &amp; Nays</title><body>${BUTTON}</body>`, {
@@ -49,14 +49,21 @@ test("without a share sheet, copies the link and says so for two seconds", async
   const copied = [];
   const window = load({ clipboard: { writeText: (text) => { copied.push(text); return Promise.resolve(); } } });
   const button = window.document.querySelector("[data-share]");
+  const status = window.document.querySelector("[data-share-status]");
   button.click();
   await tick();
   assert.deepEqual(copied, [PAGE_URL]);
   assert.equal(button.textContent, "Link copied");
-  assert.equal(button.disabled, true);
+  assert.equal(status.textContent, "Link copied");
+  // Stays enabled, so keyboard focus stays on it; a second click meanwhile
+  // doesn't copy again or restart the message.
+  assert.equal(button.disabled, false);
+  button.click();
+  await tick();
+  assert.equal(copied.length, 1);
   t.mock.timers.tick(2000);
   assert.equal(button.textContent, "Share");
-  assert.equal(button.disabled, false);
+  assert.equal(status.textContent, "");
 });
 
 test("a failed copy leaves the button as it was", async (t) => {
@@ -66,8 +73,13 @@ test("a failed copy leaves the button as it was", async (t) => {
   button.click();
   await tick();
   assert.equal(button.textContent, "Share");
-  assert.equal(button.disabled, false);
+  assert.equal(window.document.querySelector("[data-share-status]").textContent, "");
   assert.equal(logged.mock.callCount(), 1);
+});
+
+test("removed where there's neither a share sheet nor a clipboard", () => {
+  const window = load();
+  assert.equal(window.document.querySelector("[data-share]"), null);
 });
 
 test("falls back to the page's own title and address when the button names none", async () => {

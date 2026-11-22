@@ -148,7 +148,6 @@ select.field { padding: 0 8px; }
   border: 1px solid var(--line); border-radius: 0; cursor: pointer;
 }
 .share:hover { color: var(--ink); border-color: var(--ink-soft); }
-.share:disabled { cursor: default; opacity: 0.7; }
 
 /* Back-to-top link, bottom right on long pages (totop.js shows it). Clear of
    the iPhone home indicator. .button sets display, so [hidden] needs its own
@@ -175,6 +174,8 @@ select.field { padding: 0 8px; }
 /* Tabs only work with JS; filters.js reveals them. */
 .js-only { display: none; }
 .has-js .js-only { display: flex; }
+/* After .js-only, which would otherwise show it on paper. */
+@media print { .has-js .share { display: none; } }
 
 .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .filters .q { grid-column: 1 / -1; }
