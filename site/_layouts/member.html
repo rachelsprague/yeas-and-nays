@@ -21,6 +21,7 @@ layout: default
       {%- if m.service_line %}
       <p class="term nums">{{ m.service_line | escape }}</p>
       {%- endif %}
+      {% include share.html title=m.name %}
     </div>
   </section>
 

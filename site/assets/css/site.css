@@ -138,6 +138,18 @@ select.field { padding: 0 8px; }
 }
 .button:hover { color: var(--surface); background: var(--ink-soft); }
 
+/* Share button (_includes/share.html, share.js): an outline, quieter than
+   .button. .js-only sets display, so it lines up with align-self. */
+.share {
+  align-self: flex-start; align-items: center;
+  height: 36px; padding: 0 14px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  color: var(--ink-soft); background: none;
+  border: 1px solid var(--line); border-radius: 0; cursor: pointer;
+}
+.share:hover { color: var(--ink); border-color: var(--ink-soft); }
+.share:disabled { cursor: default; opacity: 0.7; }
+
 /* Back-to-top link, bottom right on long pages (totop.js shows it). Clear of
    the iPhone home indicator. .button sets display, so [hidden] needs its own
    rule. */

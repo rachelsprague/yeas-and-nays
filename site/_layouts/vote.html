@@ -24,6 +24,7 @@ layout: default
       {%- if v.amendment_purpose and v.amendment_purpose != "No Statement of Purpose on File." %}<p class="soft">Amendment{% if v.amendment_number %} {{ v.amendment_number | escape }}{% endif %}{% if v.amendment_author %} ({{ v.amendment_author | escape }}){% endif %}: {{ v.amendment_purpose | escape }}</p>{% endif %}
       <span class="kicker result">{{ v.result_label | escape }}</span>
       {%- include procedure.html vote=v %}
+      {% include share.html title=page.og_title %}
     </section>
 
     <section class="tally" aria-labelledby="tally-h" data-pagefind-ignore>
