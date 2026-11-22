@@ -139,9 +139,10 @@ select.field { padding: 0 8px; }
 .button:hover { color: var(--surface); background: var(--ink-soft); }
 
 /* Share button (_includes/share.html, share.js): an outline, quieter than
-   .button. .js-only sets display, so it lines up with align-self. */
+   .button. .js-only makes it display: flex, which would otherwise stretch it
+   across its column; fit-content keeps it the width of its label. */
 .share {
-  align-self: flex-start; align-items: center;
+  width: fit-content; align-self: flex-start; align-items: center;
   height: 36px; padding: 0 14px;
   font: inherit; font-size: 14px; font-weight: 600;
   color: var(--ink-soft); background: none;
