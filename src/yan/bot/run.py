@@ -103,15 +103,16 @@ def _page_status(url: str) -> int | None:
     from yan.http import get_on_host, redirect_target
 
     # Follows redirects so a change of scheme or path doesn't read as "not
-    # live", but only on the same host: a lapsed domain can redirect to a
-    # parking page that answers 200.
+    # live", but only on the same host and never from https to http: a lapsed
+    # domain can redirect to a parking page that answers 200.
     try:
         resp = get_on_host(url)
     except httpx.HTTPError as exc:
         print(f"Page check failed for {url}: {type(exc).__name__}")
         return None
-    if resp.is_redirect:
-        print(f"Page check for {url}: redirected to another host ({redirect_target(resp).host})")
+    if resp.has_redirect_location:
+        target = redirect_target(resp)
+        print(f"Page check for {url}: not following a redirect to {target.scheme}://{target.host}")
         return None
     if resp.status_code != 200:
         print(f"Page check for {url}: HTTP {resp.status_code}")

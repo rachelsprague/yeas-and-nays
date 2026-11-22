@@ -58,8 +58,21 @@ def test_get_on_host_stops_at_a_redirect_off_the_host(monkeypatch):
     seen = fake_hops(monkeypatch, {"https://a.test/": "https://a.test/moved",
                                    "https://a.test/moved": "https://parked.test/lander"})
     resp = get_on_host("https://a.test/")
-    assert resp.is_redirect and redirect_target(resp).host == "parked.test"
+    assert resp.has_redirect_location and redirect_target(resp).host == "parked.test"
     assert seen == ["https://a.test/", "https://a.test/moved"]
+
+
+def test_get_on_host_does_not_follow_https_to_http(monkeypatch):
+    seen = fake_hops(monkeypatch, {"https://a.test/": "http://a.test/plain"})
+    resp = get_on_host("https://a.test/")
+    assert resp.has_redirect_location and redirect_target(resp).scheme == "http"
+    assert seen == ["https://a.test/"]
+
+
+def test_get_on_host_raises_an_http_error_on_a_malformed_location(monkeypatch):
+    fake_hops(monkeypatch, {"https://a.test/": "https://a.test:abc/"})
+    with pytest.raises(httpx.RemoteProtocolError, match="Malformed redirect"):
+        get_on_host("https://a.test/")
 
 
 def test_get_on_host_gives_up_on_a_redirect_loop(monkeypatch):

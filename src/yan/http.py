@@ -71,22 +71,32 @@ MAX_REDIRECTS = 5
 def get_on_host(url: str) -> httpx.Response:
     """GET url, following redirects only while each one stays on url's host.
 
-    A redirect to another host comes back unfollowed (its Location names where
-    it pointed), so a lapsed domain's parking page is never requested. Checking
-    only the final host would still fetch it, and any redirects it chains to.
-    Raises httpx.TooManyRedirects after MAX_REDIRECTS hops.
+    A redirect to another host, or from https to http, comes back unfollowed
+    (its Location names where it pointed), so a lapsed domain's parking page is
+    never requested. Checking only the final host would still fetch it, and any
+    redirects it chains to. Raises httpx.TooManyRedirects after MAX_REDIRECTS
+    hops, and httpx.RemoteProtocolError on a malformed Location, as httpx's own
+    redirect handling does.
     """
     host = httpx.URL(url).host
     for _ in range(MAX_REDIRECTS + 1):
         resp = httpx.get(url, headers={"User-Agent": USER_AGENT}, timeout=30.0, follow_redirects=False)
-        if not resp.is_redirect or redirect_target(resp).host != host:
+        if not resp.has_redirect_location:
             return resp
-        url = str(redirect_target(resp))
+        try:
+            target = redirect_target(resp)
+        except httpx.InvalidURL as exc:
+            raise httpx.RemoteProtocolError(f"Malformed redirect Location: {exc}", request=resp.request) from exc
+        downgrade = resp.request.url.scheme == "https" and target.scheme != "https"
+        if target.host != host or downgrade:
+            return resp
+        url = str(target)
     raise httpx.TooManyRedirects(f"More than {MAX_REDIRECTS} redirects", request=resp.request)
 
 
 def redirect_target(resp: httpx.Response) -> httpx.URL:
-    """Where a redirect response points, with a relative Location resolved."""
+    """Where a redirect response points, with a relative Location resolved.
+    Safe on a redirect get_on_host returned: it already parsed the Location."""
     return resp.request.url.join(resp.headers["location"])
 
 

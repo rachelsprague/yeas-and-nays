@@ -96,8 +96,9 @@ def _get(url: str):
     except httpx.HTTPError as exc:
         _warn(f"Link card fetch failed for {url}: {type(exc).__name__}")
         return None
-    if resp.is_redirect:
-        _warn(f"Link card fetch for {url}: redirected to another host ({redirect_target(resp).host})")
+    if resp.has_redirect_location:
+        target = redirect_target(resp)
+        _warn(f"Link card fetch for {url}: not following a redirect to {target.scheme}://{target.host}")
         return None
     if resp.status_code != 200:
         _warn(f"Link card fetch for {url}: HTTP {resp.status_code}")

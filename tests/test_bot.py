@@ -703,6 +703,8 @@ def test_is_live_only_for_a_200_and_is_missing_only_for_a_404_on_the_same_host(m
         "https://lapsed.test/": (302, "https://parked.test/lander"),
         "https://gone.test/": (302, "https://parked.test/404"),
         "https://busy.test/": (503, None),
+        "https://bad.test/": (302, "https://bad.test:abc/"),
+        "https://nowhere.test/": (301, None),
     }
     calls = []
 
@@ -727,13 +729,18 @@ def test_is_live_only_for_a_200_and_is_missing_only_for_a_404_on_the_same_host(m
     assert not bot.is_missing("https://lapsed.test/")
     assert not bot.is_missing("https://gone.test/")
     assert not bot.is_missing("https://busy.test/")
+    # A malformed Location or a redirect with none is a failed check, not a crash.
+    assert not bot.is_live("https://bad.test/")
+    assert not bot.is_live("https://nowhere.test/")
     # Redirects are followed one hop at a time, and never off the host.
     assert not any(kwargs["follow_redirects"] for _, kwargs in calls)
     assert not any("parked.test" in url for url, _ in calls)
     out = capsys.readouterr().out
     assert "https://b.test/: HTTP 404" in out
-    assert "https://lapsed.test/: redirected to another host (parked.test)" in out
+    assert "https://lapsed.test/: not following a redirect to https://parked.test" in out
     assert "https://c.test/: ConnectError" in out
+    assert "https://bad.test/: RemoteProtocolError" in out
+    assert "https://nowhere.test/: HTTP 301" in out
 
 
 def test_publish_stops_at_post_limit_and_leaves_rest_for_next_run(out_dir, tmp_path, monkeypatch):
@@ -925,6 +932,8 @@ def test_fetch_card_reads_the_page_tags_and_image(monkeypatch):
     ("https://a.test/1.png", (200, "image/png", b"x" * 1_000_001, None), "over 1000000 bytes"),
     ("https://a.test/1.png", (404, "text/html", "", None), "HTTP 404"),
     ("https://a.test/1.png", None, "ConnectError"),
+    ("https://a.test/1.png", (302, "text/html", "", "https://other.test/1.png"),
+     "not following a redirect to https://other.test"),
 ])
 def test_fetch_card_leaves_off_a_thumbnail_it_cannot_use(monkeypatch, capsys, image, response, warning):
     from yan.bot.card import fetch_card
@@ -953,7 +962,7 @@ def test_fetch_card_gives_no_card_without_a_page_or_a_title(monkeypatch, capsys)
     assert fetch_card("https://a.test/error/") is None
     assert fetch_card("https://a.test/down/") is None
     out = capsys.readouterr().out
-    assert "no og:title" in out and "redirected to another host (parked.test)" in out and "HTTP 503" in out
+    assert "no og:title" in out and "not following a redirect to https://parked.test" in out and "HTTP 503" in out
     assert "ConnectError" in out
 
 
