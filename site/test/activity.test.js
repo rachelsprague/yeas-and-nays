@@ -122,12 +122,72 @@ for (const [name, key] of [["Enter", "Enter"], ["Space", " "]]) {
   });
 }
 
-test("Close puts focus back on the bar", () => {
-  const { document, bars, panel, click } = load();
-  click(bars[1]);
-  click(panel.querySelector("button"));
+test("Escape on another bar closes its own chart's list and keeps focus; another chart's list stays", () => {
+  const { document, bars, panel, press } = load();
+  bars[1].focus();
+  press("Enter");
+  const area = document.querySelector(".area-line");
+  area.focus();
+  press("Escape");
+  assert.notEqual(panel.textContent, "");
+  assert.equal(document.activeElement, area);
+  bars[0].focus();
+  assert.notEqual(panel.textContent, "");
+  press("Escape");
   assert.equal(panel.textContent, "");
+  assert.equal(document.activeElement, bars[0]);
+});
+
+test("Escape hides a focused bar's counts", () => {
+  const { document, bars, press } = load();
+  bars[2].focus();
+  press("ArrowLeft");
+  assert.equal(document.querySelector(".vol-tip").hidden, false);
+  press("Escape");
+  assert.equal(document.querySelector(".vol-tip").hidden, true);
   assert.equal(document.activeElement, bars[1]);
+});
+
+test("a held Enter doesn't list again", () => {
+  const { bars, panel, press } = load();
+  bars[1].focus();
+  press("Enter");
+  const head = panel.firstChild;
+  assert.equal(press("Enter", { repeat: true }).defaultPrevented, true);
+  assert.equal(panel.firstChild, head);
+  press("Enter");
+  assert.notEqual(panel.firstChild, head);
+});
+
+test("policy area bars move by arrow key and list their area", async () => {
+  const { document, press, release, settle } = load();
+  const [house, senate] = document.querySelectorAll(".area-line");
+  const panel = document.querySelector("div[data-list-scope] [data-list]");
+  house.focus();
+  press("ArrowDown");
+  assert.equal(document.activeElement, senate);
+  press("ArrowUp");
+  press("Enter");
+  release();
+  await settle();
+  assert.deepEqual([...panel.querySelectorAll("a .t")].map((t) => t.textContent), ["Bill 3"]);
+});
+
+test("Close puts focus back on the bar, scrolling to it only after a key", () => {
+  for (const key of [false, true]) {
+    const { document, bars, panel, click, press } = load();
+    click(bars[1]);
+    const button = panel.querySelector("button");
+    const focus = bars[1].focus;
+    let options;
+    bars[1].focus = function (o) { options = o; focus.call(this, o); };
+    button.focus();
+    if (key) press("Enter");
+    click(button);
+    assert.equal(panel.textContent, "");
+    assert.equal(document.activeElement, bars[1]);
+    assert.equal(options.preventScroll, !key);
+  }
 });
 
 test("the loaded list scrolls into view unless the reader has scrolled", async () => {

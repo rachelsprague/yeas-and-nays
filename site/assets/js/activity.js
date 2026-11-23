@@ -157,7 +157,8 @@
     bar.classList.remove("on");
     bar.setAttribute("aria-expanded", "false");
     open = null;
-    if (refocus) bar.focus({ preventScroll: true });
+    // By key the page scrolls to the bar, so focus is never off screen.
+    if (refocus) bar.focus({ preventScroll: !byKey });
   }
 
   function list(bar) {
@@ -226,7 +227,10 @@
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     var bar = barAt(e.target);
     if (e.key === "Escape") {
-      if (open && (bar || open.panel.contains(e.target))) closeList(true);
+      // Closes only this chart's list, and moves focus only out of the list.
+      tip.hidden = true;
+      var scope = e.target.closest("[data-list-scope]");
+      if (open && scope && scope.contains(open.panel)) closeList(open.panel.contains(e.target));
       return;
     }
     if (!bar) return;
