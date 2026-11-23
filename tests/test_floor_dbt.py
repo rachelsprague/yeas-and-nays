@@ -46,7 +46,7 @@ def run_results(monkeypatch, tmp_path):
     dbt = subprocess.run(
         [str(Path(sys.executable).with_name("dbt")), "build", "--indirect-selection", "buildable",
          "--select", "+path:models/marts/floor", "+votes"],
-        cwd=tmp_path / "transform", capture_output=True, text=True,
+        cwd=tmp_path / "transform", capture_output=True, text=True, timeout=120,
         env={**os.environ, "DBT_PROFILES_DIR": ".", "DBT_SEND_ANONYMOUS_USAGE_STATS": "false"},
     )
     assert dbt.returncode == 0, dbt.stdout + dbt.stderr

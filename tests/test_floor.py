@@ -229,9 +229,9 @@ def test_a_senate_day_is_brief_only_if_each_session_is_known_to_be():
         _session(dt.date(2026, 10, 1), 5), _session(dt.date(2026, 10, 2), 6),
         ("2026-10-05T12:00:00-04:00", ""), ("2026-10-06T12:00:00-04:00", "noon"),
         _session(dt.date(2026, 10, 7), 1), _session(dt.date(2026, 10, 7), 60),
-        _session(dt.date(2026, 10, 8), -60),
+        _session(dt.date(2026, 10, 8), -60), _session(dt.date(2026, 10, 9), 0),
     )
-    assert ingest.brief_days(content) == {dt.date(2026, 10, 1)}
+    assert ingest.brief_days(content) == {dt.date(2026, 10, 1), dt.date(2026, 10, 9)}
 
 
 def test_a_bad_senate_day_still_fetches_the_newer_days(monkeypatch, tmp_path, caplog):
