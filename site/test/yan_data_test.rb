@@ -2276,7 +2276,7 @@ class HouseAdTest < Minitest::Test
 
   EXPLAINERS = ["/how/bills/index.html", "/how/dictionary/index.html", "/how/expulsion/index.html",
                 "/how/house-and-senate/index.html", "/how/missed-votes/index.html",
-                "/how/voting/index.html"].freeze
+                "/how/opening-prayers/index.html", "/how/voting/index.html"].freeze
 
   def pages
     @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
@@ -2619,5 +2619,23 @@ class HouseAndSenatePageTest < Minitest::Test
     anchors = pages.fetch("/how/house-and-senate/index.html").scan(%r{href="/how/dictionary/#([^"]*)"}).flatten
     refute_empty anchors
     anchors.each { |id| assert_includes ids, id }
+  end
+end
+
+# Opening prayers and the chaplains: linked from About and How the House and
+# Senate differ, and links back to the latter.
+class OpeningPrayersPageTest < Minitest::Test
+  include SiteBuild
+
+  def pages
+    @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
+  end
+
+  def test_page_builds_and_about_and_house_and_senate_link_it
+    page = pages.fetch("/how/opening-prayers/index.html")
+    assert_includes page, %(<h1 class="vote-h">Opening prayers and the chaplains</h1>)
+    assert_includes page, %(<a href="/how/house-and-senate/">How the House and Senate differ</a>)
+    link = %(<a href="/how/opening-prayers/">Opening prayers and the chaplains</a>)
+    %w[/about/ /how/house-and-senate/].each { |url| assert_includes pages.fetch("#{url}index.html"), link }
   end
 end
