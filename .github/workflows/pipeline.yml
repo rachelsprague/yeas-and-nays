@@ -80,10 +80,18 @@ jobs:
       # Any failing dbt test stops the run here, before export and the bot,
       # so bad data never reaches data/out or Bluesky. Warnings don't fail.
       - name: dbt build (models + tests)
+        id: dbt
         working-directory: transform
         env:
           DBT_PROFILES_DIR: .
         run: uv run dbt build
+
+      # Puts test warnings on the run page. Reporting only, so a problem here
+      # never holds up export or the bot.
+      - name: Report dbt warnings
+        if: success() || steps.dbt.outcome == 'failure'
+        continue-on-error: true
+        run: python3 -I scripts/report_dbt_warnings.py transform/target/run_results.json
 
       - name: Export JSON
         run: uv run yan export

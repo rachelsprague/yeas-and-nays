@@ -281,11 +281,12 @@ models:
           chosen and sworn) for 3/5, null when no senators are on the roll. Leaves out a Vice
           President's tie-breaking vote. Also null when it disagrees with the official result
           (carried short of it, or failed with it) and no tie was broken; the warning lists
-          those votes.
+          those votes, except known ones.
         data_tests:
           - not_null:
               config:
-                where: required_share is not null and member_count > 0
+                # s119-1-0334: recorded as agreed to 51-48, 3/5 required (see votes.sql).
+                where: required_share is not null and member_count > 0 and vote_id != 's119-1-0334'
                 severity: warn
       - name: carried
         description: >
