@@ -1878,6 +1878,36 @@ class VoteVolumeTest < Minitest::Test
     assert_equal 7, vol["x_ticks"].size # July through January
   end
 
+  def test_a_small_segment_stays_above_the_baseline_and_inside_the_chart
+    votes = [vote("house", "2026-11-10", "passage")] + Array.new(399) { vote("house", "2026-11-10", "recommit") }
+    segments = Yan.vote_volume(votes)["chambers"].first["weeks"].first["segments"]
+    assert_equal({ "kind" => "passage", "y" => 199.0, "h" => 1 }, segments.first) # half a unit tall by its count
+    segments.each { |s| assert_operator s["y"] + s["h"], :<=, Yan::VOLUME_HEIGHT }
+    # Last in a stack that reaches the top: the 1-unit minimum stops at the chart's edge.
+    votes = Array.new(399) { vote("house", "2026-11-10", "passage") } + [vote("house", "2026-11-10", "recommit")]
+    assert_equal 0, Yan.vote_volume(votes)["chambers"].first["weeks"].first["segments"].last["y"]
+  end
+
+  def test_tick_steps_grow_with_the_busiest_week
+    { 20 => [0, 5, 10, 15, 20], 21 => [0, 10, 20, 30], 50 => [0, 10, 20, 30, 40, 50], 51 => [0, 20, 40, 60] }.each do |n, ticks|
+      vol = Yan.vote_volume(Array.new(n) { vote("house", "2026-11-10", "passage") })
+      assert_equal ticks, vol["y_ticks"].map { |t| t["value"] }
+      # Evenly spaced, from the baseline up to the top edge.
+      assert_equal ticks.map { |t| (Yan::VOLUME_HEIGHT * (1 - t.to_f / ticks.last)).round(1) }, vol["y_ticks"].map { |t| t["y"] }
+    end
+  end
+
+  def test_the_week_of_dec_29_holds_the_january_tick
+    vol = Yan.vote_volume([vote("house", "2025-12-29", "passage"), vote("house", "2026-01-06", "passage")])
+    assert_equal [{ "pct" => 0.0, "label" => "Jan. 2026" }], vol["x_ticks"]
+  end
+
+  def test_activity_page_with_one_chamber_has_one_chart_and_no_shared_scale_note
+    html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])["/activity/index.html"]
+    assert_equal 1, html.scan('<figure class="vol"').size
+    refute_includes html, "Both charts use the same scale"
+  end
+
   def test_activity_page_draws_a_column_per_week_with_a_table
     html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])["/activity/index.html"]
     assert_equal 1, html.scan('<g class="wk"').size
@@ -1947,9 +1977,16 @@ class PolicyVolumeTest < Minitest::Test
     votes = fields.each_with_index.map do |f, i|
       [EscapingTest::VOTE.merge("vote_id" => "#{f["chamber"][0]}119-1-#{i + 1}", "roll_number" => i + 1).merge(f), EscapingTest::DOC]
     end
-    html = build_site([EscapingTest::MEMBER], votes)["/activity/index.html"]
+    pages = build_site([EscapingTest::MEMBER], votes, files: "*.{html,json}")
+    html = pages["/activity/index.html"]
+    # Each bar's count is the number of rows activity.js lists for it.
+    listed = JSON.parse(pages.fetch("/activity/rollcalls.json"))["votes"]
+    weeks = html.scan(/data-chamber="(\w+)" data-week="([^"]*)"[^>]*data-total="(\d+)"/)
+    assert_equal %w[house senate], weeks.map(&:first).uniq
+    weeks.each { |c, w, n| assert_equal n.to_i, listed.count { |v| v["c"] == c && v["w"] == w }, [c, w] }
     section = html[/<section class="section" aria-labelledby="area-h">.*?<\/section>/m]
     bars = section.scan(/data-chamber="(\w+)" data-area="([^"]*)"[^>]*data-total="(\d+)"/)
+    bars.each { |c, a, n| assert_equal n.to_i, listed.count { |v| v["c"] == c && v["a"] == a }, [c, a] }
     rows = section.scan(%r{<tr><th scope="row">([^<]*)</th><td class="r">(\d+)</td><td class="r">(\d+)</td><td class="r">(\d+)</td></tr>})
     # Taxation 4, Health 3, Energy 1: each area's House and Senate bars carry the counts in its table row, in the same order.
     # The votes with no area get table rows last but no bars, and are counted under the chart instead.

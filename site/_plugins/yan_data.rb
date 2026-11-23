@@ -574,8 +574,10 @@ module Yan
           totals[k["key"]] += n
           h = n * scale
           y -= h
-          # A 1px surface gap above each segment; a single roll call stays visible.
-          { "kind" => k["key"], "y" => (y + 1).round(1), "h" => [h - 1, 1].max.round(1) }
+          # A 1px surface gap above each segment; a single roll call stays visible,
+          # rising from the segment's bottom so it never drops below the baseline.
+          height = [h - 1, 1].max
+          { "kind" => k["key"], "y" => [y + h - height, 0].max.round(1), "h" => height.round(1) }
         end
         total = c.values.sum
         parts = VOTE_KINDS.filter_map { |k| "#{k["label"]} #{c[k["key"]]}" if c[k["key"]].positive? }
