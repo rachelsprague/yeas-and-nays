@@ -1,7 +1,7 @@
 # Local pipeline: download -> parse -> dbt -> JSON. Run `make all`.
 DBT = cd transform && DBT_PROFILES_DIR=. uv run dbt
 
-.PHONY: all ingest stage model export cards bot-preview site site-search site-serve test pytest sitetest jstest clean
+.PHONY: all ingest stage model export cards bot-preview site site-search site-serve test pytest sitetest jstest datatest clean
 
 all: ingest stage model export
 
@@ -42,6 +42,9 @@ sitetest:        ## tests for the site's Jekyll plugin
 
 jstest:          ## tests for the site's JS (Node and jsdom, pinned in site/package-lock.json)
 	cd site && npm ci --ignore-scripts --no-audit --no-fund && node --test "test/*.test.js"
+
+datatest:        ## check the site's definitions and district map against data/out/
+	cd site && bundle install --quiet && bundle exec ruby test/data_test.rb
 
 clean:           ## remove local intermediate files (keeps raw downloads)
 	rm -rf data/staged data/warehouse.duckdb transform/target transform/logs site/_site site/.jekyll-cache site/assets/cards
