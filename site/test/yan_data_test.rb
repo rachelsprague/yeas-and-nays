@@ -2077,22 +2077,22 @@ class LiveFloorTest < Minitest::Test
     assert_includes band, '<p class="live-line small" data-row data-chamber="house" data-live-from="2026-11-17T12:00:04-05:00">'
     assert_includes band, "Scheduled to convene at 3 p.m. ET"
     senate, house = band.split('data-chamber="house"')
-    assert_includes senate, '<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Convening</span>'
+    assert_includes senate, '<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Scheduled session</span>'
     refute_includes senate, "In session"
     assert_includes house, '<span class="live-flag kicker"><span class="live-dot pulse" aria-hidden="true"></span>In session</span>'
-    refute_includes house, "Convening"
+    refute_includes house, "Scheduled session"
     assert_includes band, '<a class="link" href="https://clerk.house.gov/FloorSummary">Floor summary</a>'
     refute_includes band, "is-live"
     assert_includes html, '<script src="/assets/js/live-floor.js" defer></script>'
   end
 
-  # A House line from a scheduled time only reads "Convening", like the Senate's.
-  def test_a_house_line_from_a_scheduled_time_reads_convening
+  # A House line from a scheduled time only reads "Scheduled session", like the Senate's.
+  def test_a_house_line_from_a_scheduled_time_reads_scheduled_session
     html = build("house" => status(next_at: "2026-11-18T10:00:00-05:00", pro_forma: false))
     band = html[%r{<section class="live-band".*?</section>}m]
     assert_includes band, 'data-chamber="house" data-live-from="2026-11-18T10:00:00-05:00"'
     assert_includes band, "Scheduled to convene at 10 a.m. ET"
-    assert_includes band, '<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Convening</span>'
+    assert_includes band, '<span class="live-flag kicker"><span class="live-dot" aria-hidden="true"></span>Scheduled session</span>'
     refute_includes band, "In session"
     refute_includes band, 'data-chamber="senate"'
   end

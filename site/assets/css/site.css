@@ -224,13 +224,13 @@ main.home { gap: 20px; padding-top: 20px; }
 
 /* Home page floor band: live-floor.js marks a line .is-live from its convening
    time; a chamber tab hides a line with [hidden]. The band shows only while a
-   line is both live and not hidden. */
-.live-band { display: flex; flex-direction: column; gap: 6px; padding: 8px 0; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); }
-.live-band:not(:has(.live-line.is-live:not([hidden]))) { display: none; }
+   line is both live and not hidden (never in a browser without :has()). */
+.live-band { display: none; flex-direction: column; gap: 6px; padding: 8px 0; border-top: 1.5px solid var(--ink); border-bottom: 1px solid var(--line); }
+.live-band:has(.live-line.is-live:not([hidden])) { display: flex; }
 .live-line { display: none; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; }
 .live-line.is-live:not([hidden]) { display: flex; }
-/* "In session" (convened, per the data) gets a pulsing accent dot; "Convening"
-   (past its scheduled time) a still one. The pulse stops for reduced motion. */
+/* "In session" (convened, per the data) gets a pulsing accent dot; "Scheduled
+   session" (past its scheduled time) a still one. The pulse stops for reduced motion. */
 .live-flag { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); }
 .live-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 .live-dot.pulse::after {
