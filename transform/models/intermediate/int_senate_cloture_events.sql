@@ -14,6 +14,7 @@
 
     "Confirmed by the Senate by Voice Vote."                              disposed
     "Passed Senate without amendment by Unanimous Consent."               disposed
+    "SA 6887 fell when SA 6886 tabled."                                   disposed
 -#}
 
 with actions as (
@@ -31,7 +32,8 @@ events as (
                 status_text,
                 '^((Not )?[Cc]onfirmed by the Senate|Passed Senate|Failed of passage|Nomination withdrawn'
                 || '|Resolution (not )?agreed to|Submitted in the Senate, considered, and agreed to'
-                || '|Amendment SA \d+ (agreed to|not agreed to|withdrawn))'
+                || '|Amendment SA \d+ (agreed to|not agreed to|withdrawn)'
+                || '|SA \d+( \([^)]*\))? fell )'
             ) then 'disposed'
         end as event,
         case when status_text like 'Cloture%' then
