@@ -2274,7 +2274,8 @@ class HouseAdTest < Minitest::Test
   include SiteBuild
 
   EXPLAINERS = ["/how/bills/index.html", "/how/dictionary/index.html", "/how/expulsion/index.html",
-                "/how/missed-votes/index.html", "/how/voting/index.html"].freeze
+                "/how/house-and-senate/index.html", "/how/missed-votes/index.html",
+                "/how/voting/index.html"].freeze
 
   def pages
     @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
@@ -2594,5 +2595,28 @@ class VotingPageTest < Minitest::Test
   def test_definitions_link_lands_on_about
     assert_includes pages.fetch("/how/voting/index.html"), %(href="/about/#definitions")
     assert_includes pages.fetch("/about/index.html"), %(<section id="definitions">)
+  end
+end
+
+# How the House and Senate differ: linked from About and two other explainers,
+# and each dictionary link lands on an entry.
+class HouseAndSenatePageTest < Minitest::Test
+  include SiteBuild
+
+  def pages
+    @@pages ||= build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]])
+  end
+
+  def test_page_builds_and_about_bills_and_voting_link_it
+    assert_includes pages.fetch("/how/house-and-senate/index.html"), %(<h1 class="vote-h">How the House and Senate differ</h1>)
+    link = %(<a href="/how/house-and-senate/">How the House and Senate differ</a>)
+    %w[/about/ /how/bills/ /how/voting/].each { |url| assert_includes pages.fetch("#{url}index.html"), link }
+  end
+
+  def test_dictionary_links_name_existing_entries
+    ids = pages.fetch("/how/dictionary/index.html").scan(/<dt id="([^"]*)">/).flatten
+    anchors = pages.fetch("/how/house-and-senate/index.html").scan(%r{href="/how/dictionary/#([^"]*)"}).flatten
+    refute_empty anchors
+    anchors.each { |id| assert_includes ids, id }
   end
 end
