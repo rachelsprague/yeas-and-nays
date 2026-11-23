@@ -13,7 +13,9 @@ this reads CONGRESS_API_KEY and sends it only in the X-Api-Key header. Without a
 key this step is skipped. A failed request or an edition with fewer than
 MIN_BIOS biographies is logged as an error and leaves the saved edition in
 place, so the hourly votes aren't held up by a weekly bio refresh; the dbt test
-`members_without_bios` warns when bios go missing.
+`members_without_bios` warns when bios go missing. It is tried again once
+RETRY_AFTER has passed (the time is kept in the `failed` file), rather than
+downloading the full text every hour.
 """
 
 import datetime as dt
@@ -22,6 +24,7 @@ import logging
 import os
 import re
 import time
+from pathlib import Path
 
 import httpx
 
@@ -37,6 +40,7 @@ TEXT_URL = API + "/packages/{package_id}/txt"
 # Editions come out every year or two; three years back always includes the newest one.
 LOOKBACK = dt.timedelta(days=3 * 365)
 REFETCH_AFTER = dt.timedelta(days=7)
+RETRY_AFTER = dt.timedelta(days=1)
 # The 2026 edition has 500; a file with far fewer has changed format or been cut short.
 MIN_BIOS = 400
 DIR = RAW_DIR / "directory"
@@ -48,13 +52,20 @@ def ingest(client: Client, today: dt.date | None = None) -> None:
     if not key:
         log.warning("directory: CONGRESS_API_KEY not set; skipping")
         return
-    listing = DIR / "editions.json"
-    if listing.exists() and time.time() - listing.stat().st_mtime < REFETCH_AFTER.total_seconds():
+    failed = DIR / "failed"
+    if newer_than(DIR / "editions.json", REFETCH_AFTER) or newer_than(failed, RETRY_AFTER):
         return
     try:
         fetch(client, key, today or dt.date.today())
     except (httpx.HTTPError, ValueError) as e:
         log.error("directory: %s; keeping the saved edition", e)
+        write_atomic(failed, b"")
+    else:
+        failed.unlink(missing_ok=True)
+
+
+def newer_than(path: Path, age: dt.timedelta) -> bool:
+    return path.exists() and time.time() - path.stat().st_mtime < age.total_seconds()
 
 
 def fetch(client: Client, key: str, today: dt.date) -> None:

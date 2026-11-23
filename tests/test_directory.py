@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import os
 
 import httpx
 import pytest
@@ -144,6 +145,10 @@ class _Client:
         return httpx.Response(200, text=self.text, request=request)
 
 
+def _age(path, days):
+    os.utime(path, (path.stat().st_mtime - days * 24 * 3600,) * 2)
+
+
 @pytest.fixture
 def raw(tmp_path, monkeypatch):
     monkeypatch.setattr(ingest, "DIR", tmp_path)
@@ -166,8 +171,41 @@ def test_ingest_saves_the_newest_edition_and_drops_older_ones(raw):
 def test_ingest_keeps_the_saved_edition_when_a_new_one_parses_short(raw, caplog):
     (raw / "CDIR-2024-04-25.txt").write_text("old")
     ingest.ingest(_Client("not a directory"), today=dt.date(2026, 11, 18))
-    assert sorted(p.name for p in raw.iterdir()) == ["CDIR-2024-04-25.txt"]
+    assert sorted(p.name for p in raw.iterdir()) == ["CDIR-2024-04-25.txt", "failed"]
     assert "CDIR-2026-02-20 has 0 biographies" in caplog.text
+
+
+def test_ingest_retries_a_short_edition_after_a_day(raw):
+    short = _Client("not a directory")
+    ingest.ingest(short, today=dt.date(2026, 11, 18))
+    ingest.ingest(short, today=dt.date(2026, 11, 18))
+    assert len(short.urls) == 2
+
+    _age(raw / "failed", days=1)
+    ingest.ingest(_Client(TEXT), today=dt.date(2026, 11, 19))
+    assert sorted(p.name for p in raw.iterdir()) == ["CDIR-2026-02-20.txt", "editions.json"]
+
+
+def test_ingest_retries_a_failed_request_after_a_day(raw):
+    class Client(_Client):
+        def get(self, url, headers=None):
+            self.urls.append(url)
+            raise httpx.ConnectError("no connection")
+
+    client = Client("")
+    # A stale saved list doesn't bring the retry forward.
+    (raw / "editions.json").write_text("[]")
+    _age(raw / "editions.json", days=8)
+    ingest.ingest(client, today=dt.date(2026, 11, 18))
+    ingest.ingest(client, today=dt.date(2026, 11, 18))
+    assert len(client.urls) == 1
+
+    _age(raw / "failed", days=1)
+    ingest.ingest(client, today=dt.date(2026, 11, 19))
+    assert len(client.urls) == 2
+    # The second failure starts another day's wait.
+    ingest.ingest(client, today=dt.date(2026, 11, 19))
+    assert len(client.urls) == 2
 
 
 def test_ingest_skips_without_a_key(raw, monkeypatch):
