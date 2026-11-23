@@ -173,13 +173,65 @@ def test_an_error_on_this_weeks_house_file_still_fetches_next_week(monkeypatch, 
     week = (FIXTURES / "house_floor_2026-11-09.xml").read_bytes()
     client = _client({
         ingest.HOUSE_URL.format(week=dt.date(2026, 11, 9)): httpx.Response(500),
-        ingest.HOUSE_URL.format(week=dt.date(2026, 11, 16)): httpx.Response(200, content=week),
+        ingest.HOUSE_URL.format(week=dt.date(2026, 11, 16)):
+            httpx.Response(200, content=week.replace(b'week-date="2026-11-09"', b'week-date="2026-11-16"')),
     })
 
     ingest.ingest_house(client, dt.date(2026, 11, 12))
 
     assert [p.name for p in tmp_path.iterdir()] == ["2026-11-16.xml"]
     assert "house floor schedule for week of 2026-11-09 not updated" in caplog.text
+
+
+def test_a_house_file_for_another_week_is_not_saved(monkeypatch, tmp_path, caplog):
+    monkeypatch.setattr(ingest, "house_dir", lambda: tmp_path)
+    (tmp_path / "2026-11-16.xml").write_text("last good copy")
+    week = (FIXTURES / "house_floor_2026-11-09.xml").read_bytes()
+    client = _client({ingest.HOUSE_URL.format(week=dt.date(2026, 11, 16)): httpx.Response(200, content=week)})
+
+    ingest.ingest_house(client, dt.date(2026, 11, 12))
+
+    assert (tmp_path / "2026-11-16.xml").read_text() == "last good copy"
+    assert "House floor schedule for week of 2026-11-16 has week-date '2026-11-09'" in caplog.text
+
+
+def _session_days(*sessions: tuple[str, str]) -> bytes:
+    return b'<CongressSessionDayConvenings Congress="119">' + "".join(
+        f"<LegislativeDay><SessionDay><ConveneDate>{convene}</ConveneDate><AdjournDate>{adjourn}</AdjournDate>"
+        "</SessionDay></LegislativeDay>"
+        for convene, adjourn in sessions
+    ).encode() + b"</CongressSessionDayConvenings>"
+
+
+def _session(day: dt.date, minutes: int) -> tuple[str, str]:
+    start = dt.datetime.combine(day, dt.time(12), dt.timezone(dt.timedelta(hours=-5)))
+    return start.isoformat(), (start + dt.timedelta(minutes=minutes)).isoformat()
+
+
+def test_brief_senate_days_dont_use_up_the_window():
+    full = [dt.date(2026, 9, d) for d in range(17, 29)]
+    brief = [dt.date(2026, 10, d) for d in range(1, 13)]
+    content = _session_days(*(_session(d, 300) for d in full), *(_session(d, 1) for d in brief))
+
+    # The ten latest full days, and every brief day since.
+    assert ingest.recent_days(content, dt.date(2026, 10, 12)) == full[-10:] + brief
+    # Days after today don't count.
+    assert ingest.recent_days(content, full[-1]) == full[-10:]
+
+
+def test_with_only_brief_senate_days_the_latest_ten_are_read():
+    brief = [dt.date(2026, 10, d) for d in range(1, 13)]
+    assert ingest.recent_days(_session_days(*(_session(d, 1) for d in brief)), brief[-1]) == brief[-10:]
+
+
+def test_a_senate_day_is_brief_only_if_each_session_is_known_to_be():
+    content = _session_days(
+        _session(dt.date(2026, 10, 1), 5), _session(dt.date(2026, 10, 2), 6),
+        ("2026-10-05T12:00:00-04:00", ""), ("2026-10-06T12:00:00-04:00", "noon"),
+        _session(dt.date(2026, 10, 7), 1), _session(dt.date(2026, 10, 7), 60),
+        _session(dt.date(2026, 10, 8), -60), _session(dt.date(2026, 10, 9), 0),
+    )
+    assert ingest.brief_days(content) == {dt.date(2026, 10, 1), dt.date(2026, 10, 9)}
 
 
 def test_a_bad_senate_day_still_fetches_the_newer_days(monkeypatch, tmp_path, caplog):

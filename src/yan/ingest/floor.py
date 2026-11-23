@@ -36,8 +36,12 @@ HOUSE_LOOKBACK_DAYS = 14
 SENATE_DAYS_URL = "https://www.senate.gov/legislative/schedule/floor_schedule.xml"
 SENATE_DAY_URL = "https://www.senate.gov/legislative/LIS/floor_activity/{day:%m_%d_%Y}_Senate_Floor.xml"
 # Daily floor activity files read for filed cloture motions. A cloture vote
-# normally follows its motion within two session days, so ten is ample.
+# normally follows its motion within two session days, so ten is ample. Days
+# with only brief sessions aren't counted: a recess can have more than ten of them.
 SENATE_RECENT_DAYS = 10
+# Pro forma sessions are a minute or so. Their length tells them apart, since
+# senate.gov leaves its pro forma flag blank on many days.
+BRIEF_SESSION = dt.timedelta(minutes=5)
 # Re-download this many of the newest daily files, which are updated during the day.
 SENATE_REFRESH_DAYS = 2
 
@@ -75,6 +79,33 @@ def session_days(content: bytes) -> list[dt.date]:
     })
 
 
+def brief_days(content: bytes) -> set[dt.date]:
+    """Dates on which every Senate session adjourned within BRIEF_SESSION, from the session
+    days XML. A session still under way, or with a missing or bad time, isn't brief."""
+    brief: dict[dt.date, bool] = {}
+    for session in ET.fromstring(content).iter("SessionDay"):
+        convene, adjourn = session.findtext("ConveneDate"), session.findtext("AdjournDate")
+        if not convene:
+            continue
+        try:
+            length = dt.datetime.fromisoformat(adjourn.strip()) - dt.datetime.fromisoformat(convene.strip())
+            is_brief = dt.timedelta(0) <= length <= BRIEF_SESSION
+        except (AttributeError, TypeError, ValueError):
+            is_brief = False
+        day = dt.date.fromisoformat(convene[:10])
+        brief[day] = brief.get(day, True) and is_brief
+    return {day for day, is_brief in brief.items() if is_brief}
+
+
+def recent_days(content: bytes, today: dt.date) -> list[dt.date]:
+    """Every date the Senate convened, oldest first, since the SENATE_RECENT_DAYS-th most
+    recent that wasn't only brief sessions. Brief days in between are included."""
+    days = [d for d in session_days(content) if d <= today]
+    brief = brief_days(content)
+    full = [d for d in days if d not in brief][-SENATE_RECENT_DAYS:]
+    return [d for d in days if d >= full[0]] if full else days[-SENATE_RECENT_DAYS:]
+
+
 def prune(directory, keep: set[str]) -> None:
     """Delete dated files no longer in the window, so what's on disk is the current schedule."""
     for path in directory.glob("????-??-??.xml"):
@@ -101,8 +132,11 @@ def ingest_house_week(client: Client, week: dt.date) -> None:
         log.info("house floor schedule for week of %s: not published", week)
         return
     resp.raise_for_status()
-    if ET.fromstring(resp.content).get("congress-num") != str(CONGRESS):
+    root = ET.fromstring(resp.content)
+    if root.get("congress-num") != str(CONGRESS):
         raise ValueError(f"House floor schedule for week of {week} is not from the {CONGRESS}th Congress")
+    if root.get("week-date") != week.isoformat():
+        raise ValueError(f"House floor schedule for week of {week} has week-date {root.get('week-date')!r}")
     write_atomic(house_dir() / f"{week:%Y-%m-%d}.xml", resp.content)
     log.info("house floor schedule for week of %s: saved", week)
 
@@ -154,7 +188,7 @@ def ingest_senate(client: Client, today: dt.date) -> None:
     # Parsed before saving, so a malformed file never reaches the stage step.
     if ET.fromstring(resp.content).get("Congress") != str(CONGRESS):
         raise ValueError(f"Senate session days are not from the {CONGRESS}th Congress")
-    days = [d for d in session_days(resp.content) if d <= today][-SENATE_RECENT_DAYS:]
+    days = recent_days(resp.content, today)
     write_atomic(senate_dir() / "session_days.xml", resp.content)
     refresh = set(days[-SENATE_REFRESH_DAYS:])
     prune(senate_dir(), {f"{day:%Y-%m-%d}.xml" for day in days})

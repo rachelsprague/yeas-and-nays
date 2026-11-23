@@ -311,9 +311,11 @@ unit_tests:
           - {docnum: PN3, status_text: "Confirmed by the Senate by Voice Vote."}
           - {docnum: H.R. 2, status_text: "Passed Senate without amendment by Unanimous Consent."}
           - {docnum: S.Amdt. 7, status_text: "Amendment SA 7 agreed to in Senate by Unanimous Consent."}
+          - {docnum: S.Amdt. 8, status_text: "SA 8 fell when cloture invoked on amendment SA 9."}
+          - {docnum: S.Amdt. 10, status_text: "SA 10 (the instructions of the motion to commit) fell when cloture invoked on amendment SA 9."}
           # Not cloture events
           - {docnum: H.R. 1, status_text: "Considered by Senate."}
-          - {docnum: S.Amdt. 8, status_text: "SA 8 fell when cloture invoked on amendment SA 9."}
+          - {docnum: H.R. 1, status_text: "Motion by Senator Doe to commit with instructions to report back forthwith with the following amendment (SA 10) fell when cloture was invoked on amendment SA 9 in Senate."}
           - {docnum: PN4, status_text: "Motion to proceed to executive session to consideration of nomination agreed to in Senate by Voice Vote."}
     expect:
       rows:
@@ -327,6 +329,8 @@ unit_tests:
         - {docnum: PN3, event: disposed, target: null}
         - {docnum: H.R. 2, event: disposed, target: null}
         - {docnum: S.Amdt. 7, event: disposed, target: null}
+        - {docnum: S.Amdt. 8, event: disposed, target: null}
+        - {docnum: S.Amdt. 10, event: disposed, target: null}
 
   - name: floor_schedule_keeps_filed_cloture_motions_and_links_the_vote_that_followed
     description: >
