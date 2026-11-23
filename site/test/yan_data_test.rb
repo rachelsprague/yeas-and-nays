@@ -108,13 +108,6 @@ class ProcedureTest < Minitest::Test
     procedures = { "terms" => [{ "key" => "a", "term" => "A", "definition" => "x", "see" => ["nope"] }] }
     assert_raises(KeyError) { Yan.dictionary(procedures) }
   end
-
-  # Every question in the exported votes has a definition, so a new kind of
-  # vote gets one in procedures.yml rather than showing none.
-  def test_every_exported_question_has_a_definition
-    votes = JSON.parse(File.read(File.expand_path("../../data/out/votes.json", __dir__)))["votes"]
-    assert_empty votes.reject { |v| Yan.procedure(v, PROCEDURES) }.map { |v| v["question"] }.uniq
-  end
 end
 
 # build_site's extra pages, added once the source is read.
@@ -1093,18 +1086,6 @@ class DistrictMapTest < Minitest::Test
     assert_nil Yan.district_map(nil, [])
   end
 
-  # Every current representative in the exported data has a seat on the map
-  # for the exported Congress, so district numbering matches after a switchover.
-  def test_every_current_representative_is_on_the_current_map
-    out = File.expand_path("../../data/out", __dir__)
-    congress = JSON.parse(File.read(File.join(out, "meta.json")))["congress"]
-    doc = JSON.parse(File.read(File.expand_path("../_maps/#{congress}.json", __dir__)))
-    seats = doc["districts"].map { |d| [d["state"], d["district"]] }
-    reps = JSON.parse(File.read(File.join(out, "members.json")))["members"]
-               .select { |m| m["is_current"] && m["is_voting_member"] && m["chamber"] == "house" }
-    assert_empty reps.map { |m| [m["state"], m["district"].to_i] } - seats
-  end
-
   # Both committed maps: the 50 states' 435 seats, numbered as the member data numbers them.
   def test_committed_maps_have_every_seat
     %w[119 120].each do |congress|
@@ -1581,9 +1562,20 @@ class ScheduleTest < Minitest::Test
   end
 end
 
+# One House item in a floor schedule export.
+module HouseItem
+  def house(id, label, title, bill_type: nil, url: nil, vote_id: nil)
+    { "chamber" => "house", "item_id" => id, "week_date" => "2026-11-09",
+      "category" => "Items that may be considered under suspension of the rules", "question" => nil,
+      "measure_number" => label, "bill_type" => bill_type, "measure_label" => label, "title" => title,
+      "amends" => nil, "congress_gov_url" => url, "vote_id" => vote_id }
+  end
+end
+
 # Builds /schedule/ on Friday, Nov. 13, 2026, from a small floor schedule export.
 class SchedulePageTest < Minitest::Test
   include SiteBuild
+  include HouseItem
 
   MEMBER = {
     "bioguide_id" => "Z000001", "official_full_name" => "Jane Doe", "first_name" => "Jane", "last_name" => "Doe",
@@ -1599,13 +1591,6 @@ class SchedulePageTest < Minitest::Test
 
   DOC = { "positions" => { "Z000001" => "Yea" }, "party_totals" => { "R" => { "yes" => 1 } },
           "caucus_majority_position" => {}, "against_party_majority" => [], "summary" => nil }.freeze
-
-  def house(id, label, title, bill_type: nil, url: nil, vote_id: nil)
-    { "chamber" => "house", "item_id" => id, "week_date" => "2026-11-09",
-      "category" => "Items that may be considered under suspension of the rules", "question" => nil,
-      "measure_number" => label, "bill_type" => bill_type, "measure_label" => label, "title" => title,
-      "amends" => nil, "congress_gov_url" => url, "vote_id" => vote_id }
-  end
 
   def senate(id, label, title, amends: nil)
     { "chamber" => "senate", "item_id" => id, "filed_date" => "2026-11-12", "question" => "On the Cloture Motion",
@@ -2106,6 +2091,7 @@ end
 
 class HomeModulesTest < Minitest::Test
   include SiteBuild
+  include HouseItem
 
   def vote(id, chamber, date, yea, nay, needed, share: "1/2", posts: true, against: 0)
     { "vote_id" => id, "chamber" => chamber, "vote_date" => date, "yea_count" => yea, "nay_count" => nay,
@@ -2229,17 +2215,17 @@ class HomeModulesTest < Minitest::Test
       { "chamber" => "senate", "item_id" => "s#{i}", "filed_date" => "2026-11-12", "question" => "On the Cloture Motion",
         "measure_label" => "PN#{i}", "title" => "Nomination #{i}", "vote_id" => nil }
     end
-    house = SchedulePageTest.allocate.house("h1", "H.R. 1", "A House bill")
+    house_item = house("h1", "H.R. 1", "A House bill")
     built = ->(items) do
       build_site([member], [[v, doc], [s, doc.merge("against_party_majority" => [])]], time: "2026-11-13 12:00:00 -0500",
                  schedule: { "items" => items, "senate_next_convene_et" => "2026-11-16T15:00:00" }).fetch("/index.html")
     end
     chambers = ->(page, id) { page[/<section aria-labelledby="#{id}" data-row data-chamber="([^"]*)">/, 1] }
-    html = built.call(senate + [house])
+    html = built.call(senate + [house_item])
     # The tabs split the value on spaces: exactly one between chambers.
     assert_equal "senate house", chambers.call(html, "soon-h")
     assert_equal "senate", chambers.call(built.call(senate), "soon-h")
-    assert_equal "house", chambers.call(built.call([house]), "soon-h")
+    assert_equal "house", chambers.call(built.call([house_item]), "soon-h")
     assert_equal %w[house senate], chambers.call(html, "close-h").split(" ").sort
     assert_equal "house", chambers.call(html, "against-h")
     soon = html[%r{<section aria-labelledby="soon-h".*?</section>}m]
@@ -2248,6 +2234,19 @@ class HomeModulesTest < Minitest::Test
     # The lead takes two-thirds only beside the week's column.
     assert_includes html, '<div class="front has-side">'
     assert_includes html, '<aside class="side"'
+  end
+
+  # A build with votes always has a week, so the plugin's is replaced with none.
+  def test_lead_has_no_side_column_without_a_week
+    real = Yan.method(:home_week)
+    Yan.define_singleton_method(:home_week) { |*| nil }
+    html = build_site([EscapingTest::MEMBER], [[EscapingTest::VOTE, EscapingTest::DOC]]).fetch("/index.html")
+    assert_includes html, '<div class="front">'
+    assert_includes html, '<article class="lead">'
+    refute_includes html, "has-side"
+    refute_includes html, '<aside class="side"'
+  ensure
+    Yan.define_singleton_method(:home_week, real)
   end
 
   # The member's seat code comes from member data: escaped in the

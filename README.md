@@ -17,7 +17,7 @@ make all      # ingest -> stage -> model -> export
 | Model | `make model` | `dbt build` in `transform/`: builds DuckDB models and runs unit and data tests. |
 | Export | `make export` | Writes JSON from the marts into `data/out/` (committed). |
 
-Requires [uv](https://docs.astral.sh/uv/). Python, site plugin and site JS tests: `make test`, with Node 22.22 or later for the JS tests (CI runs them on every PR and push to `main`). Changes land through pull requests after a pre-push review; `.claude/pre-push.md` sets this repo's review focus.
+Requires [uv](https://docs.astral.sh/uv/). Python, site plugin and site JS tests: `make test`, with Node 22.22 or later for the JS tests (CI runs them on every PR and push to `main`). `make datatest` checks the site's definitions and district map against the exported data (CI runs it after each data run, and when a file it reads changes). Changes land through pull requests after a pre-push review; `.claude/pre-push.md` sets this repo's review focus.
 
 ## Sources
 

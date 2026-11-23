@@ -1,0 +1,50 @@
+name: Data check
+
+# Checks the site's definitions and district map against the exported data
+# (`make datatest`), apart from the Tests workflow: the data changes hourly, so
+# a new kind of vote would otherwise first fail an unrelated PR. Runs after each
+# data run, and when a file the checks read changes. Nothing waits on it: a
+# failure shows here and the site still deploys.
+on:
+  workflow_run:
+    workflows: ["Update vote data"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths: &paths
+      - "site/_data/procedures.yml"
+      - "site/_maps/**"
+      - "site/_plugins/**"
+      - "site/test/data_test.rb"
+      - "site/Gemfile*"
+      - ".github/workflows/data-check.yml"
+  pull_request:
+    branches: [main]
+    paths: *paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  datatest:
+    # After a data run, only when it succeeded, as in site.yml.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # After a data run, main's tip, to pick up the data it just committed.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || '' }}
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+          working-directory: site
+
+      - name: Data tests
+        working-directory: site
+        run: bundle exec ruby test/data_test.rb
