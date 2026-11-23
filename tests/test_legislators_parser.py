@@ -57,13 +57,15 @@ def test_flattens_people_terms_and_affiliations():
 def test_social_keeps_account_names_as_recorded():
     rows = parse_social([
         {"id": {"bioguide": "X000001", "govtrack": 1},
-         "social": {"twitter": "SenExample", "twitter_id": 123, "youtube_id": "UCabc", "mastodon": "@ex@example.social"}},
+         "social": {"twitter": "SenExample", "twitter_id": 123, "youtube_id": "UCabc", "mastodon": "@ex@example.social",
+                    "bluesky": "example.senate.gov"}},
         {"id": {"govtrack": 2}, "social": {"twitter": "NoBioguide"}},
     ])
 
     assert rows == [{
         "bioguide_id": "X000001", "twitter": "SenExample", "facebook": None, "instagram": None,
         "youtube": None, "youtube_id": "UCabc", "mastodon": "@ex@example.social",
+        "bluesky": "example.senate.gov",
     }]
 
 
@@ -138,7 +140,7 @@ def test_null_or_wrong_type_nested_fields_read_as_empty(value):
 
     rows = parse_social([{"id": {"bioguide": "X000003"}, "social": value}])
     assert rows == [{"bioguide_id": "X000003"} | {f: None for f in
-                    ("twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon")}]
+                    ("twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon", "bluesky")}]
 
 
 def test_skips_a_term_or_affiliation_that_is_not_an_object(caplog):

@@ -40,7 +40,7 @@ STRING_COLUMNS = {
         "url", "contact_form", "phone", "office",
     ],
     "legislator_social_media": [
-        "bioguide_id", "twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon",
+        "bioguide_id", "twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon", "bluesky",
     ],
     "bills": [
         "source_file", "congress", "bill_type", "bill_number", "title", "introduced_date",

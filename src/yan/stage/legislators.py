@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 SOURCES = {"legislators-current.json": True, "legislators-historical.json": False}
 SOCIAL_FILE = "legislators-social-media.json"
-SOCIAL_FIELDS = ["twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon"]
+SOCIAL_FIELDS = ["twitter", "facebook", "instagram", "youtube", "youtube_id", "mastodon", "bluesky"]
 BIOGUIDE_ID = re.compile(r"[A-Z][0-9]{6}")
 LABEL_MAX = 80
 

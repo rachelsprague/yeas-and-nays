@@ -123,7 +123,8 @@ select
     social.facebook_url,
     social.instagram_url,
     social.youtube_url,
-    social.mastodon_url
+    social.mastodon_url,
+    social.bluesky_url
 from latest
 inner join people on people.bioguide_id = latest.bioguide_id
 left join service on service.bioguide_id = latest.bioguide_id

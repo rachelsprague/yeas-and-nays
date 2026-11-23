@@ -29,5 +29,8 @@ select
     case when regexp_full_match(mastodon, '@?[A-Za-z0-9_]+@[A-Za-z0-9.\-]+\.[A-Za-z]+')
         then 'https://' || lower(split_part(mastodon, '@', -1))
             || '/@' || split_part(ltrim(mastodon, '@'), '@', 1)
-    end as mastodon_url
+    end as mastodon_url,
+    -- A handle is a domain name.
+    case when regexp_full_match(bluesky, '([A-Za-z0-9]([A-Za-z0-9\-]*[A-Za-z0-9])?\.)+[A-Za-z]+')
+        then 'https://bsky.app/profile/' || lower(bluesky) end as bluesky_url
 from social

@@ -409,7 +409,8 @@ module Yan
   # Official social media accounts, in one fixed order for every member.
   # "icon" names the mark in _includes/account_icon.html.
   ACCOUNTS = [["x_url", "X", "x"], ["facebook_url", "Facebook", "facebook"], ["instagram_url", "Instagram", "instagram"],
-              ["youtube_url", "YouTube", "youtube"], ["mastodon_url", "Mastodon", "mastodon"]].freeze
+              ["youtube_url", "YouTube", "youtube"], ["mastodon_url", "Mastodon", "mastodon"],
+              ["bluesky_url", "Bluesky", "bluesky"]].freeze
 
   def self.accounts(m)
     ACCOUNTS.filter_map { |key, label, icon| m[key] && { "label" => label, "url" => m[key], "icon" => icon } }
