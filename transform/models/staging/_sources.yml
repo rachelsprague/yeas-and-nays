@@ -71,7 +71,8 @@ sources:
       - name: legislator_social_media
         description: >
           One row per current member in congress-legislators' social media file: official
-          account names on X (recorded as twitter), Facebook, Instagram, YouTube, and Mastodon.
+          account names on X (recorded as twitter), Facebook, Instagram, YouTube, Mastodon,
+          and Bluesky.
       - name: directory_bios
         description: >
           One row per biography in the newest Congressional Directory (GovInfo collection

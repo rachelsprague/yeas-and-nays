@@ -1025,9 +1025,10 @@ end
 
 class AccountsTest < Minitest::Test
   def test_accounts_in_fixed_order_skipping_missing
-    m = { "mastodon_url" => "https://m.example/@a", "x_url" => "https://x.com/a", "facebook_url" => nil }
+    m = { "bluesky_url" => "https://bsky.app/profile/a.example", "mastodon_url" => "https://m.example/@a", "x_url" => "https://x.com/a", "facebook_url" => nil }
     assert_equal [{ "label" => "X", "url" => "https://x.com/a", "icon" => "x" },
-                  { "label" => "Mastodon", "url" => "https://m.example/@a", "icon" => "mastodon" }],
+                  { "label" => "Mastodon", "url" => "https://m.example/@a", "icon" => "mastodon" },
+                  { "label" => "Bluesky", "url" => "https://bsky.app/profile/a.example", "icon" => "bluesky" }],
                  Yan.accounts(m)
     assert_equal [], Yan.accounts({})
   end

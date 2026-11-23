@@ -14,17 +14,17 @@ unit_tests:
         format: sql
         rows: |
           select * from (values
-              ('A1', 'SenExample', 'senator.example', 'sen_example', 'SenExample', 'UCabcdefghijklmnopqrstuv', '@SenExample@Example.Social'),
-              ('A2', null, '8037068318', null, '@repexample', null, null),
-              ('A3', null, null, null, 'UCabcdefghijklmnopqrstuv', null, null),
-              ('A4', 'bad handle', 'x"><script>', 'a/b', 'a b', null, 'not-an-address')
-          ) as t (bioguide_id, twitter, facebook, instagram, youtube, youtube_id, mastodon)
+              ('A1', 'SenExample', 'senator.example', 'sen_example', 'SenExample', 'UCabcdefghijklmnopqrstuv', '@SenExample@Example.Social', 'Example.senate.gov'),
+              ('A2', null, '8037068318', null, '@repexample', null, null, 'rep-example.bsky.social'),
+              ('A3', null, null, null, 'UCabcdefghijklmnopqrstuv', null, null, null),
+              ('A4', 'bad handle', 'x"><script>', 'a/b', 'a b', null, 'not-an-address', 'example.com/x')
+          ) as t (bioguide_id, twitter, facebook, instagram, youtube, youtube_id, mastodon, bluesky)
     expect:
       rows:
-        - {bioguide_id: A1, x_url: "https://x.com/SenExample", facebook_url: "https://www.facebook.com/senator.example", instagram_url: "https://www.instagram.com/sen_example", youtube_url: "https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv", mastodon_url: "https://example.social/@SenExample"}
-        - {bioguide_id: A2, x_url: null, facebook_url: "https://www.facebook.com/8037068318", instagram_url: null, youtube_url: "https://www.youtube.com/@repexample", mastodon_url: null}
-        - {bioguide_id: A3, x_url: null, facebook_url: null, instagram_url: null, youtube_url: "https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv", mastodon_url: null}
-        - {bioguide_id: A4, x_url: null, facebook_url: null, instagram_url: null, youtube_url: null, mastodon_url: null}
+        - {bioguide_id: A1, x_url: "https://x.com/SenExample", facebook_url: "https://www.facebook.com/senator.example", instagram_url: "https://www.instagram.com/sen_example", youtube_url: "https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv", mastodon_url: "https://example.social/@SenExample", bluesky_url: "https://bsky.app/profile/example.senate.gov"}
+        - {bioguide_id: A2, x_url: null, facebook_url: "https://www.facebook.com/8037068318", instagram_url: null, youtube_url: "https://www.youtube.com/@repexample", mastodon_url: null, bluesky_url: "https://bsky.app/profile/rep-example.bsky.social"}
+        - {bioguide_id: A3, x_url: null, facebook_url: null, instagram_url: null, youtube_url: "https://www.youtube.com/channel/UCabcdefghijklmnopqrstuv", mastodon_url: null, bluesky_url: null}
+        - {bioguide_id: A4, x_url: null, facebook_url: null, instagram_url: null, youtube_url: null, mastodon_url: null, bluesky_url: null}
 
   - name: terms_leave_out_malformed_links
     model: stg_legislators__terms

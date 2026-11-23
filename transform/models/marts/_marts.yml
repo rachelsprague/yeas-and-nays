@@ -109,8 +109,8 @@ models:
       - name: x_url
         description: >
           Official account links built from the account names in congress-legislators' social
-          media file (x_url, facebook_url, instagram_url, youtube_url, mastodon_url). The file's
-          other services, such as Bluesky, are not staged.
+          media file (x_url, facebook_url, instagram_url, youtube_url, mastodon_url,
+          bluesky_url). The file's other services, such as Threads, are not staged.
 
   - name: member_bios
     description: >
