@@ -62,8 +62,16 @@
   live.setAttribute("role", "status");
   page.appendChild(live);
 
+  // Set a moment later, so the same text again is still a change.
+  var pending = null;
   function announce(bar, text) {
-    live.textContent = bar.getAttribute("data-head") + ": " + text;
+    clearTimeout(pending);
+    pending = setTimeout(function () { live.textContent = bar.getAttribute("data-head") + ": " + text; }, 100);
+  }
+
+  function clearStatus() {
+    clearTimeout(pending);
+    live.textContent = "";
   }
 
   function rollCalls(n) { return n + " roll call" + (n === 1 ? "" : "s"); }
@@ -166,7 +174,7 @@
     if (!open) return;
     var bar = open.bar;
     open.panel.textContent = "";
-    live.textContent = "";
+    clearStatus();
     bar.classList.remove("on");
     bar.setAttribute("aria-expanded", "false");
     open = null;
@@ -200,6 +208,7 @@
 
     var status = el("p", "small muted", "Loading…");
     panel.appendChild(status);
+    announce(bar, status.textContent);
     var chamber = bar.getAttribute("data-chamber");
     var week = bar.getAttribute("data-week");
     var area = bar.getAttribute("data-area");
