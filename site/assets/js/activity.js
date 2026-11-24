@@ -5,6 +5,7 @@
 // their vote pages, from /activity/rollcalls.json (fetched on the first click).
 // By keyboard, each chart is one tab stop: arrow keys, Home and End move between
 // its bars, Enter or Space lists a bar's roll calls, and Escape closes the list.
+// Screen readers hear a short status when a list opens, not the whole list.
 // Everything from the data is written as text, never HTML. Without JS each bar
 // keeps its title, and the tables under the charts have every count.
 (function () {
@@ -23,14 +24,17 @@
   // and the area list's aria-hidden would hide them, so those go.
   page.querySelectorAll(".vol svg[role=img]").forEach(function (svg) { svg.setAttribute("role", "group"); });
   page.querySelectorAll(".areas[aria-hidden]").forEach(function (ol) { ol.removeAttribute("aria-hidden"); });
-  page.querySelectorAll("[data-list-scope]").forEach(function (scope) {
+  page.querySelectorAll("[data-list-scope]").forEach(function (scope, i) {
     var bars = scope.querySelectorAll("[data-head]");
+    var panel = scope.querySelector("[data-list]");
+    panel.id = "vol-list-" + (i + 1);
     bars.forEach(function (bar) {
       var title = bar.querySelector("title");
       var summary = title ? title.textContent : bar.getAttribute("title");
       bar.setAttribute("role", "button");
       bar.setAttribute("aria-label", summary || bar.getAttribute("data-head"));
       bar.setAttribute("aria-expanded", "false");
+      bar.setAttribute("aria-controls", panel.id);
       bar.setAttribute("tabindex", "-1");
     });
     // Tab lands on the latest week, or the first area.
@@ -52,6 +56,14 @@
     if (cls) e.className = cls;
     if (text != null) e.textContent = text;
     return e;
+  }
+
+  var live = el("div", "visually-hidden");
+  live.setAttribute("role", "status");
+  page.appendChild(live);
+
+  function announce(bar, text) {
+    live.textContent = bar.getAttribute("data-head") + ": " + text;
   }
 
   function rollCalls(n) { return n + " roll call" + (n === 1 ? "" : "s"); }
@@ -154,6 +166,7 @@
     if (!open) return;
     var bar = open.bar;
     open.panel.textContent = "";
+    live.textContent = "";
     bar.classList.remove("on");
     bar.setAttribute("aria-expanded", "false");
     open = null;
@@ -179,7 +192,10 @@
     panel.appendChild(head);
     // The area list sits under every area's row: bring it into view.
     panel.scrollIntoView({ block: "nearest" });
-    if (!total) return;
+    if (!total) {
+      announce(bar, "No roll calls");
+      return;
+    }
     var scrolled = window.scrollY;
 
     var status = el("p", "small muted", "Loading…");
@@ -209,10 +225,13 @@
       });
       status.remove();
       panel.appendChild(ul);
+      announce(bar, rollCalls(rows.length) + " listed");
       // Not if the reader has scrolled while it loaded.
       if (window.scrollY === scrolled) panel.scrollIntoView({ block: "nearest" });
     }).catch(function () {
-      if (mine === request) status.textContent = "The list couldn't be loaded. The tables below have every count.";
+      if (mine !== request) return;
+      status.textContent = "The list couldn't be loaded. The tables below have every count.";
+      announce(bar, status.textContent);
     });
   }
 

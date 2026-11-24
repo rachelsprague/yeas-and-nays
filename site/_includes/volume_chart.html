@@ -24,7 +24,7 @@ without JS each week has a title. The table under the chart is its text version.
   <div class="vol-x small muted nums" aria-hidden="true">
     {%- for t in vol.x_ticks %}<span{% if t.label %} class="lab"{% endif %} style="left: {{ t.pct }}%">{{ t.label }}</span>{% endfor %}
   </div>
-  <figcaption class="vol-list" data-list aria-live="polite"><span class="small muted js-only">Hover over a week for its counts; click it to list its roll calls. With a keyboard, use the arrow keys and Enter.</span></figcaption>
+  <figcaption class="vol-list" data-list><span class="small muted js-only">Hover over a week for its counts; click it to list its roll calls. With a keyboard, use the arrow keys and Enter.</span></figcaption>
 </figure>
 <details>
   <summary class="small">Show the {{ c.name }} table by week</summary>
