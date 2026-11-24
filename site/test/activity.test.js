@@ -47,8 +47,11 @@ function load(votes = VOTES) {
   window.fetch = () => held.then(() => ({ ok: true, json: () => Promise.resolve({ votes: window.Array.from(votes) }) }));
   window.eval(SCRIPT);
   page.bars = [...window.document.querySelectorAll(".wk")];
+  page.live = window.document.querySelector("[role=status]");
   page.panel = window.document.querySelector("figure [data-list]");
   page.settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+  // Past the announcement delay.
+  page.heard = () => new Promise((resolve) => setTimeout(resolve, 150));
   page.press = (key, init = {}) => {
     const e = new window.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
     window.document.activeElement.dispatchEvent(e);
@@ -69,6 +72,49 @@ test("bars become labeled buttons, with one tab stop per chart", () => {
   assert.equal(areas[0].getAttribute("aria-label"), "Health, house: 1");
   assert.deepEqual(areas.map((b) => b.getAttribute("tabindex")), ["0", "-1"]);
   assert.equal(document.querySelector("title"), null);
+});
+
+test("each bar controls its own chart's list panel", () => {
+  const { document, bars, panel } = load();
+  assert.ok(panel.id);
+  bars.forEach((b) => assert.equal(b.getAttribute("aria-controls"), panel.id));
+  const areaPanel = document.querySelector("div[data-list-scope] [data-list]");
+  assert.notEqual(areaPanel.id, panel.id);
+  document.querySelectorAll(".area-line").forEach((b) => assert.equal(b.getAttribute("aria-controls"), areaPanel.id));
+});
+
+test("a short status is announced, not the list", async () => {
+  const { bars, panel, live, click, release, heard } = load();
+  assert.equal(live.textContent, "");
+  assert.equal(panel.contains(live), false);
+  click(bars[1]);
+  await heard();
+  assert.equal(live.textContent, "House · week of 2026-11-09: Loading…");
+  release();
+  await heard();
+  assert.equal(live.textContent, "House · week of 2026-11-09: 2 roll calls listed");
+  click(bars[0]);
+  await heard();
+  assert.equal(live.textContent, "House · week of 2026-11-02: 1 roll call listed");
+  // The same bar again: cleared, then announced again.
+  click(bars[0]);
+  assert.equal(live.textContent, "");
+  await heard();
+  assert.equal(live.textContent, "House · week of 2026-11-02: 1 roll call listed");
+  click(bars[2]);
+  await heard();
+  assert.equal(live.textContent, "House · week of 2026-11-16: No roll calls");
+  click(panel.querySelector("button"));
+  assert.equal(live.textContent, "");
+});
+
+test("a list that loads after Close isn't announced", async () => {
+  const { bars, panel, live, click, release, heard } = load();
+  click(bars[1]);
+  click(panel.querySelector("button"));
+  release();
+  await heard();
+  assert.equal(live.textContent, "");
 });
 
 test("arrow keys, Home and End move between bars and stop at the ends", () => {
@@ -160,7 +206,7 @@ test("a held Enter doesn't list again", () => {
 });
 
 test("policy area bars move by arrow key and list their area", async () => {
-  const { document, press, release, settle } = load();
+  const { document, live, press, release, settle, heard } = load();
   const [house, senate] = document.querySelectorAll(".area-line");
   const panel = document.querySelector("div[data-list-scope] [data-list]");
   house.focus();
@@ -171,6 +217,8 @@ test("policy area bars move by arrow key and list their area", async () => {
   release();
   await settle();
   assert.deepEqual([...panel.querySelectorAll("a .t")].map((t) => t.textContent), ["Bill 3"]);
+  await heard();
+  assert.equal(live.textContent, "Health · house: 1 roll call listed");
 });
 
 test("Close puts focus back on the bar, scrolling to it only after a key", () => {
@@ -207,10 +255,12 @@ test("a list that can't be built says so", async () => {
   // A row that passes the filter but breaks while its line is built.
   const broken = { ...VOTES[0] };
   Object.defineProperty(broken, "t", { get() { throw new Error("bad row"); } });
-  const { bars, panel, click, release, settle } = load([broken]);
+  const { bars, panel, live, click, release, settle, heard } = load([broken]);
   click(bars[1]);
   release();
   await settle();
   assert.match(panel.textContent, /The list couldn't be loaded/);
   assert.equal(panel.querySelector("ul"), null);
+  await heard();
+  assert.match(live.textContent, /The list couldn't be loaded/);
 });
