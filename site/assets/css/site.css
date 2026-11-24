@@ -730,7 +730,9 @@ footer.wrap { padding-bottom: 76px; }
   .has-side .lead { padding-right: 36px; border-right: 1px solid var(--ink); }
   .side { border-top: 0; margin-top: 0; padding-top: 0; padding-left: 28px; }
   .modules { gap: 0; }
-  .modules.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* One column per module shown (a [hidden] module isn't a grid item), so a
+     chamber tab that hides one leaves the other two sharing the row. */
+  .modules.three { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
   .modules.two { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .modules > section { padding: 0 24px; }
   .modules > section:not(:not([hidden]) ~ section) { padding-left: 0; }
