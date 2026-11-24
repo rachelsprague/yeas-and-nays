@@ -1,5 +1,5 @@
 {
-  "floor_status": {"house":{"convened_at":"2026-11-24T12:00:00-05:00","next_convene_at":null,"next_convene_pro_forma":null},"senate":{"convened_at":null,"next_convene_at":"2026-11-24T15:00:00-05:00","next_convene_pro_forma":true}},
+  "floor_status": {"house":{"convened_at":null,"next_convene_at":"2026-11-27T12:00:00-05:00","next_convene_pro_forma":null},"senate":{"convened_at":null,"next_convene_at":"2026-11-24T15:00:00-05:00","next_convene_pro_forma":true}},
   "items": [],
   "senate_next_convene_et": "2026-11-24T15:00:00"
 }
