@@ -62,7 +62,7 @@ Requires [uv](https://docs.astral.sh/uv/). Python, site plugin and site JS tests
 | `members/{bioguide_id}.json` | One member: the bills and resolutions they introduced and cosponsored, one group per Congress, newest first (each is null until a list is first fetched) |
 | `floor_schedule.json` | `floor_schedule` items with display labels, when the Senate next convenes, and each chamber's floor status (when it convened if it hadn't adjourned, else when it next convenes), for the home page's floor band |
 | `votes.json` | All votes: metadata, official tallies, source links, newest first |
-| `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, and every member's position as recorded, and the CRS summary of the measure (HTML reduced to formatting tags), or null |
+| `votes/{vote_id}.json` | One vote: metadata, totals by party, caucus majority positions, members who voted against their party majority, every member's position as recorded, the party, caucus and seat held on the vote's date by members whose latest differ, and the CRS summary of the measure (HTML reduced to formatting tags), or null |
 
 Output is deterministic: re-running with no new votes produces no diff.
 

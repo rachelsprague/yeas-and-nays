@@ -1127,10 +1127,10 @@ module Yan
         v["congress_gov_url"] = Yan.web_url(v["congress_gov_url"])
         v["congress_gov_text_url"] = Yan.text_url(v["congress_gov_url"])
         v["chamber_name"] = CHAMBER_NAMES[v["chamber"]]
-        v["result_label"] = Yan.result_label(v, by_id)
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
         doc = read.call("votes/#{v["vote_id"]}.json")
         as_of = Yan.members_as_of(doc, by_id)
+        v["result_label"] = Yan.result_label(v, as_of)
         view = Yan.vote_view(v, doc, as_of, by_id)
         # The vote page map's shapes (scripts/build_vote_map.py); the table shows either way.
         # A file without members_as_of_vote has only latest districts, so just meta's Congress gets a map.

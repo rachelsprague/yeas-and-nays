@@ -14,7 +14,9 @@
                                   the bot posts it), newest first
     data/out/votes/{vote_id}.json one vote: metadata, party totals, caucus majorities,
                                   members who voted against their party majority,
-                                  every member's position as recorded, the CRS
+                                  every member's position as recorded, the party,
+                                  caucus and seat then held by members whose latest
+                                  differ, the CRS
                                   summary of the measure, when there is one, and the
                                   measure's path from introduction to law
 

@@ -1388,6 +1388,16 @@ class VotePageTest < Minitest::Test
     assert_includes built.fetch("/members/A000001/index.html"), "R majority voted Yea"
   end
 
+  def test_a_speaker_election_names_the_top_candidate_by_party_and_seat_as_of_the_vote
+    now = member("A000001", "AL", 7).merge("party" => "I", "caucus_party" => "D")
+    then_seat = { "chamber" => "house", "state" => "AL", "district" => 1, "party" => "R", "caucus_party" => "R" }
+    v = vote(1, "Election of the Speaker").merge("result" => "Alpha", "result_bioguide_id" => "A000001")
+    d = doc({ "A000001" => "Alpha" }, { "other" => 1 }).merge("members_as_of_vote" => { "A000001" => then_seat })
+    html = build_site([now], [[v, d]]).fetch("/votes/119/house/1/1/index.html")
+    assert_includes html, "Most votes: Member A000001 (R-AL-1)"
+    refute_includes html, "AL-7"
+  end
+
   # Another Congress's vote gets that Congress's map only when its file gives seats as of the vote.
   def test_another_congress_gets_its_own_map_with_seats_as_of_the_vote
     other = vote(1, "On Passage").merge("vote_id" => "h120-1-0001", "congress" => 120)
