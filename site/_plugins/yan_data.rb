@@ -859,13 +859,25 @@ module Yan
     (s.size.odd? ? s[mid] : (s[mid - 1] + s[mid]) / 2.0).round(1)
   end
 
-  # Per chamber, the median missed-votes and with-party-majority rates of members
-  # with roll calls in the given Congress (their last), so a profile can show one
-  # beside the member's own.
-  def self.chamber_medians(members, congress)
+  # Per chamber, the members its medians count: those with roll calls in the given
+  # Congress (their last), and at least a tenth as many as the member with the most,
+  # so a few roll calls don't weigh the same as a full term. A share, not a fixed
+  # number, so medians show from a Congress's first roll call.
+  def self.median_members(members, congress)
     in_congress = members.select { |m| m["roll_calls"].to_i.positive? && m["last_congress"].to_i == congress.to_i }
-    CHAMBER_NAMES.to_h do |chamber, name|
+    CHAMBER_NAMES.to_h do |chamber, _|
       ms = in_congress.select { |m| m["chamber"] == chamber }
+      most = ms.map { |m| m["roll_calls"].to_i }.max
+      [chamber, ms.select { |m| m["roll_calls"].to_i * 10 >= most }]
+    end
+  end
+
+  # Per chamber, the median missed-votes and with-party-majority rates of its
+  # median_members, so a profile can show one beside the member's own.
+  def self.chamber_medians(members, congress)
+    counted = median_members(members, congress)
+    CHAMBER_NAMES.to_h do |chamber, name|
+      ms = counted[chamber]
       [chamber, { "name" => name, "members" => ms.size,
                   "missed_votes_pct" => median(ms.map { |m| m["missed_votes_pct"].to_f }),
                   "with_party_majority_pct" => median(ms.filter_map { |m| m["with_party_majority_pct"]&.to_f }) }]
@@ -1093,6 +1105,7 @@ module Yan
         end
       end
       medians = Yan.chamber_medians(members, meta["congress"])
+      Yan.median_members(members, meta["congress"]).each_value { |ms| ms.each { |m| m["in_median"] = true } }
       members.each { |m| m["median"] = medians[m["chamber"]] if m["last_congress"].to_i == meta["congress"].to_i }
       members.sort_by! { |m| [m["last_name"].to_s, m["first_name"].to_s, m["bioguide_id"]] }
       by_id = members.to_h { |m| [m["bioguide_id"], m] }
