@@ -8,6 +8,8 @@ Senate daily floor activity: one row per status line on each bill, amendment
 or nomination ("Cloture motion presented in Senate."), in the order recorded.
 Senate session days: one row per time the Senate convened.
 House floor days: one row per legislative day's floor proceedings file.
+House floor actions: one row per action on a measure in those files, in the
+order recorded.
 """
 
 import re
@@ -114,8 +116,30 @@ def parse_house_day(content: bytes, source_file: str) -> dict:
     }
 
 
-def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
-    house, senate, days, house_days = [], [], [], []
+def parse_house_actions(content: bytes, source_file: str) -> list[dict]:
+    root = ET.fromstring(content)
+    congress = root.find("legislative_congress")
+    rows = []
+    for action in root.iterfind("floor_actions/floor_action"):
+        measure, time = _text(action, "action_item"), action.find("action_time")
+        if not measure:
+            continue
+        # itertext: a description can hold links.
+        description = action.find("action_description")
+        rows.append({
+            "source_file": source_file,
+            "congress": congress.get("congress") if congress is not None else None,
+            "action_id": action.get("unique-id"),
+            "action_code": action.get("act-id"),
+            "action_time": time.get("for-search") if time is not None else None,
+            "measure_number": measure,
+            "action_text": " ".join("".join(description.itertext()).split()) or None if description is not None else None,
+        })
+    return rows
+
+
+def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict], list[dict], list[dict]]:
+    house, senate, days, house_days, house_actions = [], [], [], [], []
     for path in sorted(raw_root.glob("house/????-??-??.xml")):
         house.extend(parse_house_week(path.read_bytes(), path.relative_to(raw_root).as_posix()))
     for path in sorted(raw_root.glob("senate/????-??-??.xml")):
@@ -124,5 +148,7 @@ def parse_dir(raw_root: Path) -> tuple[list[dict], list[dict], list[dict], list[
     if days_file.exists():
         days = parse_session_days(days_file.read_bytes(), days_file.relative_to(raw_root).as_posix())
     for path in sorted(raw_root.glob("house_days/????-??-??.xml")):
-        house_days.append(parse_house_day(path.read_bytes(), path.relative_to(raw_root).as_posix()))
-    return house, senate, days, house_days
+        content, source_file = path.read_bytes(), path.relative_to(raw_root).as_posix()
+        house_days.append(parse_house_day(content, source_file))
+        house_actions.extend(parse_house_actions(content, source_file))
+    return house, senate, days, house_days, house_actions

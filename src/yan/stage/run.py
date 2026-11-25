@@ -83,6 +83,10 @@ STRING_COLUMNS = {
     "house_floor_days": [
         "source_file", "legislative_day", "convene_time", "finished", "next_convene_time",
     ],
+    "house_floor_actions": [
+        "source_file", "congress", "action_id", "action_code", "action_time", "measure_number",
+        "action_text", "bill_type", "bill_number",
+    ],
     "directory_bios": [
         "source_file", "edition", "date_issued", "state", "chamber", "printed_name", "opening",
         "education", "professional_history", "military_service", "election_history",
@@ -132,11 +136,12 @@ def run() -> None:
     write("cosponsored_bills", cosponsored)
     write("cosponsored_lists", cosponsored_lists)
 
-    house_floor, senate_floor, session_days, house_days = floor.parse_dir(RAW_DIR / "floor")
+    house_floor, senate_floor, session_days, house_days, house_actions = floor.parse_dir(RAW_DIR / "floor")
     write("house_floor_items", with_bill(house_floor, "legis_num"))
     write("senate_floor_actions", with_bill(senate_floor, "docnum"))
     write("senate_session_days", session_days)
     write("house_floor_days", house_days)
+    write("house_floor_actions", with_bill(house_actions, "measure_number"))
 
     people, terms, affiliations = legislators.parse_dir(RAW_DIR / "legislators")
     write("legislators", people)

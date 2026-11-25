@@ -6,7 +6,13 @@ import pytest
 
 from yan.http import Client
 from yan.ingest import floor as ingest
-from yan.stage.floor import parse_house_day, parse_house_week, parse_senate_day, parse_session_days
+from yan.stage.floor import (
+    parse_house_actions,
+    parse_house_day,
+    parse_house_week,
+    parse_senate_day,
+    parse_session_days,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 HOUSE_DAY = (FIXTURES / "house_floor_day_2026-11-13.xml").read_bytes()
@@ -140,6 +146,26 @@ def test_house_day_in_progress_has_no_next_convening():
     )
     row = parse_house_day(content, "house_days/2026-11-13.xml")
     assert (row["convene_time"], row["finished"], row["next_convene_time"]) == ("20261113T10:00:00", None, None)
+
+
+def test_house_actions_are_the_actions_on_a_measure():
+    content = b"""<legislative_activity><legislative_congress congress="119"/><floor_actions>
+      <floor_action act-id="H20100" unique-id="1"><action_time for-search="20261118T12:00:00"/>
+        <action_description>The House convened.</action_description></floor_action>
+      <floor_action act-id="H37300" unique-id="2"><action_time for-search="20261118T17:41:31">5:41:31 P.M. -</action_time>
+        <action_item>H.R. 4584</action_item><action_description>
+          On motion to suspend the rules and <a>pass the bill</a> Agreed to by voice vote.
+        </action_description></floor_action>
+      <floor_action><action_item>S. 1</action_item></floor_action>
+      </floor_actions></legislative_activity>"""
+    rows = parse_house_actions(content, "house_days/2026-11-18.xml")
+    assert rows[0] == {
+        "source_file": "house_days/2026-11-18.xml", "congress": "119", "action_id": "2", "action_code": "H37300",
+        "action_time": "20261118T17:41:31", "measure_number": "H.R. 4584",
+        "action_text": "On motion to suspend the rules and pass the bill Agreed to by voice vote.",
+    }
+    # Missing parts stage as null.
+    assert [(r["measure_number"], r["action_time"], r["action_text"]) for r in rows[1:]] == [("S. 1", None, None)]
 
 
 def test_week_start_is_monday():
@@ -351,9 +377,10 @@ def test_a_failed_fetch_logs_and_keeps_the_last_good_files(monkeypatch, tmp_path
     assert "senate floor schedule not updated" in caplog.text
 
 
-def test_house_days_keep_only_the_newest_file(house_days_dir):
+def test_house_days_keep_this_weeks_files(house_days_dir):
     house_days_dir.mkdir()
-    (house_days_dir / "2026-11-12.xml").write_text("older day")
+    (house_days_dir / "2026-11-06.xml").write_text("last week")
+    (house_days_dir / "2026-11-12.xml").write_text("earlier this week")
     client = _client({
         ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 13)): httpx.Response(200, content=HOUSE_DAY),
         ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, 14)): httpx.Response(404, text="<html>Not Found</html>"),
@@ -361,7 +388,7 @@ def test_house_days_keep_only_the_newest_file(house_days_dir):
 
     ingest.ingest_house_days(client, dt.date(2026, 11, 14))
 
-    assert [p.name for p in house_days_dir.iterdir()] == ["2026-11-13.xml"]
+    assert sorted(p.name for p in house_days_dir.iterdir()) == ["2026-11-12.xml", "2026-11-13.xml"]
     assert (house_days_dir / "2026-11-13.xml").read_bytes() == HOUSE_DAY
 
 
@@ -403,6 +430,33 @@ def test_with_nothing_saved_house_days_look_back_for_the_last_day_met(house_days
     # Nov. 15 and 16 first, then back from Nov. 14 until a day is found.
     assert fetched == [ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, d)) for d in (15, 16, 14, 13)]
     assert [p.name for p in house_days_dir.iterdir()] == ["2026-11-13.xml"]
+
+
+def test_house_days_fetch_only_the_days_missing_from_this_week(house_days_dir):
+    house_days_dir.mkdir()
+    (house_days_dir / "2026-11-10.xml").write_bytes(HOUSE_DAY)
+    fetched = []
+
+    def handler(request):
+        fetched.append(str(request.url))
+        return httpx.Response(404, text="<html>Not Found</html>")
+
+    ingest.ingest_house_days(Client(delay=0, transport=httpx.MockTransport(handler)), dt.date(2026, 11, 13))
+
+    # Monday and Wednesday, then yesterday and today.
+    assert fetched == [ingest.HOUSE_DAY_URL.format(day=dt.date(2026, 11, d)) for d in (9, 11, 12, 13)]
+
+
+def test_house_days_with_nothing_saved_this_week_or_before_are_each_tried_once(house_days_dir):
+    fetched = []
+
+    def handler(request):
+        fetched.append(str(request.url))
+        return httpx.Response(404, text="<html>Not Found</html>")
+
+    ingest.ingest_house_days(Client(delay=0, transport=httpx.MockTransport(handler)), dt.date(2026, 11, 13))
+
+    assert len(fetched) == len(set(fetched)) == ingest.HOUSE_LOOKBACK_DAYS + 1
 
 
 def test_house_days_look_back_at_most_two_weeks(house_days_dir):

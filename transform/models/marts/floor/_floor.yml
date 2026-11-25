@@ -59,6 +59,14 @@ models:
               arguments:
                 to: ref('votes')
                 field: vote_id
+      - name: decided_date
+        description: >
+          Day the House decided the item without a roll call. Null until it does, when there
+          is a roll call, and for Senate items.
+      - name: decided_question
+        description: The question decided, as the Clerk records it, e.g. "On motion to suspend the rules and pass the bill".
+      - name: decided_outcome
+        description: How it was decided, as the Clerk records it, e.g. "Agreed to by voice vote".
 
   - name: senate_sessions
     description: Each time the Senate convened this session, and when it was set to convene next.
@@ -75,7 +83,7 @@ models:
       and, once it adjourned, when it next convenes. Eastern wall-clock times.
     columns:
       - name: legislative_day
-        description: Never null (malformed rows are dropped); stg_floor__house_floor_days tests for them.
+        description: Never null (a malformed row is dropped); stg_floor__house_floor_days tests for it.
         data_tests: [unique]
       - name: adjourned
         description: True once the Clerk marks the legislative day finished.

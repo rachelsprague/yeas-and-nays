@@ -157,7 +157,8 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
     con.execute("""create table floor_schedule (chamber varchar, item_id varchar, week_date date, filed_date date,
                    category varchar, category_order integer, item_order integer, question varchar,
                    measure_number varchar, bill_type varchar, bill_number varchar, title varchar,
-                   amends varchar, congress_gov_url varchar, vote_id varchar)""")
+                   amends varchar, congress_gov_url varchar, vote_id varchar, decided_date date,
+                   decided_question varchar, decided_outcome varchar)""")
     con.execute("""create table senate_sessions (convene_time_et timestamp, adjourn_time_et timestamp,
                    next_convene_time_et timestamp, next_convene_pro_forma boolean)""")
     con.execute("""create table house_floor_days (legislative_day date, convene_time_et timestamp,

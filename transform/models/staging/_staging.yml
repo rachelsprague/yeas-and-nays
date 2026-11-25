@@ -75,8 +75,8 @@ models:
 
   - name: stg_floor__house_floor_days
     description: >
-      One row per House legislative day in the Clerk's floor proceedings (only the newest is
-      kept). `house_floor_days` drops a row whose day didn't parse, so these tests are where
+      One row per House legislative day in the Clerk's floor proceedings (this week's, and the
+      newest however old). `house_floor_days` drops a row whose day didn't parse, so these tests are where
       malformed values show; they warn because the floor status is secondary to votes.
     columns:
       - name: legislative_day
@@ -95,3 +95,19 @@ models:
               config:
                 severity: warn
                 where: adjourned
+
+  - name: stg_floor__house_actions
+    description: >
+      One row per action on a measure in the Clerk's floor proceedings. `floor_schedule`
+      can't place an action whose time didn't parse, so this test is where it shows; it
+      warns because the floor schedule is secondary to votes.
+    columns:
+      - name: action_time_et
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+      - name: question
+        description: The question decided without a roll call, as recorded. Null for any other action.
+      - name: outcome
+        description: How it was decided, e.g. "Agreed to by voice vote". Null for any other action.

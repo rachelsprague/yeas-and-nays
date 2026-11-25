@@ -7,8 +7,9 @@ and next week's files are fetched on each run; next week's is usually posted
 a few days ahead.
 
 House floor days: the Clerk's floor proceedings for a legislative day, one
-XML file per day, posted once the House convenes. Only the newest is kept: it
-says when the House convened and, once it adjourns, when it next convenes.
+XML file per day, posted once the House convenes. The newest says when the
+House convened and, once it adjourns, when it next convenes. This week's are
+kept too: they record the scheduled measures decided without a roll call.
 
 Senate: senate.gov publishes no list of upcoming measures. We fetch the session
 days (when the Senate met and when it next convenes) and the daily floor
@@ -144,14 +145,21 @@ def ingest_house_week(client: Client, week: dt.date) -> None:
 def ingest_house_days(client: Client, today: dt.date) -> None:
     # Yesterday too: a legislative day can run past midnight, and its file
     # gains the adjournment and next convening time when it ends.
-    for day in (today - dt.timedelta(days=1), today):
+    recent = [today - dt.timedelta(days=1), today]
+    # Earlier days this week, if an earlier run missed them or the cache was emptied.
+    monday = week_start(today)
+    missing = [
+        day for day in (monday + dt.timedelta(days=n) for n in range((recent[0] - monday).days))
+        if not (house_days_dir() / f"{day:%Y-%m-%d}.xml").exists()
+    ]
+    for day in missing + recent:
         try:
             ingest_house_day(client, day)
         except (httpx.HTTPError, ValueError, ET.ParseError) as e:
             log.warning("house floor proceedings for %s not updated: %s", day, e)
     # With nothing saved (a first run, or an emptied cache), look back for the
     # last day the House met, so its next convening is known before it meets.
-    back = 2
+    back = 2 + len(missing)
     while not any(house_days_dir().glob("????-??-??.xml")) and back <= HOUSE_LOOKBACK_DAYS:
         day = today - dt.timedelta(days=back)
         try:
@@ -159,10 +167,11 @@ def ingest_house_days(client: Client, today: dt.date) -> None:
         except (httpx.HTTPError, ValueError, ET.ParseError) as e:
             log.warning("house floor proceedings for %s not updated: %s", day, e)
         back += 1
-    # Only the newest is used, however old: through a recess it still holds
-    # the day the House is next set to convene.
+    # The newest is kept however old: through a recess it still holds the day
+    # the House is next set to convene.
     for path in sorted(house_days_dir().glob("????-??-??.xml"))[:-1]:
-        path.unlink()
+        if path.name < f"{monday:%Y-%m-%d}.xml":
+            path.unlink()
 
 
 def ingest_house_day(client: Client, day: dt.date) -> None:

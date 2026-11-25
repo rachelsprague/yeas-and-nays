@@ -183,7 +183,7 @@ module Yan
 
   # The floor schedule for display. Each item links to its roll call once
   # there is one (else to Congress.gov, when it's a bill or resolution).
-  # "Coming up" lists items without a roll call yet, and for the House only
+  # "Coming up" lists items not yet decided, and for the House only
   # the newest published week: by the time the next week's schedule is out,
   # the current week's floor business is mostly done. A convene time already
   # past `now` (the build time in ET) is left out.
@@ -193,7 +193,8 @@ module Yan
       item.merge("chamber_name" => CHAMBER_NAMES[item["chamber"]],
                  "category_label" => schedule_category(item["category"]),
                  "vote_url" => vote && vote["url"],
-                 "result_label" => vote && vote["result_label"])
+                 "result_label" => vote && vote["result_label"],
+                 "decided_label" => decided_label(item))
     end
     house, senate = items.partition { |i| i["chamber"] == "house" }
     # Week -> heading -> items, in the schedule's own order.
@@ -202,15 +203,31 @@ module Yan
       { "week_date" => week, "groups" => groups }
     end
     next_convene = upcoming_convene(schedule["senate_next_convene_et"], now)
+    pro_forma = schedule.dig("floor_status", "senate", "next_convene_pro_forma") == true
     latest_week = house_weeks.last
     {
       "upcoming_senate" => senate.reject { |i| i["vote_id"] },
-      "upcoming_house" => house.select { |i| i["week_date"] == latest_week["week_date"] && !i["vote_id"] },
+      "upcoming_house" => house.select { |i| i["week_date"] == latest_week["week_date"] && house_pending?(i) },
       "upcoming_week" => latest_week && latest_week["week_date"],
       "house_weeks" => house_weeks,
       "senate" => senate,
-      "senate_next_convene" => next_convene && convene_label(next_convene)
+      "senate_next_convene" => next_convene && "#{convene_label(next_convene)}#{" (pro forma session)" if pro_forma}",
+      "senate_next_convene_pro_forma" => pro_forma
     }
+  end
+
+  # A House item with neither a roll call nor a decision without one.
+  def self.house_pending?(item)
+    !item["vote_id"] && !item["decided_label"]
+  end
+
+  # The Clerk's question, how it was decided, and the date, for a House item
+  # decided by voice vote or without objection; nil for any other.
+  def self.decided_label(item)
+    question, outcome, date = item.values_at("decided_question", "decided_outcome", "decided_date")
+    return unless question && outcome && date
+
+    "#{question}: #{outcome}, #{Filters.ap_date(Date.parse(date))}"
   end
 
   CALENDAR_WEEKS_BACK = 2
@@ -250,6 +267,8 @@ module Yan
     # Pending cloture motions go in the week the Senate next convenes.
     senate_week = convene ? monday.call(convene.to_date) : default
 
+    pro_forma = " (pro forma session)" if view["senate_next_convene_pro_forma"]
+
     weeks = (first_week..last_week).step(7).map do |mon|
       days = (mon..(mon + 6)).select do |d|
         d.wday.between?(1, 5) || taken.key?([d.to_s, "house"]) || taken.key?([d.to_s, "senate"]) ||
@@ -265,23 +284,21 @@ module Yan
           "label" => "#{Filters::AP_MONTHS[d.month - 1]} #{d.day}",
           "when" => if d < today then "past" elsif d == today then "today" else "future" end,
           "senate" => roll_calls.call("senate"), "house" => roll_calls.call("house"),
-          "convene" => d == convene&.to_date ? "#{clock_label(convene)} ET" : nil }
+          "convene" => d == convene&.to_date ? "#{clock_label(convene)} ET#{pro_forma}" : nil }
       end
       house_week = house_weeks.find { |w| w["week_date"] == mon.to_s }
-      # A House item listed but never put to a roll call (a voice vote, or it
-      # didn't come up) drops off once its week's Friday has passed.
-      house_pending = if house_week && mon + 4 >= today
-                        house_week["groups"].map { |g| g.merge("items" => g["items"].reject { |i| i["vote_id"] }) }
-                                            .reject { |g| g["items"].empty? }
-                      else
-                        []
-                      end
+      # A House item listed but never put to a roll call (decided without one,
+      # or it didn't come up) drops off once its week's Friday has passed.
+      groups = house_week && mon + 4 >= today ? house_week["groups"] : []
+      house_pending = groups.map { |g| g.merge("items" => g["items"].select { |i| house_pending?(i) }) }
+                            .reject { |g| g["items"].empty? }
+      house_decided = groups.flat_map { |g| g["items"].select { |i| i["decided_label"] && !i["vote_id"] } }
       { "week_date" => mon.to_s, "label" => "Week of #{Filters.ap_date(mon)}",
         "tab" => { this_week => "This week", this_week + 7 => "Next week" }
                    .fetch(mon, "#{Filters::AP_MONTHS[mon.month - 1]} #{mon.day}"),
         "days" => days, "roll_calls" => days.sum { |d| d["senate"].size + d["house"].size },
         "senate_pending" => mon == senate_week ? view["upcoming_senate"] || [] : [],
-        "house_pending" => house_pending }
+        "house_pending" => house_pending, "house_decided" => house_decided }
     end
     { "weeks" => weeks, "default_week" => default.to_s }
   end

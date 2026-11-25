@@ -446,6 +446,8 @@ unit_tests:
           # H.R. 4: cloture on the measure and on a committee substitute; only the measure's is matched
           - {docnum: H.R. 4, document_prefix: HR, bill_type: hr, bill_number: "4", target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: B4}
           - {docnum: H.R. 4, document_prefix: HR, bill_type: hr, bill_number: "4", target: the committee-reported substitute, event: filed, activity_date: 2026-11-10, status_order: 1, document_title: B4}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           # H.R. 5: an amendment vote, then passage; the item links passage
