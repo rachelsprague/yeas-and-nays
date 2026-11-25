@@ -114,7 +114,7 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
         member_congresses = _rows(con, "select * from member_congresses order by bioguide_id, congress desc")
         votes = [with_bot_posts(with_measure_label(v)) for v in _rows(con, f"select * from votes order by {VOTE_ORDER}")]
         positions = _rows(con, """
-            select vote_id, bioguide_id, member_label, party, caucus_party, position_raw,
+            select vote_id, bioguide_id, member_label, chamber, state, district, party, caucus_party, position_raw,
                    position, caucus_majority_position, voted_against_party_majority
             from positions
             order by vote_id, member_label, bioguide_id
@@ -193,6 +193,8 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
     for member in members:
         member["congresses"] = congresses_by[member["bioguide_id"]]
 
+    members_by_id = {m["bioguide_id"]: m for m in members}
+
     changed = 0
     changed += write_if_changed(out_dir / "members.json", dumps({"congress": CONGRESS, "members": members}))
     changed += write_if_changed(out_dir / "votes.json", dumps({"congress": CONGRESS, "votes": votes}))
@@ -203,7 +205,7 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
         name = f"{vote['vote_id']}.json"
         expected.add(name)
         bill = (vote["congress"], vote["bill_type"], vote["bill_number"])
-        doc = vote_document(vote, by_vote[vote["vote_id"]], summaries.get(vote["vote_id"]),
+        doc = vote_document(vote, by_vote[vote["vote_id"]], members_by_id, summaries.get(vote["vote_id"]),
                             vote_path(vote, milestones.get(bill, {})))
         changed += write_if_changed(vote_dir / name, dumps(doc))
 
@@ -290,7 +292,21 @@ def summary_document(summary: dict | None) -> dict | None:
     }
 
 
-def vote_document(vote: dict, positions: list[dict], summary: dict | None = None,
+SEAT_FIELDS = ("chamber", "state", "district", "party", "caucus_party")
+
+
+def members_as_of_vote(positions: list[dict], members: dict[str, dict]) -> dict[str, dict]:
+    """Party, caucus and seat on the vote date, for the members whose latest (in members.json) differ."""
+    as_of = {}
+    for p in positions:
+        seat = {field: p[field] for field in SEAT_FIELDS}
+        latest = members[p["bioguide_id"]]
+        if seat != {field: latest[field] for field in SEAT_FIELDS}:
+            as_of[p["bioguide_id"]] = seat
+    return as_of
+
+
+def vote_document(vote: dict, positions: list[dict], members: dict[str, dict], summary: dict | None = None,
                   path: dict | None = None) -> dict:
     party_totals = defaultdict(lambda: defaultdict(int))
     caucus_majority = {}
@@ -309,6 +325,7 @@ def vote_document(vote: dict, positions: list[dict], summary: dict | None = None
         "party_totals": {party: dict(counts) for party, counts in party_totals.items()},
         "caucus_majority_position": caucus_majority,
         "against_party_majority": against,
+        "members_as_of_vote": members_as_of_vote(positions, members),
         "positions": {p["bioguide_id"]: p["position_raw"] for p in positions},
         "summary": summary_document(summary),
         "path": path,

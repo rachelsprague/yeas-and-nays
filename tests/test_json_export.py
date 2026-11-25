@@ -5,6 +5,7 @@ from yan.export.json_export import (
     EASTERN,
     dumps,
     floor_schedule_document,
+    members_as_of_vote,
     meta_document,
     summary_document,
     vote_document,
@@ -31,13 +32,41 @@ def test_vote_document_lists_only_members_against_majority():
          "position_raw": "Not Voting", "position": "not_voting", "caucus_majority_position": "no",
          "voted_against_party_majority": None},
     ]
-    doc = vote_document({"vote_id": "h119-1-0001"}, positions)
+    seats = {"A1": ("TX", 1), "A2": ("TX", 2), "A3": ("VT", 0)}
+    for p in positions:
+        p["chamber"] = "house"
+        p["state"], p["district"] = seats[p["bioguide_id"]]
+    members = {p["bioguide_id"]: p for p in positions}
+    doc = vote_document({"vote_id": "h119-1-0001"}, positions, members)
 
     assert doc["against_party_majority"] == [{"bioguide_id": "A2", "member_label": "B (R-TX-2)", "position": "Nay"}]
     assert doc["party_totals"] == {"R": {"yes": 1, "no": 1}, "I": {"not_voting": 1}}
     assert doc["caucus_majority_position"] == {"R": "yes", "D": "no"}
     assert doc["positions"] == {"A1": "Yea", "A2": "Nay", "A3": "Not Voting"}
     assert doc["summary"] is None
+    assert doc["members_as_of_vote"] == {}
+
+
+def test_members_as_of_vote_lists_only_members_whose_party_or_seat_has_changed():
+    def seat(chamber, state, district, party, caucus):
+        return {"chamber": chamber, "state": state, "district": district, "party": party, "caucus_party": caucus}
+
+    then = {
+        "SAME": seat("house", "TX", 1, "R", "R"),
+        "PARTY": seat("house", "CA", 3, "R", "R"),
+        "CAUCUS": seat("house", "ME", 1, "I", "R"),
+        "DISTRICT": seat("house", "CA", 9, "D", "D"),
+        "CHAMBER": seat("house", "KY", 4, "R", "R"),
+    }
+    now = {
+        **then,
+        "PARTY": seat("house", "CA", 3, "I", "R"),
+        "CAUCUS": seat("house", "ME", 1, "I", "D"),
+        "DISTRICT": seat("house", "CA", 11, "D", "D"),
+        "CHAMBER": seat("senate", "KY", None, "R", "R"),
+    }
+    positions = [{"bioguide_id": i, "position_raw": "Yea", **s} for i, s in then.items()]
+    assert members_as_of_vote(positions, now) == {i: s for i, s in then.items() if i != "SAME"}
 
 
 def test_meta_tracks_latest_roll_per_chamber_and_session():
@@ -90,8 +119,9 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
     import duckdb
 
     con = duckdb.connect(str(path))
-    con.execute("""create table members as select * from (values ('A000001', 120), ('B000002', 119))
-                   t(bioguide_id, last_congress)""")
+    con.execute("""create table members as select * from (values
+                   ('A000001', 120, 'house', 'TX', 2, 'R', 'R'), ('B000002', 119, 'house', 'TX', 3, 'R', 'R'))
+                   t(bioguide_id, last_congress, chamber, state, district, party, caucus_party)""")
     con.execute("""create table member_congresses as select * from (values
                    ('A000001', 119, true, date '2025-01-03', date '2027-01-03', 10),
                    ('A000001', 120, true, date '2027-01-03', date '2029-01-03', 1),
@@ -105,7 +135,8 @@ def _warehouse(path, sponsored_rows, cosponsored_rows=(), cosponsored_lists=(), 
     con.execute("""create table bill_milestones as select 119 as congress, 'hr' as bill_type, '1' as bill_number,
                    'passed_house' as milestone, date '2025-01-03' as first_date, date '2025-01-03' as last_date""")
     con.execute("""create table positions as select 'h119-1-0001' as vote_id, 'A000001' as bioguide_id,
-                   'A (R-TX-1)' as member_label, 'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
+                   'A (R-TX-1)' as member_label, 'house' as chamber, 'TX' as state, 1 as district,
+                   'R' as party, 'R' as caucus_party, 'Yea' as position_raw,
                    'yes' as position, 'yes' as caucus_majority_position, false as voted_against_party_majority""")
     for table, rows in (("sponsored_bills", sponsored_rows), ("cosponsored_bills", cosponsored_rows)):
         con.execute(f"""create table {table} (bioguide_id varchar, congress varchar, bill_id varchar, bill_type varchar,
@@ -235,7 +266,11 @@ def test_run_writes_each_vote_with_its_measures_path(tmp_path):
     out = tmp_path / "out"
     run(warehouse, out)
 
-    path = json.loads((out / "votes" / "h119-1-0001.json").read_text())["path"]
+    doc = json.loads((out / "votes" / "h119-1-0001.json").read_text())
+    # The fixture's member now holds TX-2.
+    assert doc["members_as_of_vote"] == {
+        "A000001": {"chamber": "house", "state": "TX", "district": 1, "party": "R", "caucus_party": "R"}}
+    path = doc["path"]
     assert path["track"] == "law"
     passed = next(s for s in path["steps"] if s["key"] == "passed_house")
     assert passed == {"key": "passed_house", "label": "Passed House", "date": "2025-01-03", "status": "done",

@@ -542,10 +542,15 @@ models:
           - accepted_values:
               arguments:
                 values: ["R", "D"]
+      - name: state
+        description: State of the seat held on the vote date, from congress-legislators.
+        data_tests: [not_null]
+      - name: district
+        description: House district of the seat held on the vote date (0 for at-large seats and delegates); null for senators.
       - name: term_covers_vote_date
         description: >
           False when the official record lists the member on a date outside their term dates in
-          congress-legislators; party, caucus, and label then come from the nearest term.
+          congress-legislators; party, caucus, seat, and label then come from the nearest term.
         data_tests: [not_null]
       - name: caucus_majority_position
         description: The member's caucus majority on this vote (yes/no), or null on a tie or a non-yes/no vote.
