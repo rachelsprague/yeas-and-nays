@@ -44,3 +44,38 @@ unit_tests:
       rows:
         - {bioguide_id: A1, website_url: "https://www.example.senate.gov", contact_form_url: null}
         - {bioguide_id: A2, website_url: null, contact_form_url: null}
+
+  - name: house_actions_split_out_decisions_without_a_roll_call
+    description: >
+      The question and outcome are read from lines that record a final decision by voice
+      vote or without objection. Recorded votes, postponed votes, and voice votes on other
+      questions have neither.
+    model: stg_floor__house_actions
+    given:
+      - input: source('staged', 'house_floor_actions')
+        format: sql
+        rows: |
+          select *, '119' as congress, 'H37300' as action_code, '20261118T17:41:31' as action_time, 'H.R. 1' as measure_number,
+              'hr' as bill_type, '1' as bill_number, 'house_days/2026-11-18.xml' as source_file
+          from (values
+              ('1', 'On motion to suspend the rules and pass the bill, as amended Agreed to by voice vote.'),
+              ('2', 'On motion that the House suspend the rules and agree to the Senate amendment Agreed to by voice vote.'),
+              ('3', 'On agreeing to the resolution Agreed to without objection.'),
+              ('4', 'On passage Passed by voice vote.'),
+              ('5', 'On motion to suspend the rules and pass the bill Agreed to by the Yeas and Nays: (2/3 required): 300 - 100 (Roll no. 1).'),
+              ('6', 'POSTPONED PROCEEDINGS - the Chair put the question on passage of the bill and by voice vote announced the ayes had prevailed.'),
+              ('7', 'Motion to reconsider laid on the table Agreed to without objection.'),
+              ('8', 'On agreeing to the Smith amendment Agreed to by voice vote.'),
+              ('9', null)
+          ) as t (action_id, action_text)
+    expect:
+      rows:
+        - {action_id: "1", question: "On motion to suspend the rules and pass the bill, as amended", outcome: Agreed to by voice vote}
+        - {action_id: "2", question: On motion that the House suspend the rules and agree to the Senate amendment, outcome: Agreed to by voice vote}
+        - {action_id: "3", question: On agreeing to the resolution, outcome: Agreed to without objection}
+        - {action_id: "4", question: On passage, outcome: Passed by voice vote}
+        - {action_id: "5", question: null, outcome: null}
+        - {action_id: "6", question: null, outcome: null}
+        - {action_id: "7", question: null, outcome: null}
+        - {action_id: "8", question: null, outcome: null}
+        - {action_id: "9", question: null, outcome: null}

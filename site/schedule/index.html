@@ -59,7 +59,7 @@ nav: schedule
       </ul>
       {%- endif %}
       {%- if w.house_pending.size > 0 %}
-      <h4 class="small soft cal-pending-h">House: on this week&rsquo;s floor schedule, no roll call yet</h4>
+      <h4 class="small soft cal-pending-h">House: on this week&rsquo;s floor schedule, no decision recorded yet</h4>
         {%- for group in w.house_pending %}
         {%- if group.category %}<p class="small muted">{{ group.category | escape }}</p>{% endif %}
         <ul class="ruled">
@@ -68,6 +68,14 @@ nav: schedule
           {%- endfor %}
         </ul>
         {%- endfor %}
+      {%- endif %}
+      {%- if w.house_decided.size > 0 %}
+      <h4 class="small soft cal-pending-h">House: on this week&rsquo;s floor schedule, decided without a roll call</h4>
+      <ul class="ruled">
+        {%- for item in w.house_decided %}
+          {%- include schedule_item.html item=item %}
+        {%- endfor %}
+      </ul>
       {%- endif %}
     </section>
     {%- endfor %}
@@ -80,6 +88,7 @@ nav: schedule
     {%- endif %}
     <p class="small soft"><strong>Senate.</strong> {{ cloture.term }}: {{ cloture.definition }} {{ cloture.timing }} Source: the Senate&rsquo;s daily floor activity, <a class="link" href="https://www.senate.gov/legislative/LIS/floor_activity/floor_activity.htm">senate.gov</a>.</p>
     <p class="small soft"><strong>House.</strong> The measures the Majority Leader lists as possible for floor consideration each week, under the headings used on the schedule. {{ suspend.term }}: {{ suspend.definition }} Source: <a class="link" href="https://docs.house.gov/floor/">docs.house.gov</a>.</p>
+    <p class="small soft"><strong>Decided without a roll call.</strong> Measures the House agreed to or rejected by voice vote or without objection, in the Clerk&rsquo;s words. No member&rsquo;s vote is recorded. Source: the Clerk&rsquo;s floor summary, <a class="link" href="https://clerk.house.gov/FloorSummary">clerk.house.gov</a>.</p>
     <p class="small soft"><strong>Roll calls.</strong> From the House Clerk and the Senate&rsquo;s roll call votes, as on every vote page.</p>
   </section>
 </main>

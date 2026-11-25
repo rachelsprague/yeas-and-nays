@@ -23,6 +23,8 @@
     <span class="t">{{ s.title | escape }}</span>
     {%- if s.vote_url %}
     <span class="small soft nums">Voted: {{ s.result_label | escape }}</span>
+    {%- elsif s.decided_label %}
+    <span class="small soft nums">{{ s.decided_label | escape }}</span>
     {%- endif %}
 {%- endcapture -%}
 {%- assign href = s.vote_url | default: s.congress_gov_url -%}

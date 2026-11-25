@@ -314,7 +314,7 @@ terms:
     definition: >-
       A vote in which members call out "aye" or "no" together and the
       presiding officer judges which side has more. No record is kept of how
-      each member voted, so voice votes are not on this site.
+      each member voted, so voice votes have no vote page on this site.
     see: [recorded_vote]
     more:
       url: /how/voting/

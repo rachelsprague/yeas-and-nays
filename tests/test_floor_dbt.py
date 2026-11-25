@@ -31,6 +31,11 @@ MALFORMED = {
     ],
     "senate_session_days": [{"legislative_day": None, "convene_time": "noon", "next_convene_time": "later"}],
     "house_floor_days": [{"legislative_day": "Nov. 13", "convene_time": "10", "finished": "?"}],
+    "house_floor_actions": [
+        {"congress": "next", "action_time": "noon", "measure_number": "H.R. 1", "bill_type": "hr", "bill_number": "1",
+         "action_text": "On passage Passed by voice vote."},
+        {"action_text": None},
+    ],
 }
 
 

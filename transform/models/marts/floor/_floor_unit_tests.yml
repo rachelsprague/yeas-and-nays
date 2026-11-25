@@ -16,6 +16,8 @@ unit_tests:
           - {docnum: null, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-09, status_order: 0, document_title: N1}
           - {docnum: null, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N2}
           - {docnum: PN7, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: N7}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
@@ -39,6 +41,8 @@ unit_tests:
         rows:
           - {docnum: H.R. 4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-09, status_order: 0, document_title: Earlier}
           - {docnum: H.R.4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: Later}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
@@ -63,6 +67,8 @@ unit_tests:
           - {docnum: H.R. 4, document_prefix: HR, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 0, document_title: Space}
           - {docnum: PN8, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: Z}
           - {docnum: PN8, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: Y}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
@@ -89,6 +95,8 @@ unit_tests:
         rows:
           - {docnum: PN8, document_prefix: PN, target: "..", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N8}
           - {docnum: "..", document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 1, document_title: N9}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
@@ -126,6 +134,8 @@ unit_tests:
           # Re-filed after that day's vote under the other spelling: that day's roll call is the earlier one.
           - {docnum: S.13, document_prefix: S, target: the measure, event: voted, activity_date: 2026-11-10, status_order: 6}
           - {docnum: S. 13, document_prefix: S, target: the measure, event: filed, activity_date: 2026-11-10, status_order: 7, document_title: Re-filed}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0002, chamber: senate, congress: 119, measure_number: S.9, amendment_number: null, question: On Cloture on the Motion to Proceed S.9, vote_date: 2026-11-12, vote_time_et: "2026-11-12 12:00:00"}
@@ -153,6 +163,8 @@ unit_tests:
       - input: ref('int_senate_cloture_events')
         rows:
           - {docnum: PN8, document_prefix: PN, target: "", event: filed, activity_date: 2026-11-10, status_order: 0, document_title: N8}
+      - input: ref('stg_floor__house_actions')
+        rows: []
       - input: ref('int_votes_unioned')
         rows:
           - {vote_id: s119-2-0001, chamber: senate, congress: 119, measure_number: PN1, question: On the Cloture Motion PN1, vote_date: 2026-11-04, vote_time_et: "2026-11-04 12:00:00"}
@@ -160,3 +172,62 @@ unit_tests:
       rows:
         - {item_id: h-2026-11-09-4098-1, title: First}
         - {item_id: s-pn8, title: N8}
+
+  - name: floor_schedule_house_decisions_without_a_roll_call
+    description: >
+      A House item decided by voice vote or without objection in its week carries the first
+      such decision. A roll call takes its place; another week's or another Congress's
+      decision, and an action that decides nothing, don't count.
+    model: floor_schedule
+    given:
+      - input: ref('stg_floor__house_items')
+        rows:
+          - {congress: 119, week_date: 2026-11-16, item_id: "1", measure_number: H.R. 1, bill_type: hr, bill_number: "1", title: Voice, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-16, item_id: "2", measure_number: H.R. 2, bill_type: hr, bill_number: "2", title: Roll call, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-16, item_id: "3", measure_number: H.R. 3, bill_type: hr, bill_number: "3", title: Week before, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-16, item_id: "4", measure_number: H.R. 4, bill_type: hr, bill_number: "4", title: Debated, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-16, item_id: "5", measure_number: Senate Amendment to H.R. 1, bill_type: null, bill_number: null, title: Amendment, removed_at_recorded: null}
+          - {congress: 119, week_date: 2026-11-16, item_id: "6", measure_number: H.R. 6, bill_type: hr, bill_number: "6", title: Other Congress, removed_at_recorded: null}
+      - input: ref('int_senate_cloture_events')
+        rows: []
+      - input: ref('stg_floor__house_actions')
+        rows:
+          - {congress: 119, action_id: "1", bill_type: hr, bill_number: "1", action_time_et: "2026-11-22 17:00:00", question: On passage, outcome: Passed by voice vote}
+          - {congress: 119, action_id: "2", bill_type: hr, bill_number: "1", action_time_et: "2026-11-18 17:00:00", question: On motion to suspend the rules and pass the bill, outcome: Agreed to by voice vote}
+          - {congress: 119, action_id: "3", bill_type: hr, bill_number: "2", action_time_et: "2026-11-18 17:00:00", question: On passage, outcome: Passed by voice vote}
+          - {congress: 119, action_id: "4", bill_type: hr, bill_number: "3", action_time_et: "2026-11-15 17:00:00", question: On passage, outcome: Passed by voice vote}
+          - {congress: 119, action_id: "5", bill_type: hr, bill_number: "4", action_time_et: "2026-11-18 17:00:00", question: null, outcome: null}
+          - {congress: 118, action_id: "6", bill_type: hr, bill_number: "6", action_time_et: "2026-11-18 17:00:00", question: On passage, outcome: Passed by voice vote}
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: h119-2-0001, chamber: house, congress: 119, bill_type: hr, bill_number: "2", question: On Passage, vote_date: 2026-11-19, vote_time_et: "2026-11-19 14:00:00"}
+    expect:
+      rows:
+        - {item_id: h-2026-11-16-1, vote_id: null, decided_date: 2026-11-18, decided_question: On motion to suspend the rules and pass the bill, decided_outcome: Agreed to by voice vote}
+        - {item_id: h-2026-11-16-2, vote_id: h119-2-0001, decided_date: null, decided_question: null, decided_outcome: null}
+        - {item_id: h-2026-11-16-3, vote_id: null, decided_date: null, decided_question: null, decided_outcome: null}
+        - {item_id: h-2026-11-16-4, vote_id: null, decided_date: null, decided_question: null, decided_outcome: null}
+        - {item_id: h-2026-11-16-5, vote_id: null, decided_date: null, decided_question: null, decided_outcome: null}
+        - {item_id: h-2026-11-16-6, vote_id: null, decided_date: null, decided_question: null, decided_outcome: null}
+
+  - name: house_floor_days_keeps_only_the_latest_file
+    description: Earlier days this week are staged too; a latest day that didn't parse isn't replaced by one of them.
+    model: house_floor_days
+    given:
+      - input: ref('stg_floor__house_floor_days')
+        rows:
+          - {legislative_day: 2026-11-17, adjourned: true, source_file: house_days/2026-11-17.xml}
+          - {legislative_day: 2026-11-18, adjourned: false, source_file: house_days/2026-11-18.xml}
+    expect:
+      rows:
+        - {legislative_day: 2026-11-18, adjourned: false}
+
+  - name: house_floor_days_malformed_latest_gives_no_row
+    model: house_floor_days
+    given:
+      - input: ref('stg_floor__house_floor_days')
+        rows:
+          - {legislative_day: 2026-11-17, adjourned: true, source_file: house_days/2026-11-17.xml}
+          - {legislative_day: null, adjourned: false, source_file: house_days/2026-11-18.xml}
+    expect:
+      rows: []

@@ -147,7 +147,8 @@ def run(warehouse: Path = WAREHOUSE_PATH, out_dir: Path = OUT_DIR) -> None:
         cosponsored_fetched = _fetched_lists(con, "cosponsored_lists")
         floor_items = _rows(con, """
             select chamber, item_id, week_date, filed_date, category, question, measure_number,
-                   bill_type, bill_number, title, amends, congress_gov_url, vote_id
+                   bill_type, bill_number, title, amends, congress_gov_url, vote_id,
+                   decided_date, decided_question, decided_outcome
             from floor_schedule
             order by chamber, week_date, category_order, item_order, filed_date,
                 -- Numbers in numeric order: PN1272-3 before PN1272-13.

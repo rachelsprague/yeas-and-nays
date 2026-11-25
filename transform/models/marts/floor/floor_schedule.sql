@@ -18,6 +18,12 @@
   votes on the way there; for the Senate, the first cloture roll call on it
   after the motion was filed, which can appear before the day's floor
   activity is posted.
+
+  decided_* is the House's decision on an item without a roll call (by voice
+  vote or without objection), from the Clerk's floor proceedings: the first in
+  the scheduled week on a question that decides the measure. Empty when there
+  is a roll call. A Senate amendment listed as such has no bill number to
+  match on, so it stays undecided rather than guessed at.
 -#}
 
 with house_items as (
@@ -46,6 +52,20 @@ house_decisions as (
         )
 ),
 
+-- One per measure and scheduled week, so the join below can't repeat an item.
+house_unrecorded as (
+    select
+        congress, bill_type, bill_number, question, outcome,
+        cast(action_time_et as date) as decided_date,
+        cast(date_trunc('week', action_time_et) as date) as week_date
+    from {{ ref('stg_floor__house_actions') }}
+    where outcome is not null and action_time_et is not null and bill_type is not null
+    qualify row_number() over (
+        partition by congress, bill_type, bill_number, date_trunc('week', action_time_et)
+        order by action_time_et, action_id
+    ) = 1
+),
+
 {%- set house_item_id -%}
     concat_ws('-', 'h', strftime(items.week_date, '%Y-%m-%d'), {{ id_part('items.item_id') }})
 {%- endset %}
@@ -67,13 +87,21 @@ house as (
         null::varchar as amends,
         {{ congress_gov_url('items.congress', 'items.bill_type', 'items.bill_number') }} as congress_gov_url,
         votes.vote_id,
-        votes.vote_date
+        votes.vote_date,
+        case when votes.vote_id is null then unrecorded.decided_date end as decided_date,
+        case when votes.vote_id is null then unrecorded.question end as decided_question,
+        case when votes.vote_id is null then unrecorded.outcome end as decided_outcome
     from house_items as items
     left join house_decisions as votes
         on votes.congress = items.congress
         and votes.bill_type = items.bill_type
         and votes.bill_number = items.bill_number
         and votes.vote_date between items.week_date and items.week_date + 6
+    left join house_unrecorded as unrecorded
+        on unrecorded.congress = items.congress
+        and unrecorded.bill_type = items.bill_type
+        and unrecorded.bill_number = items.bill_number
+        and unrecorded.week_date = items.week_date
     -- One row per item ID, with its first deciding vote. Item IDs the source writes
     -- two ways ("4098.1", "4098-1") share one, and the first in raw order is kept;
     -- the same raw ID listed twice keeps the row listed first on the schedule.
@@ -159,7 +187,10 @@ senate as (
         filed.amends,
         {{ congress_gov_url(var('congress'), 'filed.bill_type', 'filed.bill_number') }} as congress_gov_url,
         votes.vote_id,
-        votes.vote_date
+        votes.vote_date,
+        null::date as decided_date,
+        null::varchar as decided_question,
+        null::varchar as decided_outcome
     from filed
     left join votes
         on votes.chamber = 'senate'

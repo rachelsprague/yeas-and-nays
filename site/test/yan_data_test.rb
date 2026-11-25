@@ -1686,6 +1686,21 @@ class SchedulePageTest < Minitest::Test
     assert_includes tuesday, %(<a class="headline-link" href="/votes/119/house/2/316/">)
   end
 
+  def test_house_items_decided_without_a_roll_call_show_the_clerks_wording
+    items = [house("a", "H.R. 1", "Pending Act"),
+             house("b", "H.R. 2", "Decided Act").merge(
+               "decided_date" => "2026-11-10", "decided_question" => "On motion to suspend the rules & pass the bill",
+               "decided_outcome" => "Agreed to by voice vote"
+             )]
+    html = build_site([MEMBER], [[VOTE, DOC]], files: "schedule/index.html", time: "2026-11-13 12:00:00 -0500",
+                      schedule: { "items" => items })["/schedule/index.html"]
+    pending, decided = html.split("decided without a roll call</h4>", 2)
+    assert_includes pending, "no decision recorded yet</h4>"
+    refute_includes pending, "Decided Act"
+    assert_includes li(decided, "Decided Act"),
+                    "On motion to suspend the rules &amp; pass the bill: Agreed to by voice vote, Nov. 10, 2026"
+  end
+
   # The home page passes each item's place to start rows past its third
   # hidden; this page doesn't, so every item shows.
   def test_no_item_starts_hidden
@@ -1790,6 +1805,28 @@ class ScheduleCalendarTest < Minitest::Test
     # Pending cloture motions go in the week the Senate next convenes.
     assert_equal [[], ["d"]], [week(cal, "2026-11-09")["senate_pending"],
                                week(cal, "2026-11-16")["senate_pending"].map { |i| i["item_id"] }]
+  end
+
+  def test_house_items_decided_without_a_roll_call_are_listed_apart
+    decided = { "decided_date" => "2026-11-10", "decided_question" => "On passage",
+                "decided_outcome" => "Passed by voice vote" }
+    items = [item("house", "a", week: "2026-11-09"), item("house", "b", week: "2026-11-09").merge(decided)]
+    this_week = week(calendar(items, []), "2026-11-09")
+    assert_equal ["a"], this_week["house_pending"].flat_map { |g| g["items"].map { |i| i["item_id"] } }
+    assert_equal [["b", "On passage: Passed by voice vote, Nov. 10, 2026"]],
+                 this_week["house_decided"].map { |i| i.values_at("item_id", "decided_label") }
+    assert_equal ["a"], Yan.schedule_view({ "items" => items }, {}, FRIDAY)["upcoming_house"].map { |i| i["item_id"] }
+    # Like pending items, they drop off once the week's Friday has passed.
+    assert_equal [], week(calendar(items, [], Date.new(2026, 11, 14), nil), "2026-11-09")["house_decided"]
+  end
+
+  def test_a_pro_forma_senate_session_is_labeled
+    schedule = { "items" => [], "senate_next_convene_et" => "2026-11-16T15:00:00",
+                 "floor_status" => { "senate" => { "next_convene_pro_forma" => true } } }
+    view = Yan.schedule_view(schedule, {}, FRIDAY)
+    assert_equal "Monday, Nov. 16, 2026, at 3 p.m. ET (pro forma session)", view["senate_next_convene"]
+    cal = Yan.schedule_calendar(view, [], FRIDAY, "2026-11-16T15:00:00")
+    assert_equal ["3 p.m. ET (pro forma session)"], cal["weeks"].flat_map { |w| w["days"] }.filter_map { |d| d["convene"] }
   end
 
   def test_past_weeks_list_nothing_pending

@@ -59,7 +59,11 @@ sources:
       - name: house_floor_days
         description: >
           One row per House legislative day in the Clerk's floor proceedings
-          (clerk.house.gov/floor); only the newest day is kept.
+          (clerk.house.gov/floor): this week's, and the newest however old.
+      - name: house_floor_actions
+        description: >
+          One row per recorded action on a measure in the Clerk's floor proceedings, for the
+          same days.
       - name: legislators
         description: One row per person in unitedstates/congress-legislators (current + historical).
       - name: legislator_terms
