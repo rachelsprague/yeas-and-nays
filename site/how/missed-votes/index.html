@@ -6,7 +6,7 @@ title: How missed votes work
 description: The House and Senate rules on voting, what a Not Voting position records, and how many roll calls members of each chamber have missed.
 ---
 {%- assign congress = site.data.meta.congress %}
-{%- assign current = site.data.members | where_exp: "m", "m.median" | where_exp: "m", "m.roll_calls > 0" %}
+{%- assign current = site.data.members | where_exp: "m", "m.in_median" %}
 {%- assign chambers = "house,senate" | split: "," %}
 <main id="main" class="wrap">
   <section class="vote-head">
@@ -37,7 +37,7 @@ description: The House and Senate rules on voting, what a Not Voting position re
 
     <section id="typical">
       <h2>How many votes members miss</h2>
-      <p>Among members who have had roll calls in the {{ congress | ordinal }} Congress, from this site's data, updated hourly:</p>
+      <p>Among members who have had at least a tenth as many roll calls as the member of their chamber with the most in the {{ congress | ordinal }} Congress, from this site's data, updated hourly:</p>
       <dl>
         {%- for chamber in chambers %}
         {%- assign ms = current | where: "chamber", chamber %}

@@ -2465,6 +2465,21 @@ class MemberChartsTest < Minitest::Test
     assert_nil m["senate"]["missed_votes_pct"]
   end
 
+  def test_medians_leave_out_members_under_a_tenth_of_the_chambers_most_roll_calls
+    house = [[95, 1.0], [10, 3.0], [9, 80.0]].map do |n, pct|
+      { "chamber" => "house", "last_congress" => 119, "roll_calls" => n, "missed_votes_pct" => pct, "with_party_majority_pct" => 100.0 - pct }
+    end
+    # The minimum is per chamber, and the most is from this Congress only.
+    senate = [{ "chamber" => "senate", "last_congress" => 119, "roll_calls" => 1, "missed_votes_pct" => 4.0 },
+              { "chamber" => "senate", "last_congress" => 118, "roll_calls" => 900, "missed_votes_pct" => 50.0 }]
+    m = Yan.chamber_medians(house + senate, 119)
+    assert_equal({ "name" => "House", "members" => 2, "missed_votes_pct" => 2.0, "with_party_majority_pct" => 98.0 }, m["house"])
+    assert_equal 1, m["senate"]["members"]
+    # Exactly a tenth counts.
+    house.first["roll_calls"] = 100
+    assert_equal 2, Yan.chamber_medians(house, 119)["house"]["members"]
+  end
+
   # A returning member on 120th roll calls before congress-legislators lists their new term.
   def test_medians_count_a_member_with_roll_calls_but_no_term_dates
     members = [
@@ -2576,7 +2591,8 @@ class MissedVotesPageTest < Minitest::Test
   def test_each_chamber_gives_its_median_and_members_over_ten_percent
     html = page([member("A000001", "house", 2.0), member("A000002", "house", 12.5), member("A000003", "house", 30.0),
                  member("S000001", "senate", 4.0),
-                 # Neither counts: no roll calls yet, or last in an earlier Congress.
+                 # None counts: no roll calls yet, under a tenth of the most, or last in an earlier Congress.
+                 member("A000006", "house", 50.0, "roll_calls" => 9),
                  member("A000004", "house", 50.0, "roll_calls" => 0),
                  member("A000005", "house", 50.0, "last_congress" => 118)])
     assert_includes html, "The median member missed 12.5% of roll calls, among 3 members. 2 members missed more than 10%."
