@@ -29,6 +29,8 @@ select
     positions.state_as_recorded,
     positions.party,
     positions.caucus_party,
+    positions.state,
+    positions.district,
     positions.term_covers_vote_date,
     majority.majority_position as caucus_majority_position,
     case

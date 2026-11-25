@@ -1203,12 +1203,19 @@ class StateMapTest < Minitest::Test
     assert_equal "house", map["chamber"]
   end
 
-  # S1's record is a senator's (their latest seat), so it has no district for a House vote.
-  def test_a_member_now_in_the_senate_stays_off_a_house_map_but_in_the_table
-    map = Yan.state_map("house", { "A1" => "Aye", "S1" => "No" }, MEMBERS, WORDS)
+  # S1's record is a senator's (their latest seat); the vote file gives the House seat held then.
+  def test_a_member_now_in_the_senate_is_mapped_by_the_seat_held_then
+    doc = { "members_as_of_vote" => { "S1" => { "chamber" => "house", "state" => "KY", "district" => 4, "party" => "D", "caucus_party" => "D" } } }
+    map = Yan.state_map("house", { "A1" => "Aye", "S1" => "No" }, Yan.members_as_of(doc, MEMBERS), WORDS)
+    assert_equal "Kentucky, 4th District: Ed Zee (D), No", seats(map)["KY-4"]["title"]
+    assert_equal 0, map["unmapped"]
+    assert_equal "senate", MEMBERS["S1"]["chamber"]
+  end
+
+  def test_a_senator_with_no_house_seat_on_record_stays_off_a_house_map_but_in_the_table
+    map = Yan.state_map("house", { "A1" => "Aye", "S1" => "No" }, Yan.members_as_of({}, MEMBERS), WORDS)
     assert_equal ["CA-12"], seats(map).keys
     assert_equal 1, map["unmapped"]
-    assert_equal 1, map["moved"]
     assert_equal ["California", "Kentucky"], map["table"].map { |r| r["name"] }
   end
 
@@ -1223,7 +1230,6 @@ class StateMapTest < Minitest::Test
     map = Yan.state_map("house", { "A1" => "Aye", "B1" => "Aye", "Z9" => "No" }, MEMBERS, WORDS)
     assert_equal ["CA-12"], seats(map).keys
     assert_equal 2, map["unmapped"]
-    assert_equal 0, map["moved"]
     assert_equal ["California", "Puerto Rico"], map["table"].map { |r| r["name"] }
   end
 
@@ -1363,6 +1369,44 @@ class VotePageTest < Minitest::Test
                           "or a territory. See the table by state."
   end
 
+  # A member who has since changed party, caucus and district shows as they
+  # were, on the vote page and the member page.
+  def test_a_vote_shows_members_party_and_seat_as_of_the_vote
+    now = member("A000001", "AL", 7).merge("party" => "I", "caucus_party" => "D")
+    then_seat = { "chamber" => "house", "state" => "AL", "district" => 1, "party" => "R", "caucus_party" => "R" }
+    d = doc({ "A000001" => "Nay" }, { "no" => 1 }).merge(
+      "members_as_of_vote" => { "A000001" => then_seat }, "caucus_majority_position" => { "R" => "yes", "D" => "no" },
+      "against_party_majority" => [{ "bioguide_id" => "A000001", "position" => "Nay" }]
+    )
+    built = build_site([now], [[vote(1, "On Passage"), d]])
+    html = built.fetch("/votes/119/house/1/1/index.html")
+    assert_includes html, "R-AL-1"
+    refute_includes html, "AL-7"
+    seats = JSON.parse(html[%r{<script type="application/json" data-seats>(.*?)</script>}m, 1])
+    assert_equal({ "AL-1" => "Alabama, 1st District: Member A000001 (R), Nay" }, seats.transform_values { |s| s["title"] })
+    assert_includes html, "R majority voted Yea"
+    assert_includes built.fetch("/members/A000001/index.html"), "R majority voted Yea"
+  end
+
+  def test_a_speaker_election_names_the_top_candidate_by_party_and_seat_as_of_the_vote
+    now = member("A000001", "AL", 7).merge("party" => "I", "caucus_party" => "D")
+    then_seat = { "chamber" => "house", "state" => "AL", "district" => 1, "party" => "R", "caucus_party" => "R" }
+    v = vote(1, "Election of the Speaker").merge("result" => "Alpha", "result_bioguide_id" => "A000001")
+    d = doc({ "A000001" => "Alpha" }, { "other" => 1 }).merge("members_as_of_vote" => { "A000001" => then_seat })
+    html = build_site([now], [[v, d]]).fetch("/votes/119/house/1/1/index.html")
+    assert_includes html, "Most votes: Member A000001 (R-AL-1)"
+    refute_includes html, "AL-7"
+  end
+
+  # Another Congress's vote gets that Congress's map only when its file gives seats as of the vote.
+  def test_another_congress_gets_its_own_map_with_seats_as_of_the_vote
+    other = vote(1, "On Passage").merge("vote_id" => "h120-1-0001", "congress" => 120)
+    d = doc({ "A000001" => "Yea" }, { "yes" => 1 })
+    page = ->(doc) { build_site([member("A000001", "AL", 1)], [[other, doc]]).fetch("/votes/120/house/1/1/index.html") }
+    assert_includes page.call(d.merge("members_as_of_vote" => {})), 'data-src="/assets/maps/120.json"'
+    refute_includes page.call(d), "data-vmap"
+  end
+
   # A vote with no measure or vote title (a Speaker election) has the question
   # as its search result title once, not "question: question".
   def test_a_speaker_election_search_title_names_the_question_once
@@ -1455,32 +1499,6 @@ class VotePageTest < Minitest::Test
     assert_nil Yan.bill_path_view({ "steps" => [{ "label" => "B", "status" => "unknown" }] })
     assert_nil Yan.bill_path_view(nil)
     assert_nil Yan.bill_path_view({ "steps" => [] })
-  end
-
-  # A member whose latest seat is in the Senate has no district for a House vote.
-  def test_the_note_names_members_who_have_since_moved_to_the_senate
-    senator = member("S000001", "AL", nil).merge("chamber" => "senate")
-    built = build_site([member("A000001", "AL", 1), member("A000005", "ZZ", 1), senator],
-                       [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "S000001" => "Yea" }, { "yes" => 2 })],
-                        [vote(2, "On Passage"), doc({ "A000001" => "Yea", "A000005" => "Yea", "S000001" => "Nay" },
-                                                    { "yes" => 2, "no" => 1 })]])
-    assert_includes built.fetch("/votes/119/house/1/1/index.html"),
-                    "Not on the map: 1 member who has since moved to the Senate (the map places members by their " \
-                    "current seat). See the table by state."
-    assert_includes built.fetch("/votes/119/house/1/2/index.html"),
-                    "Not on the map: 2 members with no seat drawn on it, such as a delegate from the District of Columbia " \
-                    "or a territory, or a member who has since moved to the Senate (the map places members by their " \
-                    "current seat). See the table by state."
-  end
-
-  def test_the_note_counts_several_members_who_have_since_moved_to_the_senate
-    senators = %w[S000001 S000002].map { |id| member(id, "AL", nil).merge("chamber" => "senate") }
-    built = build_site([member("A000001", "AL", 1), *senators],
-                       [[vote(1, "On Passage"), doc({ "A000001" => "Yea", "S000001" => "Yea", "S000002" => "Nay" },
-                                                    { "yes" => 2, "no" => 1 })]])
-    assert_includes built.fetch("/votes/119/house/1/1/index.html"),
-                    "Not on the map: 2 members who have since moved to the Senate (the map places members by their " \
-                    "current seat). See the table by state."
   end
 
   # Every senator has a state, so on a Senate vote only one with no state on

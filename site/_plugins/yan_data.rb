@@ -476,8 +476,7 @@ module Yan
   # state ("KY"), its members' marks in last-name order and a hover title. DC
   # and the territories aren't on the map (their delegates can't vote on the
   # House floor) but are in the table; "unmapped" counts them, with members of
-  # no known state and those who have since moved to the Senate ("moved"), for
-  # a note.
+  # no known state, for a note. Members are as of the vote (members_as_of).
   def self.state_map(chamber, positions, members_by_id, words)
     return nil if positions.empty?
 
@@ -486,16 +485,12 @@ module Yan
     counts = Hash.new { |h, k| h[k] = Hash.new(0) }
     seats = {}
     unmapped = 0
-    moved = 0
     positions.sort_by { |id, _| [members_by_id.dig(id, "last_name").to_s, id] }.each do |id, raw|
       m = members_by_id[id] || {}
       kind = position_kind(raw)
       counts[m["state"]][kind] += 1 if STATE_NAMES.key?(m["state"])
-      # A member's record holds their latest seat: someone who has since moved
-      # to the Senate has no district for a House vote, so they stay off the map.
       if !STATE_NAMES.key?(m["state"]) || TERRITORIES.include?(m["state"]) || (house && m["chamber"] != "house")
         unmapped += 1
-        moved += 1 if house && m["chamber"] == "senate"
         next
       end
       s = seats[house ? seat(m) : m["state"]] ||= { "where" => house ? where(m) : STATE_NAMES[m["state"]], "marks" => [], "who" => [] }
@@ -504,7 +499,7 @@ module Yan
     end
     seats = seats.transform_values { |s| { "marks" => s["marks"], "title" => "#{s["where"]}: #{s["who"].join("; ")}" } }
     {
-      "chamber" => chamber, "unmapped" => unmapped, "moved" => moved,
+      "chamber" => chamber, "unmapped" => unmapped,
       # Every "<" escaped, so nothing in a name can end or confuse the script tag.
       "seats_json" => JSON.generate(seats).gsub("<", "\\u003c"),
       # The text version: one row per state, by name.
@@ -968,8 +963,19 @@ module Yan
     s.merge("html" => html, "version" => (version unless version.to_s.empty?), "version_date" => date)
   end
 
+  # Members by id with the party, caucus and seat they had on the vote's date.
+  # The vote file lists only those whose latest differ; older files list none.
+  def self.members_as_of(doc, members_by_id)
+    (doc["members_as_of_vote"] || {}).each_with_object(members_by_id.dup) do |(id, as_of), h|
+      m = (h[id] || {}).merge(as_of)
+      h[id] = m.merge("seat" => seat(m))
+    end
+  end
+
   # Everything the tally, by-party and against-majority blocks need for one vote.
-  def self.vote_view(vote, doc, members_by_id)
+  # members_by_id is as of the vote (members_as_of), except latest_by_id, the
+  # fallback for the sponsor.
+  def self.vote_view(vote, doc, members_by_id, latest_by_id = members_by_id)
     words = words(doc["positions"])
     counts = Hash.new(0)
     other = Hash.new(0)
@@ -1009,7 +1015,7 @@ module Yan
 
     # Party and seat when the measure was introduced; the member's latest in data without those columns.
     introduced = vote["sponsor_party"] && %w[party chamber state district].to_h { |k| [k, vote["sponsor_#{k}"]] }
-    sponsor = (m = members_by_id[vote["sponsor_bioguide_id"]]) && {
+    sponsor = (m = latest_by_id[vote["sponsor_bioguide_id"]]) && {
       "name" => member_name(m), "url" => member_url(m["bioguide_id"]),
       "code" => "#{(introduced || m)["party"]}-#{seat(introduced || m)}"
     }
@@ -1121,21 +1127,23 @@ module Yan
         v["congress_gov_url"] = Yan.web_url(v["congress_gov_url"])
         v["congress_gov_text_url"] = Yan.text_url(v["congress_gov_url"])
         v["chamber_name"] = CHAMBER_NAMES[v["chamber"]]
-        v["result_label"] = Yan.result_label(v, by_id)
         v["procedure"] = Yan.procedure(v, site.data["procedures"] || {})
         doc = read.call("votes/#{v["vote_id"]}.json")
-        view = Yan.vote_view(v, doc, by_id)
+        as_of = Yan.members_as_of(doc, by_id)
+        v["result_label"] = Yan.result_label(v, as_of)
+        view = Yan.vote_view(v, doc, as_of, by_id)
         # The vote page map's shapes (scripts/build_vote_map.py); the table shows either way.
-        # Members' districts are as of meta's Congress, so only its votes get a map.
+        # A file without members_as_of_vote has only latest districts, so just meta's Congress gets a map.
         map_src = "/assets/maps/#{v["congress"].to_i}.json"
-        if view["state_map"] && v["congress"].to_i == meta["congress"].to_i && File.exist?(File.join(site.source, map_src))
+        seats_known = doc.key?("members_as_of_vote") || v["congress"].to_i == meta["congress"].to_i
+        if view["state_map"] && seats_known && File.exist?(File.join(site.source, map_src))
           view["state_map"]["src"] = map_src
         end
         views[v["vote_id"]] = view
 
         against_ids = doc["against_party_majority"].to_h { |a| [a["bioguide_id"], true] }
         rows = doc["positions"].map do |id, raw|
-          m = by_id[id] || {}
+          m = as_of[id] || {}
           kind = Yan.position_kind(raw)
           positions_by_member[id] << { "vote" => v, "position" => raw, "against" => against_ids.key?(id),
                                        "caucus" => m["caucus_party"],

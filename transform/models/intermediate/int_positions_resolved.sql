@@ -1,6 +1,6 @@
 {#-
   One row per member per vote, with every position resolved to a bioguide ID
-  and to the party/caucus in effect on the vote date.
+  and to the party, caucus and seat in effect on the vote date.
 
   House records carry the bioguide ID directly. Senate records carry only the
   LIS member ID, which maps to bioguide through congress-legislators (id.lis).
@@ -8,7 +8,7 @@
   congress-legislators), bioguide_id is null and the not_null test on the
   positions mart fails, rather than the row being silently dropped.
 
-  Party, caucus, and label come from the member's period covering the vote
+  Party, caucus, seat, and label come from the member's period covering the vote
   date. The official record occasionally lists a member outside the dates in
   congress-legislators (a member-elect who never took the seat on the opening
   quorum call; a departure dated a day early). Those positions are kept as
@@ -67,6 +67,8 @@ select
         periods.caucus_party,
         case when positions.party_as_recorded in ('R', 'D') then positions.party_as_recorded end
     ) as caucus_party,
+    periods.state,
+    periods.district,
     periods.member_label,
     votes.vote_date between periods.period_start and periods.period_end as term_covers_vote_date
 from positions

@@ -64,6 +64,48 @@ unit_tests:
         - {vote_id: v4, bioguide_id: I1, caucus_majority_position: "yes", voted_against_party_majority: false}
         - {vote_id: v4, bioguide_id: D1, caucus_majority_position: "no", voted_against_party_majority: false}
 
+  - name: positions_resolve_to_the_party_and_seat_held_on_the_vote_date
+    description: >
+      A member who changed district, party or chamber has the values in effect
+      on each vote's date, matched within the vote's chamber. A vote outside
+      every term takes the nearest one's.
+    model: int_positions_resolved
+    given:
+      - input: ref('int_votes_unioned')
+        rows:
+          - {vote_id: h1, chamber: house, congress: 119, vote_date: 2025-03-01}
+          - {vote_id: h2, chamber: house, congress: 119, vote_date: 2026-06-01}
+          - {vote_id: h3, chamber: house, congress: 120, vote_date: 2027-03-01}
+          - {vote_id: s1, chamber: senate, congress: 120, vote_date: 2027-03-01}
+      - input: ref('stg_house__positions')
+        rows:
+          - {vote_id: h1, bioguide_id: A1}
+          - {vote_id: h2, bioguide_id: A1}
+          - {vote_id: h3, bioguide_id: A1}
+          - {vote_id: h1, bioguide_id: B1}
+          - {vote_id: h3, bioguide_id: B1}
+      - input: ref('stg_senate__positions')
+        rows:
+          - {vote_id: s1, lis_id: S001}
+      - input: ref('stg_legislators__people')
+        rows:
+          - {bioguide_id: B1, lis_id: S001}
+      - input: ref('int_member_periods')
+        rows:
+          - {bioguide_id: A1, chamber: house, state: CA, district: 9, party: R, caucus_party: R, period_start: 2025-01-03, period_end: 2026-01-03}
+          - {bioguide_id: A1, chamber: house, state: CA, district: 9, party: I, caucus_party: R, period_start: 2026-01-03, period_end: 2027-01-03}
+          - {bioguide_id: A1, chamber: house, state: CA, district: 11, party: I, caucus_party: D, period_start: 2027-01-03, period_end: 2029-01-03}
+          - {bioguide_id: B1, chamber: house, state: KY, district: 4, party: R, caucus_party: R, period_start: 2025-01-03, period_end: 2027-01-03}
+          - {bioguide_id: B1, chamber: senate, state: KY, district: null, party: R, caucus_party: R, period_start: 2027-01-03, period_end: 2033-01-03}
+    expect:
+      rows:
+        - {vote_id: h1, bioguide_id: A1, state: CA, district: 9, party: R, caucus_party: R, term_covers_vote_date: true}
+        - {vote_id: h2, bioguide_id: A1, state: CA, district: 9, party: I, caucus_party: R, term_covers_vote_date: true}
+        - {vote_id: h3, bioguide_id: A1, state: CA, district: 11, party: I, caucus_party: D, term_covers_vote_date: true}
+        - {vote_id: h1, bioguide_id: B1, state: KY, district: 4, party: R, caucus_party: R, term_covers_vote_date: true}
+        - {vote_id: h3, bioguide_id: B1, state: KY, district: 4, party: R, caucus_party: R, term_covers_vote_date: false}
+        - {vote_id: s1, bioguide_id: B1, state: KY, district: null, party: R, caucus_party: R, term_covers_vote_date: true}
+
   - name: member_periods_resolve_independent_caucus_and_mid_term_switch
     description: >
       An independent caucusing with Democrats is grouped with D. A member who
