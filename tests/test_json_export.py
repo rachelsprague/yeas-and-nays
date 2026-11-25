@@ -360,6 +360,10 @@ def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
                     [measure, measure])
     con.execute("""insert into floor_schedule (chamber, item_id, filed_date, question, measure_number, title, amends)
                    values ('senate', 's-none', date '2026-11-11', 'On the Cloture Motion', null, 'T', 'H.R. 2347')""")
+    con.execute("""insert into floor_schedule (chamber, item_id, week_date, measure_number, title, decided_date,
+                   decided_question, decided_outcome)
+                   values ('house', 'h-1', date '2026-11-09', 'H.R. 5', 'T', date '2026-11-10', 'On passage',
+                           'Passed by voice vote')""")
     con.execute("insert into senate_sessions values ('2026-11-12 12:00', '2026-11-12 16:52', '2026-11-16 15:00', false)")
     con.execute("insert into house_floor_days values ('2026-11-17', '2026-11-17 12:00:04', false, null)")
     con.close()
@@ -369,8 +373,10 @@ def test_run_writes_the_floor_schedule_in_numeric_order(tmp_path):
     doc = json.loads((tmp_path / "out" / "floor_schedule.json").read_text())
     # An item with no number sorts last.
     assert [i["measure_label"] for i in doc["items"]] == [
-        "H.R. 2347", "PN1272-3", "PN1272-13", "Amendment to H.R. 2347",
+        "H.R. 5", "H.R. 2347", "PN1272-3", "PN1272-13", "Amendment to H.R. 2347",
     ]
+    decided = [(i["decided_date"], i["decided_question"], i["decided_outcome"]) for i in doc["items"]]
+    assert decided == [("2026-11-10", "On passage", "Passed by voice vote")] + [(None, None, None)] * 4
     assert doc["senate_next_convene_et"] == "2026-11-16T15:00:00"
     assert doc["floor_status"] == {
         "house": {"convened_at": "2026-11-17T12:00:04-05:00", "next_convene_at": None, "next_convene_pro_forma": None},

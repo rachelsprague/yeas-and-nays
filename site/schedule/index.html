@@ -59,7 +59,7 @@ nav: schedule
       </ul>
       {%- endif %}
       {%- if w.house_pending.size > 0 %}
-      <h4 class="small soft cal-pending-h">House: on this week&rsquo;s floor schedule, not yet decided</h4>
+      <h4 class="small soft cal-pending-h">House: on this week&rsquo;s floor schedule, no decision recorded yet</h4>
         {%- for group in w.house_pending %}
         {%- if group.category %}<p class="small muted">{{ group.category | escape }}</p>{% endif %}
         <ul class="ruled">

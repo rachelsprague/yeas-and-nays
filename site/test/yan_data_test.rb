@@ -1686,6 +1686,21 @@ class SchedulePageTest < Minitest::Test
     assert_includes tuesday, %(<a class="headline-link" href="/votes/119/house/2/316/">)
   end
 
+  def test_house_items_decided_without_a_roll_call_show_the_clerks_wording
+    items = [house("a", "H.R. 1", "Pending Act"),
+             house("b", "H.R. 2", "Decided Act").merge(
+               "decided_date" => "2026-11-10", "decided_question" => "On motion to suspend the rules & pass the bill",
+               "decided_outcome" => "Agreed to by voice vote"
+             )]
+    html = build_site([MEMBER], [[VOTE, DOC]], files: "schedule/index.html", time: "2026-11-13 12:00:00 -0500",
+                      schedule: { "items" => items })["/schedule/index.html"]
+    pending, decided = html.split("decided without a roll call</h4>", 2)
+    assert_includes pending, "no decision recorded yet</h4>"
+    refute_includes pending, "Decided Act"
+    assert_includes li(decided, "Decided Act"),
+                    "On motion to suspend the rules &amp; pass the bill: Agreed to by voice vote, Nov. 10, 2026"
+  end
+
   # The home page passes each item's place to start rows past its third
   # hidden; this page doesn't, so every item shows.
   def test_no_item_starts_hidden
