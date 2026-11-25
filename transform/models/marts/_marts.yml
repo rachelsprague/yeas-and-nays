@@ -342,6 +342,21 @@ models:
               arguments:
                 to: ref('members')
                 field: bioguide_id
+      - name: sponsor_party
+        description: The sponsor's party on the day the measure was introduced. Null with no sponsor.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["R", "D", "I"]
+          - not_null:
+              config:
+                where: sponsor_bioguide_id is not null
+      - name: sponsor_chamber
+        description: The chamber the sponsor served in when the measure was introduced. Null with no sponsor.
+      - name: sponsor_state
+        description: The sponsor's state on the day the measure was introduced. Null with no sponsor.
+      - name: sponsor_district
+        description: The sponsor's House district on that day. Null in the Senate or with no sponsor.
       - name: cosponsor_count
         description: Current cosponsors as of the latest fetch; cosponsors who withdrew are not counted.
 

@@ -1007,8 +1007,11 @@ module Yan
         "sort" => [m["last_name"].to_s, m["first_name"].to_s] }
     end.sort_by { |a| a.delete("sort") }
 
+    # Party and seat when the measure was introduced; the member's latest in data without those columns.
+    introduced = vote["sponsor_party"] && %w[party chamber state district].to_h { |k| [k, vote["sponsor_#{k}"]] }
     sponsor = (m = members_by_id[vote["sponsor_bioguide_id"]]) && {
-      "name" => member_name(m), "url" => member_url(m["bioguide_id"]), "code" => "#{m["party"]}-#{seat(m)}"
+      "name" => member_name(m), "url" => member_url(m["bioguide_id"]),
+      "code" => "#{(introduced || m)["party"]}-#{seat(introduced || m)}"
     }
 
     {
