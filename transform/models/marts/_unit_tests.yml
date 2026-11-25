@@ -263,6 +263,37 @@ unit_tests:
         - {vote_id: s119-1-0040, bill_type: hr, bill_number: "1"}
         - {vote_id: h119-1-0011, bill_type: hr, bill_number: "10"}
 
+  - name: bills_take_the_sponsors_party_and_seat_when_introduced
+    model: bills
+    given:
+      - input: ref('stg_congress_gov__bills')
+        rows:
+          # A1 changed party on 2026-02-01, the day one period ends and the next begins.
+          - {congress: 119, bill_type: hr, bill_number: "1", introduced_date: "2026-01-31", sponsor_bioguide_id: A1}
+          - {congress: 119, bill_type: hr, bill_number: "2", introduced_date: "2026-02-01", sponsor_bioguide_id: A1}
+          # B2 moved from the House to the Senate on 2026-03-01.
+          - {congress: 119, bill_type: hres, bill_number: "3", introduced_date: "2026-01-15", sponsor_bioguide_id: B2}
+          - {congress: 119, bill_type: s, bill_number: "4", introduced_date: "2026-03-02", sponsor_bioguide_id: B2}
+          # On the day of the move, the chamber decides; before any Senate period, the nearest one.
+          - {congress: 119, bill_type: hjres, bill_number: "5", introduced_date: "2026-03-01", sponsor_bioguide_id: B2}
+          - {congress: 119, bill_type: sres, bill_number: "6", introduced_date: "2026-02-27", sponsor_bioguide_id: B2}
+          - {congress: 119, bill_type: sres, bill_number: "7", introduced_date: "2026-01-15", sponsor_bioguide_id: null}
+      - input: ref('int_member_periods')
+        rows:
+          - {bioguide_id: A1, chamber: house, state: AL, district: 4, party: R, period_start: "2025-01-03", period_end: "2026-02-01"}
+          - {bioguide_id: A1, chamber: house, state: AL, district: 4, party: I, period_start: "2026-02-01", period_end: "2027-01-03"}
+          - {bioguide_id: B2, chamber: house, state: FL, district: 7, party: D, period_start: "2025-01-03", period_end: "2026-03-01"}
+          - {bioguide_id: B2, chamber: senate, state: FL, district: null, party: D, period_start: "2026-03-01", period_end: "2029-01-03"}
+    expect:
+      rows:
+        - {bill_id: 119-hr-1, sponsor_party: R, sponsor_chamber: house, sponsor_state: AL, sponsor_district: 4}
+        - {bill_id: 119-hr-2, sponsor_party: I, sponsor_chamber: house, sponsor_state: AL, sponsor_district: 4}
+        - {bill_id: 119-hres-3, sponsor_party: D, sponsor_chamber: house, sponsor_state: FL, sponsor_district: 7}
+        - {bill_id: 119-s-4, sponsor_party: D, sponsor_chamber: senate, sponsor_state: FL, sponsor_district: null}
+        - {bill_id: 119-hjres-5, sponsor_party: D, sponsor_chamber: house, sponsor_state: FL, sponsor_district: 7}
+        - {bill_id: 119-sres-6, sponsor_party: D, sponsor_chamber: senate, sponsor_state: FL, sponsor_district: null}
+        - {bill_id: 119-sres-7, sponsor_party: null, sponsor_chamber: null, sponsor_state: null, sponsor_district: null}
+
   - name: sponsored_bills_link_the_most_recent_vote_on_each_bill
     model: sponsored_bills
     given:

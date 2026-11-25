@@ -241,6 +241,18 @@ class EscapingTest < Minitest::Test
     end
   end
 
+  # The sponsor's party and seat are as of introduction, not the member's latest.
+  def test_sponsor_code_is_as_of_introduction
+    senator = MEMBER.merge("party" => "I", "chamber" => "senate", "district" => nil)
+    code = lambda do |vote|
+      build_site([senator], [[VOTE.merge(vote), DOC]])["/votes/119/house/1/1/index.html"][/Introduced by.*?<\/a> \(([^)]*)\)/, 1]
+    end
+    assert_equal "R-AL-4", code.call("sponsor_party" => "R", "sponsor_chamber" => "house",
+                                     "sponsor_state" => "AL", "sponsor_district" => 4)
+    # Data exported before those columns: the member's latest.
+    assert_equal "I-AL", code.call({})
+  end
+
   # The rest of the feed's text: a candidate's name as a position (tallies,
   # filters, rows), amendment, tie-breaker and source fields, and a second
   # member whose state, party and initials hold the special characters.
