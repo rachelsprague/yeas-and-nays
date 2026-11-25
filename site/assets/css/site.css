@@ -698,15 +698,27 @@ table.roll { border-collapse: collapse; width: 100%; }
 /* Room below the last line for the back-to-top link (16px + 44px + 16px), so
    it never covers a footer link at the end of the page. */
 footer.wrap { padding-bottom: 76px; }
-.footline { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; padding-top: 14px; font-size: 13px; line-height: 20px; color: var(--ink-muted); text-align: center; }
-.footline .social { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 20px; }
-.footline .social:hover { color: var(--accent); }
+/* On phones, "How it works" takes the second column beside the two short
+   groups, so the groups still read in source order. */
+.footnav { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: auto 1fr; gap: 20px 24px; padding: 20px 0; font-size: 14px; line-height: 20px; }
+.footnav > :nth-child(2) { grid-row: span 2; }
+.footnav .kicker { margin-bottom: 4px; color: var(--ink-muted); }
+.footnav ul { list-style: none; padding: 0; }
+.footnav li a { display: inline-block; padding: 4px 0; }
+.footnav li .social { display: inline-flex; align-items: center; gap: 6px; }
+.footnav .social:hover { color: var(--accent); }
+.footline { display: flex; flex-wrap: wrap; gap: 6px 20px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; line-height: 20px; color: var(--ink-muted); }
 
 /* ---- Desktop ----------------------------------------------------------- */
 
 @media (min-width: 760px) {
   .wrap { padding-left: 40px; padding-right: 40px; }
   .mast img { height: 48px; }
+  .footnav { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); grid-template-rows: none; }
+  .footnav > :nth-child(2) { grid-row: auto; }
+  .footnav > :nth-child(2) ul { columns: 2; column-gap: 24px; }
+  .footnav li { break-inside: avoid; }
+  .footline { justify-content: space-between; }
   .mast.large img { height: 88px; }
   .sitesearch { flex: 0 1 300px; padding: 6px 0; }
 

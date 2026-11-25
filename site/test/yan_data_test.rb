@@ -121,6 +121,11 @@ end
 module SiteBuild
   SOURCE = File.expand_path("..", __dir__)
 
+  # A page without its footer, which links every "How it works" page.
+  def without_footer(html)
+    html.sub(%r{<footer.*</footer>}m, "")
+  end
+
   # Returns { "/path/index.html" => html } for every page built from these
   # members and [vote, vote file] pairs, plus a floor schedule export, a build
   # time (Eastern) and members' bill files ({ bioguide_id => file }) when given.
@@ -800,6 +805,23 @@ class LayoutTest < Minitest::Test
     end
   end
 
+  # A new "How it works" page has to be added to the footer's list.
+  def test_footer_links_every_how_it_works_page_and_its_links_resolve
+    pages = build
+    footer = pages.fetch("/index.html")[%r{<footer.*</footer>}m]
+    links = footer.scan(/href="(\/[^"]*)"/).flatten
+    how = pages.keys.grep(%r{\A/how/}).map { |path| path.delete_suffix("index.html") }
+    refute_empty how
+    assert_equal how.sort, links.grep(%r{\A/how/}).sort
+    links.each do |link|
+      path, id = link.split("#")
+      html = pages["#{path}index.html"]
+      refute_nil html, link
+      assert_includes html, %(id="#{id}"), link if id
+    end
+    assert_equal footer.scan(/aria-labelledby="([^"]+)"/), footer.scan(/ id="([^"]+)"/)
+  end
+
   # Site search (Pagefind) indexes each page's content under a "Show" label,
   # leaves out the home and search pages, and skips the lists that would match
   # every query. Every page but /search/ and the 404 page (which have their
@@ -1345,7 +1367,7 @@ class VotePageTest < Minitest::Test
                         [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
     link = '<a class="link small" href="/how/expulsion/" data-pagefind-ignore>How expulsion works</a>'
     assert_includes built.fetch("/votes/119/house/1/1/index.html"), link
-    refute_includes built.fetch("/votes/119/house/1/2/index.html"), "/how/expulsion/"
+    refute_includes without_footer(built.fetch("/votes/119/house/1/2/index.html")), "/how/expulsion/"
     assert_includes built.fetch("/about/index.html"), '<a href="/how/expulsion/">How expulsion works</a>.'
     assert_includes built.fetch("/how/expulsion/index.html"), "<h1 class=\"vote-h\">How expulsion works</h1>"
   end
@@ -1357,8 +1379,8 @@ class VotePageTest < Minitest::Test
                         [vote(2, "On Passage"), doc({ "A000001" => "Yea" }, { "yes" => 1 })]])
     link = '<a class="link small" href="/how/bills/" data-pagefind-ignore>How a bill becomes law</a>'
     assert_includes built.fetch("/votes/119/house/1/1/index.html"), link
-    refute_includes built.fetch("/votes/119/house/1/2/index.html"), "/how/bills/"
-    assert_includes built.fetch("/about/index.html"), '<a href="/how/bills/">How a bill becomes law</a>'
+    refute_includes without_footer(built.fetch("/votes/119/house/1/2/index.html")), "/how/bills/"
+    assert_includes without_footer(built.fetch("/about/index.html")), '<a href="/how/bills/">How a bill becomes law</a>'
     assert_includes built.fetch("/how/bills/index.html"), "<h1 class=\"vote-h\">How a bill becomes law</h1>"
   end
 
@@ -1378,7 +1400,7 @@ class VotePageTest < Minitest::Test
     assert_includes page, '<a href="/how/expulsion/">How expulsion works</a>.'
     page[%r{<dl>.*</dl>}m].scan(/href="#([^"]*)"/).flatten.each { |id| assert_includes ids, id }
     assert_includes built.fetch("/about/index.html"), '<a href="/how/dictionary/">dictionary of floor terms</a>'
-    assert_includes built.fetch("/404.html"), 'href="/how/dictionary/"'
+    assert_includes without_footer(built.fetch("/404.html")), 'href="/how/dictionary/"'
   end
 
   def path_doc
@@ -2618,7 +2640,7 @@ class MissedVotesPageTest < Minitest::Test
   def test_member_tile_and_about_link_here
     pages = build_site([member("Z000001", "house", 2.0)], [[EscapingTest::VOTE, EscapingTest::DOC]])
     assert_includes pages.fetch("/members/Z000001/index.html"), %(<a class="link" href="/how/missed-votes/">Missed votes</a>)
-    assert_includes pages.fetch("/about/index.html"), %(<a href="/how/missed-votes/">How missed votes work</a>)
+    assert_includes without_footer(pages.fetch("/about/index.html")), %(<a href="/how/missed-votes/">How missed votes work</a>)
   end
 end
 
@@ -2634,8 +2656,8 @@ class VotingPageTest < Minitest::Test
   def test_page_builds_and_about_and_bills_link_it
     assert_includes pages.fetch("/how/voting/index.html"), %(<h1 class="vote-h">How the House and Senate vote</h1>)
     link = %(<a href="/how/voting/">How the House and Senate vote</a>)
-    assert_includes pages.fetch("/about/index.html"), link
-    assert_includes pages.fetch("/how/bills/index.html"), link
+    assert_includes without_footer(pages.fetch("/about/index.html")), link
+    assert_includes without_footer(pages.fetch("/how/bills/index.html")), link
   end
 
   def test_dictionary_links_name_existing_entries
@@ -2646,7 +2668,7 @@ class VotingPageTest < Minitest::Test
   end
 
   def test_definitions_link_lands_on_about
-    assert_includes pages.fetch("/how/voting/index.html"), %(href="/about/#definitions")
+    assert_includes without_footer(pages.fetch("/how/voting/index.html")), %(href="/about/#definitions")
     assert_includes pages.fetch("/about/index.html"), %(<section id="definitions">)
   end
 end
@@ -2663,7 +2685,7 @@ class HouseAndSenatePageTest < Minitest::Test
   def test_page_builds_and_about_bills_and_voting_link_it
     assert_includes pages.fetch("/how/house-and-senate/index.html"), %(<h1 class="vote-h">How the House and Senate differ</h1>)
     link = %(<a href="/how/house-and-senate/">How the House and Senate differ</a>)
-    %w[/about/ /how/bills/ /how/voting/].each { |url| assert_includes pages.fetch("#{url}index.html"), link }
+    %w[/about/ /how/bills/ /how/voting/].each { |url| assert_includes without_footer(pages.fetch("#{url}index.html")), link }
   end
 
   def test_dictionary_links_name_existing_entries
@@ -2684,10 +2706,10 @@ class OpeningPrayersPageTest < Minitest::Test
   end
 
   def test_page_builds_and_about_and_house_and_senate_link_it
-    page = pages.fetch("/how/opening-prayers/index.html")
+    page = without_footer(pages.fetch("/how/opening-prayers/index.html"))
     assert_includes page, %(<h1 class="vote-h">Opening prayers and the chaplains</h1>)
     assert_includes page, %(<a href="/how/house-and-senate/">How the House and Senate differ</a>)
     link = %(<a href="/how/opening-prayers/">Opening prayers and the chaplains</a>)
-    %w[/about/ /how/house-and-senate/].each { |url| assert_includes pages.fetch("#{url}index.html"), link }
+    %w[/about/ /how/house-and-senate/].each { |url| assert_includes without_footer(pages.fetch("#{url}index.html")), link }
   end
 end
