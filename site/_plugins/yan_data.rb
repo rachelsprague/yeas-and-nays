@@ -927,21 +927,33 @@ module Yan
     out + open.reverse.map { |o| "</#{o}>" }.join
   end
 
-  # Entities that only make whitespace or nothing visible: &nbsp;, &ensp;,
-  # &emsp;, &thinsp;, &zwnj;, &zwj;, &shy;, &lrm;, &rlm; and the tab, line
-  # break, carriage return, space, no-break space, soft hyphen, en space, em
-  # space, thin space, zero-width space, zero-width non-joiner, zero-width
-  # joiner, left-to-right and right-to-left marks, line and paragraph
-  # separators, word joiner and byte order mark as numbers. Also those
-  # characters written out that [[:space:]] doesn't match: soft hyphen,
-  # zero-width space, non-joiner and joiner, the two marks, word joiner and
-  # byte order mark.
-  BLANK_ENTITY = Regexp.union(
-    /&(?:nbsp|ensp|emsp|thinsp|zwnj|zwj|shy|lrm|rlm);/i,
-    /&#0*(?:9|10|13|32|160|173|8194|8195|8201|8203|8204|8205|8206|8207|8232|8233|8288|65279);/,
-    /&#x0*(?:9|a|d|20|a0|ad|2002|2003|2009|200b|200c|200d|200e|200f|2028|2029|2060|feff);/i,
-    /[\u00AD\u200B-\u200F\u2060\uFEFF]/
-  )
+  # Text that shows nothing: whitespace, NUL, every Unicode format character
+  # (\p{Cf}: soft hyphen, zero-width space, non-joiner and joiner, the
+  # direction marks, word joiner, the invisible operators U+2061 to U+2064,
+  # the Mongolian vowel separator, byte order mark and the like), the
+  # combining grapheme joiner and the variation selectors. The rule is the
+  # category, so a character Unicode adds to it later needs no change here;
+  # the two outside it are listed. A character that is only invisible by
+  # context (a Hangul filler, say) is not included.
+  BLANK_CHAR = /[[:space:]\0\p{Cf}͏︀-️]/
+
+  # The named entities that make only whitespace or nothing visible. A
+  # numeric entity is blank when the character it names is (blank_entity?).
+  BLANK_NAMED_ENTITY = /&(?:nbsp|ensp|emsp|thinsp|zwnj|zwj|shy|lrm|rlm);/i
+  NUMERIC_ENTITY = /&#(?:(\d+)|[xX](\h+));/
+
+  # True when html holds no text: only tags, blank characters and blank
+  # entities, which reads as no summary.
+  def self.blank_html?(html)
+    decoded = html.gsub(NUMERIC_ENTITY) do |entity|
+      code = $1 ? $1.to_i : $2.to_i(16)
+      char = code.chr(Encoding::UTF_8) if code <= 0x10FFFF
+      char&.valid_encoding? && char.match?(BLANK_CHAR) ? char : entity
+    rescue RangeError
+      entity
+    end
+    decoded.match?(%r{\A(?:#{BLANK_CHAR}|</?\w+>|#{BLANK_NAMED_ENTITY})*\z})
+  end
 
   # The steps on a measure's path (src/yan/export/bill_path.py) and their
   # links into /how/bills/. Only known statuses and anchors pass; a date that
@@ -964,12 +976,12 @@ module Yan
   end
 
   # A CRS summary as the vote page shows it, or nil when it has no text
-  # (only tags, whitespace or the invisible text above), which reads as no
+  # (only tags, whitespace or the invisible text of BLANK_CHAR), which reads as no
   # summary. A version date that isn't an ISO date, or a blank version
   # label, is left out rather than stopping the build.
   def self.summary_view(s)
     return nil unless s.is_a?(Hash) && (html = summary_html(s["html"]))
-    return nil if html.match?(%r{\A(?:[[:space:]\0]|</?\w+>|#{BLANK_ENTITY})*\z})
+    return nil if blank_html?(html)
 
     date = begin
       Date.iso8601(s["version_date"]) if s["version_date"].is_a?(String)

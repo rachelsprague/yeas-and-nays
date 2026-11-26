@@ -325,8 +325,10 @@ class EscapingTest < Minitest::Test
                   &#9; &#10; &#13; &#32; &#160; &#173; &#8194; &#08195; &#8201; &#8203; &#8204; &#08205;
                   &#8206; &#08207; &#8232; &#8233; &#8288; &#65279;
                   &#x9; &#x0a; &#xD; &#x20; &#xA0; &#xAD; &#x2002; &#X2003; &#x2009; &#x200B; &#x0200b; &#x200c;
-                  &#X200D; &#x200E; &#x200f; &#x2028; &#X02029; &#x2060; &#xFEFF; &#x0feff;]
-    characters = [0xAD, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x2028, 0x2029, 0x2060, 0xFEFF]
+                  &#X200D; &#x200E; &#x200f; &#x2028; &#X02029; &#x2060; &#xFEFF; &#x0feff;
+                  &#847; &#x34F; &#8289; &#8290; &#8291; &#8292; &#x2061; &#6158; &#x180E; &#65024; &#xFE0F;]
+    characters = [0xAD, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x2028, 0x2029, 0x2060, 0xFEFF,
+                  0x34F, 0x2061, 0x2062, 0x2063, 0x2064, 0x180E, 0xFE00, 0xFE0F]
                  .map { |c| c.chr(Encoding::UTF_8) }
     blanks = ["", " <p> </p><br>\n", "<p>\0</p>"] + (entities + characters).map { |e| "<p>#{e}</p>" }
     summaries = [base.merge("html" => 1), "<p>a</p>"] + blanks.map { |html| base.merge("html" => html) }
@@ -338,6 +340,14 @@ class EscapingTest < Minitest::Test
       page = built.fetch("/votes/119/house/1/#{roll}/index.html")
       assert_includes page, "No Congressional Research Service summary of", roll
       refute_includes page, "By the Congressional Research Service", roll
+    end
+  end
+
+  # A numeric entity is blank only when the character it names is; a letter,
+  # an angle bracket or a number no character has is text, and stops nothing.
+  def test_numeric_entities_that_are_not_blank_are_text
+    ["&#65;", "&#x41;", "&#60;", "&#xD800;", "&#99999999999;", "&#x110000;"].each do |text|
+      refute Yan.blank_html?("<p>#{text}</p>"), text
     end
   end
 
