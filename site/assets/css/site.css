@@ -213,9 +213,10 @@ select.field { padding: 0 8px; }
 @media print { .pinbar { display: none; } }
 
 .findrow { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; padding-bottom: 16px; }
-.findrow label { font-family: var(--font-display); font-size: 18px; font-weight: 600; white-space: nowrap; }
+.findrow label, .findrow .findlabel { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 600; white-space: nowrap; }
 .findctl { display: flex; gap: 8px; min-width: 0; }
 .findctl .field { flex: 1 1 auto; min-width: 0; }
+.findlinks { flex-wrap: wrap; }
 
 /* ---- Page frame -------------------------------------------------------- */
 
@@ -737,6 +738,7 @@ footer.wrap { padding-bottom: 76px; }
 
   .findrow { flex-direction: row; align-items: center; justify-content: center; gap: 12px; }
   .findctl { flex: 0 1 420px; }
+  .findlinks { flex-basis: auto; }
 
   .front.has-side { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
   .has-side .lead { padding-right: 36px; border-right: 1px solid var(--ink); }
