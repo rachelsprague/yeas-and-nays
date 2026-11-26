@@ -16,7 +16,7 @@ nav: votes
 <div class="wrap findrow">
   <p class="findlabel">Find your members of Congress</p>
   <div class="findctl findlinks">
-    <a class="button" href="/find/">Find by ZIP code or map</a>
+    <a class="button" href="/find/">Find by {% if site.data.zip_lookup %}ZIP code or {% endif %}map</a>
     <a class="button" href="/members/">Browse all members</a>
   </div>
 </div>
