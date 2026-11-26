@@ -557,6 +557,49 @@ def test_publish_skips_votes_already_on_bluesky_but_advances_state(out_dir, tmp_
     assert bot_state.load(state_path)["house"] == "h119-2-0317"
 
 
+def test_publish_does_not_repost_when_state_was_lost_after_posting(out_dir, tmp_path, monkeypatch):
+    """The pipeline's `commit` job can fail after the bot posts, so the saved
+    state is behind the account. The next run reads the account's own feed
+    (through the real publisher, on a fake client) and posts nothing twice."""
+    from types import SimpleNamespace
+
+    from yan.bot.publish import BlueskyPublisher
+
+    class AccountClient:
+        """Keeps what is posted and serves it back as the author feed."""
+
+        def __init__(self):
+            self.texts = []
+
+        def login(self, handle, password):
+            pass
+
+        def send_post(self, builder, langs, **extra):
+            self.texts.append(builder.build_text())
+
+        def get_author_feed(self, actor, limit):
+            newest_first = reversed(self.texts[-limit:])
+            return SimpleNamespace(feed=[SimpleNamespace(post=SimpleNamespace(record=SimpleNamespace(text=t)))
+                                         for t in newest_first])
+
+    monkeypatch.setenv("BLUESKY_HANDLE", "example.test")
+    monkeypatch.setenv("BLUESKY_APP_PASSWORD", "x")
+    account = AccountClient()
+    state_path = tmp_path / "state.json"
+    started = {"house": "h119-2-0300", "senate": "s119-2-0200"}
+    bot_state.save(started, state_path)
+
+    publish_run(out_dir, state_path, BlueskyPublisher(client=account))
+    assert len(account.texts) == 3
+
+    # The run's state never reached the repo: the next run starts from the old one.
+    bot_state.save(started, state_path)
+    publish_run(out_dir, state_path, BlueskyPublisher(client=account))
+
+    assert len(account.texts) == 3
+    assert bot_state.load(state_path) == {"house": "h119-2-0317", "senate": "s119-2-0257"}
+
+
 def test_publish_recognizes_earlier_posts_that_linked_the_official_record(out_dir, tmp_path):
     state_path = tmp_path / "state.json"
     bot_state.save({"house": "h119-2-0316", "senate": "s119-2-0257"}, state_path)
