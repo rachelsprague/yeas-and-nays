@@ -12,6 +12,13 @@ from dataclasses import dataclass
 # Simple resolutions (H.Res., S.Res.) are not in the posting list.
 POSTED_MEASURE = re.compile(r"^(H\.R\.|S\.|H\.J\.Res\.|S\.J\.Res\.|H\.Con\.Res\.|S\.Con\.Res\.) ")
 
+# Resolutions expelling a member are simple resolutions, but the vote on one
+# decides whether a member is removed, so it is posted.
+# The Senate titles its resolutions "A resolution ..."; the House uses the gerund alone.
+EXPULSION_TITLE = re.compile(r"^(?:an? (?:simple )?resolution )?expelling\b", flags=re.IGNORECASE)
+RESOLUTION_MEASURE = re.compile(r"^(H|S)\.(Con\.)?Res\. ")
+EXPULSION_QUESTION = re.compile(r"On (Agreeing to )?the Resolution|On Passage", flags=re.IGNORECASE)
+
 _HOUSE_MEASURE_PREFIXES = {
     "H R": "H.R.",
     "H RES": "H.Res.",
@@ -51,7 +58,7 @@ def outcome(vote: dict) -> bool | None:
 @dataclass(frozen=True)
 class Decision:
     post: bool
-    kind: str  # passage | veto_override | nomination | cloture | conference_report | disposing_motion | skip
+    kind: str  # passage | veto_override | nomination | cloture | conference_report | disposing_motion | expulsion | skip
     reason: str
     motion: str | None = None  # table / refer / postpone, for disposing motions
 
@@ -70,6 +77,9 @@ def decide(vote: dict) -> Decision:
         return skip("not a yea/nay vote (quorum call or Speaker election)")
     if re.search(r"(?i)providing for (the )?consideration", title):
         return skip("rule (H.Res. providing for consideration)")
+
+    if RESOLUTION_MEASURE.match(measure) and EXPULSION_TITLE.match(title) and EXPULSION_QUESTION.match(question):
+        return Decision(True, "expulsion", f"vote on {measure or 'a resolution'} expelling a member")
 
     if vote["chamber"] == "house":
         return _decide_house(vote, question, measure, passed)
