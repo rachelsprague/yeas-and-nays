@@ -17,7 +17,7 @@ MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
 CLOSERS = {"(": ")", "“": "”", "‘": "’"}
-SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for)$", flags=re.IGNORECASE)
+SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for|a|in|on|by|with|or)$", flags=re.IGNORECASE)
 
 
 class PostTooLong(ValueError):
@@ -43,6 +43,8 @@ def headline(vote: dict, decision: Decision, title: str) -> str:
         return f"{chamber} {'agrees to' if passed else 'rejects'} conference report on {cited}"
     if decision.kind == "disposing_motion":
         return f"{chamber} {'agrees to' if passed else 'rejects'} motion to {decision.motion} {cited}"
+    if decision.kind == "expulsion":
+        return f"{chamber} {'agrees to' if passed else 'rejects'} {cited}"
     if decision.kind == "nomination":
         return f"{chamber} {'confirms' if passed else 'rejects'} {title}"
     if decision.kind == "cloture":

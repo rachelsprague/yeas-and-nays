@@ -6,7 +6,7 @@ Yeas & Nays reports recorded votes in the U.S. House and Senate. It states what 
 
 - **State the facts:** result, tally, date, and source. Nothing else.
 - **No adjectives or characterization.** Never "narrowly," "controversial," "sweeping," "slammed," "historic," "bipartisan win," etc.
-- **Use official language.** Quote the vote question and measure title as the Clerk or Senate records them. Don't paraphrase what a bill "does."
+- **Use official language.** Quote the vote question and measure title as the Clerk or Senate records them. Don't paraphrase what a bill "does." Bot headlines make three fixed changes to official Senate wording, and no others: a cloture title's "Motion to Invoke Cloture" and "Re:" give way to the headline's own "invokes cloture on," "Upon Reconsideration" moves to the end, and "Proceed" is capitalized the same way each time.
 - **Bill summaries are the Congressional Research Service's, verbatim.** The site may show a CRS summary from Congress.gov exactly as published, credited to CRS and labeled with the bill version and date it describes. Never edit, shorten, or write our own summary. Bot posts don't include summaries.
 - **Tie every result to its question.** A result applies to the question voted on, not necessarily the measure: "Motion to Refer: Passed," never a bare "Passed" under a measure's title. On the site, explain what each kind of vote decides using the fixed definitions in `site/_data/procedures.yml`, the same wording every time.
 - **Party breaks are counts, not judgments.** "Voted against party majority: …" Never "broke ranks," "defied," or "crossed the aisle."
@@ -30,6 +30,7 @@ Yeas & Nays reports recorded votes in the U.S. House and Senate. It states what 
 | Conference reports | Journal approval |
 | Constitutional amendments | Amendments, unless agreed to on a major bill |
 | Suspension votes that pass | Procedural motions generally |
+| Resolutions expelling a member, whether agreed to or not | Other simple resolutions (H.Res., S.Res.) |
 
 **Exception: procedural motions that dispose of a measure are posted.** A motion to table, refer, or postpone that ends floor consideration of an impeachment resolution, a privileged resolution, or a bill gets posted, because it is effectively the decisive vote on that measure. Use the official question and measure title, e.g.:
 
@@ -54,10 +55,10 @@ Voted against party majority: {Name (P-ST)}, {Name (P-ST)}, …
 {link}
 ```
 
-- **Result verbs:** passes / fails / agrees to motion to {table|refer} / rejects motion to {table|refer} / confirms / rejects / invokes cloture on / fails to invoke cloture on / overrides veto of / sustains veto of. Use the official result text when in doubt.
+- **Result verbs:** passes / fails / agrees to / rejects {resolution expelling a member} / agrees to motion to {table|refer} / rejects motion to {table|refer} / confirms / rejects / invokes cloture on / fails to invoke cloture on / overrides veto of / sustains veto of. Use the official result text when in doubt.
 - **Party breakdown line:** Yea–Nay counts by party as of the vote date, parties in alphabetical order (D, I, R), the same order the site uses. Include I only when an independent voted Yea or Nay; independents are shown under I here, not under the party they caucus with.
 - **Party-break line:** include only when 1 to 5 members voted against their party's majority, and list them all. When more than 5 did, omit the line; the party breakdown shows the split. Independents are grouped with the party they caucus with for this calculation, and the site's methodology page says so.
-- **Length:** Bluesky posts max out at 300 characters. Truncate long titles with "…" before dropping the tally or link.
+- **Length:** Bluesky posts max out at 300 characters. Truncate long titles with "…" before dropping the tally or link. A cut never leaves a small word (of, to, the, and, for, a, in, on, by, with, or) at the end of the title.
 
 ### Example (format only)
 
