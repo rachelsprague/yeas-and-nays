@@ -13,14 +13,13 @@ nav: votes
 </div>
 <div class="wrap" aria-hidden="true"><div class="rule-ink"></div></div>
 
-<form class="wrap findrow" role="search" action="/members/" method="get">
-  <label for="hb-find">Find your members of Congress</label>
-  <div class="findctl">
-    <input id="hb-find" class="field" type="search" name="q" placeholder="Name or state">
-    <button class="button" type="submit">Search</button>
+<div class="wrap findrow">
+  <p class="findlabel">Find your members of Congress</p>
+  <div class="findctl findlinks">
+    <a class="button" href="/find/">Find by {% if site.data.zip_lookup %}ZIP code or {% endif %}map</a>
+    <a class="button" href="/members/">Browse all members</a>
   </div>
-  <a class="small" href="/find/">Or find your district on a map</a>
-</form>
+</div>
 <div class="wrap" aria-hidden="true"><div class="rule-line"></div></div>
 
 {%- comment -%}

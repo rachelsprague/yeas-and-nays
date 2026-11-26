@@ -422,7 +422,11 @@ class EscapingTest < Minitest::Test
     assert_match(%r{<g class="city t2" transform="translate\([\d.]+ [\d.]+\)"><circle/><text>Long Beach</text></g>}, html)
     # The members page reads ?state= into its State filter by the select's name.
     assert_includes pages.fetch("/members/index.html"), '<select id="m-state" class="field" name="state" data-filter="state">'
-    assert_includes pages.fetch("/index.html"), '<a class="small" href="/find/">'
+    home = pages.fetch("/index.html")
+    assert_includes home, '<a class="button" href="/find/">Find by ZIP code or map</a>'
+    assert_includes home, '<a class="button" href="/members/">Browse all members</a>'
+    # The masthead box is the homepage's only search box.
+    assert_equal 1, home.scan('type="search"').size
   end
 
   def test_member_page_lists_official_links
