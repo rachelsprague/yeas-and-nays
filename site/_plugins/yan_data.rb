@@ -934,8 +934,10 @@ module Yan
   # combining grapheme joiner and the variation selectors. The rule is the
   # category, so a character Unicode adds to it later needs no change here;
   # the two outside it are listed. A character that is only invisible by
-  # context (a Hangul filler, say) is not included.
-  BLANK_CHAR = /[[:space:]\0\p{Cf}͏︀-️]/
+  # context (a Hangul filler, say) is not included. A few format characters
+  # do show (the Arabic number signs, U+0600 to U+0605); alone they are
+  # no summary either.
+  BLANK_CHAR = /[[:space:]\0\p{Cf}\u034F\uFE00-\uFE0F]/
 
   # The named entities that make only whitespace or nothing visible. A
   # numeric entity is blank when the character it names is (blank_entity?).
