@@ -17,7 +17,8 @@ MAX_NAMES = 5
 MIN_TITLE = 20
 ELLIPSIS = "…"
 CLOSERS = {"(": ")", "“": "”", "‘": "’"}
-SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for|a|in|on|by|with|or)$", flags=re.IGNORECASE)
+# a, in, on, by, with and or count only in lowercase: "Part A" and "Portland, OR" end a name.
+SMALL_WORD_END = re.compile(r"\s[\"“‘']?(?:of|to|the|and|for|(?-i:a|in|on|by|with|or))$", flags=re.IGNORECASE)
 
 
 class PostTooLong(ValueError):

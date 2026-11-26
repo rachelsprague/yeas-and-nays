@@ -14,7 +14,9 @@ POSTED_MEASURE = re.compile(r"^(H\.R\.|S\.|H\.J\.Res\.|S\.J\.Res\.|H\.Con\.Res\.
 
 # Resolutions expelling a member are simple resolutions, but the vote on one
 # decides whether a member is removed, so it is posted.
-EXPULSION_TITLE = re.compile(r"^expelling\b", flags=re.IGNORECASE)
+# The Senate titles its resolutions "A resolution ..."; the House uses the gerund alone.
+EXPULSION_TITLE = re.compile(r"^(?:an? (?:simple )?resolution )?expelling\b", flags=re.IGNORECASE)
+RESOLUTION_MEASURE = re.compile(r"^(H|S)\.(Con\.)?Res\. ")
 EXPULSION_QUESTION = re.compile(r"On (Agreeing to )?the Resolution|On Passage", flags=re.IGNORECASE)
 
 _HOUSE_MEASURE_PREFIXES = {
@@ -76,7 +78,7 @@ def decide(vote: dict) -> Decision:
     if re.search(r"(?i)providing for (the )?consideration", title):
         return skip("rule (H.Res. providing for consideration)")
 
-    if EXPULSION_TITLE.match(title) and EXPULSION_QUESTION.match(question):
+    if RESOLUTION_MEASURE.match(measure) and EXPULSION_TITLE.match(title) and EXPULSION_QUESTION.match(question):
         return Decision(True, "expulsion", f"vote on {measure or 'a resolution'} expelling a member")
 
     if vote["chamber"] == "house":

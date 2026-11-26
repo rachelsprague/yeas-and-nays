@@ -63,7 +63,7 @@ def doc(vote, against=(), positions=None, party_totals=None):
     (house_vote(question="On Agreeing to the Resolution", measure_number="H RES 100", result="Failed",
                 measure_title="Expelling Member Name from the House of Representatives"), "expulsion"),
     (senate_vote(question="On the Resolution S.Res. 100", result="Resolution Agreed to", measure_number="S.Res. 100",
-                 measure_title="Expelling Member Name from the Senate"), "expulsion"),
+                 measure_title="A resolution expelling Member Name from the Senate"), "expulsion"),
     (senate_vote(), "nomination"),
     (senate_vote(question="On the Cloture Motion PN373", result="Cloture Motion Agreed to"), "cloture"),
     (senate_vote(question="On Passage of the Bill H.R. 1", result="Bill Passed", measure_number="H.R. 1"),
@@ -83,6 +83,9 @@ def test_posted(vote, kind):
     (house_vote(question="On Motion to Adjourn"), "procedural"),
     (house_vote(question="On Motion to Suspend the Rules and Pass", result="Failed"), "did not pass"),
     (house_vote(question="On Agreeing to the Resolution", measure_number="H RES 189"), "simple resolution"),
+    # An expulsion resolution that is tabled follows the disposing-motion rules, not the expulsion rule.
+    (house_vote(question="On Motion to Table", result="Failed", measure_number="H RES 100",
+                measure_title="Expelling Member Name from the House of Representatives"), "still pending"),
     (house_vote(question="Election of the Speaker", result="Johnson (LA)", yea_count=None), "not a yea/nay"),
     # Disposing-motion exception applies only when the motion ends consideration.
     (house_vote(question="On Motion to Table", result="Failed"), "still pending"),
@@ -345,6 +348,17 @@ def test_expulsion_headline_names_the_resolution_and_result():
         'House rejects H.Res. 100, "Expelling Member Name from the House of Representatives"')
     vote = {**vote, "result": "Agreed to"}
     assert format_post(doc(vote), decide(vote)).splitlines()[0].startswith("House agrees to H.Res. 100,")
+
+
+@pytest.mark.parametrize("prefix", [
+    "Medicare Hospital Insurance Part A",
+    "Offices of the Federal Courts in Portland, OR",
+    "Offices of the Federal Courts in Indianapolis, IN",
+])
+def test_cut_keeps_a_capital_a_and_state_abbreviations(prefix):
+    tail = " Defense and a long tail " + "y" * 300
+    vote = house_vote(question="On Passage", measure_number="H R 1", measure_title=prefix + tail)
+    assert cut_after(vote, prefix, tail).endswith(prefix.rsplit(" ", 1)[1] + '…"')
 
 
 def test_small_word_stays_when_dropping_it_leaves_too_little_title():
