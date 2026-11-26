@@ -11,9 +11,11 @@ const { JSDOM } = require("jsdom");
 
 const SCRIPT = fs.readFileSync(path.join(__dirname, "..", "assets", "js", "activity.js"), "utf8");
 
-const week = (start, total) => `
+// x is the week's column in the chart's 100-unit-wide viewBox, 8 units wide like the real ones.
+const week = (start, total, x) => `
   <g class="wk" data-chamber="house" data-week="${start}" data-head="House · week of ${start}"
-     data-total="${total}" data-kinds="passage:${total}"><title>Week of ${start}: ${total}</title></g>`;
+     data-total="${total}" data-kinds="passage:${total}"><title>Week of ${start}: ${total}</title>
+    <rect class="hit" x="${x}" y="0" width="8" height="10"/></g>`;
 
 const area = (chamber, total) => `
   <span class="area-line" title="Health, ${chamber}: ${total}" data-chamber="${chamber}" data-area="Health"
@@ -23,7 +25,7 @@ const PAGE = `
 <main data-activity>
   <ul class="vol-key"><li><span class="swatch k-passage"></span>Passage</li></ul>
   <figure class="vol" data-list-scope>
-    <svg role="img">${week("2026-11-02", 1)}${week("2026-11-09", 2)}${week("2026-11-16", 0)}</svg>
+    <svg role="img" viewBox="0 0 100 10">${week("2026-11-02", 1, 0)}${week("2026-11-09", 2, 10)}${week("2026-11-16", 0, 20)}</svg>
     <figcaption data-list></figcaption>
   </figure>
   <div data-list-scope>
@@ -72,6 +74,29 @@ test("bars become labeled buttons, with one tab stop per chart", () => {
   assert.equal(areas[0].getAttribute("aria-label"), "Health, house: 1");
   assert.deepEqual(areas.map((b) => b.getAttribute("tabindex")), ["0", "-1"]);
   assert.equal(document.querySelector("title"), null);
+});
+
+test("a tap that misses every week lists the nearest one within reach", async () => {
+  const { window, document, panel, release, settle } = load();
+  const svg = document.querySelector("svg");
+  // One viewBox unit is one pixel; week centers sit at 4, 14 and 24.
+  svg.getBoundingClientRect = () => ({ left: 0, width: 100 });
+  const tap = (clientX, target = svg) =>
+    target.dispatchEvent(new window.MouseEvent("click", { bubbles: true, clientX }));
+
+  tap(60); // 36px from the nearest week
+  assert.equal(panel.textContent, "");
+
+  tap(8); // between the first week and the second; the first is nearer
+  assert.match(panel.textContent, /week of 2026-11-02/);
+  release();
+  await settle();
+
+  tap(17, document.querySelector(".hit")); // on the first week's own rect: that week, not the nearest
+  assert.match(panel.textContent, /week of 2026-11-02/);
+
+  tap(17);
+  assert.match(panel.textContent, /week of 2026-11-09/);
 });
 
 test("each bar controls its own chart's list panel", () => {

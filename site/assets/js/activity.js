@@ -6,6 +6,8 @@
 // By keyboard, each chart is one tab stop: arrow keys, Home and End move between
 // its bars, Enter or Space lists a bar's roll calls, and Escape closes the list.
 // Screen readers hear a short status when a list opens, not the whole list.
+// A week is only a few pixels wide on a phone, so a click or tap on the chart
+// that misses every week picks the nearest one within a fingertip (TAP_REACH).
 // Everything from the data is written as text, never HTML. Without JS each bar
 // keeps its title, and the tables under the charts have every count.
 (function () {
@@ -78,6 +80,28 @@
 
   function barAt(target) {
     return target.closest ? target.closest("[data-head]") : null;
+  }
+
+  // Half a fingertip, in CSS pixels.
+  var TAP_REACH = 12;
+
+  // The week nearest a click on a chart's drawing, or null: a click elsewhere,
+  // or farther than TAP_REACH from any week (a recess has no bar to pick).
+  function weekNear(e) {
+    var svg = e.target.closest && e.target.closest(".vol svg");
+    if (!svg) return null;
+    var box = svg.getBoundingClientRect();
+    var view = svg.viewBox && svg.viewBox.baseVal;
+    if (!box.width || !view || !view.width) return null;
+    var scale = box.width / view.width;
+    var best = null, bestGap = TAP_REACH;
+    svg.querySelectorAll(".wk").forEach(function (wk) {
+      var hit = wk.querySelector(".hit");
+      var x = hit ? +hit.getAttribute("x") + +hit.getAttribute("width") / 2 : NaN;
+      var gap = Math.abs(box.left + x * scale - e.clientX);
+      if (gap <= bestGap) { best = wk; bestGap = gap; }
+    });
+    return best;
   }
 
   var byKey = false; // whether the last input was a key press
@@ -245,7 +269,7 @@
   }
 
   page.addEventListener("click", function (e) {
-    var bar = barAt(e.target);
+    var bar = barAt(e.target) || weekNear(e);
     if (!bar) return;
     tip.hidden = true;
     list(bar);
