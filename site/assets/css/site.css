@@ -155,8 +155,9 @@ select.field { padding: 0 8px; }
   display: inline-flex; align-items: center;
   height: 36px; padding: 0 14px;
   font-size: 14px; font-weight: 600; text-decoration: none;
-  color: var(--ink-soft); border: 1px solid var(--line);
+  border: 1px solid var(--line);
 }
+.pill, .pill:visited { color: var(--ink-soft); }
 .pill:hover { color: var(--ink); border-color: var(--ink-soft); }
 
 /* Back-to-top link, bottom right on long pages (totop.js shows it). Clear of
