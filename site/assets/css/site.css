@@ -150,6 +150,16 @@ select.field { padding: 0 8px; }
 }
 .share:hover { color: var(--ink); border-color: var(--ink-soft); }
 
+/* Link styled like the share button: an outline pill (About page contact). */
+.pill {
+  display: inline-flex; align-items: center;
+  height: 36px; padding: 0 14px;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  border: 1px solid var(--line);
+}
+.pill, .pill:visited { color: var(--ink-soft); }
+.pill:hover { color: var(--ink); border-color: var(--ink-soft); }
+
 /* Back-to-top link, bottom right on long pages (totop.js shows it). Clear of
    the iPhone home indicator. .button sets display, so [hidden] needs its own
    rule. */
